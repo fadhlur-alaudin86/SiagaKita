@@ -7,6 +7,33 @@ import '../constants/api_config.dart';
 class IncidentService {
   static const String _baseUrl = ApiConfig.baseUrl;
 
+  // Timeout: SOS-critical calls pakai 10 detik, regular calls 15 detik
+  static const _sosTimeout = Duration(seconds: 10);
+  static const _defaultTimeout = Duration(seconds: 15);
+
+  // ─── Helper: request dengan timeout ──────────────────────────────────────
+
+  static Future<http.Response> _req(Future<http.Response> Function() call,
+      {Duration? timeout}) async {
+    try {
+      return await call().timeout(
+        timeout ?? _defaultTimeout,
+        onTimeout: () =>
+            throw IncidentException('Request timeout. Coba lagi.'),
+      );
+    } on IncidentException {
+      rethrow;
+    } on SOSBannedException {
+      rethrow;
+    } catch (_) {
+      throw IncidentException('Gagal menghubungi server. Periksa koneksi.');
+    }
+  }
+
+  static Map<String, String> _authHeader(String token) => {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
 
   // ─── Trigger SOS (Jalur A) ────────────────────────────────────────────────
 
@@ -18,17 +45,17 @@ class IncidentService {
     required double longitude,
     String triggerMethod = 'user',
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/incidents/trigger'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode({
-        'latitude': latitude,
-        'longitude': longitude,
-        'trigger_method': triggerMethod,
-      }),
+    final response = await _req(
+      () => http.post(
+        Uri.parse('$_baseUrl/incidents/trigger'),
+        headers: _authHeader(accessToken),
+        body: jsonEncode({
+          'latitude': latitude,
+          'longitude': longitude,
+          'trigger_method': triggerMethod,
+        }),
+      ),
+      timeout: _sosTimeout, // SOS harus cepat
     );
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode == 403) {
@@ -42,20 +69,18 @@ class IncidentService {
 
   // ─── Update Type (Grace Period) ───────────────────────────────────────────
 
-  /// Memilih tipe insiden selama grace period 10 detik.
-  /// Sekaligus mengubah status → broadcasting.
+  /// Memilih tipe insiden selama grace period.
   static Future<void> updateType({
     required String accessToken,
     required String incidentId,
-    required String incidentType, // 'medical'|'fire'|'crime'|'rescue'|'general'
+    required String incidentType,
   }) async {
-    final response = await http.patch(
-      Uri.parse('$_baseUrl/incidents/$incidentId/type'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode({'incident_type': incidentType}),
+    final response = await _req(
+      () => http.patch(
+        Uri.parse('$_baseUrl/incidents/$incidentId/type'),
+        headers: _authHeader(accessToken),
+        body: jsonEncode({'incident_type': incidentType}),
+      ),
     );
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -65,17 +90,21 @@ class IncidentService {
 
   // ─── Broadcast (Grace Period Timeout) ────────────────────────────────────
 
-  /// Dipanggil saat countdown 10 detik habis tanpa memilih tipe.
-  /// Status → broadcasting, tipe tetap 'unknown'.
+  /// Dipanggil saat countdown habis tanpa memilih tipe.
   static Future<void> broadcast({
     required String accessToken,
     required String incidentId,
   }) async {
-    await http.post(
-      Uri.parse('$_baseUrl/incidents/$incidentId/broadcast'),
-      headers: {'Authorization': 'Bearer $accessToken'},
-    );
-    // Silent fail — status broadcasting tetap berjalan
+    try {
+      await http
+          .post(
+            Uri.parse('$_baseUrl/incidents/$incidentId/broadcast'),
+            headers: {'Authorization': 'Bearer $accessToken'},
+          )
+          .timeout(_defaultTimeout);
+    } catch (_) {
+      // Silent fail — SOS tetap aktif, status update di iterasi berikutnya
+    }
   }
 
   // ─── Cancel SOS ───────────────────────────────────────────────────────────
@@ -84,9 +113,12 @@ class IncidentService {
     required String accessToken,
     required String incidentId,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/incidents/$incidentId/cancel'),
-      headers: {'Authorization': 'Bearer $accessToken'},
+    final response = await _req(
+      () => http.post(
+        Uri.parse('$_baseUrl/incidents/$incidentId/cancel'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      ),
+      timeout: _sosTimeout,
     );
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -102,15 +134,17 @@ class IncidentService {
     required double latitude,
     required double longitude,
   }) async {
-    await http.put(
-      Uri.parse('$_baseUrl/incidents/$incidentId/location'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode({'latitude': latitude, 'longitude': longitude}),
-    );
-    // Silent fail — lokasi diupdate di iterasi berikutnya
+    try {
+      await http
+          .put(
+            Uri.parse('$_baseUrl/incidents/$incidentId/location'),
+            headers: _authHeader(accessToken),
+            body: jsonEncode({'latitude': latitude, 'longitude': longitude}),
+          )
+          .timeout(_defaultTimeout);
+    } catch (_) {
+      // Silent fail — lokasi diupdate di timer interval berikutnya (1 menit)
+    }
   }
 
   // ─── Get Active Incident ──────────────────────────────────────────────────
@@ -118,15 +152,21 @@ class IncidentService {
   static Future<ActiveIncident?> getActive({
     required String accessToken,
   }) async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/incidents/active'),
-      headers: {'Authorization': 'Bearer $accessToken'},
-    );
-    if (response.statusCode != 200) return null;
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final data = body['data'];
-    if (data == null) return null;
-    return ActiveIncident.fromJson(data as Map<String, dynamic>);
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/incidents/active'),
+            headers: {'Authorization': 'Bearer $accessToken'},
+          )
+          .timeout(_defaultTimeout);
+      if (response.statusCode != 200) return null;
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = body['data'];
+      if (data == null) return null;
+      return ActiveIncident.fromJson(data as Map<String, dynamic>);
+    } catch (_) {
+      return null; // Silent fail — UI tetap tampil tanpa data aktif
+    }
   }
 
   // ─── Create Report (Jalur B — Laporan Warga) ─────────────────────────────
@@ -141,21 +181,20 @@ class IncidentService {
     String? photoUrl,
     String? audioUrl,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/reports'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode({
-        'incident_type': incidentType,
-        'urgency': urgency,
-        'latitude': latitude,
-        'longitude': longitude,
-        'description': description,
-        'photo_url': photoUrl,
-        'audio_url': audioUrl,
-      }),
+    final response = await _req(
+      () => http.post(
+        Uri.parse('$_baseUrl/reports'),
+        headers: _authHeader(accessToken),
+        body: jsonEncode({
+          'incident_type': incidentType,
+          'urgency': urgency,
+          'latitude': latitude,
+          'longitude': longitude,
+          'description': description,
+          'photo_url': photoUrl,
+          'audio_url': audioUrl,
+        }),
+      ),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -167,7 +206,7 @@ class IncidentService {
 // ─── Data Classes ─────────────────────────────────────────────────────────────
 
 class TriggerSOSResult {
-  final String incidentId; // UUID
+  final String incidentId;
   final String status;
   final String message;
 
@@ -186,7 +225,7 @@ class TriggerSOSResult {
 }
 
 class ActiveIncident {
-  final String incidentId; // UUID
+  final String incidentId;
   final String status;
   final String incidentType;
   final double latitude;
@@ -211,7 +250,8 @@ class ActiveIncident {
         latitude: (json['latitude'] as num).toDouble(),
         longitude: (json['longitude'] as num).toDouble(),
         createdAt: json['created_at'] as String,
-        reporterTrustLabel: json['reporter_trust_label'] as String? ?? 'standard',
+        reporterTrustLabel:
+            json['reporter_trust_label'] as String? ?? 'standard',
       );
 }
 

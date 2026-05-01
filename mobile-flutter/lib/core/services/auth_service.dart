@@ -6,6 +6,35 @@ import '../constants/api_config.dart';
 class AuthService {
   static const String _baseUrl = ApiConfig.baseUrl;
 
+  // Timeout default untuk semua request auth
+  static const _timeout = Duration(seconds: 30);
+
+  // ─── Helper: safe HTTP call dengan timeout ────────────────────────────────
+
+  static Future<http.Response> _post(String url, Map<String, dynamic> body,
+      {Map<String, String>? headers}) async {
+    try {
+      return await http
+          .post(
+            Uri.parse(url),
+            headers: {
+              'Content-Type': 'application/json',
+              ...?headers,
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(
+            _timeout,
+            onTimeout: () => throw AuthException(
+              'Server terlalu lama merespons. Coba lagi.',
+            ),
+          );
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw AuthException('Gagal menghubungi server. Periksa koneksi internet.');
+    }
+  }
 
   // ─── Register Step 1: buat akun → kirim OTP ke email ─────────────────────
   static Future<String> register({
@@ -13,15 +42,11 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/auth/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'full_name': fullName,
-        'email': email,
-        'password': password,
-      }),
-    );
+    final response = await _post('$_baseUrl/auth/register', {
+      'full_name': fullName,
+      'email': email,
+      'password': password,
+    });
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 201 && response.statusCode != 200) {
       throw AuthException(body['message'] as String? ?? 'Pendaftaran gagal');
@@ -35,10 +60,9 @@ class AuthService {
     required String email,
     required String otpCode,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/auth/verify-register-otp'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'otp_code': otpCode}),
+    final response = await _post(
+      '$_baseUrl/auth/verify-register-otp',
+      {'email': email, 'otp_code': otpCode},
     );
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
@@ -52,10 +76,9 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
+    final response = await _post(
+      '$_baseUrl/auth/login',
+      {'email': email, 'password': password},
     );
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
@@ -64,15 +87,14 @@ class AuthService {
     return AuthResult.fromJson(body['data'] as Map<String, dynamic>);
   }
 
-  // ─── Login Step 2: verifikasi OTP email → return token ───────────────────
+  // ─── Login OTP: verifikasi OTP email → return token ──────────────────────
   static Future<AuthResult> verifyLoginOTP({
     required String email,
     required String otpCode,
   }) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/auth/verify-login-otp'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'otp_code': otpCode}),
+    final response = await _post(
+      '$_baseUrl/auth/verify-login-otp',
+      {'email': email, 'otp_code': otpCode},
     );
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
@@ -104,7 +126,7 @@ class AuthResult {
 
 class UserInfo {
   final String id;
-  final String? fullName;   // nullable — diambil dari user_profiles
+  final String? fullName; // nullable — diambil dari user_profiles
   final String email;
   final String role;
 

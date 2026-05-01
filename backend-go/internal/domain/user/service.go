@@ -34,8 +34,9 @@ type RegisterResult struct {
 	Email   string `json:"email"`
 }
 
-// Register membuat akun civilian baru + row user_profiles.
-// Mengirimkan OTP ke email, JWT baru diterbitkan setelah VerifyRegisterOTP.
+// Register membuat akun civilian baru + row user_profiles dalam satu transaksi.
+// OTP email dikirim SETELAH transaksi DB berhasil.
+// Jika SMTP gagal → hard-delete user (CASCADE menghapus user_profiles otomatis).
 func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*RegisterResult, error) {
 	if req.FullName == "" || req.Email == "" || req.Password == "" {
 		return nil, errors.New("full_name, email, dan password wajib diisi")
@@ -56,28 +57,24 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 		return nil, err
 	}
 
-	// Transaksi: buat users + user_profiles sekaligus
+	// Transaksi atomik: buat users + user_profiles sekaligus.
+	// Jika salah satu gagal, keduanya di-rollback — tidak ada orphaned row.
 	user := &User{
 		Email:        req.Email,
 		PasswordHash: string(hash),
 		Role:         "civilian",
 	}
-	if err := s.repo.CreateUser(user); err != nil {
-		return nil, err
-	}
-
 	profile := &UserProfile{
-		UserID:   user.ID,
 		FullName: &req.FullName,
 	}
-	if err := s.repo.CreateProfile(profile); err != nil {
-		_ = s.repo.DeleteUserByEmail(req.Email)
-		return nil, fmt.Errorf("gagal membuat profil: %w", err)
+	if err := s.repo.CreateUserWithProfile(user, profile); err != nil {
+		return nil, fmt.Errorf("gagal membuat akun: %w", err)
 	}
 
-	// Kirim OTP ke email untuk verifikasi
+	// Kirim OTP ke email SETELAH transaksi DB commit.
+	// Jika gagal → hard-delete user (ON DELETE CASCADE menghapus user_profiles).
 	if err := s.otpSvc.RequestEmailOTP(ctx, req.Email, "register"); err != nil {
-		_ = s.repo.DeleteUserByEmail(req.Email)
+		_ = s.repo.DeleteUserByEmail(req.Email) // cascade delete user_profiles
 		return nil, fmt.Errorf("gagal mengirim OTP ke email: %w", err)
 	}
 
@@ -86,6 +83,7 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 		Email:   req.Email,
 	}, nil
 }
+
 
 // ─── VerifyRegisterOTP ────────────────────────────────────────────────────────
 

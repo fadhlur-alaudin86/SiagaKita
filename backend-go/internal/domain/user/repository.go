@@ -51,6 +51,18 @@ func (r *Repository) CreateProfile(p *UserProfile) error {
 	return r.db.Create(p).Error
 }
 
+// CreateUserWithProfile inserts users + user_profiles dalam SATU transaksi.
+// Jika salah satu gagal, keduanya di-rollback atomik.
+func (r *Repository) CreateUserWithProfile(user *User, profile *UserProfile) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(user).Error; err != nil {
+			return err
+		}
+		profile.UserID = user.ID // pastikan FK terisi dari ID yang baru di-generate
+		return tx.Create(profile).Error
+	})
+}
+
 // FindProfile retrieves the user_profiles row for a given userID.
 func (r *Repository) FindProfile(userID string) (*UserProfile, error) {
 	var p UserProfile
