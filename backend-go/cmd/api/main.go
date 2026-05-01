@@ -50,12 +50,17 @@ func main() {
 	// OTP domain
 	fonnteGateway := otpDomain.NewFonnteGateway(cfg.FonnteToken)
 
-	// Pilih email gateway: Resend (HTTP API) diutamakan, SMTP sebagai fallback.
-	// Resend tidak butuh port SMTP — cocok untuk VPS yang memblokir outbound SMTP.
+	// Pilih email gateway:
+	// 1. Resend (HTTP API)
+	// 2. Gmail REST API (OAuth2)
+	// 3. SMTP (Fallback, berpotensi diblokir)
 	var emailGateway otpDomain.EmailGateway
 	if cfg.ResendAPIKey != "" {
 		log.Printf("[Email] Menggunakan Resend HTTP API (from: %s)", cfg.SMTPFrom)
 		emailGateway = otpDomain.NewResendEmailGateway(cfg.ResendAPIKey, cfg.SMTPFrom)
+	} else if cfg.GmailClientID != "" {
+		log.Printf("[Email] Menggunakan Gmail REST API (from: %s)", cfg.SMTPFrom)
+		emailGateway = otpDomain.NewGmailAPIGateway(cfg.GmailClientID, cfg.GmailClientSecret, cfg.GmailRefreshToken, cfg.SMTPFrom)
 	} else {
 		log.Printf("[Email] Menggunakan SMTP (host: %s:%s)", cfg.SMTPHost, cfg.SMTPPort)
 		emailGateway = otpDomain.NewSMTPEmailGateway(

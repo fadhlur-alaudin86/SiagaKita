@@ -42,6 +42,11 @@ type Config struct {
 	// Daftar gratis di https://resend.com
 	ResendAPIKey string
 
+	// Email Gateway (Gmail API) — menggunakan HTTPS port 443
+	GmailClientID     string
+	GmailClientSecret string
+	GmailRefreshToken string
+
 	// Server
 	HTTPPort string
 	WSPort   string
@@ -83,6 +88,9 @@ func Load() *Config {
 		SMTPPassword:     getEnv("SMTP_PASSWORD", ""),
 		SMTPFrom:         getEnv("SMTP_FROM", ""),
 		ResendAPIKey:     getEnv("RESEND_API_KEY", ""),
+		GmailClientID:    getEnv("GMAIL_CLIENT_ID", ""),
+		GmailClientSecret: getEnv("GMAIL_CLIENT_SECRET", ""),
+		GmailRefreshToken: getEnv("GMAIL_REFRESH_TOKEN", ""),
 		HTTPPort:         getEnv("HTTP_PORT", "8080"),
 		WSPort:           getEnv("WS_PORT", "8081"),
 		SuperAdminEmail:  getEnv("SUPERADMIN_EMAIL", ""),
