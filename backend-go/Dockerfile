@@ -19,7 +19,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o siagakita-api ./cmd/ap
 # ==========================================
 FROM alpine:latest
 
-RUN apk --no-cache add tzdata
+# curl diperlukan untuk Docker healthcheck, tzdata untuk timezone Asia/Jakarta
+RUN apk --no-cache add tzdata curl
 ENV TZ=Asia/Jakarta
 
 WORKDIR /app

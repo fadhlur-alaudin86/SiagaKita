@@ -30,12 +30,17 @@ type Config struct {
 	// WhatsApp Gateway (Fonnte)
 	FonnteToken string
 
-	// Email Gateway (SMTP)
+	// Email Gateway (SMTP — fallback jika RESEND_API_KEY tidak diset)
 	SMTPHost     string
 	SMTPPort     string
 	SMTPUsername string
 	SMTPPassword string
 	SMTPFrom     string
+
+	// Email Gateway (Resend HTTP API — diutamakan jika RESEND_API_KEY diset)
+	// Tidak butuh port SMTP, menggunakan HTTPS port 443.
+	// Daftar gratis di https://resend.com
+	ResendAPIKey string
 
 	// Server
 	HTTPPort string
@@ -77,6 +82,7 @@ func Load() *Config {
 		SMTPUsername:     getEnv("SMTP_USERNAME", ""),
 		SMTPPassword:     getEnv("SMTP_PASSWORD", ""),
 		SMTPFrom:         getEnv("SMTP_FROM", ""),
+		ResendAPIKey:     getEnv("RESEND_API_KEY", ""),
 		HTTPPort:         getEnv("HTTP_PORT", "8080"),
 		WSPort:           getEnv("WS_PORT", "8081"),
 		SuperAdminEmail:  getEnv("SUPERADMIN_EMAIL", ""),

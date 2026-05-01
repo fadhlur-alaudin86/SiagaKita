@@ -49,9 +49,20 @@ func main() {
 	// ── 5. Domain wiring ──────────────────────────────────────────────────────
 	// OTP domain
 	fonnteGateway := otpDomain.NewFonnteGateway(cfg.FonnteToken)
-	emailGateway := otpDomain.NewSMTPEmailGateway(
-		cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom,
-	)
+
+	// Pilih email gateway: Resend (HTTP API) diutamakan, SMTP sebagai fallback.
+	// Resend tidak butuh port SMTP — cocok untuk VPS yang memblokir outbound SMTP.
+	var emailGateway otpDomain.EmailGateway
+	if cfg.ResendAPIKey != "" {
+		log.Printf("[Email] Menggunakan Resend HTTP API (from: %s)", cfg.SMTPFrom)
+		emailGateway = otpDomain.NewResendEmailGateway(cfg.ResendAPIKey, cfg.SMTPFrom)
+	} else {
+		log.Printf("[Email] Menggunakan SMTP (host: %s:%s)", cfg.SMTPHost, cfg.SMTPPort)
+		emailGateway = otpDomain.NewSMTPEmailGateway(
+			cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom,
+		)
+	}
+
 	otpSvc := otpDomain.NewService(rdb, fonnteGateway, emailGateway)
 	otpHandler := otpDomain.NewHandler(otpSvc)
 
