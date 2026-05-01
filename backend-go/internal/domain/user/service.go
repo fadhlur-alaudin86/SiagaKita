@@ -25,7 +25,7 @@ func NewService(repo *Repository, cfg *config.Config, otpSvc otp.Service) *Servi
 	return &Service{repo: repo, cfg: cfg, otpSvc: otpSvc}
 }
 
-// ─── Register ─────────────────────────────────────────────────────────────────
+// ─── Register (civilian/volunteer via mobile) ─────────────────────────────────
 
 // RegisterResult dikembalikan oleh Register — tidak mengandung JWT karena
 // pengguna harus verifikasi email terlebih dahulu.
@@ -34,8 +34,8 @@ type RegisterResult struct {
 	Email   string `json:"email"`
 }
 
-// Register membuat akun baru dan mengirimkan OTP ke email.
-// JWT hanya diterbitkan setelah pengguna memverifikasi emailnya via VerifyRegisterOTP.
+// Register membuat akun civilian baru + row user_profiles.
+// Mengirimkan OTP ke email, JWT baru diterbitkan setelah VerifyRegisterOTP.
 func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*RegisterResult, error) {
 	if req.FullName == "" || req.Email == "" || req.Password == "" {
 		return nil, errors.New("full_name, email, dan password wajib diisi")
@@ -56,23 +56,29 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 		return nil, err
 	}
 
+	// Transaksi: buat users + user_profiles sekaligus
 	user := &User{
-		FullName:        req.FullName,
-		Email:           req.Email,
-		PasswordHash:    string(hash),
-		Role:            "civilian",
-		IsEmailVerified: false,
-		IsPhoneVerified: false,
+		Email:        req.Email,
+		PasswordHash: string(hash),
+		Role:         "civilian",
 	}
 	if err := s.repo.CreateUser(user); err != nil {
 		return nil, err
 	}
 
+	profile := &UserProfile{
+		UserID:   user.ID,
+		FullName: &req.FullName,
+	}
+	if err := s.repo.CreateProfile(profile); err != nil {
+		_ = s.repo.DeleteUserByEmail(req.Email)
+		return nil, fmt.Errorf("gagal membuat profil: %w", err)
+	}
+
 	// Kirim OTP ke email untuk verifikasi
 	if err := s.otpSvc.RequestEmailOTP(ctx, req.Email, "register"); err != nil {
-		// Rollback: hapus user yang baru dibuat agar email bisa dipakai ulang
 		_ = s.repo.DeleteUserByEmail(req.Email)
-		return nil, fmt.Errorf("Gagal mengirim OTP ke email: %w", err)
+		return nil, fmt.Errorf("gagal mengirim OTP ke email: %w", err)
 	}
 
 	return &RegisterResult{
@@ -83,75 +89,119 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 
 // ─── VerifyRegisterOTP ────────────────────────────────────────────────────────
 
-// VerifyRegisterOTP memverifikasi OTP email saat pendaftaran dan menerbitkan JWT.
 func (s *Service) VerifyRegisterOTP(ctx context.Context, email, code string) (*AuthResponse, error) {
 	if err := s.otpSvc.VerifyEmailOTP(ctx, email, "register", code); err != nil {
 		return nil, err
 	}
-
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {
 		return nil, errors.New("akun tidak ditemukan")
 	}
-
-	// Tandai email terverifikasi
 	if err := s.repo.SetEmailVerified(user.ID); err != nil {
 		return nil, err
 	}
-	user.IsEmailVerified = true
-
-	return s.buildAuthResponse(user)
+	profile, _ := s.repo.FindProfile(user.ID)
+	return s.buildAuthResponse(user, profile)
 }
 
-// ─── Login (2FA — Email + Password → OTP ke email) ───────────────────────────
+// ─── Login (mobile: civilian/volunteer) ──────────────────────────────────────
 
-// LoginStep1Result dikembalikan dari Login — tidak mengandung JWT.
-type LoginStep1Result struct {
-	Message string `json:"message"`
-	Email   string `json:"email"`
-}
-
-// Login memvalidasi email + password lalu langsung menerbitkan JWT.
-// Tidak ada langkah OTP pada login — low-friction access.
+// Login memvalidasi email + password dan menerbitkan JWT.
+// Hanya mengizinkan role civilian dan volunteer.
 func (s *Service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
 	user, err := s.repo.FindByEmail(req.Email)
 	if err != nil {
 		return nil, errors.New("email atau password salah")
 	}
+	if user.Role != "civilian" && user.Role != "volunteer" {
+		return nil, errors.New("akun ini bukan akun masyarakat atau relawan")
+	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return nil, errors.New("email atau password salah")
 	}
-	return s.buildAuthResponse(user)
+	profile, _ := s.repo.FindProfile(user.ID)
+	return s.buildAuthResponse(user, profile)
+}
+
+// ─── Console Login (admin/superadmin/agency) ─────────────────────────────────
+
+// ConsoleLogin hanya mengizinkan role superadmin, admin, dan agency.
+func (s *Service) ConsoleLogin(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
+	user, err := s.repo.FindByEmail(req.Email)
+	if err != nil {
+		return nil, errors.New("email atau password salah")
+	}
+
+	allowedRoles := map[string]bool{"superadmin": true, "admin": true, "agency": true}
+	if !allowedRoles[user.Role] {
+		return nil, errors.New("akun ini tidak memiliki akses ke console")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		return nil, errors.New("email atau password salah")
+	}
+
+	// Ambil full_name dari admin_profiles jika ada
+	var fullName *string
+	if user.Role == "admin" || user.Role == "superadmin" {
+		var ap AdminProfile
+		if err := s.repo.db.Where("user_id = ?", user.ID).First(&ap).Error; err == nil {
+			fullName = ap.FullName
+		}
+	}
+	// Untuk agency, nama ada di tabel agencies — dikembalikan via agencies endpoint
+
+	return s.buildAuthResponseWithName(user, fullName)
+}
+
+// ─── Personnel Login (agency_personnel via mobile responder) ─────────────────
+
+// PersonnelLogin hanya mengizinkan role agency_personnel.
+func (s *Service) PersonnelLogin(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
+	user, err := s.repo.FindByEmail(req.Email)
+	if err != nil {
+		return nil, errors.New("email atau password salah")
+	}
+	if user.Role != "agency_personnel" {
+		return nil, errors.New("akun ini bukan akun personel instansi")
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		return nil, errors.New("email atau password salah")
+	}
+
+	// Ambil full_name dari agency_personnels
+	var fullName *string
+	personnel, err := s.repo.FindPersonnelByUserID(user.ID)
+	if err == nil {
+		fullName = &personnel.FullName
+	}
+
+	return s.buildAuthResponseWithName(user, fullName)
 }
 
 // ─── VerifyLoginOTP ───────────────────────────────────────────────────────────
 
-// VerifyLoginOTP memverifikasi OTP email pada langkah login kedua dan menerbitkan JWT.
 func (s *Service) VerifyLoginOTP(ctx context.Context, email, code string) (*AuthResponse, error) {
 	if err := s.otpSvc.VerifyEmailOTP(ctx, email, "login", code); err != nil {
 		return nil, err
 	}
-
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {
 		return nil, errors.New("akun tidak ditemukan")
 	}
-
-	return s.buildAuthResponse(user)
+	profile, _ := s.repo.FindProfile(user.ID)
+	return s.buildAuthResponse(user, profile)
 }
 
-// ─── Phone Verification (dalam Profile) ──────────────────────────────────────
+// ─── Phone Verification ───────────────────────────────────────────────────────
 
-// RequestPhoneVerification menyimpan nomor HP sementara dan mengirim OTP via WA.
 func (s *Service) RequestPhoneVerification(ctx context.Context, userID, phone string) error {
-	// Simpan nomor HP terlebih dahulu (is_phone_verified masih false)
 	if err := s.repo.UpdatePhoneNumber(userID, phone); err != nil {
 		return err
 	}
 	return s.otpSvc.RequestOTP(ctx, phone)
 }
 
-// ConfirmPhoneOTP memverifikasi OTP WA dan menandai nomor HP sebagai terverifikasi.
 func (s *Service) ConfirmPhoneOTP(ctx context.Context, userID, phone, code string) error {
 	if err := s.otpSvc.VerifyOTP(ctx, phone, code); err != nil {
 		return err
@@ -161,19 +211,26 @@ func (s *Service) ConfirmPhoneOTP(ctx context.Context, userID, phone, code strin
 
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
-// SaveBiodata delegates transactional biodata saving to the repository.
 func (s *Service) SaveBiodata(userID string, req *BiodataRequest) error {
 	return s.repo.SaveBiodata(userID, req)
 }
 
-// GetProfile returns the combined profile for the given userID.
 func (s *Service) GetProfile(userID string) (*ProfileResponse, error) {
 	return s.repo.GetProfile(userID)
 }
 
-// ─── Token builder ────────────────────────────────────────────────────────────
+// ─── Token builders ───────────────────────────────────────────────────────────
 
-func (s *Service) buildAuthResponse(user *User) (*AuthResponse, error) {
+// buildAuthResponse digunakan untuk civilian/volunteer (nama dari user_profiles).
+func (s *Service) buildAuthResponse(user *User, profile *UserProfile) (*AuthResponse, error) {
+	var fullName *string
+	if profile != nil {
+		fullName = profile.FullName
+	}
+	return s.buildAuthResponseWithName(user, fullName)
+}
+
+func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*AuthResponse, error) {
 	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTAccessTTL)
 	if err != nil {
 		return nil, err
@@ -187,13 +244,10 @@ func (s *Service) buildAuthResponse(user *User) (*AuthResponse, error) {
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		User: UserInfo{
-			ID:                  user.ID,
-			FullName:            user.FullName,
-			Email:               user.Email,
-			Role:                user.Role,
-			IsVerifiedVolunteer: user.IsVerifiedVolunteer,
-			IsEmailVerified:     user.IsEmailVerified,
-			IsPhoneVerified:     user.IsPhoneVerified,
+			ID:       user.ID,
+			Email:    user.Email,
+			Role:     user.Role,
+			FullName: fullName,
 		},
 	}, nil
 }

@@ -4,37 +4,70 @@ import "time"
 
 // ─── DB Models ────────────────────────────────────────────────────────────────
 
+// User adalah auth gateway — hanya menyimpan kredensial dan role.
+// Profil lengkap ada di user_profiles (civilian/volunteer) atau
+// admin_profiles (admin) atau agency_personnels (agency_personnel).
 type User struct {
-	ID                  string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	FullName            string     `gorm:"not null" json:"full_name"`
-	NIK                 *string    `json:"nik,omitempty"`
-	DateOfBirth         *time.Time `json:"date_of_birth,omitempty"`
-	PhoneNumber         *string    `json:"phone_number,omitempty"`
-	Email               string     `gorm:"uniqueIndex;not null" json:"email"`
-	PasswordHash        string     `gorm:"not null" json:"-"`
-	Role                string     `gorm:"default:'civilian'" json:"role"`
-	IsVerifiedVolunteer bool       `gorm:"default:false" json:"is_verified_volunteer"`
-	IsEmailVerified     bool       `gorm:"default:false" json:"is_email_verified"`
-	IsPhoneVerified     bool       `gorm:"default:false" json:"is_phone_verified"`
-	SOSStrikeCount      int        `gorm:"default:0" json:"sos_strike_count"`
-	IsSOSBanned         bool       `gorm:"default:false" json:"is_sos_banned"`
-	BannedUntil         *time.Time `json:"banned_until,omitempty"`
-	CreatedAt           time.Time  `json:"created_at"`
-	UpdatedAt           time.Time  `json:"updated_at"`
-	DeletedAt           *time.Time `gorm:"index" json:"-"`
+	ID           string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Email        string     `gorm:"uniqueIndex;not null" json:"email"`
+	PasswordHash string     `gorm:"not null" json:"-"`
+	Role         string     `gorm:"not null;default:'civilian'" json:"role"`
+	CreatedAt    time.Time  `json:"created_at"`
+	DeletedAt    *time.Time `gorm:"index" json:"-"`
 }
 
-type UserMedicalProfile struct {
-	UserID            string    `gorm:"type:uuid;primaryKey" json:"user_id"`
-	BloodType         *string   `json:"blood_type,omitempty"`
-	Allergies         *string   `json:"allergies,omitempty"`
-	MedicalConditions *string   `json:"medical_conditions,omitempty"`
-	HeightCm          *int      `json:"height_cm,omitempty"`
-	WeightKg          *int      `json:"weight_kg,omitempty"`
-	Alamat            *string   `json:"alamat,omitempty"`
-	UpdatedAt         time.Time `json:"updated_at"`
+func (User) TableName() string { return "users" }
+
+// UserProfile menyimpan data lengkap akun civilian dan volunteer.
+// Row ini dibuat secara transaksional bersamaan dengan pembuatan User.
+type UserProfile struct {
+	UserID               string     `gorm:"type:uuid;primaryKey" json:"user_id"`
+	FullName             *string    `json:"full_name,omitempty"`
+	NIK                  *string    `gorm:"uniqueIndex" json:"nik,omitempty"`
+	DateOfBirth          *time.Time `json:"date_of_birth,omitempty"`
+	PhoneNumber          *string    `gorm:"uniqueIndex" json:"phone_number,omitempty"`
+	IsEmailVerified      bool       `gorm:"default:false" json:"is_email_verified"`
+	IsPhoneVerified      bool       `gorm:"default:false" json:"is_phone_verified"`
+	IsVerifiedVolunteer  bool       `gorm:"default:false" json:"is_verified_volunteer"`
+	SOSStrikeCount       int        `gorm:"default:0" json:"sos_strike_count"`
+	IsSOSBanned          bool       `gorm:"default:false" json:"is_sos_banned"`
+	BannedUntil          *time.Time `json:"banned_until,omitempty"`
+	BloodType            *string    `json:"blood_type,omitempty"`
+	Allergies            *string    `json:"allergies,omitempty"`
+	MedicalConditions    *string    `json:"medical_conditions,omitempty"`
+	HeightCm             *int       `json:"height_cm,omitempty"`
+	WeightKg             *int       `json:"weight_kg,omitempty"`
+	Alamat               *string    `json:"alamat,omitempty"`
+	UpdatedAt            time.Time  `json:"updated_at"`
 }
 
+func (UserProfile) TableName() string { return "user_profiles" }
+
+// AdminProfile menyimpan nama dan metadata akun admin.
+// Dibuat saat superadmin membuat akun admin baru.
+type AdminProfile struct {
+	UserID    string    `gorm:"type:uuid;primaryKey" json:"user_id"`
+	FullName  *string   `json:"full_name,omitempty"`
+	CreatedBy *string   `gorm:"type:uuid" json:"created_by,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (AdminProfile) TableName() string { return "admin_profiles" }
+
+// AgencyPersonnel menyimpan data personel instansi.
+type AgencyPersonnel struct {
+	UserID      string    `gorm:"type:uuid;primaryKey" json:"user_id"`
+	AgencyID    string    `gorm:"type:uuid;not null" json:"agency_id"`
+	FullName    string    `gorm:"not null" json:"full_name"`
+	BadgeNumber string    `gorm:"uniqueIndex;not null" json:"badge_number"`
+	IsActive    bool      `gorm:"default:true" json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+func (AgencyPersonnel) TableName() string { return "agency_personnels" }
+
+// EmergencyContact menyimpan kontak darurat milik civilian/volunteer.
 type EmergencyContact struct {
 	ID           string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	UserID       string     `gorm:"type:uuid;not null;index" json:"user_id"`
@@ -45,6 +78,9 @@ type EmergencyContact struct {
 	DeletedAt    *time.Time `gorm:"index" json:"-"`
 }
 
+func (EmergencyContact) TableName() string { return "emergency_contacts" }
+
+// VolunteerReputation menyimpan XP dan rank relawan.
 type VolunteerReputation struct {
 	UserID       string    `gorm:"type:uuid;primaryKey" json:"user_id"`
 	ExpPoints    int       `gorm:"default:0" json:"exp_points"`
@@ -53,19 +89,49 @@ type VolunteerReputation struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+func (VolunteerReputation) TableName() string { return "volunteer_reputation" }
+
 // ─── Request DTOs ──────────────────────────────────────────────────────────────
 
+// RegisterRequest untuk pendaftaran civilian/volunteer via mobile.
 type RegisterRequest struct {
 	FullName string `json:"full_name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// LoginRequest untuk semua login endpoint.
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// CreateAdminRequest untuk pembuatan akun admin oleh superadmin.
+type CreateAdminRequest struct {
+	Email    string  `json:"email"`
+	Password string  `json:"password"`
+	FullName *string `json:"full_name,omitempty"`
+}
+
+// CreateAgencyRequest untuk pembuatan akun agency oleh admin.
+type CreateAgencyRequest struct {
+	Email         string `json:"email"`
+	Password      string `json:"password"`
+	AgencyName    string `json:"agency_name"`
+	AgencyType    string `json:"agency_type"` // police|fire|medical|sar
+	CityCode      string `json:"city_code"`
+	HotlineNumber string `json:"hotline_number,omitempty"`
+}
+
+// CreatePersonnelRequest untuk pembuatan akun agency_personnel oleh agency.
+type CreatePersonnelRequest struct {
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	FullName    string `json:"full_name"`
+	BadgeNumber string `json:"badge_number"`
+}
+
+// BiodataRequest untuk update profil civilian/volunteer.
 type BiodataRequest struct {
 	NIK                   *string `json:"nik"`
 	DateOfBirth           *string `json:"date_of_birth"` // Format: DD-MM-YYYY
@@ -80,18 +146,15 @@ type BiodataRequest struct {
 	EmergencyRelation     *string `json:"emergency_relation"`
 }
 
-// VerifyEmailOTPRequest digunakan untuk endpoint verifikasi OTP email.
 type VerifyEmailOTPRequest struct {
 	Email   string `json:"email"`
 	OTPCode string `json:"otp_code"`
 }
 
-// PhoneUpdateRequest digunakan untuk request OTP verifikasi nomor HP.
 type PhoneUpdateRequest struct {
 	PhoneNumber string `json:"phone_number"`
 }
 
-// VerifyPhoneRequest digunakan untuk konfirmasi OTP nomor HP.
 type VerifyPhoneRequest struct {
 	PhoneNumber string `json:"phone_number"`
 	OTPCode     string `json:"otp_code"`
@@ -105,28 +168,33 @@ type AuthResponse struct {
 	User         UserInfo `json:"user"`
 }
 
+// UserInfo adalah payload ringkas yang disertakan dalam response login/register.
+// FullName diisi dari tabel profil yang sesuai dengan role.
 type UserInfo struct {
-	ID                  string `json:"id"`
-	FullName            string `json:"full_name"`
-	Email               string `json:"email"`
-	Role                string `json:"role"`
-	IsVerifiedVolunteer bool   `json:"is_verified_volunteer"`
-	IsEmailVerified     bool   `json:"is_email_verified"`
-	IsPhoneVerified     bool   `json:"is_phone_verified"`
+	ID       string  `json:"id"`
+	Email    string  `json:"email"`
+	Role     string  `json:"role"`
+	FullName *string `json:"full_name,omitempty"`
 }
 
+// ProfileResponse untuk GET /users/profile (civilian/volunteer).
 type ProfileResponse struct {
 	ID                  string               `json:"id"`
-	FullName            string               `json:"full_name"`
-	NIK                 *string              `json:"nik,omitempty"`
 	Email               string               `json:"email"`
-	PhoneNumber         *string              `json:"phone_number,omitempty"`
-	DateOfBirth         *string              `json:"date_of_birth,omitempty"`
 	Role                string               `json:"role"`
-	IsVerifiedVolunteer bool                 `json:"is_verified_volunteer"`
+	FullName            *string              `json:"full_name,omitempty"`
+	NIK                 *string              `json:"nik,omitempty"`
+	DateOfBirth         *string              `json:"date_of_birth,omitempty"`
+	PhoneNumber         *string              `json:"phone_number,omitempty"`
 	IsEmailVerified     bool                 `json:"is_email_verified"`
 	IsPhoneVerified     bool                 `json:"is_phone_verified"`
-	MedicalData         *UserMedicalProfile  `json:"medical_data,omitempty"`
+	IsVerifiedVolunteer bool                 `json:"is_verified_volunteer"`
+	SOSStrikeCount      int                  `json:"sos_strike_count"`
+	IsSOSBanned         bool                 `json:"is_sos_banned"`
+	BloodType           *string              `json:"blood_type,omitempty"`
+	Allergies           *string              `json:"allergies,omitempty"`
+	MedicalConditions   *string              `json:"medical_conditions,omitempty"`
+	Alamat              *string              `json:"alamat,omitempty"`
 	EmergencyContacts   []EmergencyContact   `json:"emergency_contacts"`
 	VolunteerReputation *VolunteerReputation `json:"volunteer_reputation,omitempty"`
 }

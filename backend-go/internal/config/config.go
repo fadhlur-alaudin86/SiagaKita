@@ -40,6 +40,10 @@ type Config struct {
 	// Server
 	HTTPPort string
 	WSPort   string
+
+	// Superadmin seeding
+	SuperAdminEmail string
+	SuperAdminPass  string
 }
 
 // Load reads environment variables and returns a populated Config.
@@ -75,6 +79,8 @@ func Load() *Config {
 		SMTPFrom:         getEnv("SMTP_FROM", ""),
 		HTTPPort:         getEnv("HTTP_PORT", "8080"),
 		WSPort:           getEnv("WS_PORT", "8081"),
+		SuperAdminEmail:  getEnv("SUPERADMIN_EMAIL", ""),
+		SuperAdminPass:   getEnv("SUPERADMIN_PASS", ""),
 	}
 }
 

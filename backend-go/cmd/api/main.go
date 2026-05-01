@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"os/signal"
@@ -21,6 +22,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -34,10 +37,15 @@ func main() {
 	db := database.NewPostgres(cfg)
 	rdb := database.NewRedis(cfg)
 
-	// ── 3. Connection Hub (WebSocket registry) ────────────────────────────────
+	// ── 3. Superadmin seeding ─────────────────────────────────────────────────
+	if err := seedSuperAdmin(db, cfg); err != nil {
+		log.Fatalf("[SuperAdmin] Gagal seed superadmin: %v", err)
+	}
+
+	// ── 4. Connection Hub (WebSocket registry) ────────────────────────────────
 	wsHub := hub.New()
 
-	// ── 4. Domain wiring ──────────────────────────────────────────────────────
+	// ── 5. Domain wiring ──────────────────────────────────────────────────────
 	// OTP domain
 	fonnteGateway := otpDomain.NewFonnteGateway(cfg.FonnteToken)
 	emailGateway := otpDomain.NewSMTPEmailGateway(
@@ -46,7 +54,7 @@ func main() {
 	otpSvc := otpDomain.NewService(rdb, fonnteGateway, emailGateway)
 	otpHandler := otpDomain.NewHandler(otpSvc)
 
-	// User domain (depends on otpSvc for 2FA)
+	// User domain
 	userRepo := userDomain.NewRepository(db)
 	userSvc := userDomain.NewService(userRepo, cfg, otpSvc)
 	userHandler := userDomain.NewHandler(userSvc)
@@ -58,9 +66,8 @@ func main() {
 
 	// Telemetry domain
 	telemetryHandler := telemetry.NewHandler(rdb, wsHub, cfg)
-	app := fiber.New(fiber.Config{
-		AppName: "SiagaKita API v1",
-	})
+
+	app := fiber.New(fiber.Config{AppName: "SiagaKita API v1"})
 
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -69,7 +76,7 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-Gateway-Secret",
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
 	}))
 
 	// Health check
@@ -79,48 +86,56 @@ func main() {
 
 	// ── API v1 Routes ──────────────────────────────────────────────────────────
 	v1 := app.Group("/api/v1")
+	authMw := middleware.Auth(cfg)
 
-	// Auth (public)
+	// ── Auth (public) ──────────────────────────────────────────────────────────
 	auth := v1.Group("/auth")
+
+	// Mobile Citizen/Volunteer
 	auth.Post("/register", userHandler.Register)
 	auth.Post("/verify-register-otp", userHandler.VerifyRegisterOTP)
 	auth.Post("/login", userHandler.Login)
 	auth.Post("/verify-login-otp", userHandler.VerifyLoginOTP)
-	// OTP WhatsApp endpoint (masih dipakai untuk phone verification di profile)
+
+	// Desktop Console (superadmin, admin, agency)
+	auth.Post("/console/login", userHandler.ConsoleLogin)
+
+	// Mobile Responder (agency_personnel)
+	auth.Post("/personnel/login", userHandler.PersonnelLogin)
+
+	// OTP WhatsApp (phone verification)
 	auth.Post("/request-otp", otpHandler.RequestOTP)
 	auth.Post("/verify-otp", otpHandler.VerifyOTP)
 
-	// Users (protected)
-	authMw := middleware.Auth(cfg)
-	users := v1.Group("/users", authMw)
+	// ── Users (protected — civilian/volunteer only) ────────────────────────────
+	users := v1.Group("/users", authMw, middleware.CitizenVolunteer())
 	users.Post("/biodata", userHandler.SaveBiodata)
 	users.Get("/profile", userHandler.GetProfile)
-	// Phone verification (dalam profile — butuh JWT)
 	users.Post("/phone/request-otp", userHandler.RequestPhoneVerification)
 	users.Post("/phone/verify-otp", userHandler.ConfirmPhoneOTP)
 
-	// Incidents (protected)
+	// ── Incidents (protected — semua role yang sudah login) ───────────────────
 	incidents := v1.Group("/incidents", authMw)
 	incidents.Get("/active", incidentHandler.GetActive)
 	incidents.Post("/trigger", incidentHandler.TriggerSOS)
-	incidents.Patch("/:id/type", incidentHandler.UpdateType)       // grace period pilih tipe
-	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)    // grace period timeout
+	incidents.Patch("/:id/type", incidentHandler.UpdateType)
+	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)
 	incidents.Post("/:id/cancel", incidentHandler.CancelSOS)
 	incidents.Put("/:id/location", incidentHandler.UpdateLocation)
-	incidents.Post("/:id/mark-false-alarm", incidentHandler.MarkFalseAlarm)
-	incidents.Post("/:id/resolve", incidentHandler.Resolve)
+	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), incidentHandler.MarkFalseAlarm)
+	incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve)
 
-	// Laporan Warga — Jalur B (non-darurat, butuh JWT)
+	// ── Laporan Warga — Jalur B ───────────────────────────────────────────────
 	reports := v1.Group("/reports", authMw)
 	reports.Post("", incidentHandler.CreateReport)
-	reports.Get("", incidentHandler.GetReports)
-	reports.Patch("/:id/status", incidentHandler.UpdateReportStatus)
+	reports.Get("", middleware.ConsoleOnly(), incidentHandler.GetReports)
+	reports.Patch("/:id/status", middleware.ConsoleOnly(), incidentHandler.UpdateReportStatus)
 
-	// Telemetry (protected)
-	telemetry := v1.Group("/telemetry", authMw)
-	telemetry.Put("/location", telemetryHandler.UpdateLocation)
+	// ── Telemetry ─────────────────────────────────────────────────────────────
+	telGroup := v1.Group("/telemetry", authMw)
+	telGroup.Put("/location", telemetryHandler.UpdateLocation)
 
-	// SMS Fallback (API key protected — no JWT)
+	// ── SMS Fallback (API key protected — no JWT) ─────────────────────────────
 	v1.Post("/incidents/sms-fallback",
 		middleware.APIKeyGateway(cfg),
 		telemetryHandler.SMSFallback,
@@ -149,17 +164,68 @@ func main() {
 	<-quit
 
 	log.Println("[Main] Shutting down gracefully...")
-
 	if err := app.Shutdown(); err != nil {
 		log.Printf("[API] Shutdown error: %v", err)
 	}
 	if err := wsServer.Shutdown(context.Background()); err != nil {
 		log.Printf("[WS] Shutdown error: %v", err)
 	}
-
 	sqlDB, _ := db.DB()
 	sqlDB.Close()
 	rdb.Close()
-
 	log.Println("[Main] Goodbye.")
+}
+
+// seedSuperAdmin memastikan tepat satu akun superadmin ada di DB.
+// Dipanggil sekali setiap server start. Jika env kosong, superadmin tidak dibuat/diupdate.
+// Jika superadmin sudah ada tapi email/pass di env berubah, akun diperbarui.
+func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
+	email := cfg.SuperAdminEmail
+	pass := cfg.SuperAdminPass
+
+	if email == "" || pass == "" {
+		log.Println("[SuperAdmin] SUPERADMIN_EMAIL/PASS tidak diset di .env — skip seeding.")
+		return nil
+	}
+
+	// Cari superadmin yang sudah ada
+	var existing userDomain.User
+	err := db.Where("role = 'superadmin' AND deleted_at IS NULL").First(&existing).Error
+
+	if err == nil {
+		// Superadmin sudah ada — update email/password jika berbeda
+		hashed, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		if existing.Email != email {
+			log.Printf("[SuperAdmin] Memperbarui email superadmin menjadi: %s", email)
+		}
+		return db.Model(&existing).Updates(map[string]interface{}{
+			"email":         email,
+			"password_hash": string(hashed),
+		}).Error
+	}
+
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	// Buat superadmin baru
+	hashed, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	superadmin := userDomain.User{
+		Email:        email,
+		PasswordHash: string(hashed),
+		Role:         "superadmin",
+	}
+	if err := db.Create(&superadmin).Error; err != nil {
+		return err
+	}
+
+	log.Printf("[SuperAdmin] Akun superadmin berhasil dibuat: %s", email)
+	return nil
 }

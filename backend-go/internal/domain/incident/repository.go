@@ -98,7 +98,7 @@ func (r *Repository) UpdateReportStatus(id, status string) error {
 
 // ─── Strike & Ban ─────────────────────────────────────────────────────────────
 
-// AddStrike inserts a SOSStrike row, increments user strike count,
+// AddStrike inserts a sos_strikes row, increments user strike count in user_profiles,
 // and auto-bans if count reaches 3. Returns (newCount, banned, error).
 func (r *Repository) AddStrike(userID, incidentID, reason, givenBy string) (int, bool, error) {
 	var strikeCount int
@@ -113,26 +113,29 @@ func (r *Repository) AddStrike(userID, incidentID, reason, givenBy string) (int,
 		if givenBy != "" {
 			gby = &givenBy
 		}
+		// 1. Insert strike record
 		if err := tx.Create(&SOSStrike{
 			UserID: userID, IncidentID: incID, Reason: reason, GivenBy: gby,
 		}).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Model(map[string]interface{}{}).
-			Table("users").Where("id = ?", userID).
+		// 2. Increment di user_profiles (bukan users)
+		if err := tx.Table("user_profiles").Where("user_id = ?", userID).
 			Update("sos_strike_count", gorm.Expr("sos_strike_count + 1")).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Table("users").Select("sos_strike_count").
-			Where("id = ?", userID).Scan(&strikeCount).Error; err != nil {
+		// 3. Baca nilai terbaru
+		if err := tx.Table("user_profiles").Select("sos_strike_count").
+			Where("user_id = ?", userID).Scan(&strikeCount).Error; err != nil {
 			return err
 		}
 
+		// 4. Auto-ban jika >= 3
 		if strikeCount >= 3 {
 			banned = true
-			if err := tx.Table("users").Where("id = ?", userID).
+			if err := tx.Table("user_profiles").Where("user_id = ?", userID).
 				Updates(map[string]interface{}{"is_sos_banned": true}).Error; err != nil {
 				return err
 			}
@@ -145,13 +148,16 @@ func (r *Repository) AddStrike(userID, incidentID, reason, givenBy string) (int,
 
 func (r *Repository) IsSOSBanned(userID string) (bool, error) {
 	var count int64
-	err := r.db.Table("users").Where("id = ? AND is_sos_banned = true", userID).Count(&count).Error
+	err := r.db.Table("user_profiles").
+		Where("user_id = ? AND is_sos_banned = true", userID).
+		Count(&count).Error
 	return count > 0, err
 }
 
 func (r *Repository) GetStrikeCount(userID string) (int, error) {
 	var count int
-	err := r.db.Table("users").Select("sos_strike_count").Where("id = ?", userID).Scan(&count).Error
+	err := r.db.Table("user_profiles").Select("sos_strike_count").
+		Where("user_id = ?", userID).Scan(&count).Error
 	return count, err
 }
 
