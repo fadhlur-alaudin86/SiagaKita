@@ -4,7 +4,7 @@ class ApiConstants {
   static const String wsUrl = 'ws://localhost:8081/ws/connect';
 
   // Auth
-  static const String login = '$baseUrl/auth/login';
+  static const String login = '$baseUrl/auth/console/login';
 
   // Incidents
   static const String incidents = '$baseUrl/incidents';

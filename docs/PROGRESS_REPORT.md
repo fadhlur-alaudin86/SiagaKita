@@ -1,7 +1,7 @@
 # 📋 SiagaKita — Laporan Kemajuan Pengembangan
 
-> **Terakhir diperbarui:** 29 April 2026  
-> **Branch aktif:** `frontend`  
+> **Terakhir diperbarui:** 1 Mei 2026
+> **Branch aktif:** `main`
 > **Status keseluruhan:** 🟡 Dalam Pengembangan Aktif
 
 ---
@@ -10,10 +10,10 @@
 
 1. [Gambaran Arsitektur](#1-gambaran-arsitektur)
 2. [Status Per Komponen](#2-status-per-komponen)
-3. [Perubahan Sesi Terbaru](#3-perubahan-sesi-terbaru)
+3. [Changelog Per Sprint](#3-changelog-per-sprint)
 4. [Struktur File Terkini](#4-struktur-file-terkini)
-5. [API Endpoint yang Tersedia](#5-api-endpoint-yang-tersedia)
-6. [Schema Database — Perubahan & Status](#6-schema-database--perubahan--status)
+5. [API Endpoint Lengkap](#5-api-endpoint-lengkap)
+6. [Schema Database (v3 — Aktif)](#6-schema-database-v3--aktif)
 7. [Yang Belum Selesai](#7-yang-belum-selesai)
 8. [Panduan Setup untuk Anggota Baru](#8-panduan-setup-untuk-anggota-baru)
 
@@ -22,39 +22,39 @@
 ## 1. Gambaran Arsitektur
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                       SiagaKita System                           │
-│                                                                  │
-│  ┌─────────────────┐    REST/WS    ┌─────────────────────────┐  │
-│  │  Mobile Flutter  │◄────────────►│   Go Fiber Backend       │  │
-│  │  (Masyarakat &   │              │   Port :8080 (REST)      │  │
-│  │   Relawan)       │              │   Port :8081 (WebSocket) │  │
-│  └─────────────────┘              └────────────┬────────────┘  │
-│                                                │                │
-│  ┌─────────────────┐              ┌────────────▼────────────┐  │
-│  │  Windows Console │              │   PostgreSQL             │  │
-│  │  Flutter (Admin  │              │   (Data Permanen)        │  │
-│  │  & Instansi)     │              └────────────┬────────────┘  │
-│  └─────────────────┘                           │                │
-│                                    ┌────────────▼────────────┐  │
-│                                    │   Redis                  │  │
-│                                    │   (OTP TTL, Rate Limit,  │  │
-│                                    │    WS Hub State)         │  │
-│                                    └─────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                         SiagaKita System                             │
+│                                                                      │
+│  ┌─────────────────────┐   REST/WS   ┌───────────────────────────┐  │
+│  │  Mobile Flutter      │◄───────────►│   Go Fiber Backend         │  │
+│  │  (civilian/volunteer)│             │   Port :8080 (REST)        │  │
+│  └─────────────────────┘             │   Port :8081 (WebSocket)   │  │
+│                                      └─────────────┬─────────────┘  │
+│  ┌─────────────────────┐                           │                │
+│  │  Desktop Console     │             ┌─────────────▼─────────────┐  │
+│  │  Flutter             │◄───────────►│   PostgreSQL 15            │  │
+│  │  (admin/agency)      │             │   (Data Permanen)          │  │
+│  └─────────────────────┘             └─────────────┬─────────────┘  │
+│                                                    │                │
+│  ┌─────────────────────┐             ┌─────────────▼─────────────┐  │
+│  │  Mobile Responder    │             │   Redis                    │  │
+│  │  Flutter (BELUM BUAT)│             │   (OTP TTL, WS Hub State)  │  │
+│  │  (agency_personnel)  │             └───────────────────────────┘  │
+│  └─────────────────────┘                                            │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 **Stack teknologi:**
 | Layer | Teknologi |
 |-------|-----------|
-| Mobile | Flutter (Dart) |
-| Desktop | Flutter Windows |
+| Mobile Citizen | Flutter (Dart) — `mobile-flutter/` |
+| Desktop Console | Flutter Desktop — `windows_console_flutter/` |
+| Mobile Responder | Flutter (belum dibuat) — `mobile-flutter-responder/` |
 | Backend | Go 1.26 + Fiber v2 |
-| Database | PostgreSQL 15 |
+| Database | PostgreSQL 15 (Schema v3) |
 | Cache / Ephemeral | Redis |
-| WA Gateway | Fonnte API |
-| Email Gateway | SMTP (Gmail App Password) |
-| GPS | geolocator + permission_handler |
+| Email OTP | SMTP (Gmail) |
+| WA OTP | Fonnte API |
 | Container | Docker Compose |
 
 ---
@@ -63,192 +63,152 @@
 
 ### 🟢 Backend — Go Fiber
 
-| Domain | File | Status | Keterangan |
-|--------|------|--------|-----------|
-| Auth (User) | `domain/user/` | ✅ Selesai | Register → Email OTP → JWT; Login → JWT langsung |
-| OTP | `domain/otp/` | ✅ Selesai | Dual-channel: Email (SMTP) + Phone (Fonnte WA) |
-| Incident | `domain/incident/` | ✅ **Diperbarui** | TriggerSOS, CancelSOS, UpdateLocation, GetActive, Resolve |
-| Telemetry | `domain/telemetry/` | ✅ Selesai | Location update, SMS fallback |
-| WebSocket Hub | `internal/hub/` + `internal/ws/` | ✅ Selesai | Persistent connection registry |
-| Middleware | `internal/middleware/` | ✅ Selesai | JWT Auth, API Key Gateway |
+| Domain | Status | Keterangan |
+|--------|--------|-----------|
+| `domain/user/` | ✅ v3 | Slim auth, 3 login endpoints, transaksi user+profil |
+| `domain/otp/` | ✅ | Email OTP (SMTP) + WA OTP (Fonnte) |
+| `domain/incident/` | ✅ | SOS trigger, cancel, GPS update, resolve, false alarm |
+| `domain/admin/` | ✅ Baru | KYC, manajemen user, rank CRUD, statistik |
+| `domain/telemetry/` | ✅ | Location update, SMS fallback |
+| `internal/hub/` + `ws/` | ✅ | WebSocket persistent registry |
+| `internal/middleware/` | ✅ v3 | JWT Auth + RBAC granular (AdminOnly, ConsoleOnly, dll.) |
+| `config/config.go` | ✅ | + SuperAdminEmail, SuperAdminPass |
+| `cmd/api/main.go` | ✅ | seedSuperAdmin(), 3 login routes, admin routes |
 
-### 🟡 Mobile Flutter
+### 🟡 Mobile Flutter — Citizen/Volunteer (`mobile-flutter/`)
 
-| Layar | File | Status | Keterangan |
-|-------|------|--------|-----------|
-| Login | `auth/login_screen.dart` | ✅ **Diperbarui** | Single-step (Email+Password → JWT → HomeScreen) |
-| Register | `auth/register_screen.dart` | ✅ **Diperbarui** | 2-step: Form → Email OTP; tanpa nomor HP di awal |
-| Biodata | `auth/biodata_screen.dart` | 🟡 Sebagian | UI selesai; menerima accessToken/userId |
-| Home (SOS) | `masyarakat/home_screen.dart` | ✅ **Diperbarui** | GPS tracking, active SOS state, cancel 5-tap |
-| Main Screen | `masyarakat/main_screen.dart` | ✅ **Diperbarui** | Menerima accessToken/userId, pass ke HomeScreen |
-| Edit Profil | `masyarakat/edit_profile_screen.dart` | 🟡 Sebagian | UI selesai, API belum terhubung |
-| Pengaturan | `masyarakat/settings_screen.dart` | 🟡 Sebagian | UI selesai, API belum terhubung |
-| Relawan Dashboard | `relawan/relawan_main_screen.dart` | 🟡 Sebagian | UI selesai, data masih mock |
+| Layar | Status | Keterangan |
+|-------|--------|-----------|
+| Login | ✅ | `POST /auth/login` — hanya civilian/volunteer |
+| Register | ✅ | 2-step: form → email OTP → JWT |
+| Biodata | 🟡 | UI selesai, API belum terhubung |
+| Home (SOS) | ✅ | 5-ketukan, GPS tracking, cancel SOS |
+| Profile | 🟡 | UI selesai, query ke `user_profiles` (belum terhubung) |
+| Map | 🔴 | Mock/static |
+| Relawan Dashboard | 🟡 | UI selesai, data mock |
 
-### 🟢 Services Flutter (Baru)
+### 🟢 Desktop Console (`windows_console_flutter/`)
 
-| Service | File | Status | Keterangan |
-|---------|------|--------|-----------|
-| AuthService | `core/services/auth_service.dart` | ✅ Selesai | register, verifyRegisterOTP, login (→ JWT), verifyLoginOTP |
-| IncidentService | `core/services/incident_service.dart` | ✅ Selesai | triggerSOS, cancelSOS, updateLocation, getActive |
-| LocationService | `core/services/location_service.dart` | ✅ Selesai | requestPermission, getCurrentPosition, getCurrentPositionOrNull |
-
-### 🔴 Belum Dimulai / Direncanakan
-
-- Simpan JWT ke `flutter_secure_storage` (Token Management)
-- Refresh token otomatis saat expired
-- Integrasi WebSocket dari Flutter ke backend
-- Dashboard Admin & Instansi (windows_console_flutter)
-- Push notification / FCM
-
----
-
-## 3. Perubahan Sesi Terbaru
-
-### Sprint 1 — Infrastruktur & OTP Domain (26 Apr 2026)
-
-- **`.gitignore`** — Diperbaiki, rules untuk Flutter build artifacts & credential files
-- **OTP Domain** — Baru: `gateway.go`, `service.go`, `handler.go`; Redis-based dengan TTL 3 menit, cooldown 1 menit
-- **Fonnte WA Gateway** — Normalisasi nomor 08xxx → 628xxx
+| Layar | Status | Keterangan |
+|-------|--------|-----------|
+| Login Console | ✅ **Fix** | Sekarang pakai `POST /auth/console/login` |
+| InstansiShell | ✅ | Sidebar + WS indicator |
+| Dashboard Operasi | ✅ | KPI + live SOS list + pie chart |
+| SOS Aktif | ✅ | Detail korban, false alarm, resolve |
+| Laporan Masuk | ✅ | Jalur B + filter status |
+| Peta Operasional | ✅ | OpenStreetMap + markers live |
+| Dispatch Relawan | 🔴 | Placeholder (Sprint B.4) |
+| Admin — KYC | ✅ | UI selesai, backend endpoint tersedia |
+| Admin — User Mgmt | ✅ | UI selesai, backend endpoint tersedia |
+| Admin — Gamifikasi | ✅ | UI selesai, backend endpoint tersedia |
+| Admin — Statistik | ✅ | UI selesai, backend endpoint tersedia |
 
 ---
 
-### Sprint 2 — Email OTP & Alur Auth Baru (29 Apr 2026)
+## 3. Changelog Per Sprint
 
-#### 🔵 Backend
+---
 
-**`user/model.go`** — Tambah kolom verifikasi:
-```go
-IsEmailVerified bool  `gorm:"default:false"`
-IsPhoneVerified bool  `gorm:"default:false"`
-```
-Tambah DTO: `VerifyEmailOTPRequest`, `PhoneUpdateRequest`, `VerifyPhoneRequest`
+### 🔖 Patch 1.0.2 — 1 Mei 2026 (Sesi Ini)
 
-**`user/repository.go`** — Tambah method:
-- `SetEmailVerified(userID)` — tandai email terverifikasi
-- `SetPhoneVerified(userID)` — tandai HP terverifikasi
-- `UpdatePhoneNumber(userID, phone)` — simpan nomor HP, reset `is_phone_verified`
-- `DeleteUserByEmail(email)` — hard delete untuk rollback jika OTP gagal
+#### 🐛 Bugfix
 
-**`user/service.go`** — Alur baru:
-- `Register()` → buat akun → kirim Email OTP → **rollback (hard delete) jika OTP gagal**
-- `VerifyRegisterOTP()` → verifikasi OTP → tandai `is_email_verified = true` → return JWT
-- `Login()` → validasi email+password → **langsung return JWT** (tanpa OTP step)
-- `RequestPhoneVerification()` → simpan nomor HP → kirim OTP WA
-- `ConfirmPhoneOTP()` → verifikasi OTP WA → tandai `is_phone_verified = true`
+**[KRITIS] Desktop console routing ke endpoint yang salah**
+- **Masalah:** `windows_console_flutter` memanggil `POST /auth/login` (endpoint mobile) → backend menolak dengan error "akun ini bukan akun masyarakat atau relawan"
+- **Perbaikan:** `api_constants.dart` diupdate: `/auth/login` → `/auth/console/login`
+- **File:** `windows_console_flutter/lib/core/constants/api_constants.dart`
 
-**`otp/service.go`** — Dual-channel:
-- Email OTP: `RequestEmailOTP(ctx, email, purpose)` + `VerifyEmailOTP(ctx, email, purpose, code)`
-- Phone OTP: `RequestOTP(ctx, phone)` + `VerifyOTP(ctx, phone, code)`
+**[SECURITY] Pesan error `/auth/login` membocorkan role**
+- **Masalah:** Jika akun admin/agency mencoba login di `/auth/login`, error message-nya adalah *"akun ini bukan akun masyarakat atau relawan"* — membocorkan informasi role enumeration
+- **Perbaikan:** Pesan diubah menjadi generik: *"email atau password salah"*
+- **File:** `backend-go/internal/domain/user/service.go` → `Login()`
 
-Redis key pattern:
-```
-otp:email:{purpose}:{email}       TTL 180s   ← kode Email OTP
-otp_cooldown:email:{email}        TTL 60s    ← rate limit email
-otp:phone:{phone}                 TTL 180s   ← kode WA OTP
-otp_cooldown:phone:{phone}        TTL 60s    ← rate limit phone
-```
+---
 
-**`otp/email_gateway.go`** — SMTP gateway (Gmail App Password):
-```go
-type SMTPEmailGateway struct { host, port, username, password, from string }
-func (g *SMTPEmailGateway) SendOTP(to, purpose, code string) error { ... }
-```
+### 🔖 Sprint D — 1 Mei 2026
 
-**`incident/model.go`** — Tambah:
-- `TriggerMethod` di struct `Incident`
-- DTO: `TriggerSOSRequest`, `UpdateLocationRequest`, `TriggerSOSResponse`, `ActiveIncidentResponse`
+#### Backend: Restructuring Database + Role Expansion
 
-**`incident/repository.go`** — Tambah:
-- `MarkCancelled(id)` — status → `false_alarm`
-- `UpdateLocation(id, lat, lng)` — update koordinat
-- `FindActiveByReporter(reporterID)` — cari SOS aktif milik user
+**Schema Database v3** (`migrations/003_schema_v3.sql`)
+- Tabel `users` dipersempit → hanya `id`, `email`, `password_hash`, `role`, `created_at`, `deleted_at`
+- Tabel `user_medical_profiles` dihapus → diganti `user_profiles` (menampung semua profil citizen/volunteer)
+- Tabel baru `admin_profiles` (nama admin/superadmin)
+- Tabel `agencies` + kolom `account_id` (FK ke `users`)
+- Tabel `agency_personnels` diperbarui
+- ENUM `user_role` baru: `superadmin | admin | agency | agency_personnel | volunteer | civilian`
+- `agency_responder` dihapus
 
-**`incident/service.go`** — Tambah:
-- `TriggerSOS(reporterID, req)` — buat incident, status `broadcasting`
-- `CancelSOS(id, reporterID)` — validasi ownership → `MarkCancelled`
-- `UpdateLocation(id, lat, lng)` — delegasi ke repo
-- `GetActive(reporterID)` — cari incident aktif milik reporter
+**Backend Go — user domain diperbarui total**
+- `model.go`: Slim `User` + baru `UserProfile`, `AdminProfile`, `AgencyPersonnel`
+- `repository.go`: Semua query profil → `user_profiles`; strike/ban juga → `user_profiles`
+- `service.go`: 3 login method (`Login`, `ConsoleLogin`, `PersonnelLogin`); Register membuat `users` + `user_profiles` dalam 1 transaksi
+- `handler.go`: + handler `ConsoleLogin`, `PersonnelLogin`
 
-**`config.go`** — Tambah SMTP config:
-```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=
-SMTP_PASSWORD=         # Gmail App Password
-SMTP_FROM=
-```
+**Backend Go — middleware RBAC baru**
+- `RequireRoles()` — generic, composable
+- `AdminOnly()` — admin + superadmin
+- `ConsoleOnly()` — superadmin + admin + agency
+- `AgencyOnly()` — agency + admin + superadmin
+- `CitizenVolunteer()` — civilian + volunteer saja
+- `PersonnelOnly()` — agency_personnel saja
 
-**`cmd/api/main.go`** — Route baru:
-```
-POST /auth/verify-register-otp
-GET  /incidents/active
-POST /incidents/trigger
-POST /incidents/:id/cancel
-PUT  /incidents/:id/location
-POST /users/phone/request-otp
-POST /users/phone/verify-otp
-```
+**Backend Go — domain admin baru** (`domain/admin/`)
+- KYC: `GET /admin/volunteers/pending`, `POST /admin/volunteers/:id/approve`, `POST /admin/volunteers/:id/reject`
+- User Management: `GET /admin/users`, ban, unban, reset strike
+- Ranks: CRUD `GET/POST/PUT/DELETE /admin/ranks/:id`
+- Stats: `GET /admin/stats` (aggregat per tipe, status, bulanan, avg respons)
 
-#### 📱 Flutter
+**Superadmin auto-seed**
+- `seedSuperAdmin()` dipanggil di startup `main.go`
+- Baca `SUPERADMIN_EMAIL` + `SUPERADMIN_PASS` dari `.env`
+- Buat atau update akun superadmin otomatis
 
-**`core/services/auth_service.dart`** — BARU:
-| Method | Endpoint | Return |
-|--------|----------|--------|
-| `register()` | `POST /auth/register` | `String` (email) |
-| `verifyRegisterOTP()` | `POST /auth/verify-register-otp` | `AuthResult` (JWT) |
-| `login()` | `POST /auth/login` | `AuthResult` (JWT langsung) |
-| `verifyLoginOTP()` | `POST /auth/verify-login-otp` | `AuthResult` (JWT) |
+**Mobile Flutter — `auth_service.dart`**
+- `UserInfo.fullName` diubah ke `String?` (nullable, sesuai response backend baru)
+- Field `isEmailVerified`, `isPhoneVerified`, `isVerifiedVolunteer` dihapus dari `UserInfo` (kini ada di `GET /users/profile`)
 
-**`core/services/incident_service.dart`** — BARU:
-| Method | Endpoint |
-|--------|----------|
-| `triggerSOS()` | `POST /incidents/trigger` |
-| `cancelSOS()` | `POST /incidents/:id/cancel` |
-| `updateLocation()` | `PUT /incidents/:id/location` (silent fail) |
-| `getActive()` | `GET /incidents/active` |
+---
 
-**`core/services/location_service.dart`** — BARU:
-- `requestPermission()` — minta izin + buka settings jika permanently denied
-- `getCurrentPosition()` — ambil GPS dengan timeout 10s
-- `getCurrentPositionOrNull()` — silent fail untuk background update
+### 🔖 Sprint C — 30 April 2026
 
-**`auth/login_screen.dart`** — Single-step (dihapus OTP step):
-```
-Email + Password → AuthService.login() → JWT → GPS Permission → HomeScreen
-```
+#### Desktop Console — Modul Admin
 
-**`auth/register_screen.dart`** — 2-step (dihapus field nomor HP):
-```
-Step 0: Nama + Email + Password (strength bar) + Konfirmasi
-Step 1: OTP 6 digit + resend cooldown 60 detik
-→ GPS Permission → BiodataScreen
-```
+- `kyc_relawan_page.dart` — UI verifikasi relawan
+- `user_management_page.dart` — Tabel user + strike/ban UI
+- `gamifikasi_page.dart` — CRUD master rank
+- `statistik_page.dart` — KPI + chart analitik
+- `admin_shell.dart` — Sidebar untuk role admin/superadmin
 
-**`masyarakat/home_screen.dart`** — Rewrite penuh:
-- `initState` → cek `GET /incidents/active` saat app dibuka
-- Timer 1 menit → `PUT /incidents/:id/location` saat SOS aktif
-- Tombol SOS berubah merah (teks **AKTIF**) saat incident aktif
-- 5× tap saat SOS aktif → dialog konfirmasi **cancel** (hijau)
-- `POST /incidents/:id/cancel` untuk membatalkan SOS
-- Koordinat GPS diambil saat trigger SOS
+---
 
-**`masyarakat/main_screen.dart`** — Menerima `accessToken` + `userId`
+### 🔖 Sprint B — 29–30 April 2026
 
-**`core/router.dart`** — `getHomeByRole()` dan `navigateToHome()` menerima `accessToken` + `userId`
+#### Desktop Console — Modul Instansi
 
-**`pubspec.yaml`** — Tambah dependencies:
-```yaml
-geolocator: ^13.0.2
-permission_handler: ^11.4.0
-```
+- `dashboard_operasi_page.dart` — KPI real-time + live SOS list + pie chart
+- `sos_aktif_page.dart` — Detail korban, aksi false alarm/resolve, alarm control
+- `laporan_masuk_page.dart` — Jalur B report management
+- `peta_operasional_page.dart` — OpenStreetMap + SOS markers
+- `ws_service.dart` — WebSocket singleton (auto-reconnect, event stream)
+- `instansi_shell.dart` — Sidebar + WS connection indicator
+- `app.dart` — SplashRouter: JWT session restore → route ke shell
 
-**`AndroidManifest.xml`** — Tambah permission:
-```xml
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-```
+---
+
+### 🔖 Sprint A — 26–29 April 2026
+
+#### Mobile — SOS Redesign & GPS Integration
+
+- `home_screen.dart` — Mekanisme 5-ketukan, GPS tracking 1 menit, cancel SOS
+- `auth_service.dart` — API client auth (register, login, OTP)
+- `incident_service.dart` — SOS trigger, cancel, location update
+- `location_service.dart` — GPS permission + position
+
+#### Backend — OTP Domain
+
+- `domain/otp/` — SMTP email OTP + Fonnte WA OTP
+- Register: OTP ke email, rollback user jika SMTP gagal
+- Login: Langsung JWT (tidak perlu OTP langkah dua)
 
 ---
 
@@ -256,176 +216,201 @@ permission_handler: ^11.4.0
 
 ```
 siagakita/
-├── .gitignore                              ✅ Diperbaiki
 ├── backend-go/
-│   ├── cmd/api/main.go                     ✅ Route & wiring diperbarui
-│   └── internal/
-│       ├── config/config.go                ✅ + SMTP config (5 field)
-│       └── domain/
-│           ├── incident/
-│           │   ├── model.go                ✅ + TriggerMethod, DTO baru
-│           │   ├── repository.go           ✅ + Cancel, UpdateLocation, FindActive
-│           │   ├── service.go              ✅ + TriggerSOS, CancelSOS, UpdateLocation, GetActive
-│           │   └── handler.go              ✅ + 4 endpoint baru
-│           ├── otp/
-│           │   ├── gateway.go              ✅ WA Fonnte interface
-│           │   ├── email_gateway.go        🆕 SMTP Email gateway
-│           │   ├── service.go              ✅ Dual-channel (WA + Email)
-│           │   └── handler.go              ✅ request-otp, verify-otp
-│           ├── telemetry/                  ✅ Selesai
-│           └── user/
-│               ├── model.go                ✅ + IsEmailVerified, IsPhoneVerified, DTO baru
-│               ├── repository.go           ✅ + SetEmailVerified, SetPhoneVerified,
-│               │                                UpdatePhoneNumber, DeleteUserByEmail
-│               ├── service.go              ✅ Alur baru: Register+rollback, Login→JWT
-│               └── handler.go              ✅ + verify-register-otp, verify-login-otp,
-│                                                phone/request-otp, phone/verify-otp
+│   ├── cmd/api/main.go              ✅ seedSuperAdmin, 3 login routes, admin routes
+│   ├── internal/
+│   │   ├── config/config.go         ✅ + SuperAdminEmail, SuperAdminPass
+│   │   ├── middleware/auth.go       ✅ RBAC granular
+│   │   └── domain/
+│   │       ├── user/                ✅ v3 slim auth + user_profiles
+│   │       │   ├── model.go         ✅ User, UserProfile, AdminProfile, AgencyPersonnel
+│   │       │   ├── repository.go    ✅ query ke user_profiles
+│   │       │   ├── service.go       ✅ 3 login method
+│   │       │   └── handler.go       ✅ + ConsoleLogin, PersonnelLogin handler
+│   │       ├── admin/               🆕 BARU
+│   │       │   ├── model.go         🆕 VolunteerKYC, AdminUserItem, StatsResponse
+│   │       │   ├── repository.go    🆕 KYC, ban/unban, rank CRUD, stats
+│   │       │   ├── service.go       🆕 validasi bisnis
+│   │       │   └── handler.go       🆕 semua handler Sprint D
+│   │       ├── incident/            ✅ + strike/ban query → user_profiles
+│   │       ├── otp/                 ✅
+│   │       └── telemetry/           ✅
+│   └── migrations/
+│       ├── 001_init_schema.sql      (lama, tidak dipakai lagi)
+│       └── 003_schema_v3.sql        ✅ Schema aktif saat ini
+│
 ├── infrastructure/
-│   ├── .env                                ✅ (tidak di-track git)
-│   ├── .env-example                        ✅ + SMTP template
-│   └── docker-compose.yml                  ✅ service: backend (bukan api)
-└── mobile-flutter/
-    ├── pubspec.yaml                        ✅ + geolocator, permission_handler
-    ├── android/app/src/main/
-    │   └── AndroidManifest.xml             ✅ + GPS permissions
-    └── lib/
-        ├── core/
-        │   ├── models/user_model.dart      ✅ Selesai
-        │   ├── router.dart                 ✅ + accessToken/userId params
-        │   └── services/
-        │       ├── auth_service.dart       🆕 BARU — 4 method auth
-        │       ├── incident_service.dart   🆕 BARU — SOS API client
-        │       ├── location_service.dart   🆕 BARU — GPS wrapper
-        │       └── otp_service.dart        ✅ WA OTP (legacy, masih dipakai di profile)
-        └── features/
-            ├── auth/
-            │   ├── login_screen.dart       ✅ Single-step, GPS permission
-            │   ├── register_screen.dart    ✅ 2-step Email OTP, tanpa HP di awal
-            │   └── biodata_screen.dart     🟡 + accessToken/userId params
-            └── masyarakat/
-                ├── main_screen.dart        ✅ + accessToken/userId params
-                ├── home_screen.dart        ✅ GPS tracking, active SOS, cancel 5-tap
-                ├── edit_profile_screen.dart    🟡 UI selesai, API pending
-                ├── settings_screen.dart        🟡 UI selesai
-                └── volunteer_registration_screen.dart  🟡 UI selesai
+│   ├── .env                         ✅ + SUPERADMIN_EMAIL, SUPERADMIN_PASS
+│   └── .env-example                 ✅ + SUPERADMIN_EMAIL, SUPERADMIN_PASS template
+│
+├── mobile-flutter/
+│   └── lib/
+│       ├── core/services/
+│       │   └── auth_service.dart    ✅ UserInfo.fullName → String? (nullable)
+│       └── features/
+│           ├── auth/                ✅
+│           └── masyarakat/          🟡 Profile, Biodata belum terhubung API
+│
+├── windows_console_flutter/
+│   └── lib/
+│       ├── core/constants/
+│       │   └── api_constants.dart   ✅ Fix: login → /auth/console/login
+│       ├── app.dart                 ✅ SplashRouter
+│       └── features/
+│           ├── instansi/            ✅ Semua halaman selesai
+│           └── admin/               ✅ Semua halaman selesai
+│
+└── docs/
+    ├── FRONTEND_STRUCTURE.txt       ✅ Diperbarui 1 Mei 2026
+    └── DESKTOP_PLANNING_ADMIN_INSTANSI.txt  ✅ Diperbarui 1 Mei 2026
 ```
 
 ---
 
-## 5. API Endpoint yang Tersedia
+## 5. API Endpoint Lengkap
 
 Base URL: `http://<host>:8080/api/v1`
 
-### Auth (Public — tidak butuh JWT)
-| Method | Endpoint | Body | Keterangan |
-|--------|----------|------|-----------|
-| POST | `/auth/register` | `{full_name, email, password}` | Buat akun → kirim Email OTP |
-| POST | `/auth/verify-register-otp` | `{email, otp_code}` | Verifikasi OTP → return JWT |
-| POST | `/auth/login` | `{email, password}` | Validasi → **return JWT langsung** |
-| POST | `/auth/verify-login-otp` | `{email, otp_code}` | *(Ada tapi tidak dipakai di login flow saat ini)* |
-| POST | `/auth/request-otp` | `{phone_number}` | Kirim OTP WA (Fonnte), rate limit 60s |
-| POST | `/auth/verify-otp` | `{phone_number, otp_code}` | Verifikasi OTP WA |
+### Auth (Public)
 
-### Users (Protected — butuh `Authorization: Bearer <token>`)
+| Method | Endpoint | Untuk Role | Keterangan |
+|--------|----------|------------|-----------|
+| POST | `/auth/register` | civilian | Daftar → OTP email |
+| POST | `/auth/verify-register-otp` | — | Verifikasi OTP → JWT |
+| POST | `/auth/login` | civilian, volunteer | Login langsung → JWT |
+| POST | `/auth/console/login` | admin, superadmin, agency | Login Desktop Console → JWT |
+| POST | `/auth/personnel/login` | agency_personnel | Login Mobile Responder → JWT |
+| POST | `/auth/request-otp` | — | Kirim OTP WA (phone verification) |
+| POST | `/auth/verify-otp` | — | Verifikasi OTP WA |
+
+### Users (Protected — CitizenVolunteer)
+
 | Method | Endpoint | Keterangan |
 |--------|----------|-----------|
-| GET | `/users/profile` | Ambil profil lengkap (termasuk is_email_verified, is_phone_verified) |
-| POST | `/users/biodata` | Simpan biodata (transaksi atomik) |
-| POST | `/users/phone/request-otp` | Simpan nomor HP + kirim OTP WA untuk verifikasi |
-| POST | `/users/phone/verify-otp` | `{phone_number, otp_code}` → is_phone_verified = true |
+| GET | `/users/profile` | Profil dari `user_profiles` |
+| POST | `/users/biodata` | Update `user_profiles` (upsert) |
+| POST | `/users/phone/request-otp` | OTP WA ke HP baru |
+| POST | `/users/phone/verify-otp` | Konfirmasi OTP HP |
 
-### Incidents (Protected)
-| Method | Endpoint | Body | Keterangan |
+### Incidents (Protected — semua role)
+
+| Method | Endpoint | RBAC | Keterangan |
 |--------|----------|------|-----------|
-| GET | `/incidents/active` | — | Cek SOS aktif milik user login |
-| POST | `/incidents/trigger` | `{latitude, longitude, trigger_method, incident_type?, address_detail?}` | Kirim SOS |
-| POST | `/incidents/:id/cancel` | — | Batalkan SOS (status → false_alarm) |
-| PUT | `/incidents/:id/location` | `{latitude, longitude}` | Update koordinat GPS (tiap 1 menit) |
-| POST | `/incidents/:id/resolve` | — | Tandai insiden selesai (oleh relawan/instansi) |
+| GET | `/incidents/active` | — | Cek SOS aktif |
+| POST | `/incidents/trigger` | — | Kirim SOS |
+| POST | `/incidents/:id/cancel` | — | Batalkan SOS |
+| PUT | `/incidents/:id/location` | — | Update GPS tiap 1 menit |
+| PATCH | `/incidents/:id/type` | — | Set tipe insiden |
+| POST | `/incidents/:id/broadcast` | — | Broadcast SOS |
+| POST | `/incidents/:id/mark-false-alarm` | ConsoleOnly | Tandai false alarm |
+| POST | `/incidents/:id/resolve` | ConsoleOnly | Selesaikan insiden |
 
-### Telemetry (Protected)
+### Reports — Jalur B (Protected)
+
+| Method | Endpoint | RBAC | Keterangan |
+|--------|----------|------|-----------|
+| POST | `/reports` | — | Kirim laporan non-darurat |
+| GET | `/reports` | ConsoleOnly | Daftar laporan |
+| PATCH | `/reports/:id/status` | ConsoleOnly | Update status laporan |
+
+### Admin (Protected — AdminOnly / ConsoleOnly)
+
+| Method | Endpoint | RBAC | Keterangan |
+|--------|----------|------|-----------|
+| GET | `/admin/volunteers/pending` | AdminOnly | Antrian KYC |
+| POST | `/admin/volunteers/:id/approve` | AdminOnly | Approve KYC |
+| POST | `/admin/volunteers/:id/reject` | AdminOnly | Reject KYC |
+| GET | `/admin/users` | AdminOnly | Daftar user + filter |
+| POST | `/admin/users/:id/ban` | AdminOnly | Ban SOS user |
+| POST | `/admin/users/:id/unban` | AdminOnly | Cabut ban |
+| DELETE | `/admin/users/:id/strike` | AdminOnly | Reset strike count |
+| GET | `/admin/ranks` | ConsoleOnly | Master data rank |
+| POST | `/admin/ranks` | AdminOnly | Tambah rank |
+| PUT | `/admin/ranks/:id` | AdminOnly | Edit rank |
+| DELETE | `/admin/ranks/:id` | AdminOnly | Hapus rank |
+| GET | `/admin/stats` | ConsoleOnly | Statistik & analitik |
+
+### Telemetry & WebSocket
+
 | Method | Endpoint | Keterangan |
 |--------|----------|-----------|
-| PUT | `/telemetry/location` | Update lokasi real-time via WebSocket hub |
-
-### WebSocket
-| URL | Keterangan |
-|-----|-----------|
-| `ws://<host>:8081/ws/connect` | Persistent connection untuk SOS events |
+| PUT | `/telemetry/location` | Update lokasi real-time |
+| POST | `/incidents/sms-fallback` | SMS fallback (API Key) |
+| WS | `ws://<host>:8081/ws/connect` | WebSocket persistent |
 
 ---
 
-## 6. Schema Database — Perubahan & Status
+## 6. Schema Database (v3 — Aktif)
 
-| Tabel | Status | Keterangan |
-|-------|--------|-----------|
-| `users` | ✅ + kolom baru | + `is_email_verified BOOLEAN DEFAULT false` |
-| | | + `is_phone_verified BOOLEAN DEFAULT false` |
-| | | `role` default diubah ke `'civilian'` |
-| | | `phone_number` → nullable (diisi lewat profile) |
-| `user_medical_profiles` | ✅ | Golongan darah, alergi, riwayat penyakit |
-| `emergency_contacts` | ✅ | Kontak darurat |
-| `incidents` | ✅ + kolom baru | + `trigger_method VARCHAR(20) DEFAULT 'timeout'` |
-| `incident_responses` | ✅ | Respons relawan/instansi |
-| `volunteer_certifications` | ✅ | Sertifikat relawan |
-| `m_ranks` | ✅ | Master data rank/level relawan |
+> **Migration aktif:** `backend-go/migrations/003_schema_v3.sql`
+> **Dijalankan:** 1 Mei 2026
 
-> ⚠️ **Jalankan SQL berikut secara manual di database yang sudah berjalan:**
-> ```sql
-> -- Kolom verifikasi
-> ALTER TABLE public.users
->   ADD COLUMN IF NOT EXISTS is_email_verified BOOLEAN NOT NULL DEFAULT false,
->   ADD COLUMN IF NOT EXISTS is_phone_verified  BOOLEAN NOT NULL DEFAULT false;
->
-> -- Nomor HP jadi nullable (diisi via profile)
-> ALTER TABLE public.users
->   ALTER COLUMN phone_number DROP NOT NULL;
->
-> -- Kolom trigger_method di incidents
-> ALTER TABLE public.incidents
->   ADD COLUMN IF NOT EXISTS trigger_method VARCHAR(20) NOT NULL DEFAULT 'timeout';
-> ```
+### Tabel Inti
 
-**Enum yang digunakan:**
+| Tabel | Deskripsi | Role yang Terkait |
+|-------|-----------|------------------|
+| `users` | Auth gateway saja (id, email, password_hash, role) | Semua role |
+| `user_profiles` | Profil lengkap citizen/volunteer | civilian, volunteer |
+| `admin_profiles` | Nama admin/superadmin | admin, superadmin |
+| `agencies` | Data instansi + link ke akun agency | agency |
+| `agency_personnels` | Data personel instansi | agency_personnel |
+| `emergency_contacts` | Kontak darurat | civilian, volunteer |
+| `incidents` | SOS darurat (Jalur A) | semua |
+| `incident_reports` | Laporan non-darurat (Jalur B) | civilian, volunteer |
+| `incident_responses` | Dispatch respons | volunteer, agency_personnel |
+| `sos_strikes` | Audit log false alarm | — |
+| `m_ranks` | Master data rank XP | — |
+| `m_badges` | Master data badge | — |
+| `volunteer_reputation` | XP + rank relawan | volunteer |
+| `volunteer_certifications` | Sertifikat KYC relawan | volunteer |
+| `volunteer_badges_acquired` | Badge yang diperoleh | volunteer |
+
+### ENUM `user_role`
+
 ```sql
-user_role:          civilian | volunteer | agency_responder | admin
-incident_status:    grace_period | broadcasting | handled | resolved | false_alarm
-response_status:    en_route | on_scene | completed | canceled
-cert_status:        pending | approved | rejected
+'superadmin' | 'admin' | 'agency' | 'agency_personnel' | 'volunteer' | 'civilian'
 ```
+
+> ⚠️ `agency_responder` sudah **DIHAPUS** sejak Schema v3.
 
 ---
 
 ## 7. Yang Belum Selesai
 
-### Prioritas Tinggi (Sprint Berikutnya)
-- [ ] **Token Management:** Simpan `access_token` + `refresh_token` ke `flutter_secure_storage`
-- [ ] **Interceptor HTTP:** Attach JWT otomatis ke semua request, handle 401 → refresh
-- [ ] **BiodataScreen → API:** Wire `POST /users/biodata`
-- [ ] **ProfileScreen → API:** Wire `GET /users/profile`, tampilkan `is_email_verified`, `is_phone_verified`
-- [ ] **Phone Verification UI:** Form verifikasi nomor HP di profile screen (kirim OTP WA → konfirmasi)
+### Prioritas Tinggi
+
+- [ ] **Deploy backend** setelah tiap perubahan:
+  ```bash
+  sudo docker compose -f infrastructure/docker-compose.yml up --build -d backend
+  ```
+- [ ] **Isi `.env`** — `SUPERADMIN_EMAIL` dan `SUPERADMIN_PASS` harus diisi untuk seed superadmin
+- [ ] **Biodata Screen → API** — Wire `BiodataScreen` ke `POST /users/biodata`
+- [ ] **Profile Screen → API** — Wire `ProfileScreen` ke `GET /users/profile`
+- [ ] **Desktop Console → Admin endpoints** — Hubungkan halaman KYC, User Mgmt, Gamifikasi, Statistik ke endpoint `/admin/...`
 
 ### Prioritas Sedang
-- [ ] **WebSocket Flutter:** Koneksi `wss://host:8081/ws/connect` saat app dibuka
-- [ ] **SOS dispatch via WebSocket:** Kirim `TRIGGER_SOS` event sehingga relawan menerima notifikasi real-time
-- [ ] **Relawan dashboard:** Ganti data mock dengan data dari API
-- [ ] **Edit Profile → API:** Wire form ke `PUT /users/profile`
-- [ ] **Refresh token:** Auto-refresh saat `access_token` expired
+
+- [ ] **Dispatch Relawan** — Halaman masih placeholder (Sprint B.4)
+- [ ] **Mobile Responder App** — Proyek baru `mobile-flutter-responder/` untuk role `agency_personnel`
+- [ ] **Audio Alarm** — `assets/audio/alarm.mp3` masih placeholder, ganti dengan file sirine sungguhan
+- [ ] **Refresh token** — Auto-refresh saat `access_token` expired
 
 ### Prioritas Rendah / Masa Depan
+
 - [ ] Push notification (FCM) untuk alert darurat
-- [ ] Dashboard Admin & Instansi (Windows Flutter)
-- [ ] Status verifikasi KTP (admin dapat lihat flag di incident reporter)
 - [ ] Riwayat insiden per pengguna
+- [ ] Granular RBAC untuk agency di Flutter (hide menu yang tidak diizinkan)
+- [ ] Fitur volunteer_badges_acquired (gamifikasi penuh)
 
 ---
 
 ## 8. Panduan Setup untuk Anggota Baru
 
 ### Prasyarat
+
 ```bash
-go version    # Go 1.26+
-flutter --version   # Flutter 3.x+
+go version       # Go 1.23+
+flutter --version # Flutter 3.x+
 docker --version && docker compose version
 ```
 
@@ -435,19 +420,17 @@ docker --version && docker compose version
 ```bash
 git clone https://github.com/SuperBypassUdinnn/siagakita.git
 cd siagakita
-git checkout frontend
 ```
 
 **2. Buat file environment:**
 ```bash
 cp infrastructure/.env-example infrastructure/.env
-# Edit .env dan isi:
-# DB_USER, DB_PASSWORD, DB_NAME
-# REDIS_PASSWORD
-# JWT_SECRET (string acak panjang)
+# Edit infrastructure/.env dan isi:
+# DB_USER, DB_PASSWORD, REDIS_PASSWORD
+# JWT_SECRET (buat string acak panjang)
+# SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM (untuk email OTP)
 # FONNTE_TOKEN (daftar di fonnte.com)
-# SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM
-#   → Untuk Gmail: buat App Password di myaccount.google.com/apppasswords
+# SUPERADMIN_EMAIL, SUPERADMIN_PASS (akun superadmin pertama)
 ```
 
 **3. Jalankan infrastruktur:**
@@ -455,33 +438,37 @@ cp infrastructure/.env-example infrastructure/.env
 sudo docker compose -f infrastructure/docker-compose.yml up -d postgres redis pgadmin
 ```
 
-**4. Jalankan migrasi database:**
+**4. Jalankan migrasi database (schema v3):**
 ```bash
 sudo docker exec -i siagakita_postgres psql \
   -U siagakita_admin -d siagakita \
-  < backend-go/migrations/001_init_schema.sql
-
-# Lalu jalankan ALTER TABLE manual (lihat section 6)
+  < backend-go/migrations/003_schema_v3.sql
 ```
 
 **5. Build dan jalankan backend:**
 ```bash
-# Development (langsung)
-cd backend-go
-go run ./cmd/api/
-
-# Atau via Docker (nama service adalah "backend", bukan "api")
+# Via Docker (rekomendasi)
 sudo docker compose -f infrastructure/docker-compose.yml up --build -d backend
+
+# Atau langsung (dev)
+cd backend-go && go run ./cmd/api/
 ```
+
+> Saat server start, cek log untuk baris:
+> `[SuperAdmin] Akun superadmin berhasil dibuat: <email>`
 
 **6. Jalankan Flutter mobile:**
 ```bash
-cd mobile-flutter
-flutter pub get
-flutter run
+cd mobile-flutter && flutter pub get && flutter run
+```
+
+**7. Jalankan Desktop Console:**
+```bash
+cd windows_console_flutter && flutter pub get && flutter run -d linux
 ```
 
 ### Cara Akses
+
 | Layanan | URL |
 |---------|-----|
 | REST API | `http://localhost:8080` |
@@ -489,24 +476,15 @@ flutter run
 | WebSocket | `ws://localhost:8081/ws/connect` |
 | pgAdmin | `http://localhost:5050` |
 
-### Catatan Emulator Android
-Flutter emulator menggunakan `10.0.2.2` untuk mengakses `localhost` host machine. Semua `_baseUrl` di service files sudah dikonfigurasi ke `http://10.0.2.2:8080/api/v1`.
+> **Emulator Android:** Gunakan `10.0.2.2` sebagai alamat backend (bukan `localhost`).
 
-### Catatan Alur Auth Terbaru
-```
-REGISTER:                              LOGIN:
-Nama + Email + Password                Email + Password
-  ↓ POST /auth/register                  ↓ POST /auth/login
-  Kirim OTP ke email                     JWT langsung (tanpa OTP)
-  ↓ POST /auth/verify-register-otp         ↓
-  JWT + Minta izin GPS                   Minta izin GPS
-  ↓                                      ↓
-  BiodataScreen                          HomeScreen
+### Login Console (Desktop)
 
-VERIFIKASI HP (di Profile setelah login):
-  Isi nomor HP → POST /users/phone/request-otp → OTP via WA
-  Masukkan OTP → POST /users/phone/verify-otp → is_phone_verified = true
-```
+| Role | Endpoint |
+|------|----------|
+| superadmin / admin / agency | `POST /auth/console/login` |
+| civilian / volunteer | `POST /auth/login` |
+| agency_personnel | `POST /auth/personnel/login` |
 
 ---
 

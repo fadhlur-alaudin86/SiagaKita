@@ -114,7 +114,7 @@ func (s *Service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		return nil, errors.New("email atau password salah")
 	}
 	if user.Role != "civilian" && user.Role != "volunteer" {
-		return nil, errors.New("akun ini bukan akun masyarakat atau relawan")
+		return nil, errors.New("email atau password salah")
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return nil, errors.New("email atau password salah")
