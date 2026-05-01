@@ -192,6 +192,8 @@ CREATE TABLE public.agencies (
     type           agency_type NOT NULL,
     city_code      varchar(50) NOT NULL,
     hotline_number varchar(20),
+    latitude       numeric(10,8),
+    longitude      numeric(11,8),
     account_id     uuid UNIQUE REFERENCES users(id),  -- FK ke akun agency di users
     created_at     timestamptz DEFAULT now()
 );
@@ -439,3 +441,4 @@ Untuk audit trail — jika ada laporan penyalahgunaan, data historis bisa dipuli
 | v1 (`001_init_schema.sql`) | Apr 2026 | Schema awal: users dengan semua kolom, user_medical_profiles, agencies dengan agency_responder |
 | v2 (patch manual) | Apr 2026 | + kolom `trigger_method` di incidents, beberapa kolom nullable |
 | **v3** (`003_schema_v3.sql`) | **1 Mei 2026** | **Slim users, + user_profiles, + admin_profiles, ENUM baru (superadmin/agency/agency_personnel), agencies + account_id, hapus agency_responder** |
+| v4 (`004_add_agency_location.sql`) | 1 Mei 2026 | + `latitude` dan `longitude` di tabel `agencies` |

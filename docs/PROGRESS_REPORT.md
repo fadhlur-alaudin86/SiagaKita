@@ -345,6 +345,7 @@ Base URL: `http://<host>:8080/api/v1`
 
 | Method | Endpoint | RBAC | Keterangan |
 |--------|----------|------|-----------|
+| POST | `/admin/admins` | SuperAdminOnly | Buat akun admin baru |
 | GET | `/admin/volunteers/pending` | AdminOnly | Antrian KYC |
 | POST | `/admin/volunteers/:id/approve` | AdminOnly | Approve KYC |
 | POST | `/admin/volunteers/:id/reject` | AdminOnly | Reject KYC |
@@ -357,6 +358,12 @@ Base URL: `http://<host>:8080/api/v1`
 | PUT | `/admin/ranks/:id` | AdminOnly | Edit rank |
 | DELETE | `/admin/ranks/:id` | AdminOnly | Hapus rank |
 | GET | `/admin/stats` | ConsoleOnly | Statistik & analitik |
+
+### Agencies (Protected — AgencyOnly)
+
+| Method | Endpoint | RBAC | Keterangan |
+|--------|----------|------|-----------|
+| POST | `/agencies/personnels` | AgencyOnly | Daftarkan petugas lapangan instansi |
 
 ### Telemetry & WebSocket
 
