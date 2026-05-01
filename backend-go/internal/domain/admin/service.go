@@ -30,6 +30,13 @@ func (s *Service) RejectKYC(userID, verifiedBy, reason string) error {
 
 // ─── User Management ──────────────────────────────────────────────────────────
 
+func (s *Service) CreateAdmin(req *CreateAdminRequest, superadminID string) error {
+	if req.Email == "" || req.Password == "" || req.FullName == "" {
+		return errorMsg("Email, password, dan full name wajib diisi")
+	}
+	return s.repo.CreateAdmin(req, superadminID)
+}
+
 func (s *Service) GetUsers(filterBanned bool, filterHighStrike bool, search string) ([]AdminUserItem, error) {
 	return s.repo.GetUsers(filterBanned, filterHighStrike, search)
 }

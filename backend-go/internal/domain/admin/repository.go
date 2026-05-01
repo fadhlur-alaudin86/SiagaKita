@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -126,6 +127,54 @@ func (r *Repository) RejectKYC(userID, verifiedBy, reason string) error {
 }
 
 // ─── User Management ──────────────────────────────────────────────────────────
+
+// CreateAdmin creates a new user with 'admin' role and its corresponding admin_profiles.
+func (r *Repository) CreateAdmin(req *CreateAdminRequest, superadminID string) error {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("gagal mengenkripsi password: %w", err)
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Check email
+		var count int64
+		if err := tx.Table("users").Where("email = ? AND deleted_at IS NULL", req.Email).Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			return fmt.Errorf("email sudah digunakan")
+		}
+
+		// 2. Create user
+		type User struct {
+			ID           string `gorm:"column:id;primaryKey;default:gen_random_uuid()"`
+			Email        string `gorm:"column:email"`
+			PasswordHash string `gorm:"column:password_hash"`
+			Role         string `gorm:"column:role"`
+		}
+		newUser := User{
+			Email:        req.Email,
+			PasswordHash: string(hashed),
+			Role:         "admin",
+		}
+		if err := tx.Table("users").Create(&newUser).Error; err != nil {
+			return err
+		}
+
+		// 3. Create admin_profiles
+		type AdminProfile struct {
+			UserID    string `gorm:"column:user_id;primaryKey"`
+			FullName  string `gorm:"column:full_name"`
+			CreatedBy string `gorm:"column:created_by"`
+		}
+		newProfile := AdminProfile{
+			UserID:    newUser.ID,
+			FullName:  req.FullName,
+			CreatedBy: superadminID,
+		}
+		return tx.Table("admin_profiles").Create(&newProfile).Error
+	})
+}
 
 // GetUsers returns all users with civilian/volunteer role (paginated).
 func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search string) ([]AdminUserItem, error) {

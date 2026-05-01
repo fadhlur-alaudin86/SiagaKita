@@ -60,6 +60,24 @@ func (h *Handler) RejectKYC(c *fiber.Ctx) error {
 
 // ─── User Management ──────────────────────────────────────────────────────────
 
+// POST /api/v1/admin/admins  [SuperAdminOnly]
+func (h *Handler) CreateAdmin(c *fiber.Ctx) error {
+	callerID := c.Locals("userID").(string)
+	
+	var req CreateAdminRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	if err := h.svc.CreateAdmin(&req, callerID); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	return utils.SuccessResponse(c, fiber.Map{
+		"message": "Akun admin berhasil dibuat.",
+	})
+}
+
 // GET /api/v1/admin/users?banned=true&high_strike=true&search=...  [AdminOnly]
 func (h *Handler) GetUsers(c *fiber.Ctx) error {
 	filterBanned := c.Query("banned") == "true"

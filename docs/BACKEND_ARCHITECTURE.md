@@ -95,10 +95,22 @@ PostgreSQL / Redis
 | Domain | Tanggung Jawab |
 |--------|---------------|
 | `user` | Autentikasi (register, login, JWT), manajemen profil citizen/volunteer, verifikasi phone |
-| `admin` | KYC relawan, ban/unban user, master data rank, statistik sistem |
+| `admin` | KYC relawan, ban/unban user, master data rank, statistik sistem, buat akun admin |
 | `incident` | SOS (Jalur A): trigger, cancel, GPS update, resolve, false alarm; Laporan (Jalur B): CRUD + status |
-| `otp` | OTP email via SMTP, OTP WA via Fonnte, rate limiting di Redis |
+| `otp` | OTP via Gmail API (REST), OTP WA via Fonnte, rate limiting di Redis |
 | `telemetry` | Location update real-time, SMS fallback untuk area tanpa internet |
+| `agency` | Manajemen akun `agency_personnel` khusus untuk instansi terkait |
+
+### 2.1 Hierarki Role & Akses
+| Role | Keterangan |
+|------|------------|
+| **superadmin** | Akses absolut (Web Console). Dapat membuat akun **admin**, instansi, mengatur hak akses. |
+| **admin** | Moderator sistem (Web Console). Memverifikasi KYC relawan, memblokir pengguna. Dibuat oleh *superadmin*. |
+| **agency** | Kantor Instansi (Polisi/Damkar/RS). Hanya dapat mengakses Web Console untuk manajemen dan mendaftarkan akun petugas lapangannya (**agency_personnel**). |
+| **agency_personnel** | Petugas lapangan (Mobile App). Menerima dispatch insiden. Didaftarkan oleh *agency*. |
+| **volunteer** | Relawan terlatih (Mobile App). Lolos KYC. Menerima dispatch. |
+| **civilian** | Warga biasa (Mobile App). Mengirim SOS, melihat laporan. |
+
 
 ---
 
@@ -325,11 +337,10 @@ File: `infrastructure/.env` (lihat `infrastructure/.env-example` sebagai templat
 | `JWT_SECRET` | Secret key JWT (buat string acak panjang) | ✅ |
 | `JWT_ACCESS_TTL` | Durasi access token (default: 15m) | — |
 | `JWT_REFRESH_TTL` | Durasi refresh token (default: 168h) | — |
-| `SMTP_HOST` | SMTP host (default: smtp.gmail.com) | ✅ |
-| `SMTP_PORT` | SMTP port (default: 587) | ✅ |
-| `SMTP_USERNAME` | Email pengirim | ✅ |
-| `SMTP_PASSWORD` | App password Gmail / password SMTP | ✅ |
-| `SMTP_FROM` | Alamat pengirim tampil | ✅ |
+| `EMAIL_FROM` | Alamat pengirim tampil untuk OTP (ex: no-reply@) | ✅ |
+| `GMAIL_CLIENT_ID` | OAuth2 Client ID Gmail API | ✅ |
+| `GMAIL_CLIENT_SECRET`| OAuth2 Client Secret Gmail API | ✅ |
+| `GMAIL_REFRESH_TOKEN`| OAuth2 Refresh Token Gmail API | ✅ |
 | `FONNTE_TOKEN` | Token API Fonnte (WhatsApp gateway) | ✅ |
 | `HTTP_PORT` | Port REST API (default: 8080) | — |
 | `WS_PORT` | Port WebSocket (default: 8081) | — |

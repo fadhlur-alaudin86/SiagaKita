@@ -61,6 +61,12 @@ type RejectKYCRequest struct {
 	Reason string `json:"reason"`
 }
 
+type CreateAdminRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	FullName string `json:"full_name"`
+}
+
 type BanUserRequest struct {
 	Reason string `json:"reason"`
 }

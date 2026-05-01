@@ -11,6 +11,7 @@ import (
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/database"
 	adminDomain "siagakita-backend/internal/domain/admin"
+	agencyDomain "siagakita-backend/internal/domain/agency"
 	incidentDomain "siagakita-backend/internal/domain/incident"
 	otpDomain "siagakita-backend/internal/domain/otp"
 	"siagakita-backend/internal/domain/telemetry"
@@ -70,6 +71,11 @@ func main() {
 	// Admin domain
 	adminSvc := adminDomain.NewService(db)
 	adminHandler := adminDomain.NewHandler(adminSvc)
+
+	// Agency domain
+	agencyRepo := agencyDomain.NewRepository(db)
+	agencySvc := agencyDomain.NewService(agencyRepo)
+	agencyHandler := agencyDomain.NewHandler(agencySvc)
 
 	// Telemetry domain
 	telemetryHandler := telemetry.NewHandler(rdb, wsHub, cfg)
@@ -151,6 +157,7 @@ func main() {
 	admin.Post("/volunteers/:id/reject", middleware.AdminOnly(), adminHandler.RejectKYC)
 
 	// Manajemen Pengguna
+	admin.Post("/admins", middleware.SuperAdminOnly(), adminHandler.CreateAdmin)
 	admin.Get("/users", middleware.AdminOnly(), adminHandler.GetUsers)
 	admin.Post("/users/:id/ban", middleware.AdminOnly(), adminHandler.BanUser)
 	admin.Post("/users/:id/unban", middleware.AdminOnly(), adminHandler.UnbanUser)
@@ -164,6 +171,10 @@ func main() {
 
 	// Statistik
 	admin.Get("/stats", middleware.ConsoleOnly(), adminHandler.GetStats)
+
+	// ── Agencies (protected — AgencyOnly) ─────────────────────────────────────
+	agencies := v1.Group("/agencies", authMw)
+	agencies.Post("/personnels", middleware.AgencyOnly(), agencyHandler.CreatePersonnel)
 
 	// ── SMS Fallback (API key protected — no JWT) ─────────────────────────────
 	v1.Post("/incidents/sms-fallback",
