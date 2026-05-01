@@ -9,9 +9,14 @@ import (
 	"strings"
 )
 
-// Gateway mendefinisikan kontrak pengiriman pesan OTP.
+// Gateway mendefinisikan kontrak pengiriman pesan OTP (SMS/WhatsApp).
 type Gateway interface {
 	Send(phone, message string) error
+}
+
+// EmailGateway mendefinisikan kontrak pengiriman email OTP.
+type EmailGateway interface {
+	SendEmail(toEmail, subject, body string) error
 }
 
 // ─── Fonnte Gateway ──────────────────────────────────────────────────────────
