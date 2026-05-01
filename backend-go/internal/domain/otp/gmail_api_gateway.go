@@ -87,7 +87,7 @@ func (g *gmailAPIGateway) SendEmail(toEmail, subject, body string) error {
 	jsonPayload, _ := json.Marshal(payload)
 
 	// 4. Kirim request HTTP POST ke Gmail API
-	url := "https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send"
+	url := "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return fmt.Errorf("gmail_api: gagal membuat HTTP request: %w", err)
