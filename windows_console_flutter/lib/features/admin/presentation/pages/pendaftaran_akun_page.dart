@@ -6,15 +6,21 @@ import '../../../../core/constants/api_constants.dart';
 class PendaftaranAkunPage extends StatefulWidget {
   final String token;
   final String role;
-  const PendaftaranAkunPage({super.key, required this.token, required this.role});
+  const PendaftaranAkunPage({
+    super.key,
+    required this.token,
+    required this.role,
+  });
 
   @override
   State<PendaftaranAkunPage> createState() => _PendaftaranAkunPageState();
 }
 
-class _PendaftaranAkunPageState extends State<PendaftaranAkunPage> with SingleTickerProviderStateMixin {
+class _PendaftaranAkunPageState extends State<PendaftaranAkunPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final int _tabCount = 2; // Always show 2 tabs, but we might disable one or hide it
+  final int _tabCount =
+      2; // Always show 2 tabs, but we might disable one or hide it
 
   @override
   void initState() {
@@ -53,7 +59,8 @@ class _PendaftaranAkunPageState extends State<PendaftaranAkunPage> with SingleTi
         Expanded(
           child: TabBarView(
             controller: _tabController,
-            physics: const NeverScrollableScrollPhysics(), // Biar tidak bisa di-swipe kalau tab disable
+            physics:
+                const NeverScrollableScrollPhysics(), // Biar tidak bisa di-swipe kalau tab disable
             children: [
               _FormInstansi(token: widget.token),
               if (isSuperadmin) _FormAdmin(token: widget.token),
@@ -86,7 +93,10 @@ class _FormInstansiState extends State<_FormInstansi> {
   bool _isError = false;
 
   Future<void> _submit() async {
-    setState(() { _loading = true; _msg = null; });
+    setState(() {
+      _loading = true;
+      _msg = null;
+    });
     try {
       final res = await http.post(
         Uri.parse(ApiConstants.adminAgencies),
@@ -113,12 +123,20 @@ class _FormInstansiState extends State<_FormInstansi> {
           _cityCtrl.clear();
         });
       } else {
-        setState(() { _isError = true; _msg = body['message'] ?? 'Gagal membuat instansi'; });
+        setState(() {
+          _isError = true;
+          _msg = body['message'] ?? 'Gagal membuat instansi';
+        });
       }
     } catch (e) {
-      setState(() { _isError = true; _msg = 'Terjadi kesalahan jaringan.'; });
+      setState(() {
+        _isError = true;
+        _msg = 'Terjadi kesalahan jaringan.';
+      });
     } finally {
-      setState(() { _loading = false; });
+      setState(() {
+        _loading = false;
+      });
     }
   }
 
@@ -126,7 +144,8 @@ class _FormInstansiState extends State<_FormInstansi> {
   Widget build(BuildContext context) {
     return _buildCardForm(
       title: 'Pendaftaran Akun Instansi (Agency)',
-      subtitle: 'Akun ini akan digunakan oleh operator instansi untuk mengelola respon dan mendaftarkan petugas lapangannya.',
+      subtitle:
+          'Akun ini akan digunakan oleh operator instansi untuk mengelola respon dan mendaftarkan petugas lapangannya.',
       msg: _msg,
       isError: _isError,
       children: [
@@ -135,21 +154,30 @@ class _FormInstansiState extends State<_FormInstansi> {
         _buildField('Nama Instansi (Cth: Polrestabes Bandung)', _nameCtrl),
         _buildField('Kode Kota (Cth: BDO)', _cityCtrl),
         const SizedBox(height: 12),
-        const Text('Tipe Instansi', style: TextStyle(color: Colors.white70, fontSize: 13)),
+        const Text(
+          'Tipe Instansi',
+          style: TextStyle(color: Colors.white70, fontSize: 13),
+        ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _type,
+          initialValue: _type,
           dropdownColor: const Color(0xFF1A1F2E),
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.05),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
           ),
           items: const [
             DropdownMenuItem(value: 'police', child: Text('Kepolisian')),
             DropdownMenuItem(value: 'fire', child: Text('Pemadam Kebakaran')),
-            DropdownMenuItem(value: 'medical', child: Text('Medis / Rumah Sakit')),
+            DropdownMenuItem(
+              value: 'medical',
+              child: Text('Medis / Rumah Sakit'),
+            ),
             DropdownMenuItem(value: 'sar', child: Text('Tim SAR')),
           ],
           onChanged: (v) => setState(() => _type = v!),
@@ -183,7 +211,10 @@ class _FormAdminState extends State<_FormAdmin> {
   bool _isError = false;
 
   Future<void> _submit() async {
-    setState(() { _loading = true; _msg = null; });
+    setState(() {
+      _loading = true;
+      _msg = null;
+    });
     try {
       final res = await http.post(
         Uri.parse(ApiConstants.adminAdmins),
@@ -207,12 +238,20 @@ class _FormAdminState extends State<_FormAdmin> {
           _nameCtrl.clear();
         });
       } else {
-        setState(() { _isError = true; _msg = body['message'] ?? 'Gagal membuat admin'; });
+        setState(() {
+          _isError = true;
+          _msg = body['message'] ?? 'Gagal membuat admin';
+        });
       }
     } catch (e) {
-      setState(() { _isError = true; _msg = 'Terjadi kesalahan jaringan.'; });
+      setState(() {
+        _isError = true;
+        _msg = 'Terjadi kesalahan jaringan.';
+      });
     } finally {
-      setState(() { _loading = false; });
+      setState(() {
+        _loading = false;
+      });
     }
   }
 
@@ -220,7 +259,8 @@ class _FormAdminState extends State<_FormAdmin> {
   Widget build(BuildContext context) {
     return _buildCardForm(
       title: 'Pendaftaran Administrator Sistem',
-      subtitle: 'Hanya superadmin yang dapat membuat akun admin. Admin bertugas mengelola aplikasi harian.',
+      subtitle:
+          'Hanya superadmin yang dapat membuat akun admin. Admin bertugas mengelola aplikasi harian.',
       msg: _msg,
       isError: _isError,
       children: [
@@ -257,20 +297,39 @@ Widget _buildCardForm({
       padding: const EdgeInsets.all(24),
       child: ListView(
         children: [
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+          Text(
+            subtitle,
+            style: const TextStyle(color: Colors.white54, fontSize: 13),
+          ),
           const SizedBox(height: 24),
           if (msg != null)
             Container(
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: (isError ? Colors.red : Colors.green).withValues(alpha: 0.1),
-                border: Border.all(color: (isError ? Colors.red : Colors.green).withValues(alpha: 0.3)),
+                color: (isError ? Colors.red : Colors.green).withValues(
+                  alpha: 0.1,
+                ),
+                border: Border.all(
+                  color: (isError ? Colors.red : Colors.green).withValues(
+                    alpha: 0.3,
+                  ),
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(msg, style: TextStyle(color: isError ? Colors.red : Colors.green)),
+              child: Text(
+                msg,
+                style: TextStyle(color: isError ? Colors.red : Colors.green),
+              ),
             ),
           ...children,
         ],
@@ -279,13 +338,20 @@ Widget _buildCardForm({
   );
 }
 
-Widget _buildField(String label, TextEditingController ctrl, {bool obscureText = false}) {
+Widget _buildField(
+  String label,
+  TextEditingController ctrl, {
+  bool obscureText = false,
+}) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: ctrl,
@@ -294,8 +360,14 @@ Widget _buildField(String label, TextEditingController ctrl, {bool obscureText =
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.05),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       ],
@@ -313,7 +385,14 @@ Widget _buildSubmitBtn(String label, bool loading, VoidCallback onPressed) {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     child: loading
-        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+        ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+          )
         : Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
   );
 }

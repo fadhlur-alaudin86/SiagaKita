@@ -53,7 +53,11 @@ class _SplashRouterState extends State<_SplashRouter> {
 
     Widget shell;
     if (session.role == 'admin' || session.role == 'superadmin') {
-      shell = AdminShell(token: session.accessToken, ws: ws);
+      shell = AdminShell(
+        token: session.accessToken,
+        role: session.role,
+        ws: ws,
+      );
     } else {
       shell = InstansiShell(token: session.accessToken, ws: ws);
     }
@@ -63,8 +67,8 @@ class _SplashRouterState extends State<_SplashRouter> {
   void _navigateTo(Widget dest) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => dest,
-        transitionsBuilder: (_, anim, __, child) =>
+        pageBuilder: (_, _, _) => dest,
+        transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 400),
       ),
@@ -91,7 +95,10 @@ class _SplashRouterState extends State<_SplashRouter> {
               ),
             ),
             SizedBox(height: 8),
-            Text('Memuat...', style: TextStyle(color: Colors.white38, fontSize: 13)),
+            Text(
+              'Memuat...',
+              style: TextStyle(color: Colors.white38, fontSize: 13),
+            ),
             SizedBox(height: 32),
             CircularProgressIndicator(
               color: Color(0xFFFF7418),
