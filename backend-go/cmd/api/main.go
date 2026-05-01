@@ -158,6 +158,7 @@ func main() {
 
 	// Manajemen Pengguna
 	admin.Post("/admins", middleware.SuperAdminOnly(), adminHandler.CreateAdmin)
+	admin.Post("/agencies", middleware.AdminOnly(), adminHandler.CreateAgency)
 	admin.Get("/users", middleware.AdminOnly(), adminHandler.GetUsers)
 	admin.Post("/users/:id/ban", middleware.AdminOnly(), adminHandler.BanUser)
 	admin.Post("/users/:id/unban", middleware.AdminOnly(), adminHandler.UnbanUser)

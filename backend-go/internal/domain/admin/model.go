@@ -67,6 +67,17 @@ type CreateAdminRequest struct {
 	FullName string `json:"full_name"`
 }
 
+type CreateAgencyRequest struct {
+	Email          string  `json:"email"`
+	Password       string  `json:"password"`
+	Name           string  `json:"name"`
+	Type           string  `json:"type"`
+	CityCode       string  `json:"city_code"`
+	HotlineNumber  *string `json:"hotline_number,omitempty"`
+	Latitude       *float64 `json:"latitude,omitempty"`
+	Longitude      *float64 `json:"longitude,omitempty"`
+}
+
 type BanUserRequest struct {
 	Reason string `json:"reason"`
 }

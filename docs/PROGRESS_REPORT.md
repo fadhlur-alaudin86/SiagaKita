@@ -346,6 +346,7 @@ Base URL: `http://<host>:8080/api/v1`
 | Method | Endpoint | RBAC | Keterangan |
 |--------|----------|------|-----------|
 | POST | `/admin/admins` | SuperAdminOnly | Buat akun admin baru |
+| POST | `/admin/agencies` | AdminOnly | Mendaftarkan instansi baru |
 | GET | `/admin/volunteers/pending` | AdminOnly | Antrian KYC |
 | POST | `/admin/volunteers/:id/approve` | AdminOnly | Approve KYC |
 | POST | `/admin/volunteers/:id/reject` | AdminOnly | Reject KYC |

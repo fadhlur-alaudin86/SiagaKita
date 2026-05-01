@@ -104,8 +104,8 @@ PostgreSQL / Redis
 ### 2.1 Hierarki Role & Akses
 | Role | Keterangan |
 |------|------------|
-| **superadmin** | Akses absolut (Web Console). Dapat membuat akun **admin**, instansi, mengatur hak akses. |
-| **admin** | Moderator sistem (Web Console). Memverifikasi KYC relawan, memblokir pengguna. Dibuat oleh *superadmin*. |
+| **superadmin** | Akses root sistem (Web Console). **Hanya bertugas membuat akun admin.** Di-*seed* otomatis dari environment. |
+| **admin** | Administrator aplikasi (Web Console). Mendaftarkan instansi (`agency`), verifikasi KYC relawan, memblokir pengguna, manajemen rank. |
 | **agency** | Kantor Instansi (Polisi/Damkar/RS). Hanya dapat mengakses Web Console untuk manajemen dan mendaftarkan akun petugas lapangannya (**agency_personnel**). |
 | **agency_personnel** | Petugas lapangan (Mobile App). Menerima dispatch insiden. Didaftarkan oleh *agency*. |
 | **volunteer** | Relawan terlatih (Mobile App). Lolos KYC. Menerima dispatch. |

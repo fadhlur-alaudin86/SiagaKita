@@ -37,6 +37,19 @@ func (s *Service) CreateAdmin(req *CreateAdminRequest, superadminID string) erro
 	return s.repo.CreateAdmin(req, superadminID)
 }
 
+func (s *Service) CreateAgency(req *CreateAgencyRequest) error {
+	if req.Email == "" || req.Password == "" || req.Name == "" || req.Type == "" || req.CityCode == "" {
+		return errorMsg("Email, password, name, type, dan city_code wajib diisi")
+	}
+	// Validasi Enum Type
+	validTypes := map[string]bool{"police": true, "fire": true, "medical": true, "sar": true}
+	if !validTypes[req.Type] {
+		return errorMsg("Tipe instansi tidak valid (harus police/fire/medical/sar)")
+	}
+
+	return s.repo.CreateAgency(req)
+}
+
 func (s *Service) GetUsers(filterBanned bool, filterHighStrike bool, search string) ([]AdminUserItem, error) {
 	return s.repo.GetUsers(filterBanned, filterHighStrike, search)
 }

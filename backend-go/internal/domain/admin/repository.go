@@ -176,6 +176,63 @@ func (r *Repository) CreateAdmin(req *CreateAdminRequest, superadminID string) e
 	})
 }
 
+// CreateAgency creates a new user with 'agency' role and its corresponding agencies entry.
+func (r *Repository) CreateAgency(req *CreateAgencyRequest) error {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("gagal mengenkripsi password: %w", err)
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Check email
+		var count int64
+		if err := tx.Table("users").Where("email = ? AND deleted_at IS NULL", req.Email).Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			return fmt.Errorf("email sudah digunakan")
+		}
+
+		// 2. Create user (role: agency)
+		type User struct {
+			ID           string `gorm:"column:id;primaryKey;default:gen_random_uuid()"`
+			Email        string `gorm:"column:email"`
+			PasswordHash string `gorm:"column:password_hash"`
+			Role         string `gorm:"column:role"`
+		}
+		newUser := User{
+			Email:        req.Email,
+			PasswordHash: string(hashed),
+			Role:         "agency",
+		}
+		if err := tx.Table("users").Create(&newUser).Error; err != nil {
+			return err
+		}
+
+		// 3. Create agencies
+		type Agency struct {
+			ID            string   `gorm:"column:id;primaryKey;default:gen_random_uuid()"`
+			Name          string   `gorm:"column:name"`
+			Type          string   `gorm:"column:type"`
+			CityCode      string   `gorm:"column:city_code"`
+			HotlineNumber *string  `gorm:"column:hotline_number"`
+			Latitude      *float64 `gorm:"column:latitude"`
+			Longitude     *float64 `gorm:"column:longitude"`
+			AccountID     string   `gorm:"column:account_id"`
+		}
+		newAgency := Agency{
+			Name:          req.Name,
+			Type:          req.Type,
+			CityCode:      req.CityCode,
+			HotlineNumber: req.HotlineNumber,
+			Latitude:      req.Latitude,
+			Longitude:     req.Longitude,
+			AccountID:     newUser.ID,
+		}
+		return tx.Table("agencies").Create(&newAgency).Error
+	})
+}
+
 // GetUsers returns all users with civilian/volunteer role (paginated).
 func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search string) ([]AdminUserItem, error) {
 	query := r.db.Raw(`

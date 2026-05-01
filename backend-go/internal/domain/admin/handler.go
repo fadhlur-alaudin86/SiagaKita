@@ -78,6 +78,22 @@ func (h *Handler) CreateAdmin(c *fiber.Ctx) error {
 	})
 }
 
+// POST /api/v1/admin/agencies  [AdminOnly]
+func (h *Handler) CreateAgency(c *fiber.Ctx) error {
+	var req CreateAgencyRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	if err := h.svc.CreateAgency(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	return utils.SuccessResponse(c, fiber.Map{
+		"message": "Akun instansi (agency) berhasil dibuat.",
+	})
+}
+
 // GET /api/v1/admin/users?banned=true&high_strike=true&search=...  [AdminOnly]
 func (h *Handler) GetUsers(c *fiber.Ctx) error {
 	filterBanned := c.Query("banned") == "true"
