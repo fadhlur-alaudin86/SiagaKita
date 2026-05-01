@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await ws.connect(result.accessToken);
 
       Widget destination;
-      if (result.role == 'admin') {
+      if (result.role == 'admin' || result.role == 'superadmin') {
         destination = AdminShell(token: result.accessToken, ws: ws);
       } else {
         destination = InstansiShell(token: result.accessToken, ws: ws);

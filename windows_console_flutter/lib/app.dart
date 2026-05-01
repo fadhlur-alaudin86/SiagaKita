@@ -52,7 +52,7 @@ class _SplashRouterState extends State<_SplashRouter> {
     await ws.connect(session.accessToken);
 
     Widget shell;
-    if (session.role == 'admin') {
+    if (session.role == 'admin' || session.role == 'superadmin') {
       shell = AdminShell(token: session.accessToken, ws: ws);
     } else {
       shell = InstansiShell(token: session.accessToken, ws: ws);
