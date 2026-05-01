@@ -30,17 +30,8 @@ type Config struct {
 	// WhatsApp Gateway (Fonnte)
 	FonnteToken string
 
-	// Email Gateway (SMTP — fallback jika RESEND_API_KEY tidak diset)
-	SMTPHost     string
-	SMTPPort     string
-	SMTPUsername string
-	SMTPPassword string
-	SMTPFrom     string
-
-	// Email Gateway (Resend HTTP API — diutamakan jika RESEND_API_KEY diset)
-	// Tidak butuh port SMTP, menggunakan HTTPS port 443.
-	// Daftar gratis di https://resend.com
-	ResendAPIKey string
+	// Email Gateway (Gmail API) — menggunakan HTTPS port 443
+	EmailFrom         string
 
 	// Email Gateway (Gmail API) — menggunakan HTTPS port 443
 	GmailClientID     string
@@ -82,12 +73,7 @@ func Load() *Config {
 		JWTRefreshTTL:    refreshTTL,
 		SMSGatewaySecret: getEnv("SMS_GATEWAY_SECRET", ""),
 		FonnteToken:      getEnv("FONNTE_TOKEN", ""),
-		SMTPHost:         getEnv("SMTP_HOST", "smtp.gmail.com"),
-		SMTPPort:         getEnv("SMTP_PORT", "587"),
-		SMTPUsername:     getEnv("SMTP_USERNAME", ""),
-		SMTPPassword:     getEnv("SMTP_PASSWORD", ""),
-		SMTPFrom:         getEnv("SMTP_FROM", ""),
-		ResendAPIKey:     getEnv("RESEND_API_KEY", ""),
+		EmailFrom:        getEnv("EMAIL_FROM", ""),
 		GmailClientID:    getEnv("GMAIL_CLIENT_ID", ""),
 		GmailClientSecret: getEnv("GMAIL_CLIENT_SECRET", ""),
 		GmailRefreshToken: getEnv("GMAIL_REFRESH_TOKEN", ""),
