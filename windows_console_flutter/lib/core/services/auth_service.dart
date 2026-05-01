@@ -8,7 +8,7 @@ class AuthResult {
   final String accessToken;
   final String userId;
   final String fullName;
-  final String role; // 'instansi' | 'admin'
+  final String role; // 'agency' | 'admin' | 'superadmin'
 
   const AuthResult({
     required this.accessToken,
@@ -44,9 +44,9 @@ class AuthService {
     final user = data['user'] as Map<String, dynamic>;
     final role = user['role'] as String;
 
-    // Hanya izinkan role instansi dan admin
-    if (role != 'instansi' && role != 'admin') {
-      throw AuthException('Akun ini tidak memiliki akses ke console. Role: $role');
+    // Hanya izinkan role yang berhubungan dengan console
+    if (role != 'agency' && role != 'admin' && role != 'superadmin') {
+      throw AuthException('Email atau password salah.');
     }
 
     final result = AuthResult(

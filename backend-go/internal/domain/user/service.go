@@ -145,7 +145,8 @@ func (s *Service) ConsoleLogin(ctx context.Context, req *LoginRequest) (*AuthRes
 
 	allowedRoles := map[string]bool{"superadmin": true, "admin": true, "agency": true}
 	if !allowedRoles[user.Role] {
-		return nil, errors.New("akun ini tidak memiliki akses ke console")
+		// Gunakan pesan generic agar tidak membocorkan role/keberadaan akun
+		return nil, errors.New("email atau password salah")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
@@ -174,7 +175,7 @@ func (s *Service) PersonnelLogin(ctx context.Context, req *LoginRequest) (*AuthR
 		return nil, errors.New("email atau password salah")
 	}
 	if user.Role != "agency_personnel" {
-		return nil, errors.New("akun ini bukan akun personel instansi")
+		return nil, errors.New("email atau password salah")
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return nil, errors.New("email atau password salah")
