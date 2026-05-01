@@ -46,8 +46,15 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 	}
 
 	// Cek duplikasi email
-	if _, err := s.repo.FindByEmail(req.Email); err == nil {
-		return nil, errors.New("email sudah terdaftar")
+	existingUser, err := s.repo.FindByEmail(req.Email)
+	if err == nil {
+		// Jika email ada tapi BELUM verified (karena timeout OTP sebelumnya), hapus yang lama
+		profile, _ := s.repo.FindProfile(existingUser.ID)
+		if profile != nil && !profile.IsEmailVerified {
+			_ = s.repo.DeleteUserByEmail(req.Email)
+		} else {
+			return nil, errors.New("email sudah terdaftar")
+		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
@@ -118,6 +125,12 @@ func (s *Service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		return nil, errors.New("email atau password salah")
 	}
 	profile, _ := s.repo.FindProfile(user.ID)
+	
+	// Tolak login jika email belum diverifikasi (mencegah ghost account login)
+	if profile != nil && !profile.IsEmailVerified {
+		return nil, errors.New("email belum diverifikasi, silakan daftar ulang")
+	}
+
 	return s.buildAuthResponse(user, profile)
 }
 

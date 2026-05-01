@@ -110,13 +110,16 @@ PostgreSQL / Redis
 POST /auth/register
   { full_name, email, password }
         │
-        ├── Cek duplikasi email
+        ├── Cek duplikasi email 
+        │     └── [Email ada TAPI belum terverifikasi OTP] → Auto-hapus (cleanup ghost account)
         ├── bcrypt hash password (cost: 12)
-        ├── INSERT INTO users (email, password_hash, role='civilian')
-        ├── INSERT INTO user_profiles (user_id, full_name)
+        ├── [ATOMIC TRANSACTION MULAI]
+        │     ├── INSERT INTO users (email, password_hash, role='civilian')
+        │     └── INSERT INTO user_profiles (user_id, full_name)
+        ├── [ATOMIC TRANSACTION SELESAI]
         └── kirim OTP ke email via SMTP
               │
-              ├── [GAGAL] → DELETE users (rollback) ← agar email bisa dipakai ulang
+              ├── [GAGAL/TIMEOUT] → Hapus akun (CASCADE) ← agar email bisa dipakai ulang
               └── [OK]    → return { message, email }
 
 POST /auth/verify-register-otp
@@ -135,7 +138,10 @@ POST /auth/verify-register-otp
 | `POST /auth/console/login` | superadmin, admin, agency | Desktop Console |
 | `POST /auth/personnel/login` | agency_personnel | Mobile Responder |
 
-> **Keamanan:** Jika role yang salah mencoba endpoint yang salah, semua endpoint mengembalikan "email atau password salah" — tidak membocorkan informasi role (role enumeration prevention).
+> **Keamanan & Konsistensi:** 
+> 1. Jika role yang salah mencoba endpoint yang salah, semua endpoint mengembalikan "email atau password salah" — mencegah kebocoran informasi (role enumeration prevention).
+> 2. Untuk civilian/volunteer, sistem secara ketat memblokir login jika `IsEmailVerified = false`. Pengguna akan diminta mendaftar ulang, yang akan memicu proses "cleanup ghost account".
+
 
 ### 3.3 JWT Token
 

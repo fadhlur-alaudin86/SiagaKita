@@ -109,7 +109,35 @@
 
 ---
 
-### 🔖 Patch 1.0.2 — 1 Mei 2026 (Sesi Ini)
+### 🔖 Patch 1.0.4 — 1 Mei 2026 (Sesi Ini)
+
+#### 🐛 Bugfix & Arsitektur Auth
+
+**[KRITIS] Ghost Account & Timeout Pendaftaran**
+- **Masalah:** Jika server SMTP lambat atau gagal, aplikasi Flutter stuck (tidak ada timeout). Saat user menekan "kembali", request dibatalkan di client namun data `users` sudah terlanjur di-commit di backend, menghasilkan "Ghost Account" yang bisa login meskipun belum diverifikasi OTP.
+- **Perbaikan Backend:**
+  - `repo.CreateUserWithProfile()` — Operasi pembuatan `users` dan `user_profiles` digabung ke dalam satu transaksi atomik.
+  - `Register()` diubah agar memanggil `DeleteUserByEmail` (menghapus user yang unverified) jika *email* sudah pernah gagal OTP sebelumnya, memungkinkan pendaftaran ulang dengan lancar.
+  - `Login()` diubah: kini secara tegas memblokir akun yang `IsEmailVerified = false`.
+- **Perbaikan Flutter:** Menambahkan timeout konfigurasi (10s untuk SOS, 15s untuk regular, 30s untuk auth) menggunakan helper function `_post` dan `_req`.
+- **File Terdampak:** `auth_service.dart`, `incident_service.dart`, `backend-go/internal/domain/user/service.go`, `repository.go`.
+
+---
+
+### 🔖 Patch 1.0.3 — 1 Mei 2026
+
+#### 🚀 Deployment Infrastruktur (VPS)
+
+- **Masalah:** Aplikasi Flutter masih memakai IP lokal `10.0.2.2` dan `localhost`.
+- **Penyelesaian:** 
+  - Centralized IP configuration di `api_config.dart` (Mobile) dan `api_constants.dart` (Desktop). IP diubah menunjuk ke `139.59.99.230`.
+  - Penyiapan `docker-compose.prod.yml` khusus VPS (dengan port `8080` dan `8081` diekspos).
+  - Pembuatan skrip `setup_server.sh` untuk inisialisasi VPS awal dan dokumentasi lengkap di `DEPLOYMENT_GUIDE.md`.
+
+---
+
+### 🔖 Patch 1.0.2 — 1 Mei 2026
+
 
 #### 🐛 Bugfix
 
