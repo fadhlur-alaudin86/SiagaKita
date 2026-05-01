@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../constants/api_config.dart';
 
 /// IncidentService menangani API calls untuk SOS incidents (Jalur A)
 /// dan laporan warga non-darurat (Jalur B).
 class IncidentService {
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/v1';
+  static const String _baseUrl = ApiConfig.baseUrl;
+
 
   // ─── Trigger SOS (Jalur A) ────────────────────────────────────────────────
 

@@ -1,7 +1,13 @@
-// Konstanta API untuk desktop app
+// Konfigurasi API untuk desktop app.
+// Ganti _host untuk pindah antara local dan production.
 class ApiConstants {
-  static const String baseUrl = 'http://localhost:8080/api/v1';
-  static const String wsUrl = 'ws://localhost:8081/ws/connect';
+  // ── GANTI DI SINI jika server berganti ──────────────────────────────
+  static const String _host = '139.59.99.230';
+  // ────────────────────────────────────────────────────────────────────
+
+  static const String baseUrl = 'http://$_host:8080/api/v1';
+  static const String wsUrl = 'ws://$_host:8081/ws/connect';
+
 
   // Auth
   static const String login = '$baseUrl/auth/console/login';

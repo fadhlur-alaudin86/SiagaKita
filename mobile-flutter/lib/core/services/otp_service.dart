@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../constants/api_config.dart';
 
 /// OTPService menangani komunikasi dengan backend untuk permintaan dan
 /// verifikasi kode OTP yang dikirim via WhatsApp.
 class OTPService {
-  // TODO: Pindahkan base URL ke environment config (Task 6)
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/v1';
+  static const String _baseUrl = ApiConfig.baseUrl;
+
 
   /// Meminta kode OTP dikirimkan ke [phoneNumber] via WhatsApp.
   ///

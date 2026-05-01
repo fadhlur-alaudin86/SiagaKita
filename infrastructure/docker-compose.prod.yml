@@ -1,0 +1,79 @@
+# docker-compose.prod.yml — Digunakan oleh GitHub Actions di server VPS
+# Jalankan: docker compose -f docker-compose.prod.yml up -d
+#
+# Perbedaan dari docker-compose.yml (dev):
+#   - backend: pakai image dari Docker Hub (bukan build lokal)
+#   - postgres: tidak expose port ke publik (hanya lewat network internal)
+#   - redis: tidak expose port ke publik
+#   - pgadmin: TIDAK dijalankan di production
+#   - WebSocket port 8081 di-expose
+
+services:
+  # 1. Database Relasional (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: siagakita_postgres
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    # Tidak expose port ke publik — hanya diakses via siagakita_network
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - siagakita_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. In-Memory Cache (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: siagakita_redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD} --notify-keyspace-events Ex
+    env_file:
+      - .env
+    # Tidak expose port ke publik
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - siagakita_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # 3. Backend Go — image dari Docker Hub (di-push oleh GitHub Actions)
+  backend:
+    image: ${DOCKERHUB_USERNAME}/siagakita-api:latest
+    container_name: siagakita_backend
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"   # REST API
+      - "8081:8081"   # WebSocket
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - siagakita_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+networks:
+  siagakita_network:
+    driver: bridge

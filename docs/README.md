@@ -12,8 +12,10 @@
 | [PROGRESS_REPORT.md](./PROGRESS_REPORT.md) | Laporan kemajuan, changelog per sprint, status komponen, TODO | 1 Mei 2026 |
 | [BACKEND_ARCHITECTURE.md](./BACKEND_ARCHITECTURE.md) | Struktur folder Go, DDD pattern, auth flow, RBAC, WebSocket, OTP, env vars | 1 Mei 2026 |
 | [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) | Schema v3 lengkap, semua tabel + SQL, triggers, ERD, keputusan desain | 1 Mei 2026 |
+| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Setup VPS, GitHub Secrets, alur CI/CD, troubleshooting, firewall | 1 Mei 2026 |
 | [FRONTEND_STRUCTURE.txt](./FRONTEND_STRUCTURE.txt) | Struktur Flutter Mobile (citizen/volunteer), endpoint yang digunakan per screen | 1 Mei 2026 |
 | [DESKTOP_PLANNING_ADMIN_INSTANSI.txt](./DESKTOP_PLANNING_ADMIN_INSTANSI.txt) | Struktur Flutter Desktop Console (admin/instansi), fitur per halaman | 1 Mei 2026 |
+
 
 ---
 

@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../constants/api_config.dart';
 
 /// AuthService menangani komunikasi auth dengan backend Go.
 class AuthService {
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/v1';
+  static const String _baseUrl = ApiConfig.baseUrl;
+
 
   // ─── Register Step 1: buat akun → kirim OTP ke email ─────────────────────
   static Future<String> register({
