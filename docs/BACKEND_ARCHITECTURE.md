@@ -128,7 +128,24 @@ POST /auth/verify-register-otp
         ├── verifyEmailOTP (Redis lookup)
         ├── UPDATE user_profiles SET is_email_verified = true
         └── return JWT (access_token + refresh_token)
-```
+### B. Otentikasi & Registrasi (Anti-Ghost Account)
+
+Alur registrasi telah diperkuat untuk memastikan **integritas data** dan **mencegah kebocoran akun tak terverifikasi** (*Ghost Account*).
+
+1. **Atomic Transaction (`domain/user/service.go:Register`)**
+   - Pembuatan `users` (credentials) dan `user_profiles` dibungkus dalam **1 transaksi GORM**.
+   - Jika ada langkah yang gagal, transaksi di-_rollback_ tanpa meninggalkan data sampah di database.
+
+2. **Ghost Account Prevention & Auto-Cleanup**
+   - Masalah: Terkadang server gagal mengirim OTP karena *network timeout* atau pemblokiran port SMTP.
+   - Solusi: Jika terjadi kegagalan _setelah_ transaksi DB berhasil di-_commit_, server secara otomatis **menghapus kembali** (*hard-delete*) row yang baru saja dibuat.
+   - Pengecekan Login: Fungsi `Login()` kini menolak akses untuk akun dengan `is_email_verified = false`. Akun seperti ini akan diminta melakukan registrasi ulang (yang akan menghapus akun rusak lama).
+
+3. **Email Gateway via Gmail REST API**
+   - VPS cloud modern (seperti DigitalOcean) secara default memblokir semua outbound *port* SMTP (25, 465, 587) untuk mencegah SPAM.
+   - Untuk menghindari *infinite loop / timeout* yang membekukan aplikasi klien, gateway email dipindahkan menggunakan **Gmail REST API via HTTPS (Port 443)** di `domain/otp/gmail_api_gateway.go`.
+   - Hal ini memastikan pengiriman email menggunakan protokol HTTPS yang aman dari pemblokiran firewall VPS, lengkap dengan implementasi *Refresh Token OAuth2* secara otomatis.
+
 
 ### 3.2 Login — 3 Endpoint Terpisah
 
