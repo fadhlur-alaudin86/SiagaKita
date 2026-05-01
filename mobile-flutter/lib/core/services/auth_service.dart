@@ -102,31 +102,22 @@ class AuthResult {
 
 class UserInfo {
   final String id;
-  final String fullName;
+  final String? fullName;   // nullable — diambil dari user_profiles
   final String email;
   final String role;
-  final bool isEmailVerified;
-  final bool isPhoneVerified;
-  final bool isVerifiedVolunteer;
 
   const UserInfo({
     required this.id,
-    required this.fullName,
+    this.fullName,
     required this.email,
     required this.role,
-    required this.isEmailVerified,
-    required this.isPhoneVerified,
-    required this.isVerifiedVolunteer,
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) => UserInfo(
         id: json['id'] as String,
-        fullName: json['full_name'] as String,
+        fullName: json['full_name'] as String?,
         email: json['email'] as String,
         role: json['role'] as String,
-        isEmailVerified: (json['is_email_verified'] as bool?) ?? false,
-        isPhoneVerified: (json['is_phone_verified'] as bool?) ?? false,
-        isVerifiedVolunteer: (json['is_verified_volunteer'] as bool?) ?? false,
       );
 }
 

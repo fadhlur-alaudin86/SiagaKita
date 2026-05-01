@@ -10,6 +10,7 @@ import (
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/database"
+	adminDomain "siagakita-backend/internal/domain/admin"
 	incidentDomain "siagakita-backend/internal/domain/incident"
 	otpDomain "siagakita-backend/internal/domain/otp"
 	"siagakita-backend/internal/domain/telemetry"
@@ -63,6 +64,10 @@ func main() {
 	incidentRepo := incidentDomain.NewRepository(db)
 	incidentSvc := incidentDomain.NewService(incidentRepo)
 	incidentHandler := incidentDomain.NewHandler(incidentSvc)
+
+	// Admin domain
+	adminSvc := adminDomain.NewService(db)
+	adminHandler := adminDomain.NewHandler(adminSvc)
 
 	// Telemetry domain
 	telemetryHandler := telemetry.NewHandler(rdb, wsHub, cfg)
@@ -134,6 +139,29 @@ func main() {
 	// ── Telemetry ─────────────────────────────────────────────────────────────
 	telGroup := v1.Group("/telemetry", authMw)
 	telGroup.Put("/location", telemetryHandler.UpdateLocation)
+
+	// ── Admin (protected — AdminOnly / ConsoleOnly) ───────────────────────────
+	admin := v1.Group("/admin", authMw)
+
+	// KYC Relawan
+	admin.Get("/volunteers/pending", middleware.AdminOnly(), adminHandler.GetPendingKYC)
+	admin.Post("/volunteers/:id/approve", middleware.AdminOnly(), adminHandler.ApproveKYC)
+	admin.Post("/volunteers/:id/reject", middleware.AdminOnly(), adminHandler.RejectKYC)
+
+	// Manajemen Pengguna
+	admin.Get("/users", middleware.AdminOnly(), adminHandler.GetUsers)
+	admin.Post("/users/:id/ban", middleware.AdminOnly(), adminHandler.BanUser)
+	admin.Post("/users/:id/unban", middleware.AdminOnly(), adminHandler.UnbanUser)
+	admin.Delete("/users/:id/strike", middleware.AdminOnly(), adminHandler.ResetStrike)
+
+	// Master Data: Ranks
+	admin.Get("/ranks", middleware.ConsoleOnly(), adminHandler.GetRanks)
+	admin.Post("/ranks", middleware.AdminOnly(), adminHandler.CreateRank)
+	admin.Put("/ranks/:id", middleware.AdminOnly(), adminHandler.UpdateRank)
+	admin.Delete("/ranks/:id", middleware.AdminOnly(), adminHandler.DeleteRank)
+
+	// Statistik
+	admin.Get("/stats", middleware.ConsoleOnly(), adminHandler.GetStats)
 
 	// ── SMS Fallback (API key protected — no JWT) ─────────────────────────────
 	v1.Post("/incidents/sms-fallback",
