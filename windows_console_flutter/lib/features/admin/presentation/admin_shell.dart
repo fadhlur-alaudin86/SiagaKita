@@ -5,14 +5,16 @@ import 'pages/kyc_relawan_page.dart';
 import 'pages/user_management_page.dart';
 import 'pages/gamifikasi_page.dart';
 import 'pages/statistik_page.dart';
+import 'pages/pendaftaran_akun_page.dart';
 
-enum AdminMenu { kyc, users, gamifikasi, statistik }
+enum AdminMenu { kyc, users, pendaftaran, gamifikasi, statistik }
 
 class AdminShell extends StatefulWidget {
   final String token;
+  final String role;
   final WsService ws;
 
-  const AdminShell({super.key, required this.token, required this.ws});
+  const AdminShell({super.key, required this.token, required this.role, required this.ws});
 
   @override
   State<AdminShell> createState() => _AdminShellState();
@@ -24,6 +26,7 @@ class _AdminShellState extends State<AdminShell> {
   static const _titles = {
     AdminMenu.kyc: 'KYC & Verifikasi Relawan',
     AdminMenu.users: 'Manajemen Pengguna',
+    AdminMenu.pendaftaran: 'Pendaftaran Akun Khusus',
     AdminMenu.gamifikasi: 'Master Data Gamifikasi',
     AdminMenu.statistik: 'Statistik & Analitik',
   };
@@ -31,6 +34,7 @@ class _AdminShellState extends State<AdminShell> {
   Widget _resolvePage() => switch (_active) {
         AdminMenu.kyc => KycRelawanPage(token: widget.token),
         AdminMenu.users => UserManagementPage(token: widget.token),
+        AdminMenu.pendaftaran => PendaftaranAkunPage(token: widget.token, role: widget.role),
         AdminMenu.gamifikasi => GamifikasiPage(token: widget.token),
         AdminMenu.statistik => StatistikPage(token: widget.token),
       };
@@ -129,6 +133,12 @@ class _AdminSideNav extends StatelessWidget {
                 icon: Icons.people_outlined,
                 selected: activeMenu == AdminMenu.users,
                 onTap: () => onSelected(AdminMenu.users),
+              ),
+              _AdminNavItem(
+                label: 'Pendaftaran Akun',
+                icon: Icons.person_add_outlined,
+                selected: activeMenu == AdminMenu.pendaftaran,
+                onTap: () => onSelected(AdminMenu.pendaftaran),
               ),
               const SizedBox(height: 12),
               const Padding(
