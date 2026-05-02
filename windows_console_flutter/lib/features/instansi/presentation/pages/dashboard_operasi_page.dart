@@ -194,11 +194,11 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                               )
                             : ListView.separated(
                                 itemCount: _recentSOS.length,
-                                separatorBuilder: (_, __) => const Divider(
+                                separatorBuilder: (context, index) => const Divider(
                                   color: Colors.white10,
                                   height: 1,
                                 ),
-                                itemBuilder: (_, i) {
+                                itemBuilder: (context, i) {
                                   final inc = _recentSOS[i];
                                   return ListTile(
                                     leading: const Icon(

@@ -33,11 +33,12 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     final data = await AdminApiService.getPendingVolunteers(widget.token);
-    if (mounted)
+    if (mounted) {
       setState(() {
         _volunteers = data;
         _loading = false;
       });
+    }
   }
 
   Future<void> _approve() async {
@@ -371,7 +372,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                   v.nikPhotoUrl!,
                   height: 180,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (context, error, stackTrace) => Container(
                     height: 100,
                     color: Colors.white10,
                     child: const Center(

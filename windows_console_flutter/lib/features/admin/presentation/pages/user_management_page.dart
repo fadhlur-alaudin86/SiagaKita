@@ -251,11 +251,9 @@ class _UserManagementPageState extends State<UserManagementPage> {
                               )
                             : ListView.separated(
                                 itemCount: _filtered.length,
-                                separatorBuilder: (_, __) => const Divider(
-                                  color: Colors.white10,
-                                  height: 1,
-                                ),
-                                itemBuilder: (_, i) {
+                                separatorBuilder: (context, index) =>
+                                    const Divider(color: Colors.white10, height: 1),
+                                itemBuilder: (context, i) {
                                   final u = _filtered[i];
                                   return _UserRow(
                                     user: u,

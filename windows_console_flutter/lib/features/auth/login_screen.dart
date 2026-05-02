@@ -54,9 +54,10 @@ class _LoginScreenState extends State<LoginScreen> {
         destination = InstansiShell(token: result.accessToken, ws: ws);
       }
 
+      if (!mounted) return;
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
+      ).pushReplacement(MaterialPageRoute(builder: (context) => destination));
     } on AuthException catch (e) {
       setState(() {
         _error = e.message;

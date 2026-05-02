@@ -47,11 +47,12 @@ class _SosAktifPageState extends State<SosAktifPage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     final data = await IncidentApiService.getActiveIncidents(widget.token);
-    if (mounted)
+    if (mounted) {
       setState(() {
         _incidents = data;
         _loading = false;
       });
+    }
   }
 
   Future<void> _markFalseAlarm() async {
@@ -228,9 +229,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         )
                       : ListView.separated(
                           itemCount: _incidents.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (context, index) =>
                               const Divider(color: Colors.white10, height: 1),
-                          itemBuilder: (_, i) {
+                          itemBuilder: (context, i) {
                             final inc = _incidents[i];
                             final isSelected = _selected?.id == inc.id;
                             return Material(

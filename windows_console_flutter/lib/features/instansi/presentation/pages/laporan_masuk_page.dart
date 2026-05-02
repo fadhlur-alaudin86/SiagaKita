@@ -28,11 +28,12 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
       widget.token,
       status: _filterStatus == 'all' ? null : _filterStatus,
     );
-    if (mounted)
+    if (mounted) {
       setState(() {
         _reports = data;
         _loading = false;
       });
+    }
   }
 
   Future<void> _updateStatus(String id, String status) async {
@@ -87,9 +88,9 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                 )
               : ListView.separated(
                   itemCount: _reports.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (context, index) =>
                       const Divider(color: Colors.white10, height: 1),
-                  itemBuilder: (_, i) {
+                  itemBuilder: (context, i) {
                     final r = _reports[i];
                     return Card(
                       color: const Color(0xFF1A2035),

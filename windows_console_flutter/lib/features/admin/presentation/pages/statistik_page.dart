@@ -25,11 +25,12 @@ class _StatistikPageState extends State<StatistikPage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     final data = await AdminApiService.getStats(widget.token);
-    if (mounted)
+    if (mounted) {
       setState(() {
         _stats = data;
         _loading = false;
       });
+    }
   }
 
   @override

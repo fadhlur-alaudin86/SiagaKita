@@ -253,7 +253,7 @@ class _TopHeader extends StatelessWidget {
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const Spacer(),
           Consumer<WsService>(
-            builder: (_, ws, __) => Container(
+            builder: (context, ws, child) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: ws.isConnected

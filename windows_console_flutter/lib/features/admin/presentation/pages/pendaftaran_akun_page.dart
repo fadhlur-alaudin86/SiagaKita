@@ -21,8 +21,6 @@ class PendaftaranAkunPage extends StatefulWidget {
 class _PendaftaranAkunPageState extends State<PendaftaranAkunPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final int _tabCount =
-      2; // Always show 2 tabs, but we might disable one or hide it
 
   @override
   void initState() {

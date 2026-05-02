@@ -24,11 +24,12 @@ class _GamifikasiPageState extends State<GamifikasiPage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     final data = await AdminApiService.getRanks(widget.token);
-    if (mounted)
+    if (mounted) {
       setState(() {
         _ranks = data;
         _loading = false;
       });
+    }
   }
 
   Future<void> _showForm({RankModel? existing}) async {
