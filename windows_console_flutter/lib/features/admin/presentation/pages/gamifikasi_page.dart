@@ -195,10 +195,10 @@ class _GamifikasiPageState extends State<GamifikasiPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.emoji_events_outlined,
                         size: 64,
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white38,
                       ),
                       const SizedBox(height: 16),
                       const Text(

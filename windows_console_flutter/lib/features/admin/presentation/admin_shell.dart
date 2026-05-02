@@ -88,6 +88,7 @@ class _AdminShellState extends State<AdminShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0F172A), // Slate 900
       body: Row(
         children: [
           _AdminSideNav(

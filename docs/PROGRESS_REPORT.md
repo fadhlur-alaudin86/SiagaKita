@@ -153,6 +153,34 @@
 
 ---
 
+### 🔖 Sprint E — 2 Mei 2026
+
+#### Desktop Console: UI/UX Polish & Bug Fixes
+
+**Superadmin Dashboard UI Improvements**
+- Mengubah background `Scaffold` menjadi `Color(0xFF0F172A)` agar warna tema gelap (dark mode) konsisten secara keseluruhan dan teks tidak menghilang di atas background terang.
+- Menyesuaikan _opacity_ ikon _placeholder_ dan teks pada halaman Gamifikasi agar mudah terlihat di atas background gelap.
+- Perbaikan layout status pengguna di tab Manajemen Pengguna menggunakan `Align` agar lebar _background_ indikator status tidak melebar dan menutupi tombol _Aksi_.
+- Memperbaiki indikator tab pada halaman Pendaftaran Akun (`TabBarIndicatorSize.tab`) sehingga garis _highlight_ mencakup keseluruhan lebar tab.
+
+**Fungsionalitas Interaktif & Peta**
+- Menambahkan input pencarian berbasis teks pada komponen peta Pendaftaran Akun Instansi, menggunakan API _reverse geocoding_ dari Nominatim (OpenStreetMap).
+- Penerapan logika pengambilan data _reverse geocoding_ otomatis saat peta diklik/dicari untuk mengisi _field_ "Kode Kota" berupa 3 huruf (singkatan kota) berdasarkan lokasi kordinat.
+- Menambahkan efek _hover_ (perubahan _cursor_ dan _highlight_) pada tombol navigasi (_FilterChip_) dan tombol _ActionBtn_ (Ban/Unban) di Manajemen Pengguna.
+
+**Logika Pemblokiran (Ban/Unban)**
+- Menyempurnakan _popup_ pemblokiran di Manajemen Pengguna:
+  - Teks pada tombol "Ban Sekarang" dibuat tebal dan putih agar kontras.
+  - Menambahkan _input text field_ khusus untuk "Rentang waktu ban (hari)".
+  - Memberikan batasan validasi; jika alasan pemblokiran kosong, tombol "Ban Sekarang" dinonaktifkan (_disabled_).
+  - Melakukan konversi API parameter `days` untuk dikirimkan secara langsung ke `AdminApiService.banUser()`.
+- Menambahkan proses _popup_ konfirmasi ketika aksi unban dilakukan agar admin tidak sengaja membuka blokir pengguna.
+
+**Code Quality & Linting**
+- Telah menyelesaikan seluruh masalah pada kode Flutter (_flutter analyze_), seperti penambahan kurung kurawal pada blok struktur `if`, penggunaan *named variables* ketimbang *underscore parameter* `(_, __)`, menghapus variabel yang tidak terpakai, serta menjaga agar `BuildContext` sinkron tidak dijalankan setelah asynchronous gaps (_use_build_context_synchronously_).
+
+---
+
 ### 🔖 Sprint D — 1 Mei 2026
 
 #### Backend: Restructuring Database + Role Expansion

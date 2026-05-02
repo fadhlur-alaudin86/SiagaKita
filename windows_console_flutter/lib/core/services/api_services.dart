@@ -144,11 +144,11 @@ class AdminApiService {
         .toList();
   }
 
-  static Future<bool> banUser(String token, String id, String reason) async {
+  static Future<bool> banUser(String token, String id, String reason, int days) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.adminUserBan(id)),
       headers: AuthService.headers(token),
-      body: jsonEncode({'reason': reason}),
+      body: jsonEncode({'reason': reason, 'days': days}),
     );
     return resp.statusCode == 200;
   }

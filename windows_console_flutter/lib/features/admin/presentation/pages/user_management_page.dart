@@ -67,57 +67,81 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
   Future<void> _ban(UserModel user) async {
     _banReasonCtrl.clear();
+    final banDaysCtrl = TextEditingController(text: '7');
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E2537),
-        title: Text(
-          'Ban ${user.fullName}?',
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Pengguna tidak akan bisa menggunakan fitur SOS.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _banReasonCtrl,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setStateBuilder) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E2537),
+            title: Text(
+              'Ban ${user.fullName}?',
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Alasan ban',
-                labelStyle: TextStyle(color: Colors.white54),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white24),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.red),
-                ),
-              ),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ban Sekarang'),
-          ),
-        ],
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Pengguna tidak akan bisa menggunakan fitur SOS.',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _banReasonCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  onChanged: (v) => setStateBuilder(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Alasan ban',
+                    labelStyle: TextStyle(color: Colors.white54),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white24),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: banDaysCtrl,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Rentang waktu ban (hari)',
+                    labelStyle: TextStyle(color: Colors.white54),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white24),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF7418)),
+                onPressed: _banReasonCtrl.text.trim().isEmpty ? null : () => Navigator.pop(ctx, true),
+                child: const Text('Ban Sekarang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        }
       ),
     );
-    if (confirmed != true || _banReasonCtrl.text.isEmpty) return;
+    if (confirmed != true || _banReasonCtrl.text.trim().isEmpty) return;
+    int days = int.tryParse(banDaysCtrl.text) ?? 7;
     final ok = await AdminApiService.banUser(
       widget.token,
       user.id,
       _banReasonCtrl.text,
+      days,
     );
     if (ok && mounted) {
       _load();
@@ -126,6 +150,32 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
 
   Future<void> _unban(UserModel user) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E2537),
+        title: Text(
+          'Unban ${user.fullName}?',
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Pengguna akan bisa menggunakan fitur SOS kembali.',
+          style: TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Unban Sekarang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     final ok = await AdminApiService.unbanUser(widget.token, user.id);
     if (ok && mounted) {
       _load();
@@ -340,20 +390,23 @@ class _UserRow extends StatelessWidget {
           ),
           Expanded(
             flex: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: user.isSOSBanned
-                    ? Colors.red.withValues(alpha: 0.2)
-                    : Colors.green.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Text(
-                user.isSOSBanned ? '🚫 BANNED' : '✅ Aktif',
-                style: TextStyle(
-                  color: user.isSOSBanned ? Colors.red : Colors.green,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: user.isSOSBanned
+                      ? Colors.red.withValues(alpha: 0.2)
+                      : Colors.green.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  user.isSOSBanned ? '🚫 BANNED' : '✅ Aktif',
+                  style: TextStyle(
+                    color: user.isSOSBanned ? Colors.red : Colors.green,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -425,22 +478,26 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = color ?? const Color(0xFFFF7418);
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? c.withValues(alpha: 0.2) : const Color(0xFF1A2035),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: selected ? c : Colors.white12),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? c : Colors.white54,
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: selected ? c.withValues(alpha: 0.2) : const Color(0xFF1A2035),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: selected ? c : Colors.white12),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? c : Colors.white54,
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ),
       ),
@@ -462,29 +519,33 @@ class _ActionBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.4)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 12),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 12),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

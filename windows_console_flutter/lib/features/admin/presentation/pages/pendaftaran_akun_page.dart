@@ -59,6 +59,7 @@ class _PendaftaranAkunPageState extends State<PendaftaranAkunPage>
                 color: const Color(0xFFFF7418),
                 borderRadius: BorderRadius.circular(8),
               ),
+              indicatorSize: TabBarIndicatorSize.tab,
               indicatorPadding: const EdgeInsets.all(4),
               dividerColor: Colors.transparent,
               tabs: const [
@@ -99,6 +100,7 @@ class _FormInstansiState extends State<_FormInstansi> {
   final _passCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
+  final _searchCtrl = TextEditingController();
   String _type = 'police';
   bool _loading = false;
   String? _msg;
@@ -161,6 +163,54 @@ class _FormInstansiState extends State<_FormInstansi> {
     }
   }
 
+  Future<void> _searchLocation() async {
+    final query = _searchCtrl.text.trim();
+    if (query.isEmpty) return;
+    
+    setState(() => _loading = true);
+    try {
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=1');
+      final res = await http.get(url, headers: {'User-Agent': 'com.siagakita.console'});
+      if (res.statusCode == 200) {
+        final List data = jsonDecode(res.body);
+        if (data.isNotEmpty) {
+          final lat = double.parse(data[0]['lat'].toString());
+          final lon = double.parse(data[0]['lon'].toString());
+          final point = LatLng(lat, lon);
+          setState(() {
+            _selectedLocation = point;
+          });
+          _mapController.move(point, 14.0);
+          _reverseGeocode(point);
+        }
+      }
+    } catch (_) {}
+    setState(() => _loading = false);
+  }
+
+  Future<void> _reverseGeocode(LatLng point) async {
+    try {
+      final url = Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=${point.latitude}&lon=${point.longitude}&zoom=10');
+      final res = await http.get(url, headers: {'User-Agent': 'com.siagakita.console'});
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final address = data['address'] as Map<String, dynamic>?;
+        if (address != null) {
+          String city = address['city'] ?? address['town'] ?? address['county'] ?? address['state'] ?? '';
+          if (city.isNotEmpty) {
+            String code = city.replaceAll(RegExp(r'[^a-zA-Z]'), '').toUpperCase();
+            if (code.length > 3) {
+              code = code.substring(0, 3);
+            }
+            setState(() {
+              _cityCtrl.text = code;
+            });
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildCardForm(
@@ -209,6 +259,40 @@ class _FormInstansiState extends State<_FormInstansi> {
           style: TextStyle(color: Colors.white70, fontSize: 13),
         ),
         const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Cari nama tempat / kota...',
+                  hintStyle: const TextStyle(color: Colors.white24),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onSubmitted: (_) => _searchLocation(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: _loading ? null : _searchLocation,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1F2937),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Icon(Icons.search, size: 20),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         Container(
           height: 250,
           decoration: BoxDecoration(
@@ -229,6 +313,7 @@ class _FormInstansiState extends State<_FormInstansi> {
                   setState(() {
                     _selectedLocation = point;
                   });
+                  _reverseGeocode(point);
                 },
               ),
               children: [
