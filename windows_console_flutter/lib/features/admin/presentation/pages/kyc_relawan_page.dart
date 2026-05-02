@@ -33,15 +33,25 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     final data = await AdminApiService.getPendingVolunteers(widget.token);
-    if (mounted) setState(() { _volunteers = data; _loading = false; });
+    if (mounted)
+      setState(() {
+        _volunteers = data;
+        _loading = false;
+      });
   }
 
   Future<void> _approve() async {
     if (_selected == null) return;
-    final ok = await AdminApiService.approveVolunteer(widget.token, _selected!.id);
+    final ok = await AdminApiService.approveVolunteer(
+      widget.token,
+      _selected!.id,
+    );
     if (!mounted) return;
     if (ok) {
-      _showSnack('✅ ${_selected!.fullName} disetujui sebagai relawan.', Colors.green);
+      _showSnack(
+        '✅ ${_selected!.fullName} disetujui sebagai relawan.',
+        Colors.green,
+      );
       setState(() => _selected = null);
       _load();
     } else {
@@ -57,13 +67,18 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
-        title: const Text('Tolak Pendaftaran', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Tolak Pendaftaran',
+          style: TextStyle(color: Colors.white),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Alasan penolakan untuk ${_selected!.fullName}:',
-                style: const TextStyle(color: Colors.white70)),
+            Text(
+              'Alasan penolakan untuk ${_selected!.fullName}:',
+              style: const TextStyle(color: Colors.white70),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _rejectCtrl,
@@ -73,9 +88,11 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                 hintText: 'Contoh: Foto KTP tidak jelas',
                 hintStyle: TextStyle(color: Colors.white38),
                 enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white24)),
+                  borderSide: BorderSide(color: Colors.white24),
+                ),
                 focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.orange)),
+                  borderSide: BorderSide(color: Colors.orange),
+                ),
               ),
             ),
           ],
@@ -96,20 +113,25 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
 
     if (confirmed != true || _rejectCtrl.text.isEmpty) return;
     final ok = await AdminApiService.rejectVolunteer(
-        widget.token, _selected!.id, _rejectCtrl.text);
+      widget.token,
+      _selected!.id,
+      _rejectCtrl.text,
+    );
     if (!mounted) return;
     if (ok) {
-      _showSnack('❌ Pendaftaran ${_selected!.fullName} ditolak.', Colors.orange);
+      _showSnack(
+        '❌ Pendaftaran ${_selected!.fullName} ditolak.',
+        Colors.orange,
+      );
       setState(() => _selected = null);
       _load();
     }
   }
 
   void _showSnack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: color,
-    ));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
   @override
@@ -121,7 +143,9 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
           width: 300,
           child: Card(
             color: const Color(0xFF1A2035),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -129,20 +153,37 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      const Icon(Icons.pending_actions, color: Colors.orange, size: 18),
+                      const Icon(
+                        Icons.pending_actions,
+                        color: Colors.orange,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
-                      const Text('Antrian KYC',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Antrian KYC',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const Spacer(),
                       if (!_loading)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.orange.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(99),
                           ),
-                          child: Text('${_volunteers.length}',
-                              style: const TextStyle(color: Colors.orange, fontSize: 12)),
+                          child: Text(
+                            '${_volunteers.length}',
+                            style: const TextStyle(
+                              color: Colors.orange,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                     ],
                   ),
@@ -152,62 +193,81 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                   child: _loading
                       ? const Center(child: CircularProgressIndicator())
                       : _volunteers.isEmpty
-                          ? const Center(
-                              child: Text('Tidak ada antrian',
-                                  style: TextStyle(color: Colors.white38)))
-                          : ListView.builder(
-                              itemCount: _volunteers.length,
-                              itemBuilder: (_, i) {
-                                final v = _volunteers[i];
-                                final isSelected = _selected?.id == v.id;
-                                return Material(
-                                  color: isSelected
-                                      ? const Color(0xFFFF7418).withValues(alpha: 0.15)
-                                      : Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => setState(() => _selected = v),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 12),
-                                      child: Row(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 20,
-                                            backgroundColor:
-                                                Colors.orange.withValues(alpha: 0.2),
-                                            child: Text(
-                                              v.fullName.isNotEmpty
-                                                  ? v.fullName[0].toUpperCase()
-                                                  : '?',
-                                              style: const TextStyle(color: Colors.orange),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(v.fullName,
-                                                    style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.w600)),
-                                                Text(v.email,
-                                                    style: const TextStyle(
-                                                        color: Colors.white54,
-                                                        fontSize: 11)),
-                                              ],
-                                            ),
-                                          ),
-                                          if (isSelected)
-                                            const Icon(Icons.chevron_right,
-                                                color: Color(0xFFFF7418), size: 18),
-                                        ],
-                                      ),
-                                    ),
+                      ? const Center(
+                          child: Text(
+                            'Tidak ada antrian',
+                            style: TextStyle(color: Colors.white38),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: _volunteers.length,
+                          itemBuilder: (_, i) {
+                            final v = _volunteers[i];
+                            final isSelected = _selected?.id == v.id;
+                            return Material(
+                              color: isSelected
+                                  ? const Color(
+                                      0xFFFF7418,
+                                    ).withValues(alpha: 0.15)
+                                  : Colors.transparent,
+                              child: InkWell(
+                                onTap: () => setState(() => _selected = v),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
                                   ),
-                                );
-                              },
-                            ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor: Colors.orange
+                                            .withValues(alpha: 0.2),
+                                        child: Text(
+                                          v.fullName.isNotEmpty
+                                              ? v.fullName[0].toUpperCase()
+                                              : '?',
+                                          style: const TextStyle(
+                                            color: Colors.orange,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              v.fullName,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            Text(
+                                              v.email,
+                                              style: const TextStyle(
+                                                color: Colors.white54,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          color: Color(0xFFFF7418),
+                                          size: 18,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -223,11 +283,16 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.touch_app_outlined,
-                          color: Colors.white24, size: 48),
+                      Icon(
+                        Icons.touch_app_outlined,
+                        color: Colors.white24,
+                        size: 48,
+                      ),
                       const SizedBox(height: 12),
-                      const Text('Pilih relawan dari daftar untuk verifikasi',
-                          style: TextStyle(color: Colors.white38)),
+                      const Text(
+                        'Pilih relawan dari daftar untuk verifikasi',
+                        style: TextStyle(color: Colors.white38),
+                      ),
                     ],
                   ),
                 )
@@ -261,16 +326,23 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(v.fullName,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold)),
-                    Text(v.email,
-                        style: const TextStyle(color: Colors.white54)),
+                    Text(
+                      v.fullName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      v.email,
+                      style: const TextStyle(color: Colors.white54),
+                    ),
                     if (v.phoneNumber != null)
-                      Text(v.phoneNumber!,
-                          style: const TextStyle(color: Colors.white54)),
+                      Text(
+                        v.phoneNumber!,
+                        style: const TextStyle(color: Colors.white54),
+                      ),
                   ],
                 ),
               ],
@@ -284,9 +356,13 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
             const SizedBox(height: 16),
 
             // Foto KTP
-            const Text('Foto KTP:',
-                style: TextStyle(
-                    color: Colors.white70, fontWeight: FontWeight.w600)),
+            const Text(
+              'Foto KTP:',
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 8),
             if (v.nikPhotoUrl != null && v.nikPhotoUrl!.isNotEmpty)
               ClipRRect(
@@ -299,41 +375,54 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                     height: 100,
                     color: Colors.white10,
                     child: const Center(
-                        child: Text('Gagal memuat foto',
-                            style: TextStyle(color: Colors.white38))),
+                      child: Text(
+                        'Gagal memuat foto',
+                        style: TextStyle(color: Colors.white38),
+                      ),
+                    ),
                   ),
                 ),
               )
             else
-              const Text('Tidak ada foto KTP',
-                  style: TextStyle(color: Colors.white38)),
+              const Text(
+                'Tidak ada foto KTP',
+                style: TextStyle(color: Colors.white38),
+              ),
 
             const SizedBox(height: 20),
 
             // Sertifikat
-            const Text('Sertifikat:',
-                style: TextStyle(
-                    color: Colors.white70, fontWeight: FontWeight.w600)),
+            const Text(
+              'Sertifikat:',
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 8),
             if (v.certUrls.isEmpty)
-              const Text('Tidak ada sertifikat',
-                  style: TextStyle(color: Colors.white38))
+              const Text(
+                'Tidak ada sertifikat',
+                style: TextStyle(color: Colors.white38),
+              )
             else
-              ...v.certUrls.asMap().entries.map((e) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.blue,
-                        side: const BorderSide(color: Colors.blue),
-                      ),
-                      icon: const Icon(Icons.file_download_outlined, size: 16),
-                      label: Text('Sertifikat ${e.key + 1}'),
-                      onPressed: () async {
-                        final uri = Uri.parse(e.value);
-                        if (await canLaunchUrl(uri)) launchUrl(uri);
-                      },
+              ...v.certUrls.asMap().entries.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      side: const BorderSide(color: Colors.blue),
                     ),
-                  )),
+                    icon: const Icon(Icons.file_download_outlined, size: 16),
+                    label: Text('Sertifikat ${e.key + 1}'),
+                    onPressed: () async {
+                      final uri = Uri.parse(e.value);
+                      if (await canLaunchUrl(uri)) launchUrl(uri);
+                    },
+                  ),
+                ),
+              ),
 
             const SizedBox(height: 32),
             const Divider(color: Colors.white12),
@@ -349,10 +438,14 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                       side: const BorderSide(color: Colors.red),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     icon: const Icon(Icons.close, size: 18),
-                    label: const Text('TOLAK', style: TextStyle(letterSpacing: 1)),
+                    label: const Text(
+                      'TOLAK',
+                      style: TextStyle(letterSpacing: 1),
+                    ),
                     onPressed: _reject,
                   ),
                 ),
@@ -365,11 +458,17 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('APPROVE RELAWAN',
-                        style: TextStyle(letterSpacing: 1, fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'APPROVE RELAWAN',
+                      style: TextStyle(
+                        letterSpacing: 1,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     onPressed: _approve,
                   ),
                 ),
@@ -394,13 +493,19 @@ class _DetailRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 120,
-          child: Text(label,
-              style: const TextStyle(color: Colors.white54, fontSize: 13)),
+          child: Text(
+            label,
+            style: const TextStyle(color: Colors.white54, fontSize: 13),
+          ),
         ),
         Expanded(
-          child: Text(value,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w600)),
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
     );

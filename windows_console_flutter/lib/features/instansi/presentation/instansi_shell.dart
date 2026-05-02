@@ -165,12 +165,17 @@ class _SideNavigation extends StatelessWidget {
                     Icon(
                       Icons.circle,
                       size: 9,
-                      color: ws.isConnected ? const Color(0xFF2EAF60) : Colors.red,
+                      color: ws.isConnected
+                          ? const Color(0xFF2EAF60)
+                          : Colors.red,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       ws.isConnected ? 'WS Connected' : 'Offline',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -245,10 +250,7 @@ class _TopHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
           const Spacer(),
           Consumer<WsService>(
             builder: (_, ws, __) => Container(
@@ -264,13 +266,17 @@ class _TopHeader extends StatelessWidget {
                   Icon(
                     Icons.circle,
                     size: 10,
-                    color: ws.isConnected ? const Color(0xFF2EAF60) : Colors.red,
+                    color: ws.isConnected
+                        ? const Color(0xFF2EAF60)
+                        : Colors.red,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     ws.isConnected ? 'Realtime Connected' : 'Offline',
                     style: TextStyle(
-                      color: ws.isConnected ? const Color(0xFF2EAF60) : Colors.red,
+                      color: ws.isConnected
+                          ? const Color(0xFF2EAF60)
+                          : Colors.red,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),

@@ -65,32 +65,47 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
             children: [
               const Icon(Icons.map_outlined, color: Colors.white54, size: 16),
               const SizedBox(width: 8),
-              const Text('Peta Real-time',
-                  style: TextStyle(color: Colors.white70, fontSize: 13)),
+              const Text(
+                'Peta Real-time',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.red.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        color: Colors.red, size: 12),
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.red,
+                      size: 12,
+                    ),
                     const SizedBox(width: 4),
-                    Text('${_incidents.length} SOS Aktif',
-                        style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      '${_incidents.length} SOS Aktif',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
               GestureDetector(
                 onTap: _loadIncidents,
-                child: const Icon(Icons.refresh, color: Colors.white38, size: 18),
+                child: const Icon(
+                  Icons.refresh,
+                  color: Colors.white38,
+                  size: 18,
+                ),
               ),
             ],
           ),
@@ -141,8 +156,11 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                                   ),
                                 ],
                               ),
-                              child: const Icon(Icons.warning_amber_rounded,
-                                  color: Colors.white, size: 18),
+                              child: const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                             ),
                             CustomPaint(
                               size: const Size(12, 8),
@@ -164,9 +182,15 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
           padding: const EdgeInsets.only(top: 12),
           child: Row(
             children: [
-              _LegendItem(color: Colors.red, label: 'SOS Aktif (${_incidents.length})'),
+              _LegendItem(
+                color: Colors.red,
+                label: 'SOS Aktif (${_incidents.length})',
+              ),
               const SizedBox(width: 16),
-              _LegendItem(color: Colors.green, label: 'Relawan Online (via WS Telemetry)'),
+              _LegendItem(
+                color: Colors.green,
+                label: 'Relawan Online (via WS Telemetry)',
+              ),
             ],
           ),
         ),
@@ -184,18 +208,25 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Pelapor: ${inc.reporterName}',
-                style: const TextStyle(color: Colors.white70)),
-            Text('Trust: ${inc.trustLabel}',
-                style: const TextStyle(color: Colors.white70)),
-            Text('Waktu: ${inc.formattedTime}',
-                style: const TextStyle(color: Colors.white70)),
+            Text(
+              'Pelapor: ${inc.reporterName}',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            Text(
+              'Trust: ${inc.trustLabel}',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            Text(
+              'Waktu: ${inc.formattedTime}',
+              style: const TextStyle(color: Colors.white70),
+            ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup', style: TextStyle(color: Colors.white54))),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup', style: TextStyle(color: Colors.white54)),
+          ),
         ],
       ),
     );
@@ -209,14 +240,16 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Container(
-              width: 12, height: 12,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-        ],
-      );
+    children: [
+      Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 6),
+      Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+    ],
+  );
 }
 
 class _TrianglePainter extends CustomPainter {

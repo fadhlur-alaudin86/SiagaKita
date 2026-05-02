@@ -16,7 +16,14 @@ class DispatchRelawanPage extends StatelessWidget {
         children: [
           Icon(Icons.local_shipping_outlined, color: Colors.white24, size: 56),
           SizedBox(height: 16),
-          Text('Dispatch Relawan', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            'Dispatch Relawan',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           SizedBox(height: 8),
           Text(
             'Halaman ini akan menampilkan daftar relawan online\ndan SOS yang perlu di-dispatch.',

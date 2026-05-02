@@ -65,11 +65,7 @@ class WsService extends ChangeNotifier {
 
     final uri = Uri.parse('${ApiConstants.wsUrl}?token=$token');
     _channel = WebSocketChannel.connect(uri);
-    _sub = _channel!.stream.listen(
-      _onData,
-      onError: _onError,
-      onDone: _onDone,
-    );
+    _sub = _channel!.stream.listen(_onData, onError: _onError, onDone: _onDone);
     _connected = true;
     notifyListeners();
     debugPrint('[WS] Connected');

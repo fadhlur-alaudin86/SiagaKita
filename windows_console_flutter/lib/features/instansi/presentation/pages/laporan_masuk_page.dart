@@ -17,13 +17,22 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
   String _filterStatus = 'pending';
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _load();
+  }
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final data = await IncidentApiService.getReports(widget.token,
-        status: _filterStatus == 'all' ? null : _filterStatus);
-    if (mounted) setState(() { _reports = data; _loading = false; });
+    final data = await IncidentApiService.getReports(
+      widget.token,
+      status: _filterStatus == 'all' ? null : _filterStatus,
+    );
+    if (mounted)
+      setState(() {
+        _reports = data;
+        _loading = false;
+      });
   }
 
   Future<void> _updateStatus(String id, String status) async {
@@ -45,7 +54,10 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                 child: ChoiceChip(
                   label: Text(f.toUpperCase()),
                   selected: _filterStatus == f,
-                  onSelected: (_) => setState(() { _filterStatus = f; _load(); }),
+                  onSelected: (_) => setState(() {
+                    _filterStatus = f;
+                    _load();
+                  }),
                   selectedColor: const Color(0xFFFF7418),
                   labelStyle: TextStyle(
                     color: _filterStatus == f ? Colors.white : Colors.white54,
@@ -67,79 +79,104 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _reports.isEmpty
-                  ? const Center(child: Text('Tidak ada laporan ditemukan',
-                      style: TextStyle(color: Colors.white38)))
-                  : ListView.separated(
-                      itemCount: _reports.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(color: Colors.white10, height: 1),
-                      itemBuilder: (_, i) {
-                        final r = _reports[i];
-                        return Card(
-                          color: const Color(0xFF1A2035),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 8),
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.orange.withValues(alpha: 0.2),
-                              child: const Icon(Icons.description_outlined,
-                                  color: Colors.orange, size: 20),
-                            ),
-                            title: Row(
-                              children: [
-                                Text(r.incidentType.toUpperCase(),
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14)),
-                                const SizedBox(width: 8),
-                                Text(r.urgencyLabel,
-                                    style: const TextStyle(fontSize: 12)),
-                              ],
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text('Pelapor: ${r.reporterName}',
-                                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                                if (r.description != null && r.description!.isNotEmpty)
-                                  Text(r.description!,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          color: Colors.white38, fontSize: 11)),
-                              ],
-                            ),
-                            trailing: Wrap(
-                              spacing: 8,
-                              children: [
-                                if (r.status == 'pending') ...[
-                                  _StatusBtn(
-                                    label: 'Tinjau',
-                                    color: Colors.blue,
-                                    onTap: () => _updateStatus(r.id, 'reviewed'),
-                                  ),
-                                  _StatusBtn(
-                                    label: 'Arsip',
-                                    color: Colors.grey,
-                                    onTap: () => _updateStatus(r.id, 'actioned'),
-                                  ),
-                                ],
-                                if (r.status == 'reviewed')
-                                  _StatusBtn(
-                                    label: 'Selesai',
-                                    color: Colors.green,
-                                    onTap: () => _updateStatus(r.id, 'actioned'),
-                                  ),
-                              ],
-                            ),
+              ? const Center(
+                  child: Text(
+                    'Tidak ada laporan ditemukan',
+                    style: TextStyle(color: Colors.white38),
+                  ),
+                )
+              : ListView.separated(
+                  itemCount: _reports.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(color: Colors.white10, height: 1),
+                  itemBuilder: (_, i) {
+                    final r = _reports[i];
+                    return Card(
+                      color: const Color(0xFF1A2035),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.orange.withValues(alpha: 0.2),
+                          child: const Icon(
+                            Icons.description_outlined,
+                            color: Colors.orange,
+                            size: 20,
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                        title: Row(
+                          children: [
+                            Text(
+                              r.incidentType.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              r.urgencyLabel,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              'Pelapor: ${r.reporterName}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                            if (r.description != null &&
+                                r.description!.isNotEmpty)
+                              Text(
+                                r.description!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                        trailing: Wrap(
+                          spacing: 8,
+                          children: [
+                            if (r.status == 'pending') ...[
+                              _StatusBtn(
+                                label: 'Tinjau',
+                                color: Colors.blue,
+                                onTap: () => _updateStatus(r.id, 'reviewed'),
+                              ),
+                              _StatusBtn(
+                                label: 'Arsip',
+                                color: Colors.grey,
+                                onTap: () => _updateStatus(r.id, 'actioned'),
+                              ),
+                            ],
+                            if (r.status == 'reviewed')
+                              _StatusBtn(
+                                label: 'Selesai',
+                                color: Colors.green,
+                                onTap: () => _updateStatus(r.id, 'actioned'),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -147,7 +184,11 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
 }
 
 class _StatusBtn extends StatelessWidget {
-  const _StatusBtn({required this.label, required this.color, required this.onTap});
+  const _StatusBtn({
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
   final String label;
   final Color color;
   final VoidCallback onTap;
@@ -163,7 +204,14 @@ class _StatusBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
-        child: Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }

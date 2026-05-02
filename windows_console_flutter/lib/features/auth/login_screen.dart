@@ -27,9 +27,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final result = await AuthService.login(_emailCtrl.text.trim(), _passCtrl.text);
+      final result = await AuthService.login(
+        _emailCtrl.text.trim(),
+        _passCtrl.text,
+      );
       if (!mounted) return;
 
       // Sambungkan WebSocket
@@ -38,18 +44,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Widget destination;
       if (result.role == 'admin' || result.role == 'superadmin') {
-        destination = AdminShell(token: result.accessToken, role: result.role, name: result.fullName, ws: ws);
+        destination = AdminShell(
+          token: result.accessToken,
+          role: result.role,
+          name: result.fullName,
+          ws: ws,
+        );
       } else {
         destination = InstansiShell(token: result.accessToken, ws: ws);
       }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => destination),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
     } on AuthException catch (e) {
-      setState(() { _error = e.message; _loading = false; });
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
     } catch (e) {
-      setState(() { _error = 'Koneksi gagal. Pastikan server berjalan.'; _loading = false; });
+      setState(() {
+        _error = 'Koneksi gagal. Pastikan server berjalan.';
+        _loading = false;
+      });
     }
   }
 
@@ -84,8 +101,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 2,
                       ),
                     ),
-                    child: const Icon(Icons.shield_outlined,
-                        color: Color(0xFFFF7418), size: 52),
+                    child: const Icon(
+                      Icons.shield_outlined,
+                      color: Color(0xFFFF7418),
+                      size: 52,
+                    ),
                   ),
                   const SizedBox(height: 28),
                   const Text(
@@ -107,11 +127,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 48),
-                  _InfoChip(icon: Icons.sensors, label: 'Real-time SOS Monitoring'),
+                  _InfoChip(
+                    icon: Icons.sensors,
+                    label: 'Real-time SOS Monitoring',
+                  ),
                   const SizedBox(height: 12),
-                  _InfoChip(icon: Icons.local_shipping_outlined, label: 'Dispatch & Coordination'),
+                  _InfoChip(
+                    icon: Icons.local_shipping_outlined,
+                    label: 'Dispatch & Coordination',
+                  ),
                   const SizedBox(height: 12),
-                  _InfoChip(icon: Icons.analytics_outlined, label: 'Analytics & Reporting'),
+                  _InfoChip(
+                    icon: Icons.analytics_outlined,
+                    label: 'Analytics & Reporting',
+                  ),
                 ],
               ),
             ),
@@ -149,13 +178,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: BoxDecoration(
                         color: Colors.red.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                        border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
-                          Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13))),
+                          Expanded(
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -179,7 +222,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscure: _obscure,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        _obscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                         color: Colors.white38,
                         size: 20,
                       ),
@@ -197,9 +242,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF7418),
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color(0xFFFF7418).withValues(alpha: 0.5),
+                        disabledBackgroundColor: const Color(
+                          0xFFFF7418,
+                        ).withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 0,
                       ),
                       child: _loading
@@ -207,13 +255,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2.5))
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
                           : const Text(
                               'MASUK',
                               style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2,
-                                  fontSize: 14),
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2,
+                                fontSize: 14,
+                              ),
                             ),
                     ),
                   ),
@@ -255,7 +307,10 @@ class _InfoChip extends StatelessWidget {
         children: [
           Icon(icon, color: const Color(0xFFFF7418), size: 16),
           const SizedBox(width: 10),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
         ],
       ),
     );

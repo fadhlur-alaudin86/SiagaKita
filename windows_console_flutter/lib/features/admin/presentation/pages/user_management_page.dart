@@ -33,19 +33,27 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final data = await AdminApiService.getUsers(widget.token);
-    if (mounted) {
-      setState(() {
-        _all = data;
-        _applyFilter();
-        _loading = false;
-      });
+    try {
+      final data = await AdminApiService.getUsers(widget.token);
+      if (mounted) {
+        setState(() {
+          _all = data;
+          _applyFilter();
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        _showSnack('Gagal memuat pengguna: $e', Colors.red);
+      }
     }
   }
 
   void _applyFilter() {
     _filtered = _all.where((u) {
-      final matchSearch = _search.isEmpty ||
+      final matchSearch =
+          _search.isEmpty ||
           u.fullName.toLowerCase().contains(_search.toLowerCase()) ||
           u.email.toLowerCase().contains(_search.toLowerCase());
       final matchFilter = switch (_filterType) {
@@ -63,14 +71,18 @@ class _UserManagementPageState extends State<UserManagementPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
-        title: Text('Ban ${user.fullName}?',
-            style: const TextStyle(color: Colors.white)),
+        title: Text(
+          'Ban ${user.fullName}?',
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Pengguna tidak akan bisa menggunakan fitur SOS.',
-                style: TextStyle(color: Colors.white70, fontSize: 13)),
+            const Text(
+              'Pengguna tidak akan bisa menggunakan fitur SOS.',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _banReasonCtrl,
@@ -79,42 +91,59 @@ class _UserManagementPageState extends State<UserManagementPage> {
                 labelText: 'Alasan ban',
                 labelStyle: TextStyle(color: Colors.white54),
                 enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white24)),
+                  borderSide: BorderSide(color: Colors.white24),
+                ),
                 focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.red)),
+                  borderSide: BorderSide(color: Colors.red),
+                ),
               ),
             ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal', style: TextStyle(color: Colors.white54))),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+          ),
           ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Ban Sekarang')),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ban Sekarang'),
+          ),
         ],
       ),
     );
     if (confirmed != true || _banReasonCtrl.text.isEmpty) return;
-    final ok = await AdminApiService.banUser(widget.token, user.id, _banReasonCtrl.text);
-    if (ok && mounted) { _load(); _showSnack('${user.fullName} telah dibanned.', Colors.red); }
+    final ok = await AdminApiService.banUser(
+      widget.token,
+      user.id,
+      _banReasonCtrl.text,
+    );
+    if (ok && mounted) {
+      _load();
+      _showSnack('${user.fullName} telah dibanned.', Colors.red);
+    }
   }
 
   Future<void> _unban(UserModel user) async {
     final ok = await AdminApiService.unbanUser(widget.token, user.id);
-    if (ok && mounted) { _load(); _showSnack('${user.fullName} telah di-unban.', Colors.green); }
+    if (ok && mounted) {
+      _load();
+      _showSnack('${user.fullName} telah di-unban.', Colors.green);
+    }
   }
 
   Future<void> _resetStrike(UserModel user) async {
     final ok = await AdminApiService.resetStrike(widget.token, user.id);
-    if (ok && mounted) { _load(); _showSnack('Strike ${user.fullName} telah direset.', Colors.blue); }
+    if (ok && mounted) {
+      _load();
+      _showSnack('Strike ${user.fullName} telah direset.', Colors.blue);
+    }
   }
 
-  void _showSnack(String msg, Color color) =>
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: color));
+  void _showSnack(String msg, Color color) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +155,10 @@ class _UserManagementPageState extends State<UserManagementPage> {
           children: [
             Expanded(
               child: TextField(
-                onChanged: (v) => setState(() { _search = v; _applyFilter(); }),
+                onChanged: (v) => setState(() {
+                  _search = v;
+                  _applyFilter();
+                }),
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Cari nama atau email...',
@@ -143,16 +175,34 @@ class _UserManagementPageState extends State<UserManagementPage> {
               ),
             ),
             const SizedBox(width: 12),
-            _FilterChip(label: 'Semua', selected: _filterType == 'all',
-                onTap: () => setState(() { _filterType = 'all'; _applyFilter(); })),
+            _FilterChip(
+              label: 'Semua',
+              selected: _filterType == 'all',
+              onTap: () => setState(() {
+                _filterType = 'all';
+                _applyFilter();
+              }),
+            ),
             const SizedBox(width: 8),
-            _FilterChip(label: '⚠️ Strike ≥ 2', selected: _filterType == 'strike',
-                color: Colors.orange,
-                onTap: () => setState(() { _filterType = 'strike'; _applyFilter(); })),
+            _FilterChip(
+              label: '⚠️ Strike ≥ 2',
+              selected: _filterType == 'strike',
+              color: Colors.orange,
+              onTap: () => setState(() {
+                _filterType = 'strike';
+                _applyFilter();
+              }),
+            ),
             const SizedBox(width: 8),
-            _FilterChip(label: '🚫 Banned', selected: _filterType == 'banned',
-                color: Colors.red,
-                onTap: () => setState(() { _filterType = 'banned'; _applyFilter(); })),
+            _FilterChip(
+              label: '🚫 Banned',
+              selected: _filterType == 'banned',
+              color: Colors.red,
+              onTap: () => setState(() {
+                _filterType = 'banned';
+                _applyFilter();
+              }),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -164,16 +214,20 @@ class _UserManagementPageState extends State<UserManagementPage> {
               : Card(
                   color: const Color(0xFF1A2035),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Column(
                     children: [
                       // Header
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: const BoxDecoration(
                           border: Border(
-                              bottom: BorderSide(color: Colors.white12)),
+                            bottom: BorderSide(color: Colors.white12),
+                          ),
                         ),
                         child: const Row(
                           children: [
@@ -190,12 +244,17 @@ class _UserManagementPageState extends State<UserManagementPage> {
                       Expanded(
                         child: _filtered.isEmpty
                             ? const Center(
-                                child: Text('Tidak ada pengguna ditemukan',
-                                    style: TextStyle(color: Colors.white38)))
+                                child: Text(
+                                  'Tidak ada pengguna ditemukan',
+                                  style: TextStyle(color: Colors.white38),
+                                ),
+                              )
                             : ListView.separated(
                                 itemCount: _filtered.length,
-                                separatorBuilder: (_, __) =>
-                                    const Divider(color: Colors.white10, height: 1),
+                                separatorBuilder: (_, __) => const Divider(
+                                  color: Colors.white10,
+                                  height: 1,
+                                ),
                                 itemBuilder: (_, i) {
                                   final u = _filtered[i];
                                   return _UserRow(
@@ -234,8 +293,8 @@ class _UserRow extends StatelessWidget {
     final strikeColor = user.sosStrikeCount >= 3
         ? Colors.red
         : user.sosStrikeCount >= 2
-            ? Colors.orange
-            : Colors.green;
+        ? Colors.orange
+        : Colors.green;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -243,27 +302,41 @@ class _UserRow extends StatelessWidget {
         children: [
           Expanded(
             flex: 3,
-            child: Text(user.fullName,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+            child: Text(
+              user.fullName,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
           Expanded(
             flex: 3,
-            child: Text(user.email,
-                style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            child: Text(
+              user.email,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
           ),
           Expanded(
             flex: 2,
-            child: Text(user.phoneNumber ?? '-',
-                style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            child: Text(
+              user.phoneNumber ?? '-',
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
           ),
           Expanded(
             child: Row(
               children: [
                 Icon(Icons.warning_amber_rounded, color: strikeColor, size: 14),
                 const SizedBox(width: 4),
-                Text('${user.sosStrikeCount}/3',
-                    style: TextStyle(
-                        color: strikeColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                Text(
+                  '${user.sosStrikeCount}/3',
+                  style: TextStyle(
+                    color: strikeColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
@@ -329,13 +402,14 @@ class _TableHeader extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Text(
-        text,
-        style: const TextStyle(
-            color: Colors.white38,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1),
-      );
+    text,
+    style: const TextStyle(
+      color: Colors.white38,
+      fontSize: 11,
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1,
+    ),
+  );
 }
 
 class _FilterChip extends StatelessWidget {
@@ -363,11 +437,14 @@ class _FilterChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: selected ? c : Colors.white12),
         ),
-        child: Text(label,
-            style: TextStyle(
-                color: selected ? c : Colors.white54,
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? c : Colors.white54,
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
@@ -401,7 +478,14 @@ class _ActionBtn extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 12),
             const SizedBox(width: 4),
-            Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),

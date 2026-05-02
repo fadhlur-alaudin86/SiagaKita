@@ -88,9 +88,9 @@ class AuthService {
   // ─── Auth header helper ────────────────────────────────────────────────────
 
   static Map<String, String> headers(String token) => {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+  };
 }
 
 class AuthException implements Exception {

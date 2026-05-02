@@ -17,12 +17,19 @@ class _StatistikPageState extends State<StatistikPage> {
   bool _loading = true;
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _load();
+  }
 
   Future<void> _load() async {
     setState(() => _loading = true);
     final data = await AdminApiService.getStats(widget.token);
-    if (mounted) setState(() { _stats = data; _loading = false; });
+    if (mounted)
+      setState(() {
+        _stats = data;
+        _loading = false;
+      });
   }
 
   @override
@@ -36,23 +43,40 @@ class _StatistikPageState extends State<StatistikPage> {
           // ── KPI Cards ────────────────────────────────────────────────────
           Row(
             children: [
-              _KpiCard(label: 'Total SOS', value: '${_stats.totalSOS}',
-                  icon: Icons.sensors, color: Colors.red),
+              _KpiCard(
+                label: 'Total SOS',
+                value: '${_stats.totalSOS}',
+                icon: Icons.sensors,
+                color: Colors.red,
+              ),
               const SizedBox(width: 16),
-              _KpiCard(label: 'Selesai', value: '${_stats.totalResolved}',
-                  icon: Icons.check_circle_outline, color: Colors.green),
+              _KpiCard(
+                label: 'Selesai',
+                value: '${_stats.totalResolved}',
+                icon: Icons.check_circle_outline,
+                color: Colors.green,
+              ),
               const SizedBox(width: 16),
-              _KpiCard(label: 'Avg Respons',
-                  value: '${_stats.avgResponseMinutes.toStringAsFixed(1)} mnt',
-                  icon: Icons.timer_outlined, color: Colors.blue),
+              _KpiCard(
+                label: 'Avg Respons',
+                value: '${_stats.avgResponseMinutes.toStringAsFixed(1)} mnt',
+                icon: Icons.timer_outlined,
+                color: Colors.blue,
+              ),
               const SizedBox(width: 16),
-              _KpiCard(label: 'False Alarm',
-                  value: '${_stats.falseAlarmRate.toStringAsFixed(1)}%',
-                  icon: Icons.warning_amber_outlined, color: Colors.orange),
+              _KpiCard(
+                label: 'False Alarm',
+                value: '${_stats.falseAlarmRate.toStringAsFixed(1)}%',
+                icon: Icons.warning_amber_outlined,
+                color: Colors.orange,
+              ),
               const SizedBox(width: 16),
-              _KpiCard(label: 'Relawan Aktif',
-                  value: '${_stats.activeVolunteers}',
-                  icon: Icons.people_outline, color: Colors.purple),
+              _KpiCard(
+                label: 'Relawan Aktif',
+                value: '${_stats.activeVolunteers}',
+                icon: Icons.people_outline,
+                color: Colors.purple,
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -67,12 +91,19 @@ class _StatistikPageState extends State<StatistikPage> {
                 child: _ChartCard(
                   title: 'Tren SOS per Bulan',
                   child: _stats.monthly.isEmpty
-                      ? const Center(child: Text('Belum ada data', style: TextStyle(color: Colors.white38)))
+                      ? const Center(
+                          child: Text(
+                            'Belum ada data',
+                            style: TextStyle(color: Colors.white38),
+                          ),
+                        )
                       : LineChart(
                           LineChartData(
-                            gridData: const FlGridData(show: true,
-                                getDrawingHorizontalLine: _gridLine,
-                                getDrawingVerticalLine: _gridLine),
+                            gridData: const FlGridData(
+                              show: true,
+                              getDrawingHorizontalLine: _gridLine,
+                              getDrawingVerticalLine: _gridLine,
+                            ),
                             titlesData: FlTitlesData(
                               bottomTitles: AxisTitles(
                                 sideTitles: SideTitles(
@@ -80,13 +111,17 @@ class _StatistikPageState extends State<StatistikPage> {
                                   interval: 1,
                                   getTitlesWidget: (v, _) {
                                     final idx = v.toInt();
-                                    if (idx < 0 || idx >= _stats.monthly.length) {
+                                    if (idx < 0 ||
+                                        idx >= _stats.monthly.length) {
                                       return const SizedBox();
                                     }
                                     return Text(
-                                      _stats.monthly[idx]['month'] as String? ?? '',
+                                      _stats.monthly[idx]['month'] as String? ??
+                                          '',
                                       style: const TextStyle(
-                                          color: Colors.white38, fontSize: 10),
+                                        color: Colors.white38,
+                                        fontSize: 10,
+                                      ),
                                     );
                                   },
                                 ),
@@ -97,18 +132,27 @@ class _StatistikPageState extends State<StatistikPage> {
                                   reservedSize: 28,
                                   getTitlesWidget: (v, _) => Text(
                                     '${v.toInt()}',
-                                    style: const TextStyle(color: Colors.white38, fontSize: 10),
+                                    style: const TextStyle(
+                                      color: Colors.white38,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ),
                               ),
-                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              topTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              rightTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
                             ),
                             borderData: FlBorderData(show: false),
                             lineBarsData: [
                               LineChartBarData(
                                 spots: _stats.monthly.asMap().entries.map((e) {
-                                  final count = (e.value['count'] as num?)?.toDouble() ?? 0;
+                                  final count =
+                                      (e.value['count'] as num?)?.toDouble() ??
+                                      0;
                                   return FlSpot(e.key.toDouble(), count);
                                 }).toList(),
                                 isCurved: true,
@@ -117,7 +161,9 @@ class _StatistikPageState extends State<StatistikPage> {
                                 dotData: const FlDotData(show: true),
                                 belowBarData: BarAreaData(
                                   show: true,
-                                  color: const Color(0xFFFF7418).withValues(alpha: 0.1),
+                                  color: const Color(
+                                    0xFFFF7418,
+                                  ).withValues(alpha: 0.1),
                                 ),
                               ),
                             ],
@@ -133,7 +179,12 @@ class _StatistikPageState extends State<StatistikPage> {
                 child: _ChartCard(
                   title: 'Distribusi Tipe Insiden',
                   child: _stats.byType.isEmpty
-                      ? const Center(child: Text('Belum ada data', style: TextStyle(color: Colors.white38)))
+                      ? const Center(
+                          child: Text(
+                            'Belum ada data',
+                            style: TextStyle(color: Colors.white38),
+                          ),
+                        )
                       : PieChart(
                           PieChartData(
                             sectionsSpace: 2,
@@ -152,8 +203,12 @@ class _StatistikPageState extends State<StatistikPage> {
 
   List<PieChartSectionData> _buildPieSections() {
     const colors = [
-      Colors.red, Colors.blue, Colors.orange,
-      Colors.purple, Colors.teal, Colors.green,
+      Colors.red,
+      Colors.blue,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.green,
     ];
     final entries = _stats.byType.entries.toList();
     final total = entries.fold(0, (sum, e) => sum + e.value);
@@ -166,7 +221,10 @@ class _StatistikPageState extends State<StatistikPage> {
         title: '${pct.toStringAsFixed(0)}%',
         radius: 80,
         titleStyle: const TextStyle(
-            fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       );
     }).toList();
   }
@@ -215,11 +273,19 @@ class _KpiCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Text(value,
-                style: TextStyle(
-                    color: color, fontSize: 26, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
           ],
         ),
       ),
@@ -244,9 +310,14 @@ class _ChartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
           const SizedBox(height: 16),
           Expanded(child: child),
         ],

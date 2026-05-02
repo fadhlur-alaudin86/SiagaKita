@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/api_constants.dart';
 
 class PendaftaranAkunPage extends StatefulWidget {
@@ -44,16 +46,28 @@ class _PendaftaranAkunPageState extends State<PendaftaranAkunPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (isSuperadmin)
-          TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: const Color(0xFFFF7418),
-            unselectedLabelColor: Colors.white54,
-            indicatorColor: const Color(0xFFFF7418),
-            tabs: const [
-              Tab(text: 'Instansi (Agency)'),
-              Tab(text: 'Admin Sistem'),
-            ],
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF111827),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF1F2937)),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white54,
+              indicator: BoxDecoration(
+                color: const Color(0xFFFF7418),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              indicatorPadding: const EdgeInsets.all(4),
+              dividerColor: Colors.transparent,
+              tabs: const [
+                Tab(text: 'Instansi (Agency)'),
+                Tab(text: 'Admin Sistem'),
+              ],
+            ),
           ),
         const SizedBox(height: 16),
         Expanded(
@@ -92,6 +106,10 @@ class _FormInstansiState extends State<_FormInstansi> {
   String? _msg;
   bool _isError = false;
 
+  // Map Variables
+  final _mapController = MapController();
+  LatLng? _selectedLocation;
+
   Future<void> _submit() async {
     setState(() {
       _loading = true;
@@ -110,6 +128,10 @@ class _FormInstansiState extends State<_FormInstansi> {
           'name': _nameCtrl.text.trim(),
           'type': _type,
           'city_code': _cityCtrl.text.trim(),
+          if (_selectedLocation != null)
+            'latitude': _selectedLocation!.latitude,
+          if (_selectedLocation != null)
+            'longitude': _selectedLocation!.longitude,
         }),
       );
       final body = jsonDecode(res.body);
@@ -121,6 +143,7 @@ class _FormInstansiState extends State<_FormInstansi> {
           _passCtrl.clear();
           _nameCtrl.clear();
           _cityCtrl.clear();
+          _selectedLocation = null;
         });
       } else {
         setState(() {
@@ -182,6 +205,66 @@ class _FormInstansiState extends State<_FormInstansi> {
           ],
           onChanged: (v) => setState(() => _type = v!),
         ),
+        const SizedBox(height: 16),
+        const Text(
+          'Lokasi Instansi',
+          style: TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 250,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: const LatLng(
+                  -6.200000,
+                  106.816666,
+                ), // Jakarta as default
+                initialZoom: 10.0,
+                onTap: (tapPosition, point) {
+                  setState(() {
+                    _selectedLocation = point;
+                  });
+                },
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.siagakita.console',
+                ),
+                if (_selectedLocation != null)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: _selectedLocation!,
+                        width: 40,
+                        height: 40,
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (_selectedLocation != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Terpilih: ${_selectedLocation!.latitude.toStringAsFixed(6)}, ${_selectedLocation!.longitude.toStringAsFixed(6)}',
+              style: const TextStyle(color: Colors.green, fontSize: 12),
+            ),
+          ),
         const SizedBox(height: 24),
         Align(
           alignment: Alignment.centerRight,

@@ -10,7 +10,9 @@ class IncidentApiService {
 
   static Future<List<IncidentModel>> getActiveIncidents(String token) async {
     final resp = await http.get(
-      Uri.parse('${ApiConstants.incidents}?status=active,broadcasting,grace_period'),
+      Uri.parse(
+        '${ApiConstants.incidents}?status=active,broadcasting,grace_period',
+      ),
       headers: AuthService.headers(token),
     );
     if (resp.statusCode != 200) return [];
@@ -35,7 +37,11 @@ class IncidentApiService {
 
   // ─── Mark False Alarm ─────────────────────────────────────────────────────
 
-  static Future<bool> markFalseAlarm(String token, String id, String reason) async {
+  static Future<bool> markFalseAlarm(
+    String token,
+    String id,
+    String reason,
+  ) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.incidentMarkFalseAlarm(id)),
       headers: AuthService.headers(token),
@@ -56,9 +62,13 @@ class IncidentApiService {
 
   // ─── Reports (Jalur B) ────────────────────────────────────────────────────
 
-  static Future<List<ReportModel>> getReports(String token, {String? status}) async {
-    final uri = Uri.parse(ApiConstants.reports)
-        .replace(queryParameters: status != null ? {'status': status} : null);
+  static Future<List<ReportModel>> getReports(
+    String token, {
+    String? status,
+  }) async {
+    final uri = Uri.parse(
+      ApiConstants.reports,
+    ).replace(queryParameters: status != null ? {'status': status} : null);
     final resp = await http.get(uri, headers: AuthService.headers(token));
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -69,7 +79,10 @@ class IncidentApiService {
   }
 
   static Future<bool> updateReportStatus(
-      String token, String id, String status) async {
+    String token,
+    String id,
+    String status,
+  ) async {
     final resp = await http.patch(
       Uri.parse(ApiConstants.reportStatus(id)),
       headers: AuthService.headers(token),
@@ -103,7 +116,11 @@ class AdminApiService {
     return resp.statusCode == 200;
   }
 
-  static Future<bool> rejectVolunteer(String token, String id, String reason) async {
+  static Future<bool> rejectVolunteer(
+    String token,
+    String id,
+    String reason,
+  ) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.adminVolunteerReject(id)),
       headers: AuthService.headers(token),
