@@ -31,12 +31,6 @@ class _HomeScreenState extends State<HomeScreen>
   int _tapCount = 0;
   Timer? _tapResetTimer;
 
-  // ─── Confirm Dialog State ───────────────────────────────────────────────────
-  bool _showConfirmDialog = false;
-  bool _isCancelMode = false; // true = cancel confirmation, false = send confirmation
-  int _confirmCountdown = 5;
-  Timer? _confirmTimer;
-
   // ─── SOS Phase State Machine ────────────────────────────────────────────────
   // idle → gracePeriod → broadcasting → (cancelled)
   String _sosPhase = 'idle'; // 'idle' | 'gracePeriod' | 'broadcasting'
@@ -64,7 +58,6 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _tapResetTimer?.cancel();
-    _confirmTimer?.cancel();
     _locationUpdateTimer?.cancel();
     _graceTimer?.cancel();
     super.dispose();
@@ -118,7 +111,6 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── SOS Tap Logic (Send) ────────────────────────────────────────────────────
 
   void _onSOSTap() {
-    if (_showConfirmDialog) return;
     if (_activeIncident != null) return; // ada SOS aktif — gunakan cancel mode
 
     HapticFeedback.lightImpact();
@@ -128,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (_tapCount >= _requiredTaps) {
       _tapCount = 0;
       HapticFeedback.heavyImpact();
-      _showSendConfirmation();
+      _triggerSOS(triggeredBy: 'user');
       return;
     }
 
@@ -140,7 +132,6 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── Cancel SOS Tap Logic (5× tap saat SOS aktif) ──────────────────────────
 
   void _onCancelTap() {
-    if (_showConfirmDialog) return;
     HapticFeedback.lightImpact();
     _tapResetTimer?.cancel();
     setState(() => _tapCount++);
@@ -148,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (_tapCount >= _requiredTaps) {
       _tapCount = 0;
       HapticFeedback.heavyImpact();
-      _showCancelConfirmation();
+      _executeCancelSOS();
       return;
     }
 
@@ -157,61 +148,13 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  // ─── Confirmation Dialogs ────────────────────────────────────────────────────
 
-  void _showSendConfirmation() {
-    setState(() {
-      _showConfirmDialog = true;
-      _isCancelMode = false;
-      _confirmCountdown = _confirmDuration.inSeconds;
-    });
-
-    _confirmTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) { timer.cancel(); return; }
-      setState(() => _confirmCountdown--);
-      HapticFeedback.selectionClick();
-      if (_confirmCountdown <= 0) {
-        timer.cancel();
-        _triggerSOS(triggeredBy: 'timeout');
-      }
-    });
-  }
-
-  void _showCancelConfirmation() {
-    setState(() {
-      _showConfirmDialog = true;
-      _isCancelMode = true;
-      _confirmCountdown = _confirmDuration.inSeconds;
-    });
-
-    _confirmTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) { timer.cancel(); return; }
-      setState(() => _confirmCountdown--);
-      HapticFeedback.selectionClick();
-      if (_confirmCountdown <= 0) {
-        timer.cancel();
-        _dismissConfirmation(); // timeout = jangan batalkan
-      }
-    });
-  }
-
-  void _dismissConfirmation() {
-    _confirmTimer?.cancel();
-    setState(() {
-      _showConfirmDialog = false;
-      _confirmCountdown = 5;
-      _tapCount = 0;
-    });
-  }
 
   // ─── Trigger SOS ─────────────────────────────────────────────────────────────
 
   Future<void> _triggerSOS({required String triggeredBy}) async {
-    _confirmTimer?.cancel();
     HapticFeedback.vibrate();
     setState(() {
-      _showConfirmDialog = false;
-      _confirmCountdown = 5;
       _tapCount = 0;
     });
 
@@ -332,9 +275,7 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── Cancel Active SOS ───────────────────────────────────────────────────────
 
   Future<void> _executeCancelSOS() async {
-    _confirmTimer?.cancel();
     setState(() {
-      _showConfirmDialog = false;
       _tapCount = 0;
     });
 
@@ -391,29 +332,57 @@ class _HomeScreenState extends State<HomeScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const SizedBox(width: 40),
-                      Column(
-                        children: [
-                          Text(
-                            'SiagaKita',
-                            style: TextStyle(
-                              color: isSOSActive ? Colors.red : primaryColor,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            isSOSActive
-                                ? 'SOS AKTIF — Ketuk 5× untuk batalkan'
-                                : 'Ketuk 5× untuk mengirim SOS'.tr(context),
-                            style: TextStyle(
-                              color: isSOSActive
-                                  ? Colors.red.withValues(alpha: 0.8)
-                                  : colors.onSurface.withValues(alpha: 0.6),
-                              fontSize: 11,
-                              fontWeight: isSOSActive ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ],
+                      ValueListenableBuilder<UserModel>(
+                        valueListenable: UserModel.currentUser,
+                        builder: (context, user, child) {
+                          return Column(
+                            children: [
+                              Text(
+                                user.name,
+                                style: TextStyle(
+                                  color: isSOSActive ? Colors.red : primaryColor,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: isSOSActive ? Colors.red : Colors.green,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    user.roleLabel,
+                                    style: TextStyle(
+                                      color: colors.onSurface.withValues(alpha: 0.6),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isSOSActive
+                                    ? 'SOS AKTIF — Ketuk 5× untuk batalkan'
+                                    : 'Ketuk 5× untuk mengirim SOS'.tr(context),
+                                style: TextStyle(
+                                  color: isSOSActive
+                                      ? Colors.red.withValues(alpha: 0.8)
+                                      : colors.onSurface.withValues(alpha: 0.6),
+                                  fontSize: 11,
+                                  fontWeight: isSOSActive ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
                       ),
                       GestureDetector(
                         onTap: () {
@@ -647,9 +616,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
 
-            // ── Confirmation Dialog Overlay ─────────────────────────────────
-            if (_showConfirmDialog)
-              _buildConfirmDialog(context, primaryColor, colors),
 
             // ── Grace Period Overlay (pilih tipe insiden) ──────────────────
             if (_sosPhase == 'gracePeriod')
@@ -889,159 +855,5 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ─── Confirmation Dialog ─────────────────────────────────────────────────────
-
-  Widget _buildConfirmDialog(
-      BuildContext context, Color primaryColor, ColorScheme colors) {
-    final dialogColor = _isCancelMode ? Colors.green : primaryColor;
-    final title = _isCancelMode ? 'BATALKAN SOS?' : 'KONFIRMASI SOS';
-    final subtitle = _isCancelMode
-        ? 'Yakin ingin membatalkan SOS yang sedang aktif?'
-        : 'Sinyal darurat akan dikirim otomatis dalam:';
-    final confirmLabel = _isCancelMode ? 'BATALKAN SOS' : 'KIRIM!';
-    final dismissLabel = _isCancelMode ? 'KEMBALI' : 'BATALKAN';
-
-    return Container(
-      color: Colors.black.withValues(alpha: 0.65),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Container(
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: dialogColor.withValues(alpha: 0.4),
-                  blurRadius: 40,
-                  spreadRadius: 5,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: dialogColor.withValues(alpha: 0.15),
-                  ),
-                  child: Icon(
-                    _isCancelMode ? Icons.cancel_outlined : Icons.warning_amber_rounded,
-                    color: dialogColor,
-                    size: 48,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  title.tr(context),
-                  style: TextStyle(
-                    color: dialogColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  subtitle.tr(context),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: colors.onSurface.withValues(alpha: 0.7),
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: dialogColor,
-                    boxShadow: [
-                      BoxShadow(
-                          color: dialogColor.withValues(alpha: 0.6),
-                          blurRadius: 20,
-                          spreadRadius: 2)
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$_confirmCountdown',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: _confirmCountdown / _confirmDuration.inSeconds,
-                    minHeight: 8,
-                    backgroundColor: colors.onSurface.withValues(alpha: 0.1),
-                    valueColor: AlwaysStoppedAnimation<Color>(dialogColor),
-                  ),
-                ),
-                const SizedBox(height: 28),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _dismissConfirmation,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          side: BorderSide(
-                              color: colors.onSurface.withValues(alpha: 0.3)),
-                        ),
-                        child: Text(
-                          dismissLabel.tr(context),
-                          style: TextStyle(
-                            color: colors.onSurface.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_isCancelMode) {
-                            _executeCancelSOS();
-                          } else {
-                            _triggerSOS(triggeredBy: 'user');
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: dialogColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          elevation: 4,
-                          shadowColor: dialogColor.withValues(alpha: 0.5),
-                        ),
-                        child: Text(
-                          confirmLabel.tr(context),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

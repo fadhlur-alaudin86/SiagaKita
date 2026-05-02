@@ -153,6 +153,24 @@
 
 ---
 
+### 🔖 Sprint F — 2 Mei 2026
+
+#### Mobile Flutter: Masyarakat Role & SOS Refactoring
+
+**User Profile & Settings API**
+- Menambahkan `UserService` di `lib/core/services/user_service.dart` untuk memuat (`GET /users/profile`) dan memperbarui data profil pengguna (`PUT /users/profile`).
+- Memperbarui `MainScreen` (`main_screen.dart`) untuk otomatis menarik data profil (*fetch*) pada saat inisialisasi awal aplikasi.
+- Menyempurnakan `EditProfileScreen` dengan state *loading* dan mengintegrasikan fungsi ubah profil secara penuh dengan API `UserService.updateProfile`.
+- Memperbaiki fitur *Logout* pada `ProfileScreen` untuk membersihkan otentikasi sesi (mengosongkan nilai *ValueNotifier* `UserModel.currentUser.value` ke state *default*) dan mengalihkan (_pushAndRemoveUntil_) ke `LoginScreen`.
+
+**Dashboard Beranda & Refaktorisasi Alur Darurat SOS**
+- Merombak Header pada `HomeScreen` untuk tidak hanya menampilkan teks generik, melainkan menampilkan secara dinamis **Nama Pengguna** (menggunakan `ValueListenableBuilder` pada `UserModel.currentUser`) beserta **Role Akun** mereka (mis. Masyarakat / Relawan) dalam badge warna hijau/merah.
+- **Dihapus (Efisiensi UX Darurat):** Menghilangkan dialog pop-up konfirmasi tunggu 5 detik saat akan mengirimkan SOS (`_showSendConfirmation`). Sekarang ketukan 5 kali akan memicu API SOS seketika (*instant trigger*).
+- **Dihapus (Efisiensi UX Darurat):** Menghilangkan dialog pop-up konfirmasi pembatalan SOS (`_showCancelConfirmation`). Mengetuk SOS 5 kali saat sudah _broadcasting_ langsung menghentikan sinyal tanpa intervensi pop-up.
+- **Penggabungan UX Pembatalan & Grace Period:** Layar 10-detik _Grace Period_ (layar pemilihan tipe insiden pasca aktivasi SOS) kini murni berfungsi sebagai titik pembatalan (dengan tombol "Batalkan SOS" di layar) sehingga mengurangi langkah ekstra saat _False Alarm_.
+
+---
+
 ### 🔖 Sprint E — 2 Mei 2026
 
 #### Desktop Console: UI/UX Polish & Bug Fixes

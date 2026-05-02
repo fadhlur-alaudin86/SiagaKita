@@ -8,7 +8,8 @@ import 'about_screen.dart';
 import 'volunteer_registration_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final String accessToken;
+  const ProfileScreen({super.key, required this.accessToken});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -64,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(Icons.edit, color: Colors.orange),
             tooltip: 'Edit Profil'.tr(context),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfileScreen(accessToken: widget.accessToken)));
             },
           )
         ],
@@ -304,6 +305,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Logout Button
                 OutlinedButton.icon(
                   onPressed: () {
+                    // Reset user to clear session data locally
+                    UserModel.currentUser.value = const UserModel(
+                      id: '',
+                      name: '',
+                      email: '',
+                      role: UserRole.masyarakat,
+                    );
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                       (route) => false,

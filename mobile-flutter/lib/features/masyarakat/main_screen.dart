@@ -6,6 +6,8 @@ import 'map_screen.dart';
 import 'profile_screen.dart';
 import '../relawan/relawan_main_screen.dart';
 import '../../core/models/user_model.dart';
+import '../../core/services/user_service.dart';
+
 class MainScreen extends StatefulWidget {
   final String accessToken;
   final String userId;
@@ -22,6 +24,28 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final user = await UserService.getProfile(widget.accessToken);
+      UserModel.currentUser.value = user;
+    } catch (e) {
+      // Ignored for now, fallback to default or error state
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +59,7 @@ class _MainScreenState extends State<MainScreen> {
           const GuideScreen(),
           if (isRelawan) const RelawanMainScreen(),
           const MapScreen(),
-          const ProfileScreen(),
+          ProfileScreen(accessToken: widget.accessToken),
         ];
 
         final List<BottomNavigationBarItem> navItems = [
@@ -73,10 +97,12 @@ class _MainScreenState extends State<MainScreen> {
         }
 
         return Scaffold(
-          body: IndexedStack(
-            index: _currentIndex,
-            children: screens,
-          ),
+          body: _isLoading 
+            ? const Center(child: CircularProgressIndicator())
+            : IndexedStack(
+                index: _currentIndex,
+                children: screens,
+              ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               border: Border(top: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1), width: 1)),

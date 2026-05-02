@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
+import '../../core/services/user_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({super.key});
+  final String accessToken;
+  const EditProfileScreen({super.key, required this.accessToken});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+  bool _isSaving = false;
   // Informasi Pribadi
   final _phoneCtrl = TextEditingController();
   final _birthDateCtrl = TextEditingController();
@@ -144,27 +147,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     final user = UserModel.currentUser.value;
     
-    // Update Medical Data Map
-    final updatedMedData = Map<String, dynamic>.from(user.medicalData ?? {});
-    updatedMedData['address'] = _addressCtrl.text;
-    updatedMedData['blood_type'] = _bloodTypeCtrl.text;
-    updatedMedData['weight'] = _weightCtrl.text;
-    updatedMedData['height'] = _heightCtrl.text;
-    updatedMedData['allergies'] = _allergiesCtrl.text;
-    updatedMedData['medical_history'] = _medicalHistoryCtrl.text;
-    
-    UserModel.currentUser.value = user.copyWith(
-      phoneNumber: _phoneCtrl.text,
-      birthDate: _birthDateCtrl.text.isEmpty ? null : _birthDateCtrl.text,
-      bio: _bioCtrl.text,
-      medicalData: updatedMedData,
-      emergencyContacts: _contacts.isEmpty ? null : _contacts,
-    );
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Profil berhasil diperbarui.'.tr(context))),
-    );
-    Navigator.pop(context);
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final updatedMedData = Map<String, dynamic>.from(user.medicalData ?? {});
+      updatedMedData['address'] = _addressCtrl.text;
+      updatedMedData['blood_type'] = _bloodTypeCtrl.text;
+      updatedMedData['weight'] = _weightCtrl.text;
+      updatedMedData['height'] = _heightCtrl.text;
+      updatedMedData['allergies'] = _allergiesCtrl.text;
+      updatedMedData['medical_history'] = _medicalHistoryCtrl.text;
+      
+      final updatedUser = user.copyWith(
+        phoneNumber: _phoneCtrl.text,
+        birthDate: _birthDateCtrl.text.isEmpty ? null : _birthDateCtrl.text,
+        bio: _bioCtrl.text,
+        medicalData: updatedMedData,
+        emergencyContacts: _contacts.isEmpty ? null : _contacts,
+      );
+
+      final returnedUser = await UserService.updateProfile(widget.accessToken, updatedUser);
+      UserModel.currentUser.value = returnedUser;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profil berhasil diperbarui.'.tr(context))),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memperbarui profil: $e'.tr(context)), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -415,8 +440,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 5,
                 ),
-                onPressed: _saveData,
-                child: Text('Simpan Perubahan'.tr(context), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                onPressed: _isSaving ? null : _saveData,
+                child: _isSaving 
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text('Simpan Perubahan'.tr(context), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
             const SizedBox(height: 48),
