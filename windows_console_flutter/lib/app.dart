@@ -56,6 +56,7 @@ class _SplashRouterState extends State<_SplashRouter> {
       shell = AdminShell(
         token: session.accessToken,
         role: session.role,
+        name: session.fullName,
         ws: ws,
       );
     } else {

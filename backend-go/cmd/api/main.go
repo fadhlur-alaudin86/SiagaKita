@@ -240,6 +240,19 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 		if err != nil {
 			return err
 		}
+		
+		// Pastikan row admin_profiles ada dengan nama "root"
+		type AdminProfile struct {
+			UserID   string `gorm:"column:user_id;primaryKey"`
+			FullName string `gorm:"column:full_name"`
+		}
+		var ap AdminProfile
+		if err := db.Table("admin_profiles").Where("user_id = ?", existing.ID).First(&ap).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				db.Table("admin_profiles").Create(&AdminProfile{UserID: existing.ID, FullName: "root"})
+			}
+		}
+
 		if existing.Email != email {
 			log.Printf("[SuperAdmin] Memperbarui email superadmin menjadi: %s", email)
 		}
@@ -259,12 +272,27 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 		return err
 	}
 
-	superadmin := userDomain.User{
-		Email:        email,
-		PasswordHash: string(hashed),
-		Role:         "superadmin",
-	}
-	if err := db.Create(&superadmin).Error; err != nil {
+	err = db.Transaction(func(tx *gorm.DB) error {
+		superadmin := userDomain.User{
+			Email:        email,
+			PasswordHash: string(hashed),
+			Role:         "superadmin",
+		}
+		if err := tx.Create(&superadmin).Error; err != nil {
+			return err
+		}
+		
+		type AdminProfile struct {
+			UserID   string `gorm:"column:user_id;primaryKey"`
+			FullName string `gorm:"column:full_name"`
+		}
+		profile := AdminProfile{
+			UserID:   superadmin.ID,
+			FullName: "root",
+		}
+		return tx.Table("admin_profiles").Create(&profile).Error
+	})
+	if err != nil {
 		return err
 	}
 

@@ -12,9 +12,10 @@ enum AdminMenu { kyc, users, pendaftaran, gamifikasi, statistik }
 class AdminShell extends StatefulWidget {
   final String token;
   final String role;
+  final String name;
   final WsService ws;
 
-  const AdminShell({super.key, required this.token, required this.role, required this.ws});
+  const AdminShell({super.key, required this.token, required this.role, required this.name, required this.ws});
 
   @override
   State<AdminShell> createState() => _AdminShellState();
@@ -46,6 +47,7 @@ class _AdminShellState extends State<AdminShell> {
         children: [
           _AdminSideNav(
             activeMenu: _active,
+            name: widget.name,
             onSelected: (m) => setState(() => _active = m),
           ),
           Expanded(
@@ -70,8 +72,9 @@ class _AdminShellState extends State<AdminShell> {
 // ─── Admin Sidebar ────────────────────────────────────────────────────────────
 
 class _AdminSideNav extends StatelessWidget {
-  const _AdminSideNav({required this.activeMenu, required this.onSelected});
+  const _AdminSideNav({required this.activeMenu, required this.name, required this.onSelected});
   final AdminMenu activeMenu;
+  final String name;
   final ValueChanged<AdminMenu> onSelected;
 
   @override
@@ -107,10 +110,10 @@ class _AdminSideNav extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text('System Administrator',
-                    style: TextStyle(color: Colors.white38, fontSize: 11)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(name.isNotEmpty ? name : 'System Administrator',
+                    style: const TextStyle(color: Colors.white38, fontSize: 11)),
               ),
               const SizedBox(height: 24),
               const Padding(

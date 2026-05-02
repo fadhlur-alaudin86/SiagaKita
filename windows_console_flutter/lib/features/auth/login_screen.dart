@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Widget destination;
       if (result.role == 'admin' || result.role == 'superadmin') {
-        destination = AdminShell(token: result.accessToken, role: result.role, ws: ws);
+        destination = AdminShell(token: result.accessToken, role: result.role, name: result.fullName, ws: ws);
       } else {
         destination = InstansiShell(token: result.accessToken, ws: ws);
       }
