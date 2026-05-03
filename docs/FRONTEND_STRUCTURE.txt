@@ -1,7 +1,7 @@
 ===========================================================================
   SIAGAKITA — DOKUMENTASI STRUKTUR FRONTEND (Flutter Mobile — Citizen/Volunteer)
   Untuk referensi tim Backend & anggota baru
-  Diperbarui: 1 Mei 2026
+  Diperbarui: 4 Mei 2026
 ===========================================================================
 
 CATATAN PENTING:
@@ -9,7 +9,11 @@ CATATAN PENTING:
   Modul lain (Profile, Biodata, Map, Relawan) masih menggunakan data MOCK.
   Dokumentasi ini menjelaskan state terkini dan kebutuhan integrasi berikutnya.
 
-  PERUBAHAN TERBARU (1 Mei 2026):
+  PERUBAHAN TERBARU (4 Mei 2026):
+  - Integrasi Menu Profil & Pengaturan di HomeScreen via BottomSheet.
+  - Perbaikan Debouncing tombol SOS & dialog konfirmasi pembatalan.
+  - Pemindahan fungsi Dark Mode global ke SettingsScreen.
+  - Penambahan Indikator "Online / SOS AKTIF" di header.
   - Tabel users diperampingkan: hanya id, email, password_hash, role
   - Profil citizen/volunteer kini ada di tabel user_profiles (bukan users)
   - ENUM user_role baru: superadmin | admin | agency | agency_personnel | volunteer | civilian
@@ -45,12 +49,12 @@ lib/
 │   │
 │   ├── masyarakat/                   — Fitur role Masyarakat & Relawan
 │   │   ├── main_screen.dart          — Navigasi utama (Bottom Nav), menerima token
-│   │   ├── home_screen.dart          — Tombol SOS + GPS tracking + cancel SOS
+│   │   ├── home_screen.dart          — Tombol SOS, Status Online, GPS tracking, Profil Menu
 │   │   ├── guide_screen.dart         — Panduan Pertolongan Pertama (offline)
 │   │   ├── map_screen.dart           — Radar peta (MOCK)
 │   │   ├── profile_screen.dart       — Profil pengguna (MOCK)
 │   │   ├── edit_profile_screen.dart  — Form edit biodata & profil (MOCK)
-│   │   ├── settings_screen.dart      — Notifikasi, privasi, mode gelap, bahasa
+│   │   ├── settings_screen.dart      — Mode Gelap (Global), privasi, bahasa, notifikasi
 │   │   ├── about_screen.dart         — Informasi aplikasi (statis)
 │   │   ├── report_screen.dart        — Form laporan darurat (MOCK)
 │   │   └── volunteer_registration_screen.dart — Daftar jadi relawan (MOCK)
@@ -226,6 +230,10 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
 4.4 HOME SCREEN — SOS BUTTON (features/masyarakat/home_screen.dart)
 ─────────────────────────────────────────────────────────────
   Status: ✅ TERHUBUNG KE API
+
+  UI Tambahan:
+    - Ikon Avatar di kanan atas untuk memanggil Profil BottomSheet.
+    - Indikator status "Online" / "SOS AKTIF".
 
   Mekanisme SOS (kirim):
     1. User ketuk tombol SOS 5× dalam 1.5 detik
@@ -409,5 +417,5 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   Dibuat oleh: Tim Frontend SiagaKita
   Branch: frontend / main
   Repo:   https://github.com/SuperBypassUdinnn/SIAGAKITA
-  Diperbarui: 1 Mei 2026
+  Diperbarui: 4 Mei 2026
 ===========================================================================
