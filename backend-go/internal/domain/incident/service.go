@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 var incidentTypeMultiplier = map[string]float64{
@@ -178,7 +180,7 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 
 // ─── Laporan Warga (Jalur B) ──────────────────────────────────────────────────
 
-func (s *Service) CreateReport(reporterID string, req *CreateReportRequest) (*IncidentReport, error) {
+func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, photoPaths []string, audioPath *string) (*IncidentReport, error) {
 	if req.IncidentType == "" || req.IncidentType == "unknown" {
 		return nil, errors.New("tipe insiden wajib diisi dan tidak boleh 'unknown' untuk laporan warga")
 	}
@@ -186,24 +188,23 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest) (*In
 		return nil, fmt.Errorf("tipe insiden tidak valid: %s", req.IncidentType)
 	}
 
-	urgency := req.Urgency
-	if urgency == "" {
-		urgency = "low"
-	}
-
 	rep := &IncidentReport{
 		ReporterID:   reporterID,
 		IncidentType: req.IncidentType,
-		Urgency:      urgency,
+		UrgencyLevel: req.UrgencyLevel,
 		Latitude:     req.Latitude,
 		Longitude:    req.Longitude,
-		Description:  req.Description,
-		PhotoURL:     req.PhotoURL,
-		AudioURL:     req.AudioURL,
-		Status:       "pending",
+		Status:       "received",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
+	if req.Description != "" {
+		rep.Description = &req.Description
+	}
+	if len(photoPaths) > 0 {
+		rep.PhotoPaths = pq.StringArray(photoPaths)
+	}
+	rep.AudioPath = audioPath
 
 	if err := s.repo.CreateReport(rep); err != nil {
 		return nil, err
@@ -213,6 +214,10 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest) (*In
 
 func (s *Service) GetReports(status string) ([]IncidentReport, error) {
 	return s.repo.FindReports(status)
+}
+
+func (s *Service) GetReportsByUser(userID string) ([]IncidentReport, error) {
+	return s.repo.FindReportsByUser(userID)
 }
 
 func (s *Service) UpdateReportStatus(id, status string) error {

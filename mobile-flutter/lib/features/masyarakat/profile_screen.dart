@@ -6,6 +6,7 @@ import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
 import 'volunteer_registration_screen.dart';
+import 'report_history_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String accessToken;
@@ -260,6 +261,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
+                      ListTile(
+                        leading: Icon(Icons.assignment_outlined, color: primaryTextColor),
+                        title: Text('Riwayat Laporan'.tr(context), style: TextStyle(fontWeight: FontWeight.w600, color: primaryTextColor)),
+                        trailing: Icon(Icons.chevron_right, color: hintColor),
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => ReportHistoryScreen(accessToken: widget.accessToken)));
+                        },
+                      ),
+                      Divider(height: 1, indent: 16, endIndent: 16, color: isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200),
                       ListTile(
                         leading: Icon(Icons.settings, color: primaryTextColor),
                         title: Text('Pengaturan'.tr(context), style: TextStyle(fontWeight: FontWeight.w600, color: primaryTextColor)),

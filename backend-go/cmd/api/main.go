@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"siagakita-backend/internal/config"
@@ -66,7 +67,7 @@ func main() {
 	// Incident domain
 	incidentRepo := incidentDomain.NewRepository(db)
 	incidentSvc := incidentDomain.NewService(incidentRepo)
-	incidentHandler := incidentDomain.NewHandler(incidentSvc)
+	incidentHandler := incidentDomain.NewHandler(incidentSvc, cfg)
 
 	// Admin domain
 	adminSvc := adminDomain.NewService(db)
@@ -95,6 +96,14 @@ func main() {
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok", "service": "SiagaKita REST API"})
+	})
+
+	// Static file serving for uploads
+	uploadDir := cfg.UploadDir
+	app.Get("/uploads/*", func(c *fiber.Ctx) error {
+		subPath := c.Params("*")
+		filePath := filepath.Join(uploadDir, filepath.Clean("/"+subPath))
+		return c.SendFile(filePath)
 	})
 
 	// ── API v1 Routes ──────────────────────────────────────────────────────────
@@ -141,6 +150,7 @@ func main() {
 	// ── Laporan Warga — Jalur B ───────────────────────────────────────────────
 	reports := v1.Group("/reports", authMw)
 	reports.Post("", incidentHandler.CreateReport)
+	reports.Get("/my", incidentHandler.GetMyReports)
 	reports.Get("", middleware.ConsoleOnly(), incidentHandler.GetReports)
 	reports.Patch("/:id/status", middleware.ConsoleOnly(), incidentHandler.UpdateReportStatus)
 

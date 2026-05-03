@@ -2,7 +2,14 @@ package incident
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
+	"path/filepath"
+	"time"
 
+	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,10 +17,11 @@ import (
 
 type Handler struct {
 	svc *Service
+	cfg *config.Config
 }
 
-func NewHandler(svc *Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc *Service, cfg *config.Config) *Handler {
+	return &Handler{svc: svc, cfg: cfg}
 }
 
 // POST /api/v1/incidents/trigger
@@ -156,21 +164,92 @@ func (h *Handler) Resolve(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, resp)
 }
 
-// POST /api/v1/reports — Jalur B laporan warga
+// POST /api/v1/reports — Jalur B laporan warga (multipart/form-data)
 func (h *Handler) CreateReport(c *fiber.Ctx) error {
 	reporterID := c.Locals("userID").(string)
 
-	var req CreateReportRequest
-	if err := c.BodyParser(&req); err != nil {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	// Parse form fields (works for both multipart and url-encoded)
+	req := CreateReportRequest{
+		IncidentType: c.FormValue("incident_type"),
+		Description:  c.FormValue("description"),
+		Latitude:     parseFloat(c.FormValue("latitude")),
+		Longitude:    parseFloat(c.FormValue("longitude")),
+		UrgencyLevel: parseInt(c.FormValue("urgency_level"), 1),
 	}
 
-	rep, err := h.svc.CreateReport(reporterID, &req)
+	if req.IncidentType == "" || req.IncidentType == "unknown" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "incident_type wajib diisi")
+	}
+	if req.Latitude == 0 && req.Longitude == 0 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Koordinat GPS wajib diisi")
+	}
+
+	uploadDir := h.cfg.UploadDir
+	baseURL := h.cfg.UploadBaseURL
+	now := time.Now()
+	yearMonth := fmt.Sprintf("%d/%02d", now.Year(), now.Month())
+
+	var photoPaths []string
+	var audioPath *string
+
+	// Process photos (max 3, max 2 MB each)
+	if form, err := c.MultipartForm(); err == nil {
+		photos := form.File["photos[]"]
+		if len(photos) > 3 {
+			photos = photos[:3]
+		}
+		for i, fh := range photos {
+			if fh.Size > 2<<20 {
+				continue
+			}
+			ext := filepath.Ext(fh.Filename)
+			if ext == "" {
+				ext = ".jpg"
+			}
+			// Use reporterID as temp dir key before report is created
+			dir := filepath.Join(uploadDir, "reports", "photos", yearMonth, reporterID)
+			_ = os.MkdirAll(dir, 0755)
+			fileName := fmt.Sprintf("photo_%d_%d%s", now.UnixNano(), i, ext)
+			dst := filepath.Join(dir, fileName)
+			if err := saveFile(fh, dst); err == nil {
+				relPath := fmt.Sprintf("reports/photos/%s/%s/%s", yearMonth, reporterID, fileName)
+				photoPaths = append(photoPaths, baseURL+"/"+relPath)
+			}
+		}
+
+		// Process audio (max 1, max 5 MB)
+		if audioFiles := form.File["audio"]; len(audioFiles) > 0 {
+			fh := audioFiles[0]
+			if fh.Size <= 5<<20 {
+				dir := filepath.Join(uploadDir, "reports", "audio", yearMonth, reporterID)
+				_ = os.MkdirAll(dir, 0755)
+				fileName := fmt.Sprintf("audio_%d.m4a", now.UnixNano())
+				dst := filepath.Join(dir, fileName)
+				if err := saveFile(fh, dst); err == nil {
+					relPath := fmt.Sprintf("reports/audio/%s/%s/%s", yearMonth, reporterID, fileName)
+					fullURL := baseURL + "/" + relPath
+					audioPath = &fullURL
+				}
+			}
+		}
+	}
+
+	rep, err := h.svc.CreateReport(reporterID, &req, photoPaths, audioPath)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	return utils.CreatedResponse(c, rep)
+}
+
+// GET /api/v1/reports/my — riwayat laporan milik user yang sedang login
+func (h *Handler) GetMyReports(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+	reports, err := h.svc.GetReportsByUser(userID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, reports)
 }
 
 // GET /api/v1/reports
@@ -221,4 +300,33 @@ func isBanError(err error) bool {
 // parseIDInt kept for compatibility (unused but prevents import errors)
 func parseIDInt(_ string) (uint, error) {
 	return 0, errors.New("use UUID string IDs")
+}
+
+func saveFile(fh *multipart.FileHeader, dst string) error {
+	src, err := fh.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, src)
+	return err
+}
+
+func parseFloat(s string) float64 {
+	var f float64
+	fmt.Sscanf(s, "%f", &f)
+	return f
+}
+
+func parseInt(s string, defaultVal int) int {
+	var i int
+	if _, err := fmt.Sscanf(s, "%d", &i); err != nil {
+		return defaultVal
+	}
+	return i
 }

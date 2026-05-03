@@ -587,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen>
                         child: GestureDetector(
                           onTap: () {
                             Navigator.push(context,
-                                MaterialPageRoute(builder: (_) => ReportScreen()));
+                                MaterialPageRoute(builder: (_) => ReportScreen(accessToken: widget.accessToken)));
                           },
                           child: _actionCard(
                             colors: colors,

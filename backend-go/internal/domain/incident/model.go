@@ -1,6 +1,10 @@
 package incident
 
-import "time"
+import (
+	"time"
+
+	"github.com/lib/pq"
+)
 
 // ─── DB Models ────────────────────────────────────────────────────────────────
 
@@ -23,18 +27,18 @@ type Incident struct {
 
 // IncidentReport merepresentasikan laporan warga non-darurat (Jalur B).
 type IncidentReport struct {
-	ID           string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	ReporterID   string    `gorm:"type:uuid;not null" json:"reporter_id"`
-	IncidentType string    `gorm:"not null" json:"incident_type"` // TIDAK boleh 'unknown'
-	Urgency      string    `gorm:"default:'low'" json:"urgency"`  // urgency_level enum
-	Latitude     float64   `gorm:"not null" json:"latitude"`
-	Longitude    float64   `gorm:"not null" json:"longitude"`
-	Description  *string   `json:"description,omitempty"`
-	PhotoURL     *string   `json:"photo_url,omitempty"`
-	AudioURL     *string   `json:"audio_url,omitempty"`
-	Status       string    `gorm:"default:'pending'" json:"status"` // pending|reviewed|actioned
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID           string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	ReporterID   string         `gorm:"type:uuid;not null" json:"reporter_id"`
+	IncidentType string         `gorm:"not null" json:"incident_type"`
+	UrgencyLevel int            `gorm:"default:1" json:"urgency_level"` // 0=ringan, 1=sedang, 2=kritis
+	Latitude     float64        `gorm:"not null" json:"latitude"`
+	Longitude    float64        `gorm:"not null" json:"longitude"`
+	Description  *string        `json:"description,omitempty"`
+	PhotoPaths   pq.StringArray `gorm:"type:text[]" json:"photo_paths"`
+	AudioPath    *string        `json:"audio_path,omitempty"`
+	Status       string         `gorm:"default:'received'" json:"status"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 // SOSStrike adalah audit log setiap kali admin menandai false alarm.
@@ -99,15 +103,13 @@ type MarkFalseAlarmRequest struct {
 	Reason string `json:"reason"`
 }
 
-// CreateReportRequest — Jalur B: laporan warga non-darurat.
+// CreateReportRequest — Jalur B: laporan warga non-darurat (multipart/form-data).
 type CreateReportRequest struct {
-	IncidentType string  `json:"incident_type"` // wajib, tidak boleh 'unknown'
-	Urgency      string  `json:"urgency"`       // 'low'|'medium'|'high'
-	Latitude     float64 `json:"latitude"`
-	Longitude    float64 `json:"longitude"`
-	Description  *string `json:"description"`
-	PhotoURL     *string `json:"photo_url"`
-	AudioURL     *string `json:"audio_url"`
+	IncidentType string  `form:"incident_type"` // wajib
+	UrgencyLevel int     `form:"urgency_level"` // 0=ringan, 1=sedang, 2=kritis
+	Latitude     float64 `form:"latitude"`
+	Longitude    float64 `form:"longitude"`
+	Description  string  `form:"description"`
 }
 
 // ─── Response DTOs ─────────────────────────────────────────────────────────────

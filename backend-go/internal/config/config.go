@@ -45,6 +45,10 @@ type Config struct {
 	// Superadmin seeding
 	SuperAdminEmail string
 	SuperAdminPass  string
+
+	// Upload Storage
+	UploadDir     string
+	UploadBaseURL string
 }
 
 // Load reads environment variables and returns a populated Config.
@@ -81,6 +85,8 @@ func Load() *Config {
 		WSPort:           getEnv("WS_PORT", "8081"),
 		SuperAdminEmail:  getEnv("SUPERADMIN_EMAIL", ""),
 		SuperAdminPass:   getEnv("SUPERADMIN_PASS", ""),
+		UploadDir:        getEnv("UPLOAD_DIR", "/app/uploads"),
+		UploadBaseURL:    getEnv("UPLOAD_BASE_URL", "http://localhost:8080/uploads"),
 	}
 }
 
