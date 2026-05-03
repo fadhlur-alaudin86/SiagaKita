@@ -1,8 +1,8 @@
 # 🗄️ SiagaKita — Database Schema Reference
 
-> **Versi Aktif:** Schema v3
-> **Migration File:** `backend-go/migrations/003_schema_v3.sql`
-> **Dijalankan:** 1 Mei 2026
+> **Versi Aktif:** Schema v5 (reports_v2)
+> **Migration File:** `backend-go/migrations/005_reports_v2.sql`
+> **Dijalankan:** 3 Mei 2026
 > **Database:** PostgreSQL 15
 
 ---
@@ -442,3 +442,29 @@ Untuk audit trail — jika ada laporan penyalahgunaan, data historis bisa dipuli
 | v2 (patch manual) | Apr 2026 | + kolom `trigger_method` di incidents, beberapa kolom nullable |
 | **v3** (`003_schema_v3.sql`) | **1 Mei 2026** | **Slim users, + user_profiles, + admin_profiles, ENUM baru (superadmin/agency/agency_personnel), agencies + account_id, hapus agency_responder** |
 | v4 (`004_add_agency_location.sql`) | 1 Mei 2026 | + `latitude` dan `longitude` di tabel `agencies` |
+| **v5** (`005_reports_v2.sql`) | **3 Mei 2026** | **Upgrade `incident_reports`: ganti `photo_url`/`audio_url` (single) → `photo_paths TEXT[]`/`audio_path`, ganti `urgency VARCHAR` → `urgency_level SMALLINT`, status default `received` (dari `pending`)** |
+
+---
+
+## Catatan Tabel `incident_reports` (sejak v5)
+
+Tabel `incident_reports` (Jalur B — laporan warga non-darurat) telah diperbarui:
+
+```sql
+CREATE TABLE incident_reports (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    reporter_id   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    incident_type VARCHAR(50) NOT NULL,
+    urgency_level SMALLINT NOT NULL DEFAULT 1,  -- 0=ringan, 1=sedang, 2=kritis
+    latitude      DOUBLE PRECISION NOT NULL,
+    longitude     DOUBLE PRECISION NOT NULL,
+    description   TEXT,
+    photo_paths   TEXT[] DEFAULT '{}',          -- array URL publik foto (max 3)
+    audio_path    TEXT,                         -- URL publik audio (nullable)
+    status        VARCHAR(20) NOT NULL DEFAULT 'received', -- received|processing|resolved
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+File upload disimpan di VPS: `/opt/siagakita/uploads/reports/` dan diakses via `GET /uploads/*`.

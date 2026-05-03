@@ -1,6 +1,6 @@
 # 📋 SiagaKita — Laporan Kemajuan Pengembangan
 
-> **Terakhir diperbarui:** 1 Mei 2026
+> **Terakhir diperbarui:** 3 Mei 2026
 > **Branch aktif:** `main`
 > **Status keseluruhan:** 🟡 Dalam Pengembangan Aktif
 
@@ -150,6 +150,76 @@
 - **Masalah:** Jika akun admin/agency mencoba login di `/auth/login`, error message-nya adalah *"akun ini bukan akun masyarakat atau relawan"* — membocorkan informasi role enumeration
 - **Perbaikan:** Pesan diubah menjadi generik: *"email atau password salah"*
 - **File:** `backend-go/internal/domain/user/service.go` → `Login()`
+
+---
+
+### 🔖 Sprint G — 3 Mei 2026
+
+#### Mobile Flutter: Report Screen — Implementasi Penuh
+
+**Peta GPS Nyata (OpenStreetMap)**
+- Mengganti simulasi peta palsu (grid kotak) dengan widget `FlutterMap` (tile OSM) yang sesungguhnya.
+- Mengambil koordinat GPS pengguna via `LocationService.getCurrentPositionOrNull()` saat layar dibuka.
+- Melakukan *reverse geocoding* ke Nominatim API untuk menampilkan nama jalan/alamat di bawah peta.
+- Tombol refresh lokasi tersedia jika GPS tidak terdeteksi pertama kali.
+
+**Lampiran Multi-Foto (Maks. 3)**
+- Mengimplementasikan `image_picker` untuk memilih foto dari kamera atau galeri.
+- Foto ditampilkan sebagai thumbnail grid dengan tombol ✕ untuk menghapus.
+- Kompresi otomatis via `flutter_image_compress`: resolusi maks 1280×960px, kualitas JPEG 70% → target ~150–300 KB/foto.
+- Antarmuka menampilkan penghitung `0/3`, `1/3`, dst.
+
+**Perekaman Audio (Hold-to-Record)**
+- Mengimplementasikan *hold-to-record* via `record`: rekam mulai saat jari ditekan (`onLongPressStart`), berhenti saat dilepas (`onLongPressEnd`).
+- Konfigurasi rekaman: AAC/M4A, 22050 Hz, 64 kbps → target ~500 KB/menit.
+- Menampilkan timer detik dan animasi pulsasi merah selama rekaman berlangsung.
+- Setelah rekam selesai: tampilkan durasi + tombol ▶️ putar ulang dan 🗑️ hapus.
+
+**Konfirmasi Sebelum Kirim**
+- Menampilkan `showModalBottomSheet` ringkasan laporan (kategori, lokasi, urgensi, jumlah foto/audio) sebelum request dikirim ke API.
+- Dua tombol: **Batal** (tutup sheet) dan **Kirim Sekarang** (eksekusi API).
+
+**Pengiriman ke API (Multipart)**
+- Membuat `ReportService` baru (`lib/core/services/report_service.dart`) dengan:
+  - `submitReport()`: `POST /api/v1/reports` dengan `multipart/form-data` (foto + audio).
+  - `getMyReports()`: `GET /api/v1/reports/my` untuk riwayat laporan.
+- Loading indicator saat upload berlangsung; pesan error jika API gagal.
+
+**Perbaikan Warna Tombol**
+- Tombol "Kirim Laporan" sekarang selalu berwarna `primaryColor` (oranye), tidak lagi berubah merah saat urgensi Kritis dipilih.
+
+**Halaman Riwayat Laporan**
+- Membuat `ReportHistoryScreen` baru yang dapat diakses dari `ProfileScreen`.
+- Menampilkan daftar laporan dengan status berwarna (Diterima/Diproses/Selesai), kategori, urgensi, dan lampiran.
+- State kosong dan tombol retry jika API error.
+- Dukungan pull-to-refresh.
+
+**Perizinan Android**
+- Menambahkan izin `CAMERA`, `RECORD_AUDIO`, `READ_MEDIA_IMAGES`, `READ/WRITE_EXTERNAL_STORAGE` ke `AndroidManifest.xml`.
+- Menambahkan `FileProvider` dan `file_paths.xml` untuk kebutuhan `image_picker`.
+
+#### Backend Go: Upload File & Report API v2
+
+**Endpoint Upload Multipart**
+- `POST /api/v1/reports` sekarang menerima `multipart/form-data`.
+- Foto (maks. 3, maks. 2 MB/file) disimpan ke `$UPLOAD_DIR/reports/photos/{year}/{month}/{user_id}/`.
+- Audio (maks. 1, maks. 5 MB) disimpan ke `$UPLOAD_DIR/reports/audio/{year}/{month}/{user_id}/`.
+- URL publik file dikembalikan dalam response dan disimpan ke database.
+
+**Static File Serving**
+- Menambahkan route `GET /uploads/*` di Fiber untuk menyajikan file upload langsung dari backend Go (tanpa Nginx tambahan).
+
+**Endpoint Riwayat Laporan**
+- Menambahkan `GET /api/v1/reports/my` (protected, citizen/volunteer) untuk mengambil daftar laporan milik pengguna yang sedang login.
+
+**Migrasi Database**
+- Menambahkan `migrations/005_reports_v2.sql`: tabel `incident_reports` diperbarui dengan kolom `photo_paths TEXT[]`, `audio_path TEXT`, `urgency_level SMALLINT` (menggantikan `photo_url`, `audio_url`, dan `urgency VARCHAR`).
+- Migrasi data lama secara otomatis dari tabel lama ke tabel baru.
+
+**Konfigurasi**
+- Menambahkan `UPLOAD_DIR` dan `UPLOAD_BASE_URL` ke `Config` dan `.env`.
+- Menambahkan `volumes` mount di `docker-compose.prod.yml`: `/opt/siagakita/uploads:/app/uploads`.
+- Menambahkan dependensi Go: `github.com/lib/pq` untuk dukungan `pq.StringArray` (kolom `TEXT[]` PostgreSQL).
 
 ---
 

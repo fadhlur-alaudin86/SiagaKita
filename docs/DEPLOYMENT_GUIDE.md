@@ -1,7 +1,7 @@
 # 🚀 SiagaKita — Panduan Deployment Production
 
 > **Server:** `139.59.99.230` (DigitalOcean / VPS)
-> **Diperbarui:** 1 Mei 2026
+> **Diperbarui:** 3 Mei 2026
 
 ---
 
@@ -80,9 +80,25 @@ SUPERADMIN_PASS=<password_kuat>
 SMS_GATEWAY_SECRET=<string_acak>
 
 DOCKERHUB_USERNAME=<username_dockerhub>
+
+# Upload Storage (wajib untuk fitur laporan foto & audio)
+UPLOAD_DIR=/app/uploads
+UPLOAD_BASE_URL=http://139.59.99.230:8080/uploads
 ```
 
-### 2c. Verifikasi infrastruktur berjalan
+### 2c. Setup direktori upload
+
+```bash
+# Di VPS — buat direktori penyimpanan file laporan
+sudo mkdir -p /opt/siagakita/uploads/reports/photos
+sudo mkdir -p /opt/siagakita/uploads/reports/audio
+sudo chown -R ubuntu:ubuntu /opt/siagakita/uploads
+chmod -R 755 /opt/siagakita/uploads
+```
+
+> Volume ini sudah di-mount di `docker-compose.prod.yml` sebagai `/opt/siagakita/uploads:/app/uploads`. File yang ditulis backend akan persisten meski container di-restart.
+
+### 2d. Verifikasi infrastruktur berjalan
 
 ```bash
 # Cek semua container
@@ -206,6 +222,9 @@ docker logs siagakita_backend -f --tail=100
 | Tidak bisa connect WebSocket | Port 8081 tidak terbuka | Cek firewall: `ufw allow 8081/tcp` |
 | Database connection refused | postgres belum healthy | Tunggu 30 detik, cek `docker ps` |
 | Image pull gagal di GitHub Actions | `DOCKERHUB_TOKEN` expired | Buat token baru di Docker Hub |
+| Upload foto/audio gagal | Direktori `/opt/siagakita/uploads` belum ada atau permission salah | `mkdir -p /opt/siagakita/uploads && chmod 755 ...` |
+| File upload tidak bisa diakses publik | `UPLOAD_BASE_URL` salah di `.env` | Sesuaikan dengan IP/domain VPS, restart backend |
+| Volume tidak ter-mount | `docker-compose.prod.yml` belum memiliki `volumes` | Cek section `volumes` di service `backend`, lakukan `up -d --force-recreate backend` |
 
 ### Buka port di firewall VPS
 
@@ -221,9 +240,11 @@ ufw status
 
 ---
 
-## 7. Reset Database (hati-hati!)
+## 7. Menjalankan Migrasi Database
 
-> ⚠️ **PERINGATAN:** Ini menghapus SEMUA data production. Lakukan hanya jika benar-benar perlu.
+> ⚠️ **PERINGATAN:** Migrasi `003_schema_v3.sql` menghapus SEMUA data. Migrasi `005_reports_v2.sql` bersifat *additive* dan aman dijalankan di production.
+
+### Reset database (fresh setup / dev):
 
 ```bash
 # Dari mesin lokal, kirim file migrasi
@@ -242,6 +263,22 @@ rm /tmp/003_schema_v3.sql
 
 # Restart backend (agar superadmin ter-seed ulang)
 docker restart siagakita_backend
+```
+
+### Migrasi incremental — Reports v2 (005):
+
+```bash
+# Dari mesin lokal
+scp backend-go/migrations/005_reports_v2.sql root@139.59.99.230:/opt/siagakita/
+
+# SSH ke server
+ssh root@139.59.99.230
+cd /opt/siagakita
+
+# Jalankan migrasi (aman, tidak menghapus data lama)
+docker exec -i siagakita_postgres psql \
+  -U $DB_USER -d siagakita \
+  < /opt/siagakita/005_reports_v2.sql
 ```
 
 ---
