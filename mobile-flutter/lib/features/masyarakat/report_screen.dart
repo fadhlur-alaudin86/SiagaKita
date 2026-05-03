@@ -162,6 +162,7 @@ class _ReportScreenState extends State<ReportScreen> {
   // ─── Audio ───────────────────────────────────────────────────────────────────
 
   Future<void> _startRecording() async {
+    if (_isRecording) return; // Cegah timer ganda
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Izin mikrofon ditolak.')));
@@ -180,6 +181,7 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _stopRecording() async {
+    if (!_isRecording) return;
     _recordTimer?.cancel();
     final path = await _recorder.stop();
     setState(() {
@@ -579,6 +581,8 @@ class _ReportScreenState extends State<ReportScreen> {
     return GestureDetector(
       onLongPressStart: (_) => _startRecording(),
       onLongPressEnd: (_) => _stopRecording(),
+      onLongPressCancel: () => _stopRecording(),
+      onLongPressUp: () => _stopRecording(),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 80,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/location_service.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 import '../masyarakat/home_screen.dart';
 
@@ -170,7 +171,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                      );
+                    },
                     child: Text(
                       'Lupa sandi?'.tr(context),
                       style: TextStyle(

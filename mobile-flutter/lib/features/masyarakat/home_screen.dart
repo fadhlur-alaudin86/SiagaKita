@@ -111,7 +111,8 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── SOS Tap Logic (Send) ────────────────────────────────────────────────────
 
   void _onSOSTap() {
-    if (_activeIncident != null) return; // ada SOS aktif — gunakan cancel mode
+    // Blokir tap jika sudah ada SOS aktif, atau sedang dalam masa grace period/loading
+    if (_activeIncident != null || _pendingIncidentId != null || _sosPhase != 'idle') return;
 
     HapticFeedback.lightImpact();
     _tapResetTimer?.cancel();

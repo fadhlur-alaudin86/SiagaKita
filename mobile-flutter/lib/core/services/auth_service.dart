@@ -101,6 +101,45 @@ class AuthService {
       throw AuthException(body['message'] as String? ?? 'Verifikasi OTP gagal');
     }
     return AuthResult.fromJson(body['data'] as Map<String, dynamic>);
+  // ─── Forgot Password ───────────────────────────────────────────────────────
+  static Future<void> forgotPassword(String email) async {
+    final response = await _post('$_baseUrl/auth/forgot-password', {'email': email});
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw AuthException(body['message'] as String? ?? 'Gagal memproses permintaan');
+    }
+  }
+
+  // ─── Reset Password ────────────────────────────────────────────────────────
+  static Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final response = await _post('$_baseUrl/auth/reset-password', {
+      'email': email,
+      'otp': otp,
+      'new_password': newPassword,
+    });
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw AuthException(body['message'] as String? ?? 'Gagal mereset password');
+    }
+  }
+
+  // ─── Resend OTP ────────────────────────────────────────────────────────────
+  static Future<void> resendOTP({
+    required String email,
+    required String context,
+  }) async {
+    final response = await _post('$_baseUrl/auth/resend-otp', {
+      'email': email,
+      'context': context,
+    });
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw AuthException(body['message'] as String? ?? 'Gagal mengirim ulang OTP');
+    }
   }
 }
 
