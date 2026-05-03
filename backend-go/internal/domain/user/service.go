@@ -262,3 +262,39 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 		},
 	}, nil
 }
+
+// ─── Forgot Password & Resend OTP ─────────────────────────────────────────────
+
+func (s *Service) ForgotPassword(ctx context.Context, email string) error {
+	_, err := s.repo.FindByEmail(email)
+	if err != nil {
+		return errors.New("akun tidak ditemukan")
+	}
+	return s.otpSvc.RequestEmailOTP(ctx, email, "forgot_password")
+}
+
+func (s *Service) ResetPassword(ctx context.Context, email, otp, newPassword string) error {
+	if len(newPassword) < 8 {
+		return errors.New("password minimal 8 karakter")
+	}
+	if err := s.otpSvc.VerifyEmailOTP(ctx, email, "forgot_password", otp); err != nil {
+		return err
+	}
+	user, err := s.repo.FindByEmail(email)
+	if err != nil {
+		return errors.New("akun tidak ditemukan")
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+	if err != nil {
+		return err
+	}
+	return s.repo.UpdatePassword(user.ID, string(hash))
+}
+
+func (s *Service) ResendOTP(ctx context.Context, email, otpContext string) error {
+	_, err := s.repo.FindByEmail(email)
+	if err != nil {
+		return errors.New("akun tidak ditemukan")
+	}
+	return s.otpSvc.RequestEmailOTP(ctx, email, otpContext)
+}

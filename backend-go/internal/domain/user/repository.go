@@ -44,6 +44,11 @@ func (r *Repository) DeleteUserByEmail(email string) error {
 	return r.db.Unscoped().Where("email = ?", email).Delete(&User{}).Error
 }
 
+// UpdatePassword updates the user's password hash.
+func (r *Repository) UpdatePassword(userID, newHash string) error {
+	return r.db.Model(&User{}).Where("id = ?", userID).Update("password_hash", newHash).Error
+}
+
 // ─── UserProfile (civilian/volunteer) ────────────────────────────────────────
 
 // CreateProfile inserts a new user_profiles row.

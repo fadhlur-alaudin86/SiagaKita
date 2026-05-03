@@ -162,3 +162,47 @@ func (h *Handler) ConfirmPhoneOTP(c *fiber.Ctx) error {
 		"verified": true,
 	})
 }
+
+// ─── Password Reset & Resend OTP ──────────────────────────────────────────────
+
+func (h *Handler) ForgotPassword(c *fiber.Ctx) error {
+	var req ForgotPasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Format JSON tidak valid")
+	}
+	if req.Email == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Email wajib diisi")
+	}
+	if err := h.svc.ForgotPassword(c.Context(), req.Email); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return utils.SuccessResponse(c, "Kode OTP untuk reset password telah dikirim ke email")
+}
+
+func (h *Handler) ResetPassword(c *fiber.Ctx) error {
+	var req ResetPasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Format JSON tidak valid")
+	}
+	if req.Email == "" || req.OTP == "" || req.NewPassword == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Email, OTP, dan Password baru wajib diisi")
+	}
+	if err := h.svc.ResetPassword(c.Context(), req.Email, req.OTP, req.NewPassword); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return utils.SuccessResponse(c, "Password berhasil diubah, silakan login kembali")
+}
+
+func (h *Handler) ResendOTP(c *fiber.Ctx) error {
+	var req ResendOTPRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Format JSON tidak valid")
+	}
+	if req.Email == "" || req.Context == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Email dan context wajib diisi")
+	}
+	if err := h.svc.ResendOTP(c.Context(), req.Email, req.Context); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return utils.SuccessResponse(c, "Kode OTP telah dikirim ulang ke email")
+}

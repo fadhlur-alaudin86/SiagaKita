@@ -81,7 +81,10 @@ func main() {
 	// Telemetry domain
 	telemetryHandler := telemetry.NewHandler(rdb, wsHub, cfg)
 
-	app := fiber.New(fiber.Config{AppName: "SiagaKita API v1"})
+	app := fiber.New(fiber.Config{
+		AppName:   "SiagaKita API v1",
+		BodyLimit: 15 * 1024 * 1024, // 15 MB
+	})
 
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -118,6 +121,11 @@ func main() {
 	auth.Post("/verify-register-otp", userHandler.VerifyRegisterOTP)
 	auth.Post("/login", userHandler.Login)
 	auth.Post("/verify-login-otp", userHandler.VerifyLoginOTP)
+
+	// Lupa password
+	auth.Post("/forgot-password", userHandler.ForgotPassword)
+	auth.Post("/reset-password", userHandler.ResetPassword)
+	auth.Post("/resend-otp", userHandler.ResendOTP)
 
 	// Desktop Console (superadmin, admin, agency)
 	auth.Post("/console/login", userHandler.ConsoleLogin)
