@@ -120,7 +120,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  void _saveData() {
+  Future<void> _saveData() async {
     if (_phoneCtrl.text.isNotEmpty && _phoneCtrl.text.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Nomor telepon pengguna minimal 10 digit'.tr(context))),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../main.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
 import 'report_screen.dart';
@@ -26,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── SOS Tap State ──────────────────────────────────────────────────────────
   static const int _requiredTaps = 5;
   static const Duration _tapResetDuration = Duration(milliseconds: 1500);
-  static const Duration _confirmDuration = Duration(seconds: 5);
 
   int _tapCount = 0;
   Timer? _tapResetTimer;
@@ -853,7 +853,5 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
-  }
-
   }
 }
