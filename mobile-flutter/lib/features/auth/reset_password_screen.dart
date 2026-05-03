@@ -175,7 +175,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Belum menerima kode?', style: TextStyle(color: colors.onSurface.withOpacity(0.6))),
+                    Text('Belum menerima kode?', style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6))),
                     TextButton(
                       onPressed: _resendCountdown > 0 || _isResending ? null : _resendOTP,
                       child: _isResending

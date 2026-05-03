@@ -198,3 +198,20 @@ type ProfileResponse struct {
 	EmergencyContacts   []EmergencyContact   `json:"emergency_contacts"`
 	VolunteerReputation *VolunteerReputation `json:"volunteer_reputation,omitempty"`
 }
+
+// ─── DTOs for Password Reset & OTP Resend ─────────────────────────────────────
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+type ResetPasswordRequest struct {
+	Email       string `json:"email"`
+	OTP         string `json:"otp"`
+	NewPassword string `json:"new_password"`
+}
+
+type ResendOTPRequest struct {
+	Email   string `json:"email"`
+	Context string `json:"context"` // "register", "login", "forgot_password"
+}

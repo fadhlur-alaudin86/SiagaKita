@@ -101,6 +101,8 @@ class AuthService {
       throw AuthException(body['message'] as String? ?? 'Verifikasi OTP gagal');
     }
     return AuthResult.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
   // ─── Forgot Password ───────────────────────────────────────────────────────
   static Future<void> forgotPassword(String email) async {
     final response = await _post('$_baseUrl/auth/forgot-password', {'email': email});

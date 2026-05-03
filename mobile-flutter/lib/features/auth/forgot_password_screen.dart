@@ -70,7 +70,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 Text(
                   'Masukkan email akun Anda. Kami akan mengirimkan kode OTP untuk mengatur ulang kata sandi.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: colors.onSurface.withOpacity(0.8)),
+                  style: TextStyle(fontSize: 16, color: colors.onSurface.withValues(alpha: 0.8)),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
