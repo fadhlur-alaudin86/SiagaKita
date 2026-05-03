@@ -30,23 +30,26 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       final reports = await ReportService.getMyReports(
         accessToken: widget.accessToken,
       );
-      if (mounted)
+      if (mounted) {
         setState(() {
           _reports = reports;
           _isLoading = false;
         });
+      }
     } on ReportException catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = e.message;
           _isLoading = false;
         });
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = 'Gagal memuat riwayat.';
           _isLoading = false;
         });
+      }
     }
   }
 

@@ -141,11 +141,12 @@ class _ReportScreenState extends State<ReportScreen> {
         });
       }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _addressLabel = 'Gagal memuat alamat';
           _isLoadingLocation = false;
         });
+      }
     }
   }
 
@@ -224,10 +225,11 @@ class _ReportScreenState extends State<ReportScreen> {
     if (_isRecording) return; // Cegah timer ganda
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Izin mikrofon ditolak.')));
+      }
       return;
     }
     final dir = await getTemporaryDirectory();

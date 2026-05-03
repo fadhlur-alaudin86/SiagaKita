@@ -14,7 +14,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
   bool _smsAlerts = false;
   bool _locationTracking = true;
-  bool _darkMode = true;
   late String _language;
   static const List<String> _availableLanguages = <String>[
     'Bahasa Indonesia',
@@ -203,16 +202,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   activeThumbColor: Colors.orange,
-                  value: _darkMode,
+                  value: isDark,
                   onChanged: (val) {
-                    setState(() => _darkMode = val);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Tema dikendalikan oleh sistem saat ini.'.tr(context),
-                        ),
-                      ),
-                    );
+                    SiagaKitaApp.themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
                   },
                 ),
                 Divider(

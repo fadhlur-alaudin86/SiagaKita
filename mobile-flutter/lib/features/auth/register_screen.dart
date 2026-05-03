@@ -102,8 +102,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validateRepeat(String? v) {
-    if (v == null || v.isEmpty)
+    if (v == null || v.isEmpty) {
       return 'Konfirmasi kata sandi tidak boleh kosong';
+    }
     if (v != _passwordController.text) return 'Kata sandi tidak cocok';
     return null;
   }

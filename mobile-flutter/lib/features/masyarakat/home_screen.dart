@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../main.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
+import '../auth/login_screen.dart';
+import 'profile_screen.dart';
+import 'settings_screen.dart';
 import 'report_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -34,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── SOS Phase State Machine ────────────────────────────────────────────────
   // idle → gracePeriod → broadcasting → (cancelled)
   String _sosPhase = 'idle'; // 'idle' | 'gracePeriod' | 'broadcasting'
+  bool _isTriggeringSOS = false;
 
   // ─── Grace Period State ─────────────────────────────────────────────────────
   int _graceCountdown = 10;
@@ -116,8 +119,10 @@ class _HomeScreenState extends State<HomeScreen>
     // Blokir tap jika sudah ada SOS aktif, atau sedang dalam masa grace period/loading
     if (_activeIncident != null ||
         _pendingIncidentId != null ||
-        _sosPhase != 'idle')
+        _sosPhase != 'idle' ||
+        _isTriggeringSOS) {
       return;
+    }
 
     HapticFeedback.lightImpact();
     _tapResetTimer?.cancel();
@@ -145,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (_tapCount >= _requiredTaps) {
       _tapCount = 0;
       HapticFeedback.heavyImpact();
-      _executeCancelSOS();
+      _showCancelConfirmationDialog();
       return;
     }
 
@@ -157,9 +162,12 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── Trigger SOS ─────────────────────────────────────────────────────────────
 
   Future<void> _triggerSOS({required String triggeredBy}) async {
+    if (_isTriggeringSOS) return;
+    
     HapticFeedback.vibrate();
     setState(() {
       _tapCount = 0;
+      _isTriggeringSOS = true;
     });
 
     final pos = await LocationService.getCurrentPositionOrNull();
@@ -181,13 +189,16 @@ class _HomeScreenState extends State<HomeScreen>
         _pendingIncidentId = result.incidentId;
         _sosPhase = 'gracePeriod';
         _graceCountdown = 10;
+        _isTriggeringSOS = false;
       });
       _startGracePeriodCountdown();
     } on SOSBannedException catch (e) {
       if (!mounted) return;
+      setState(() => _isTriggeringSOS = false);
       _showSOSBannedDialog(e.toString());
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isTriggeringSOS = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal mengirim SOS: $e'),
@@ -285,6 +296,35 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ─── Cancel Active SOS ───────────────────────────────────────────────────────
 
+  void _showCancelConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Batalkan SOS?'),
+        content: const Text(
+          'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('TIDAK', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _executeCancelSOS();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('YA, BATALKAN'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _executeCancelSOS() async {
     setState(() {
       _tapCount = 0;
@@ -365,8 +405,8 @@ class _HomeScreenState extends State<HomeScreen>
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Container(
-                                    width: 6,
-                                    height: 6,
+                                    width: 8,
+                                    height: 8,
                                     decoration: BoxDecoration(
                                       color: isSOSActive
                                           ? Colors.red
@@ -374,9 +414,18 @@ class _HomeScreenState extends State<HomeScreen>
                                       shape: BoxShape.circle,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    user.roleLabel,
+                                    isSOSActive ? 'SOS AKTIF' : 'Online',
+                                    style: TextStyle(
+                                      color: isSOSActive ? Colors.red : Colors.green,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '• ${user.roleLabel}',
                                     style: TextStyle(
                                       color: colors.onSurface.withValues(
                                         alpha: 0.6,
@@ -407,16 +456,16 @@ class _HomeScreenState extends State<HomeScreen>
                         },
                       ),
                       GestureDetector(
-                        onTap: () {
-                          SiagaKitaApp.themeNotifier.value = isDarkMode
-                              ? ThemeMode.light
-                              : ThemeMode.dark;
-                        },
+                        onTap: () => _showProfileMenu(context, UserModel.currentUser.value, isDarkMode),
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: colors.surface,
-                            borderRadius: BorderRadius.circular(12),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: primaryColor.withValues(alpha: 0.3), 
+                              width: 2,
+                            ),
                             boxShadow: isDarkMode
                                 ? []
                                 : [
@@ -429,10 +478,8 @@ class _HomeScreenState extends State<HomeScreen>
                                   ],
                           ),
                           child: Icon(
-                            isDarkMode
-                                ? Icons.wb_sunny
-                                : Icons.nightlight_round,
-                            color: isDarkMode ? Colors.amber : Colors.blue[600],
+                            Icons.person,
+                            color: primaryColor,
                             size: 20,
                           ),
                         ),
@@ -465,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'SOS #${_activeIncident!.incidentId} aktif — Lokasi diperbarui tiap 1 menit',
+                              'SOS AKTIF — Lokasi diperbarui tiap 1 menit',
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontSize: 11,
@@ -831,6 +878,57 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ─── Confirmation Dialog ────────────────────────────────────────────────────
+
+  // ─── Profile Menu ──────────────────────────────────────────────────────────
+
+  void _showProfileMenu(BuildContext context, UserModel user, bool isDarkMode) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(user.email, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              const SizedBox(height: 16),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.person_outline),
+                title: const Text('Profil Saya'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(accessToken: widget.accessToken)));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings_outlined),
+                title: const Text('Pengaturan'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text('Keluar Aplikasi', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  UserModel.currentUser.value = const UserModel(id: '', name: '', email: '', role: UserRole.masyarakat);
+                  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   // ─── Grace Period Overlay ─────────────────────────────────────────────────────
 
