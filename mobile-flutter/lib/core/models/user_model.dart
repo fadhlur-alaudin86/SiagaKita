@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 // Enum untuk mendefinisikan 4 role pengguna SiagaKita
 enum UserRole {
   masyarakat, // Masyarakat umum
-  relawan,    // Relawan terverifikasi
-  instansi,   // Instansi penyelamat (Damkar, BPBD, Polisi, dll)
-  admin,      // Administrator sistem
+  relawan, // Relawan terverifikasi
+  instansi, // Instansi penyelamat (Damkar, BPBD, Polisi, dll)
+  admin, // Administrator sistem
 }
 
 // Model data pengguna yang sedang login
@@ -14,13 +14,13 @@ class UserModel {
   final String name;
   final String email;
   final UserRole role;
-  
+
   // New properties for profile & volunteer features
   final String? phoneNumber;
   final String? birthDate; // format: DD-MM-YYYY or YYYY-MM-DD
   final String? bio;
   final String? volunteerStatus; // 'none', 'pending', 'approved'
-  final String? specialization; 
+  final String? specialization;
   final int volunteerPoints;
   final String volunteerLevel;
   final bool isAvailableForMission;
@@ -53,7 +53,8 @@ class UserModel {
       role: UserRole.masyarakat,
       phoneNumber: '081234567890',
       birthDate: '20-05-1998',
-      bio: 'Pemerhati keamanan bencana dan warga aktif dalam sosialisasi tanggap darurat lingkungan.',
+      bio:
+          'Pemerhati keamanan bencana dan warga aktif dalam sosialisasi tanggap darurat lingkungan.',
       volunteerStatus: 'approved',
       specialization: 'Medis Pertama',
       volunteerPoints: 120,
@@ -65,14 +66,15 @@ class UserModel {
         'height': '175',
         'allergies': 'Penisilin, Kacang',
         'medical_history': 'Asma Ringan',
-        'address': 'Jl. Cut Nyak Dhien No. 44, Peukan Bada, Kabupaten Aceh Besar, Aceh 23351',
+        'address':
+            'Jl. Cut Nyak Dhien No. 44, Peukan Bada, Kabupaten Aceh Besar, Aceh 23351',
       },
       emergencyContacts: [
         {
           'name': 'Siti Aminah',
           'relation': 'Ibu / Wali',
           'phone': '081234567891',
-        }
+        },
       ],
     ),
   );
@@ -105,7 +107,8 @@ class UserModel {
       specialization: specialization ?? this.specialization,
       volunteerPoints: volunteerPoints ?? this.volunteerPoints,
       volunteerLevel: volunteerLevel ?? this.volunteerLevel,
-      isAvailableForMission: isAvailableForMission ?? this.isAvailableForMission,
+      isAvailableForMission:
+          isAvailableForMission ?? this.isAvailableForMission,
       medicalData: medicalData ?? this.medicalData,
       emergencyContacts: emergencyContacts ?? this.emergencyContacts,
     );
@@ -121,15 +124,20 @@ class UserModel {
         if (parts[0].length == 4) {
           birth = DateTime.parse(birthDate!);
         } else {
-          birth = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          birth = DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[1]),
+            int.parse(parts[0]),
+          );
         }
       } else {
         birth = DateTime.parse(birthDate!);
       }
-      
+
       final today = DateTime.now();
       int calculatedAge = today.year - birth.year;
-      if (today.month < birth.month || (today.month == birth.month && today.day < birth.day)) {
+      if (today.month < birth.month ||
+          (today.month == birth.month && today.day < birth.day)) {
         calculatedAge--;
       }
       return calculatedAge;
@@ -184,7 +192,9 @@ class UserModel {
       volunteerPoints: json['volunteer_points'] ?? 0,
       volunteerLevel: json['volunteer_level'] ?? 'Pemula',
       isAvailableForMission: json['is_available_for_mission'] ?? false,
-      medicalData: json['medical_data'] != null ? Map<String, dynamic>.from(json['medical_data']) : null,
+      medicalData: json['medical_data'] != null
+          ? Map<String, dynamic>.from(json['medical_data'])
+          : null,
       emergencyContacts: json['emergency_contacts'] != null
           ? List<Map<String, dynamic>>.from(json['emergency_contacts'])
           : null,

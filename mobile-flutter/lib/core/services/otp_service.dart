@@ -7,7 +7,6 @@ import '../constants/api_config.dart';
 class OTPService {
   static const String _baseUrl = ApiConfig.baseUrl;
 
-
   /// Meminta kode OTP dikirimkan ke [phoneNumber] via WhatsApp.
   ///
   /// Melempar [OTPException] jika:
@@ -39,10 +38,7 @@ class OTPService {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/verify-otp'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'phone_number': phoneNumber,
-        'otp_code': otpCode,
-      }),
+      body: jsonEncode({'phone_number': phoneNumber, 'otp_code': otpCode}),
     );
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;

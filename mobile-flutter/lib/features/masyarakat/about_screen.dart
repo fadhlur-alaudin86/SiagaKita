@@ -8,7 +8,7 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     final primaryTextColor = isDark ? Colors.white : const Color(0xFF0D1B3E);
     final secondaryTextColor = isDark ? Colors.white70 : Colors.black87;
     final cardColor = isDark ? colors.surfaceContainerHighest : Colors.white;
@@ -16,7 +16,13 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: AppBar(
-        title: Text('Tentang Aplikasi'.tr(context), style: TextStyle(fontWeight: FontWeight.bold, color: primaryTextColor)),
+        title: Text(
+          'Tentang Aplikasi'.tr(context),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: primaryTextColor,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: primaryTextColor),
@@ -35,10 +41,14 @@ class AboutScreen extends StatelessWidget {
                 color: Colors.orange.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.health_and_safety, size: 64, color: Colors.orange),
+              child: const Icon(
+                Icons.health_and_safety,
+                size: 64,
+                color: Colors.orange,
+              ),
             ),
             const SizedBox(height: 24),
-            
+
             // App Title & Version
             Text(
               'SIAGAKITA',
@@ -59,10 +69,11 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            
+
             // Description
             Text(
-              'SiagaKita adalah platform penanggulangan darurat terpadu yang menghubungkan masyarakat dengan relawan medis dan instansi penyelamat dalam satu ekosistem waktu nyata (real-time).'.tr(context),
+              'SiagaKita adalah platform penanggulangan darurat terpadu yang menghubungkan masyarakat dengan relawan medis dan instansi penyelamat dalam satu ekosistem waktu nyata (real-time).'
+                  .tr(context),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -71,44 +82,97 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 48),
-            
+
             // Links
             Card(
               color: cardColor,
               elevation: isDark ? 0 : 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: isDark ? BorderSide(color: Colors.grey.withValues(alpha: 0.2)) : BorderSide.none,
+                side: isDark
+                    ? BorderSide(color: Colors.grey.withValues(alpha: 0.2))
+                    : BorderSide.none,
               ),
               child: Column(
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.description_outlined, color: Colors.grey),
-                    title: Text('Syarat & Ketentuan'.tr(context), style: TextStyle(color: primaryTextColor, fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.open_in_new, color: Colors.grey, size: 18),
+                    leading: const Icon(
+                      Icons.description_outlined,
+                      color: Colors.grey,
+                    ),
+                    title: Text(
+                      'Syarat & Ketentuan'.tr(context),
+                      style: TextStyle(
+                        color: primaryTextColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.open_in_new,
+                      color: Colors.grey,
+                      size: 18,
+                    ),
                     onTap: () {},
                   ),
-                  Divider(height: 1, indent: 16, endIndent: 16, color: isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: isDark
+                        ? Colors.grey.withValues(alpha: 0.2)
+                        : Colors.grey.shade200,
+                  ),
                   ListTile(
-                    leading: const Icon(Icons.privacy_tip_outlined, color: Colors.grey),
-                    title: Text('Kebijakan Privasi'.tr(context), style: TextStyle(color: primaryTextColor, fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.open_in_new, color: Colors.grey, size: 18),
+                    leading: const Icon(
+                      Icons.privacy_tip_outlined,
+                      color: Colors.grey,
+                    ),
+                    title: Text(
+                      'Kebijakan Privasi'.tr(context),
+                      style: TextStyle(
+                        color: primaryTextColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.open_in_new,
+                      color: Colors.grey,
+                      size: 18,
+                    ),
                     onTap: () {},
                   ),
-                  Divider(height: 1, indent: 16, endIndent: 16, color: isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: isDark
+                        ? Colors.grey.withValues(alpha: 0.2)
+                        : Colors.grey.shade200,
+                  ),
                   ListTile(
                     leading: const Icon(Icons.code, color: Colors.grey),
-                    title: Text('Lisensi Perangkat Lunak'.tr(context), style: TextStyle(color: primaryTextColor, fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    title: Text(
+                      'Lisensi Perangkat Lunak'.tr(context),
+                      style: TextStyle(
+                        color: primaryTextColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                    ),
                     onTap: () {},
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 48),
             Text(
-              '© 2026 Tim SiagaKita\nDibuat dengan ❤️ untuk Kemanusiaan'.tr(context),
+              '© 2026 Tim SiagaKita\nDibuat dengan ❤️ untuk Kemanusiaan'.tr(
+                context,
+              ),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,

@@ -39,7 +39,8 @@ class LocationService {
 
   /// Mengambil koordinat GPS saat ini.
   /// Melempar [LocationException] jika GPS tidak tersedia.
-  static Future<({double latitude, double longitude})> getCurrentPosition() async {
+  static Future<({double latitude, double longitude})>
+  getCurrentPosition() async {
     if (!await hasPermission()) {
       throw LocationException('Izin GPS belum diberikan');
     }
@@ -53,7 +54,9 @@ class LocationService {
       );
       return (latitude: position.latitude, longitude: position.longitude);
     } on LocationServiceDisabledException {
-      throw LocationException('Layanan GPS tidak aktif. Aktifkan GPS di pengaturan.');
+      throw LocationException(
+        'Layanan GPS tidak aktif. Aktifkan GPS di pengaturan.',
+      );
     } catch (e) {
       throw LocationException('Gagal mengambil lokasi: $e');
     }
@@ -61,7 +64,8 @@ class LocationService {
 
   /// Mengambil koordinat GPS dengan fallback ke (0,0) jika gagal.
   /// Digunakan untuk kasus non-critical seperti update periodik.
-  static Future<({double latitude, double longitude})?> getCurrentPositionOrNull() async {
+  static Future<({double latitude, double longitude})?>
+  getCurrentPositionOrNull() async {
     try {
       return await getCurrentPosition();
     } catch (_) {

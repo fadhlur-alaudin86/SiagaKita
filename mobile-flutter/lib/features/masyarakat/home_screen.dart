@@ -89,7 +89,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _startLocationUpdates() {
     _locationUpdateTimer?.cancel();
-    _locationUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+    _locationUpdateTimer = Timer.periodic(const Duration(minutes: 1), (
+      _,
+    ) async {
       if (_activeIncident == null || !mounted) return;
       final pos = await LocationService.getCurrentPositionOrNull();
       if (pos != null && _activeIncident != null) {
@@ -112,7 +114,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onSOSTap() {
     // Blokir tap jika sudah ada SOS aktif, atau sedang dalam masa grace period/loading
-    if (_activeIncident != null || _pendingIncidentId != null || _sosPhase != 'idle') return;
+    if (_activeIncident != null ||
+        _pendingIncidentId != null ||
+        _sosPhase != 'idle')
+      return;
 
     HapticFeedback.lightImpact();
     _tapResetTimer?.cancel();
@@ -148,8 +153,6 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) setState(() => _tapCount = 0);
     });
   }
-
-
 
   // ─── Trigger SOS ─────────────────────────────────────────────────────────────
 
@@ -199,7 +202,10 @@ class _HomeScreenState extends State<HomeScreen>
   void _startGracePeriodCountdown() {
     _graceTimer?.cancel();
     _graceTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) { timer.cancel(); return; }
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       setState(() => _graceCountdown--);
       HapticFeedback.selectionClick();
       if (_graceCountdown <= 0) {
@@ -218,7 +224,9 @@ class _HomeScreenState extends State<HomeScreen>
         incidentId: _pendingIncidentId!,
         incidentType: type,
       );
-    } catch (_) {/* silent */}
+    } catch (_) {
+      /* silent */
+    }
     _transitionToBroadcasting();
   }
 
@@ -257,11 +265,13 @@ class _HomeScreenState extends State<HomeScreen>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Row(children: [
-          Icon(Icons.block, color: Colors.red),
-          SizedBox(width: 8),
-          Text('SOS Dinonaktifkan'),
-        ]),
+        title: const Row(
+          children: [
+            Icon(Icons.block, color: Colors.red),
+            SizedBox(width: 8),
+            Text('SOS Dinonaktifkan'),
+          ],
+        ),
         content: Text(message),
         actions: [
           TextButton(
@@ -325,7 +335,10 @@ class _HomeScreenState extends State<HomeScreen>
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 32.0,
+              ),
               child: Column(
                 children: [
                   // ── Header ──────────────────────────────────────────────────
@@ -341,7 +354,9 @@ class _HomeScreenState extends State<HomeScreen>
                               Text(
                                 user.name,
                                 style: TextStyle(
-                                  color: isSOSActive ? Colors.red : primaryColor,
+                                  color: isSOSActive
+                                      ? Colors.red
+                                      : primaryColor,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -353,7 +368,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     width: 6,
                                     height: 6,
                                     decoration: BoxDecoration(
-                                      color: isSOSActive ? Colors.red : Colors.green,
+                                      color: isSOSActive
+                                          ? Colors.red
+                                          : Colors.green,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -361,7 +378,9 @@ class _HomeScreenState extends State<HomeScreen>
                                   Text(
                                     user.roleLabel,
                                     style: TextStyle(
-                                      color: colors.onSurface.withValues(alpha: 0.6),
+                                      color: colors.onSurface.withValues(
+                                        alpha: 0.6,
+                                      ),
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -378,12 +397,14 @@ class _HomeScreenState extends State<HomeScreen>
                                       ? Colors.red.withValues(alpha: 0.8)
                                       : colors.onSurface.withValues(alpha: 0.6),
                                   fontSize: 11,
-                                  fontWeight: isSOSActive ? FontWeight.bold : FontWeight.normal,
+                                  fontWeight: isSOSActive
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
                               ),
                             ],
                           );
-                        }
+                        },
                       ),
                       GestureDetector(
                         onTap: () {
@@ -400,12 +421,17 @@ class _HomeScreenState extends State<HomeScreen>
                                 ? []
                                 : [
                                     BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.05),
-                                        blurRadius: 10)
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 10,
+                                    ),
                                   ],
                           ),
                           child: Icon(
-                            isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
                             color: isDarkMode ? Colors.amber : Colors.blue[600],
                             size: 20,
                           ),
@@ -418,15 +444,24 @@ class _HomeScreenState extends State<HomeScreen>
                   if (isSOSActive && !_isLoadingActiveIncident) ...[
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                        border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.emergency_share, color: Colors.red, size: 18),
+                          const Icon(
+                            Icons.emergency_share,
+                            color: Colors.red,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -464,12 +499,15 @@ class _HomeScreenState extends State<HomeScreen>
                                   child: CircularProgressIndicator(
                                     value: _tapCount / _requiredTaps,
                                     strokeWidth: 8,
-                                    backgroundColor: (isSOSActive
-                                            ? Colors.red
-                                            : primaryColor)
-                                        .withValues(alpha: 0.15),
+                                    backgroundColor:
+                                        (isSOSActive
+                                                ? Colors.red
+                                                : primaryColor)
+                                            .withValues(alpha: 0.15),
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      isSOSActive ? Colors.red : Colors.orangeAccent,
+                                      isSOSActive
+                                          ? Colors.red
+                                          : Colors.orangeAccent,
                                     ),
                                   ),
                                 ),
@@ -484,23 +522,47 @@ class _HomeScreenState extends State<HomeScreen>
                                     shape: BoxShape.circle,
                                     gradient: RadialGradient(
                                       colors: isSOSActive
-                                          ? [Colors.red, const Color(0xFF8B0000)]
-                                          : [primaryColor, const Color(0xFFCB5100)],
+                                          ? [
+                                              Colors.red,
+                                              const Color(0xFF8B0000),
+                                            ]
+                                          : [
+                                              primaryColor,
+                                              const Color(0xFFCB5100),
+                                            ],
                                     ),
                                     border: Border.all(
                                       color: (_tapCount > 0
-                                              ? (isSOSActive ? Colors.red : const Color(0xFFFFA265))
-                                              : (isDarkMode
-                                                  ? Colors.white.withValues(alpha: 0.2)
-                                                  : (isSOSActive ? Colors.red : primaryColor).withValues(alpha: 0.3))),
+                                          ? (isSOSActive
+                                                ? Colors.red
+                                                : const Color(0xFFFFA265))
+                                          : (isDarkMode
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.2,
+                                                  )
+                                                : (isSOSActive
+                                                          ? Colors.red
+                                                          : primaryColor)
+                                                      .withValues(alpha: 0.3))),
                                       width: 8,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: (isSOSActive ? Colors.red : primaryColor)
-                                            .withValues(alpha: _tapCount > 0 ? 0.8 : (isDarkMode ? 0.3 : 0.6)),
+                                        color:
+                                            (isSOSActive
+                                                    ? Colors.red
+                                                    : primaryColor)
+                                                .withValues(
+                                                  alpha: _tapCount > 0
+                                                      ? 0.8
+                                                      : (isDarkMode
+                                                            ? 0.3
+                                                            : 0.6),
+                                                ),
                                         blurRadius: _tapCount > 0 ? 50 : 30,
-                                        spreadRadius: _tapCount > 0 ? 10 : (isDarkMode ? 5 : 10),
+                                        spreadRadius: _tapCount > 0
+                                            ? 10
+                                            : (isDarkMode ? 5 : 10),
                                       ),
                                     ],
                                   ),
@@ -508,7 +570,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
-                                        isSOSActive ? Icons.cancel_outlined : Icons.error_outline,
+                                        isSOSActive
+                                            ? Icons.cancel_outlined
+                                            : Icons.error_outline,
                                         color: Colors.white,
                                         size: 60,
                                       ),
@@ -522,9 +586,13 @@ class _HomeScreenState extends State<HomeScreen>
                                         ),
                                       ),
                                       Text(
-                                        isSOSActive ? 'KETUK 5× BATALKAN' : 'KETUK 5×'.tr(context),
+                                        isSOSActive
+                                            ? 'KETUK 5× BATALKAN'
+                                            : 'KETUK 5×'.tr(context),
                                         style: TextStyle(
-                                          color: Colors.white.withValues(alpha: 0.9),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.9,
+                                          ),
                                           fontSize: 9,
                                           fontWeight: FontWeight.bold,
                                           letterSpacing: 1.5,
@@ -545,7 +613,9 @@ class _HomeScreenState extends State<HomeScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(_requiredTaps, (i) {
                           final filled = i < _tapCount;
-                          final dotColor = isSOSActive ? Colors.red : primaryColor;
+                          final dotColor = isSOSActive
+                              ? Colors.red
+                              : primaryColor;
                           return AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             margin: const EdgeInsets.symmetric(horizontal: 5),
@@ -557,7 +627,12 @@ class _HomeScreenState extends State<HomeScreen>
                                   ? dotColor
                                   : colors.onSurface.withValues(alpha: 0.2),
                               boxShadow: filled
-                                  ? [BoxShadow(color: dotColor.withValues(alpha: 0.5), blurRadius: 6)]
+                                  ? [
+                                      BoxShadow(
+                                        color: dotColor.withValues(alpha: 0.5),
+                                        blurRadius: 6,
+                                      ),
+                                    ]
                                   : [],
                             ),
                           );
@@ -587,8 +662,14 @@ class _HomeScreenState extends State<HomeScreen>
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
-                            Navigator.push(context,
-                                MaterialPageRoute(builder: (_) => ReportScreen(accessToken: widget.accessToken)));
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReportScreen(
+                                  accessToken: widget.accessToken,
+                                ),
+                              ),
+                            );
                           },
                           child: _actionCard(
                             colors: colors,
@@ -617,10 +698,8 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
 
-
             // ── Grace Period Overlay (pilih tipe insiden) ──────────────────
-            if (_sosPhase == 'gracePeriod')
-              _buildGracePeriodOverlay(colors),
+            if (_sosPhase == 'gracePeriod') _buildGracePeriodOverlay(colors),
 
             // ── SOS Sent Banner ────────────────────────────────────────────────
             if (_showSOSSentBanner)
@@ -631,8 +710,10 @@ class _HomeScreenState extends State<HomeScreen>
                 child: TweenAnimationBuilder<double>(
                   duration: const Duration(milliseconds: 300),
                   tween: Tween(begin: -60, end: 0),
-                  builder: (context, value, child) =>
-                      Transform.translate(offset: Offset(0, value), child: child!),
+                  builder: (context, value, child) => Transform.translate(
+                    offset: Offset(0, value),
+                    child: child!,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -660,16 +741,24 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Bantuan sedang diarahkan ke lokasi Anda.'.tr(context),
+                          'Bantuan sedang diarahkan ke lokasi Anda.'.tr(
+                            context,
+                          ),
                           style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.w500, fontSize: 11),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 11,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         if (_lastTriggerMethod == 'timeout') ...[
                           const SizedBox(height: 4),
                           const Text(
                             '(Terkirim otomatis — konfirmasi habis)',
-                            style: TextStyle(color: Colors.white70, fontSize: 10),
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -701,7 +790,12 @@ class _HomeScreenState extends State<HomeScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: isDarkMode
             ? []
-            : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                ),
+              ],
       ),
       child: Column(
         children: [
@@ -714,14 +808,23 @@ class _HomeScreenState extends State<HomeScreen>
             child: Icon(icon, color: iconColor, size: 28),
           ),
           const SizedBox(height: 12),
-          Text(title,
-              style: TextStyle(
-                  color: colors.onSurface, fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(
+            title,
+            style: TextStyle(
+              color: colors.onSurface,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: colors.onSurface.withValues(alpha: 0.5), fontSize: 10)),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.onSurface.withValues(alpha: 0.5),
+              fontSize: 10,
+            ),
+          ),
         ],
       ),
     );
@@ -789,7 +892,10 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(t['icon']!, style: const TextStyle(fontSize: 36)),
+                          Text(
+                            t['icon']!,
+                            style: const TextStyle(fontSize: 36),
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             t['label']!,
@@ -841,11 +947,15 @@ class _HomeScreenState extends State<HomeScreen>
                     side: const BorderSide(color: Colors.white54),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Text(
                     'BATALKAN SOS',
-                    style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
                   ),
                 ),
               ),

@@ -33,11 +33,36 @@ class _ReportScreenState extends State<ReportScreen> {
   // ─── Category ────────────────────────────────────────────────────────────────
   int _selectedCategoryIndex = -1;
   final List<Map<String, dynamic>> _categories = [
-    {'title': 'Kebakaran',   'icon': Icons.local_fire_department, 'color': Colors.orange, 'value': 'fire'},
-    {'title': 'Kecelakaan',  'icon': Icons.car_crash,             'color': Colors.red,    'value': 'accident'},
-    {'title': 'Bencana Alam','icon': Icons.water_damage,          'color': Colors.blue,   'value': 'disaster'},
-    {'title': 'Kriminalitas','icon': Icons.warning_rounded,       'color': Colors.purple, 'value': 'crime'},
-    {'title': 'Medis',       'icon': Icons.medical_services,      'color': Colors.green,  'value': 'medical'},
+    {
+      'title': 'Kebakaran',
+      'icon': Icons.local_fire_department,
+      'color': Colors.orange,
+      'value': 'fire',
+    },
+    {
+      'title': 'Kecelakaan',
+      'icon': Icons.car_crash,
+      'color': Colors.red,
+      'value': 'accident',
+    },
+    {
+      'title': 'Bencana Alam',
+      'icon': Icons.water_damage,
+      'color': Colors.blue,
+      'value': 'disaster',
+    },
+    {
+      'title': 'Kriminalitas',
+      'icon': Icons.warning_rounded,
+      'color': Colors.purple,
+      'value': 'crime',
+    },
+    {
+      'title': 'Medis',
+      'icon': Icons.medical_services,
+      'color': Colors.green,
+      'value': 'medical',
+    },
   ];
 
   // ─── Photos ──────────────────────────────────────────────────────────────────
@@ -95,19 +120,32 @@ class _ReportScreenState extends State<ReportScreen> {
       final uri = Uri.parse(
         'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&zoom=18',
       );
-      final res = await http.get(uri, headers: {'User-Agent': 'com.siagakita.mobile'});
+      final res = await http.get(
+        uri,
+        headers: {'User-Agent': 'com.siagakita.mobile'},
+      );
       if (!mounted) return;
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final display = data['display_name'] as String? ?? '$lat, $lng';
         final parts = display.split(', ');
         final short = parts.take(3).join(', ');
-        setState(() { _addressLabel = short; _isLoadingLocation = false; });
+        setState(() {
+          _addressLabel = short;
+          _isLoadingLocation = false;
+        });
       } else {
-        setState(() { _addressLabel = '$lat, $lng'; _isLoadingLocation = false; });
+        setState(() {
+          _addressLabel = '$lat, $lng';
+          _isLoadingLocation = false;
+        });
       }
     } catch (_) {
-      if (mounted) setState(() { _addressLabel = 'Gagal memuat alamat'; _isLoadingLocation = false; });
+      if (mounted)
+        setState(() {
+          _addressLabel = 'Gagal memuat alamat';
+          _isLoadingLocation = false;
+        });
     }
   }
 
@@ -121,7 +159,9 @@ class _ReportScreenState extends State<ReportScreen> {
     if (!status.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Izin ditolak. Buka pengaturan untuk mengizinkan.')),
+          const SnackBar(
+            content: Text('Izin ditolak. Buka pengaturan untuk mengizinkan.'),
+          ),
         );
       }
       return;
@@ -130,7 +170,10 @@ class _ReportScreenState extends State<ReportScreen> {
     if (picked == null || !mounted) return;
 
     final dir = await getTemporaryDirectory();
-    final outPath = p.join(dir.path, 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final outPath = p.join(
+      dir.path,
+      'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
     final compressed = await FlutterImageCompress.compressAndGetFile(
       picked.path,
       outPath,
@@ -146,13 +189,29 @@ class _ReportScreenState extends State<ReportScreen> {
   void _showPhotoSource() {
     showModalBottomSheet<void>(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(leading: const Icon(Icons.camera_alt), title: const Text('Ambil Foto'), onTap: () { Navigator.pop(context); _pickPhoto(ImageSource.camera); }),
-            ListTile(leading: const Icon(Icons.photo_library), title: const Text('Pilih dari Galeri'), onTap: () { Navigator.pop(context); _pickPhoto(ImageSource.gallery); }),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Ambil Foto'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pilih dari Galeri'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
           ],
         ),
       ),
@@ -165,16 +224,29 @@ class _ReportScreenState extends State<ReportScreen> {
     if (_isRecording) return; // Cegah timer ganda
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Izin mikrofon ditolak.')));
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Izin mikrofon ditolak.')));
       return;
     }
     final dir = await getTemporaryDirectory();
-    _audioPath = p.join(dir.path, 'audio_${DateTime.now().millisecondsSinceEpoch}.m4a');
+    _audioPath = p.join(
+      dir.path,
+      'audio_${DateTime.now().millisecondsSinceEpoch}.m4a',
+    );
     await _recorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 22050, bitRate: 64000),
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        sampleRate: 22050,
+        bitRate: 64000,
+      ),
       path: _audioPath!,
     );
-    setState(() { _isRecording = true; _recordSeconds = 0; });
+    setState(() {
+      _isRecording = true;
+      _recordSeconds = 0;
+    });
     _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _recordSeconds++);
     });
@@ -198,7 +270,9 @@ class _ReportScreenState extends State<ReportScreen> {
     } else {
       await _player.play(DeviceFileSource(_audioFile!.path));
       setState(() => _isPlayingAudio = true);
-      _player.onPlayerComplete.listen((_) { if (mounted) setState(() => _isPlayingAudio = false); });
+      _player.onPlayerComplete.listen((_) {
+        if (mounted) setState(() => _isPlayingAudio = false);
+      });
     }
   }
 
@@ -213,7 +287,9 @@ class _ReportScreenState extends State<ReportScreen> {
   void _showConfirmSheet() {
     if (_selectedCategoryIndex < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih kategori darurat terlebih dahulu.')),
+        const SnackBar(
+          content: Text('Pilih kategori darurat terlebih dahulu.'),
+        ),
       );
       return;
     }
@@ -226,43 +302,102 @@ class _ReportScreenState extends State<ReportScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: colors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: colors.onSurface.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
-            Text('Konfirmasi Laporan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.onSurface)),
+            Text(
+              'Konfirmasi Laporan',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: colors.onSurface,
+              ),
+            ),
             const SizedBox(height: 16),
-            _confirmRow(Icons.category_outlined, 'Kategori', cat['title'].toString(), colors),
-            _confirmRow(Icons.location_on_outlined, 'Lokasi', _addressLabel, colors),
-            _confirmRow(Icons.priority_high, 'Urgensi', urgencyLabels[_urgencyLevel], colors, valueColor: urgencyColors[_urgencyLevel]),
-            if (_photos.isNotEmpty) _confirmRow(Icons.image_outlined, 'Foto', '${_photos.length} foto terlampir', colors),
-            if (_audioFile != null) _confirmRow(Icons.mic_outlined, 'Audio', 'Rekaman ${_formatDuration(_recordSeconds)}', colors),
+            _confirmRow(
+              Icons.category_outlined,
+              'Kategori',
+              cat['title'].toString(),
+              colors,
+            ),
+            _confirmRow(
+              Icons.location_on_outlined,
+              'Lokasi',
+              _addressLabel,
+              colors,
+            ),
+            _confirmRow(
+              Icons.priority_high,
+              'Urgensi',
+              urgencyLabels[_urgencyLevel],
+              colors,
+              valueColor: urgencyColors[_urgencyLevel],
+            ),
+            if (_photos.isNotEmpty)
+              _confirmRow(
+                Icons.image_outlined,
+                'Foto',
+                '${_photos.length} foto terlampir',
+                colors,
+              ),
+            if (_audioFile != null)
+              _confirmRow(
+                Icons.mic_outlined,
+                'Audio',
+                'Rekaman ${_formatDuration(_recordSeconds)}',
+                colors,
+              ),
             const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
                     child: const Text('Batal'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () { Navigator.pop(ctx); _submitReport(); },
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _submitReport();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                    child: const Text('Kirim Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Kirim Sekarang',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -274,15 +409,36 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _confirmRow(IconData icon, String label, String value, ColorScheme colors, {Color? valueColor}) {
+  Widget _confirmRow(
+    IconData icon,
+    String label,
+    String value,
+    ColorScheme colors, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Icon(icon, size: 18, color: colors.onSurface.withValues(alpha: 0.5)),
           const SizedBox(width: 12),
-          Text('$label: ', style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6), fontSize: 13)),
-          Expanded(child: Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: valueColor ?? colors.onSurface))),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              color: colors.onSurface.withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: valueColor ?? colors.onSurface,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -303,7 +459,10 @@ class _ReportScreenState extends State<ReportScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Laporan berhasil dikirim!'.tr(context)), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text('Laporan berhasil dikirim!'.tr(context)),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context);
     } on ReportException catch (e) {
@@ -327,7 +486,13 @@ class _ReportScreenState extends State<ReportScreen> {
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: AppBar(
-        title: Text('Buat Laporan'.tr(context), style: TextStyle(color: colors.onSurface, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Buat Laporan'.tr(context),
+          style: TextStyle(
+            color: colors.onSurface,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: colors.onSurface),
@@ -343,13 +508,27 @@ class _ReportScreenState extends State<ReportScreen> {
               const SizedBox(height: 24),
 
               // 2. Kategori
-              Text('Kategori Darurat'.tr(context), style: TextStyle(color: colors.onSurface, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Kategori Darurat'.tr(context),
+                style: TextStyle(
+                  color: colors.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 16),
               _buildCategoryRow(colors, primaryColor, isDark),
               const SizedBox(height: 24),
 
               // 3. Foto
-              Text('Lampiran Foto & Audio'.tr(context), style: TextStyle(color: colors.onSurface, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Lampiran Foto & Audio'.tr(context),
+                style: TextStyle(
+                  color: colors.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 16),
               _buildPhotoSection(colors, isDark),
               const SizedBox(height: 16),
@@ -360,14 +539,24 @@ class _ReportScreenState extends State<ReportScreen> {
 
               // 5. Deskripsi
               Container(
-                decoration: BoxDecoration(color: colors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: colors.onSurface.withValues(alpha: 0.1))),
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colors.onSurface.withValues(alpha: 0.1),
+                  ),
+                ),
                 child: TextField(
                   controller: _descCtrl,
                   maxLines: 3,
                   style: TextStyle(color: colors.onSurface),
                   decoration: InputDecoration(
-                    hintText: 'Ketik deskripsi tambahan jika ada...'.tr(context),
-                    hintStyle: TextStyle(color: colors.onSurface.withValues(alpha: 0.4)),
+                    hintText: 'Ketik deskripsi tambahan jika ada...'.tr(
+                      context,
+                    ),
+                    hintStyle: TextStyle(
+                      color: colors.onSurface.withValues(alpha: 0.4),
+                    ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.all(16),
                   ),
@@ -376,7 +565,14 @@ class _ReportScreenState extends State<ReportScreen> {
               const SizedBox(height: 24),
 
               // 6. Urgensi
-              Text('Tingkat Urgensi'.tr(context), style: TextStyle(color: colors.onSurface, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Tingkat Urgensi'.tr(context),
+                style: TextStyle(
+                  color: colors.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -395,14 +591,29 @@ class _ReportScreenState extends State<ReportScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _isSubmitting ? null : _showConfirmSheet,
                   icon: _isSubmitting
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Icon(Icons.send),
-                  label: Text('Kirim Laporan'.tr(context), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  label: Text(
+                    'Kirim Laporan'.tr(context),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ),
@@ -419,7 +630,14 @@ class _ReportScreenState extends State<ReportScreen> {
         color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colors.onSurface.withValues(alpha: 0.1)),
-        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                ),
+              ],
       ),
       child: Column(
         children: [
@@ -430,18 +648,36 @@ class _ReportScreenState extends State<ReportScreen> {
               child: _currentLatLng == null
                   ? Container(
                       color: const Color(0xFF0D1B3E),
-                      child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+                      child: const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
                     )
                   : FlutterMap(
-                      options: MapOptions(initialCenter: _currentLatLng!, initialZoom: 15, interactionOptions: const InteractionOptions(flags: InteractiveFlag.none)),
+                      options: MapOptions(
+                        initialCenter: _currentLatLng!,
+                        initialZoom: 15,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.none,
+                        ),
+                      ),
                       children: [
-                        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.siagakita.mobile'),
-                        MarkerLayer(markers: [
-                          Marker(
-                            point: _currentLatLng!,
-                            child: Icon(Icons.location_on, color: primaryColor, size: 36),
-                          ),
-                        ]),
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.siagakita.mobile',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: _currentLatLng!,
+                              child: Icon(
+                                Icons.location_on,
+                                color: primaryColor,
+                                size: 36,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
             ),
@@ -450,20 +686,49 @@ class _ReportScreenState extends State<ReportScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(_isLoadingLocation ? Icons.hourglass_empty : Icons.gps_fixed, color: _isLoadingLocation ? Colors.grey : Colors.green, size: 20),
+                Icon(
+                  _isLoadingLocation ? Icons.hourglass_empty : Icons.gps_fixed,
+                  color: _isLoadingLocation ? Colors.grey : Colors.green,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_isLoadingLocation ? 'Mendeteksi lokasi...' : 'Lokasi Otomatis Ditemukan', style: TextStyle(color: colors.onSurface, fontWeight: FontWeight.bold, fontSize: 13)),
-                      Text(_addressLabel, style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6), fontSize: 12)),
+                      Text(
+                        _isLoadingLocation
+                            ? 'Mendeteksi lokasi...'
+                            : 'Lokasi Otomatis Ditemukan',
+                        style: TextStyle(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        _addressLabel,
+                        style: TextStyle(
+                          color: colors.onSurface.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 GestureDetector(
-                  onTap: () { setState(() { _isLoadingLocation = true; _addressLabel = 'Memuat ulang...'; }); _loadLocation(); },
-                  child: Icon(Icons.refresh, color: Theme.of(context).primaryColor, size: 20),
+                  onTap: () {
+                    setState(() {
+                      _isLoadingLocation = true;
+                      _addressLabel = 'Memuat ulang...';
+                    });
+                    _loadLocation();
+                  },
+                  child: Icon(
+                    Icons.refresh,
+                    color: Theme.of(context).primaryColor,
+                    size: 20,
+                  ),
                 ),
               ],
             ),
@@ -473,7 +738,11 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _buildCategoryRow(ColorScheme colors, Color primaryColor, bool isDark) {
+  Widget _buildCategoryRow(
+    ColorScheme colors,
+    Color primaryColor,
+    bool isDark,
+  ) {
     return SizedBox(
       height: 100,
       child: ListView.builder(
@@ -490,15 +759,38 @@ class _ReportScreenState extends State<ReportScreen> {
               decoration: BoxDecoration(
                 color: isSel ? primaryColor : colors.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isSel ? primaryColor : colors.onSurface.withValues(alpha: 0.1)),
-                boxShadow: isSel && !isDark ? [BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 8)] : [],
+                border: Border.all(
+                  color: isSel
+                      ? primaryColor
+                      : colors.onSurface.withValues(alpha: 0.1),
+                ),
+                boxShadow: isSel && !isDark
+                    ? [
+                        BoxShadow(
+                          color: primaryColor.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                        ),
+                      ]
+                    : [],
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(cat['icon'] as IconData, color: isSel ? Colors.white : cat['color'] as Color, size: 32),
+                  Icon(
+                    cat['icon'] as IconData,
+                    color: isSel ? Colors.white : cat['color'] as Color,
+                    size: 32,
+                  ),
                   const SizedBox(height: 8),
-                  Text(cat['title'].toString(), textAlign: TextAlign.center, style: TextStyle(color: isSel ? Colors.white : colors.onSurface, fontSize: 10, fontWeight: isSel ? FontWeight.bold : FontWeight.normal)),
+                  Text(
+                    cat['title'].toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isSel ? Colors.white : colors.onSurface,
+                      fontSize: 10,
+                      fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -519,16 +811,29 @@ class _ReportScreenState extends State<ReportScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(entry.value, width: 100, height: 100, fit: BoxFit.cover),
+                child: Image.file(
+                  entry.value,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                ),
               ),
               Positioned(
-                top: 4, right: 4,
+                top: 4,
+                right: 4,
                 child: GestureDetector(
                   onTap: () => setState(() => _photos.removeAt(entry.key)),
                   child: Container(
                     padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                    child: const Icon(Icons.close, size: 16, color: Colors.white),
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -539,17 +844,32 @@ class _ReportScreenState extends State<ReportScreen> {
           GestureDetector(
             onTap: _showPhotoSource,
             child: Container(
-              width: 100, height: 100,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
-                color: colors.surface, borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colors.onSurface.withValues(alpha: 0.2), style: BorderStyle.solid),
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colors.onSurface.withValues(alpha: 0.2),
+                  style: BorderStyle.solid,
+                ),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_a_photo_outlined, size: 28, color: primaryColor),
+                  Icon(
+                    Icons.add_a_photo_outlined,
+                    size: 28,
+                    color: primaryColor,
+                  ),
                   const SizedBox(height: 6),
-                  Text('${_photos.length}/3', style: TextStyle(color: colors.onSurface.withValues(alpha: 0.5), fontSize: 11)),
+                  Text(
+                    '${_photos.length}/3',
+                    style: TextStyle(
+                      color: colors.onSurface.withValues(alpha: 0.5),
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -571,9 +891,30 @@ class _ReportScreenState extends State<ReportScreen> {
           children: [
             const Icon(Icons.mic, color: Colors.green),
             const SizedBox(width: 12),
-            Expanded(child: Text('Rekaman ${_formatDuration(_recordSeconds)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))),
-            IconButton(icon: Icon(_isPlayingAudio ? Icons.stop : Icons.play_arrow, color: Colors.green), onPressed: _togglePlayAudio),
-            IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => setState(() { _audioFile = null; _audioPath = null; _recordSeconds = 0; })),
+            Expanded(
+              child: Text(
+                'Rekaman ${_formatDuration(_recordSeconds)}',
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: Icon(
+                _isPlayingAudio ? Icons.stop : Icons.play_arrow,
+                color: Colors.green,
+              ),
+              onPressed: _togglePlayAudio,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () => setState(() {
+                _audioFile = null;
+                _audioPath = null;
+                _recordSeconds = 0;
+              }),
+            ),
           ],
         ),
       );
@@ -587,18 +928,37 @@ class _ReportScreenState extends State<ReportScreen> {
         duration: const Duration(milliseconds: 200),
         height: 80,
         decoration: BoxDecoration(
-          color: _isRecording ? Colors.red.withValues(alpha: 0.15) : colors.surface,
+          color: _isRecording
+              ? Colors.red.withValues(alpha: 0.15)
+              : colors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _isRecording ? Colors.red : colors.onSurface.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: _isRecording
+                ? Colors.red
+                : colors.onSurface.withValues(alpha: 0.2),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.mic, size: 28, color: _isRecording ? Colors.red : colors.onSurface.withValues(alpha: 0.5)),
+            Icon(
+              Icons.mic,
+              size: 28,
+              color: _isRecording
+                  ? Colors.red
+                  : colors.onSurface.withValues(alpha: 0.5),
+            ),
             const SizedBox(width: 12),
             Text(
-              _isRecording ? 'Merekam... ${_formatDuration(_recordSeconds)}' : 'Tahan untuk rekam suara',
-              style: TextStyle(color: _isRecording ? Colors.red : colors.onSurface.withValues(alpha: 0.6), fontWeight: _isRecording ? FontWeight.bold : FontWeight.normal),
+              _isRecording
+                  ? 'Merekam... ${_formatDuration(_recordSeconds)}'
+                  : 'Tahan untuk rekam suara',
+              style: TextStyle(
+                color: _isRecording
+                    ? Colors.red
+                    : colors.onSurface.withValues(alpha: 0.6),
+                fontWeight: _isRecording ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ],
         ),
@@ -606,7 +966,12 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _urgencyPill(int level, String text, Color targetColor, ColorScheme colors) {
+  Widget _urgencyPill(
+    int level,
+    String text,
+    Color targetColor,
+    ColorScheme colors,
+  ) {
     final isSel = _urgencyLevel == level;
     return Expanded(
       child: GestureDetector(
@@ -616,9 +981,20 @@ class _ReportScreenState extends State<ReportScreen> {
           decoration: BoxDecoration(
             color: isSel ? targetColor : colors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSel ? targetColor : colors.onSurface.withValues(alpha: 0.1)),
+            border: Border.all(
+              color: isSel
+                  ? targetColor
+                  : colors.onSurface.withValues(alpha: 0.1),
+            ),
           ),
-          child: Text(text, textAlign: TextAlign.center, style: TextStyle(color: isSel ? Colors.white : colors.onSurface, fontWeight: isSel ? FontWeight.bold : FontWeight.normal)),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSel ? Colors.white : colors.onSurface,
+              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ),
       ),
     );

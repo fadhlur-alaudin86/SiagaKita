@@ -44,7 +44,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan, coba lagi nanti'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Terjadi kesalahan, coba lagi nanti'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -70,7 +73,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 Text(
                   'Masukkan email akun Anda. Kami akan mengirimkan kode OTP untuk mengatur ulang kata sandi.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: colors.onSurface.withValues(alpha: 0.8)),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: colors.onSurface.withValues(alpha: 0.8),
+                  ),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
@@ -96,8 +102,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     foregroundColor: colors.onPrimary,
                   ),
                   child: _isLoading
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Kirim Kode OTP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Kirim Kode OTP',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             ),

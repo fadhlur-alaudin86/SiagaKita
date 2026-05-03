@@ -21,7 +21,7 @@ class _GuideScreenState extends State<GuideScreen> {
         "Tekan luka kuat-kuat dengan kain bersih.",
         "Tinggikan posisi luka di atas jantung jika memungkinkan.",
         "Jangan lepas kain pertama jika darah tembus, tumpuk dengan kain baru.",
-        "Segera cari bantuan darurat."
+        "Segera cari bantuan darurat.",
       ],
     },
     {
@@ -32,7 +32,7 @@ class _GuideScreenState extends State<GuideScreen> {
         "Aliri area luka dengan air mengalir (bukan es) selama 15-20 menit.",
         "Lepaskan pakaian atau perhiasan di sekitar luka sebelum membengkak.",
         "Tutup luka secara longgar dengan plastik wrap atau kain bersih.",
-        "Jangan pernah memecahkan lepuhan."
+        "Jangan pernah memecahkan lepuhan.",
       ],
     },
     {
@@ -43,7 +43,7 @@ class _GuideScreenState extends State<GuideScreen> {
         "Berdirilah di belakang korban dan peluk pinggangnya.",
         "Kepalkan satu tangan sedikit di atas pusarnya.",
         "Genggam kepalan dengan tangan satunya, lalu hentakkan ke atas dan ke dalam (Heimlich Maneuver).",
-        "Ulangi sampai benda asing keluar."
+        "Ulangi sampai benda asing keluar.",
       ],
     },
     {
@@ -54,13 +54,14 @@ class _GuideScreenState extends State<GuideScreen> {
         "Lakukan Drop, Cover, Hold On (Merunduk, Berlindung di bawah meja yang kuat, Berpegangan).",
         "Jauhi jendela, kaca, dan perabotan yang bisa jatuh.",
         "Jika di luar, cari area terbuka jauh dari bangunan, pohon, dan tiang listrik.",
-        "Jangan gunakan lift saat evakuasi."
+        "Jangan gunakan lift saat evakuasi.",
       ],
     },
   ];
 
   List<Map<String, dynamic>> _localizedGuides(BuildContext context) {
-    if (Localizations.localeOf(context).languageCode != AppLocalization.localeEn.languageCode) {
+    if (Localizations.localeOf(context).languageCode !=
+        AppLocalization.localeEn.languageCode) {
       return _guides;
     }
 
@@ -73,7 +74,7 @@ class _GuideScreenState extends State<GuideScreen> {
           'Apply firm pressure on the wound with a clean cloth.',
           'Raise the injured area above heart level if possible.',
           'Do not remove the first cloth if soaked; add another on top.',
-          'Seek emergency help immediately.'
+          'Seek emergency help immediately.',
         ],
       },
       {
@@ -84,7 +85,7 @@ class _GuideScreenState extends State<GuideScreen> {
           'Cool the burn under running water (not ice) for 15-20 minutes.',
           'Remove clothing or jewelry around the area before swelling.',
           'Cover loosely with plastic wrap or a clean cloth.',
-          'Do not pop blisters.'
+          'Do not pop blisters.',
         ],
       },
       {
@@ -95,7 +96,7 @@ class _GuideScreenState extends State<GuideScreen> {
           'Stand behind the victim and wrap your arms around the waist.',
           'Make a fist slightly above the navel.',
           'Grab your fist with the other hand and thrust inward and upward (Heimlich maneuver).',
-          'Repeat until the object is expelled.'
+          'Repeat until the object is expelled.',
         ],
       },
       {
@@ -106,7 +107,7 @@ class _GuideScreenState extends State<GuideScreen> {
           'Drop, Cover, and Hold On.',
           'Stay away from windows, glass, and heavy furniture.',
           'If outdoors, move to an open area away from buildings, trees, and power lines.',
-          'Do not use elevators during evacuation.'
+          'Do not use elevators during evacuation.',
         ],
       },
     ];
@@ -116,12 +117,19 @@ class _GuideScreenState extends State<GuideScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     final localizedGuides = _localizedGuides(context);
-    final filteredGuides = localizedGuides.where((g) => 
-      g['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-      g['type'].toString().toLowerCase().contains(_searchQuery.toLowerCase())
-    ).toList();
+    final filteredGuides = localizedGuides
+        .where(
+          (g) =>
+              g['title'].toString().toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ||
+              g['type'].toString().toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ),
+        )
+        .toList();
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -131,7 +139,11 @@ class _GuideScreenState extends State<GuideScreen> {
             Container(
               padding: const EdgeInsets.all(24.0),
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: colors.onSurface.withValues(alpha: 0.1))),
+                border: Border(
+                  bottom: BorderSide(
+                    color: colors.onSurface.withValues(alpha: 0.1),
+                  ),
+                ),
               ),
               child: Column(
                 children: [
@@ -149,17 +161,37 @@ class _GuideScreenState extends State<GuideScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Panduan Darurat'.tr(context), style: TextStyle(color: colors.onSurface, fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Panduan Darurat'.tr(context),
+                            style: TextStyle(
+                              color: colors.onSurface,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(Icons.verified_user, color: Colors.green, size: 12),
+                              const Icon(
+                                Icons.verified_user,
+                                color: Colors.green,
+                                size: 12,
+                              ),
                               const SizedBox(width: 4),
-                              Text('Database Lokal Aktif (Offline/Online)'.tr(context), style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w500)),
+                              Text(
+                                'Database Lokal Aktif (Offline/Online)'.tr(
+                                  context,
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ],
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -168,17 +200,34 @@ class _GuideScreenState extends State<GuideScreen> {
                     decoration: BoxDecoration(
                       color: colors.surface,
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5)],
+                      boxShadow: isDark
+                          ? []
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 5,
+                              ),
+                            ],
                     ),
                     child: TextField(
                       style: TextStyle(color: colors.onSurface, fontSize: 14),
                       onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
-                        hintText: "Cari tindakan (mis: Luka Bakar)...".tr(context),
-                        hintStyle: TextStyle(color: colors.onSurface.withValues(alpha: 0.5)),
-                        prefixIcon: Icon(Icons.search, color: colors.onSurface.withValues(alpha: 0.5), size: 20),
+                        hintText: "Cari tindakan (mis: Luka Bakar)...".tr(
+                          context,
+                        ),
+                        hintStyle: TextStyle(
+                          color: colors.onSurface.withValues(alpha: 0.5),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: colors.onSurface.withValues(alpha: 0.5),
+                          size: 20,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -204,8 +253,17 @@ class _GuideScreenState extends State<GuideScreen> {
                       decoration: BoxDecoration(
                         color: colors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: colors.onSurface.withValues(alpha: 0.1)),
-                        boxShadow: isDark ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5)],
+                        border: Border.all(
+                          color: colors.onSurface.withValues(alpha: 0.1),
+                        ),
+                        boxShadow: isDark
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 5,
+                                ),
+                              ],
                       ),
                       child: Column(
                         children: [
@@ -217,48 +275,99 @@ class _GuideScreenState extends State<GuideScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(guide['title'], style: TextStyle(color: colors.onSurface, fontWeight: FontWeight.bold, fontSize: 14)),
+                                    Text(
+                                      guide['title'],
+                                      style: TextStyle(
+                                        color: colors.onSurface,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
                                     const SizedBox(height: 4),
-                                    Text(guide['type'], style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                    Text(
+                                      guide['type'],
+                                      style: TextStyle(
+                                        color: colors.onSurface.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 Icon(
-                                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                                  color: isExpanded ? colors.primary : colors.onSurface.withValues(alpha: 0.5),
-                                )
+                                  isExpanded
+                                      ? Icons.keyboard_arrow_up
+                                      : Icons.keyboard_arrow_down,
+                                  color: isExpanded
+                                      ? colors.primary
+                                      : colors.onSurface.withValues(alpha: 0.5),
+                                ),
                               ],
                             ),
                           ),
                           if (isExpanded)
                             Padding(
-                              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                              padding: const EdgeInsets.only(
+                                left: 16,
+                                right: 16,
+                                bottom: 16,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Divider(color: colors.onSurface.withValues(alpha: 0.1), height: 1),
-                                  const SizedBox(height: 12),
-                                  ...List.generate(guide['steps'].length, (idx) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 8.0),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text('${idx + 1}. ', style: TextStyle(color: colors.onSurface.withValues(alpha: 0.9), fontSize: 12)),
-                                        Expanded(
-                                          child: Text(guide['steps'][idx], style: TextStyle(color: colors.onSurface.withValues(alpha: 0.9), fontSize: 12, height: 1.5)),
-                                        )
-                                      ],
+                                  Divider(
+                                    color: colors.onSurface.withValues(
+                                      alpha: 0.1,
                                     ),
-                                  )),
+                                    height: 1,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ...List.generate(
+                                    guide['steps'].length,
+                                    (idx) => Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 8.0,
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${idx + 1}. ',
+                                            style: TextStyle(
+                                              color: colors.onSurface
+                                                  .withValues(alpha: 0.9),
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              guide['steps'][idx],
+                                              style: TextStyle(
+                                                color: colors.onSurface
+                                                    .withValues(alpha: 0.9),
+                                                fontSize: 12,
+                                                height: 1.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
-                            )
+                            ),
                         ],
                       ),
                     ),
                   );
                 },
               ),
-            )
+            ),
           ],
         ),
       ),

@@ -13,13 +13,14 @@ class IncidentService {
 
   // ─── Helper: request dengan timeout ──────────────────────────────────────
 
-  static Future<http.Response> _req(Future<http.Response> Function() call,
-      {Duration? timeout}) async {
+  static Future<http.Response> _req(
+    Future<http.Response> Function() call, {
+    Duration? timeout,
+  }) async {
     try {
       return await call().timeout(
         timeout ?? _defaultTimeout,
-        onTimeout: () =>
-            throw IncidentException('Request timeout. Coba lagi.'),
+        onTimeout: () => throw IncidentException('Request timeout. Coba lagi.'),
       );
     } on IncidentException {
       rethrow;
@@ -31,9 +32,9 @@ class IncidentService {
   }
 
   static Map<String, String> _authHeader(String token) => {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      };
+    'Authorization': 'Bearer $token',
+    'Content-Type': 'application/json',
+  };
 
   // ─── Trigger SOS (Jalur A) ────────────────────────────────────────────────
 
@@ -59,10 +60,14 @@ class IncidentService {
     );
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode == 403) {
-      throw SOSBannedException(body['message'] as String? ?? 'Fitur SOS dinonaktifkan');
+      throw SOSBannedException(
+        body['message'] as String? ?? 'Fitur SOS dinonaktifkan',
+      );
     }
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw IncidentException(body['message'] as String? ?? 'Gagal mengirim SOS');
+      throw IncidentException(
+        body['message'] as String? ?? 'Gagal mengirim SOS',
+      );
     }
     return TriggerSOSResult.fromJson(body['data'] as Map<String, dynamic>);
   }
@@ -84,7 +89,9 @@ class IncidentService {
     );
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw IncidentException(body['message'] as String? ?? 'Gagal update tipe');
+      throw IncidentException(
+        body['message'] as String? ?? 'Gagal update tipe',
+      );
     }
   }
 
@@ -122,7 +129,9 @@ class IncidentService {
     );
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw IncidentException(body['message'] as String? ?? 'Gagal membatalkan SOS');
+      throw IncidentException(
+        body['message'] as String? ?? 'Gagal membatalkan SOS',
+      );
     }
   }
 
@@ -198,7 +207,9 @@ class IncidentService {
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw IncidentException(body['message'] as String? ?? 'Gagal mengirim laporan');
+      throw IncidentException(
+        body['message'] as String? ?? 'Gagal mengirim laporan',
+      );
     }
   }
 }
@@ -244,15 +255,14 @@ class ActiveIncident {
   });
 
   factory ActiveIncident.fromJson(Map<String, dynamic> json) => ActiveIncident(
-        incidentId: json['incident_id'] as String,
-        status: json['status'] as String,
-        incidentType: json['incident_type'] as String? ?? 'unknown',
-        latitude: (json['latitude'] as num).toDouble(),
-        longitude: (json['longitude'] as num).toDouble(),
-        createdAt: json['created_at'] as String,
-        reporterTrustLabel:
-            json['reporter_trust_label'] as String? ?? 'standard',
-      );
+    incidentId: json['incident_id'] as String,
+    status: json['status'] as String,
+    incidentType: json['incident_type'] as String? ?? 'unknown',
+    latitude: (json['latitude'] as num).toDouble(),
+    longitude: (json['longitude'] as num).toDouble(),
+    createdAt: json['created_at'] as String,
+    reporterTrustLabel: json['reporter_trust_label'] as String? ?? 'standard',
+  );
 }
 
 // ─── Exceptions ───────────────────────────────────────────────────────────────

@@ -9,13 +9,15 @@ class UserService {
 
   static Future<UserModel> getProfile(String token) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/users/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(_timeout);
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/users/profile'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(_timeout);
 
       final body = jsonDecode(response.body);
 
@@ -29,22 +31,27 @@ class UserService {
     }
   }
 
-  static Future<UserModel> updateProfile(String token, UserModel updatedUser) async {
+  static Future<UserModel> updateProfile(
+    String token,
+    UserModel updatedUser,
+  ) async {
     try {
-      final response = await http.put(
-        Uri.parse('$_baseUrl/users/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'phone_number': updatedUser.phoneNumber,
-          'birth_date': updatedUser.birthDate,
-          'bio': updatedUser.bio,
-          'medical_data': updatedUser.medicalData,
-          'emergency_contacts': updatedUser.emergencyContacts,
-        }),
-      ).timeout(_timeout);
+      final response = await http
+          .put(
+            Uri.parse('$_baseUrl/users/profile'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'phone_number': updatedUser.phoneNumber,
+              'birth_date': updatedUser.birthDate,
+              'bio': updatedUser.bio,
+              'medical_data': updatedUser.medicalData,
+              'emergency_contacts': updatedUser.emergencyContacts,
+            }),
+          )
+          .timeout(_timeout);
 
       final body = jsonDecode(response.body);
 

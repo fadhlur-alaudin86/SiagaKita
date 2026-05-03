@@ -52,8 +52,9 @@ class _MainScreenState extends State<MainScreen> {
     return ValueListenableBuilder<UserModel>(
       valueListenable: UserModel.currentUser,
       builder: (context, user, child) {
-        final isRelawan = user.volunteerStatus == 'approved' || user.role == UserRole.relawan;
-        
+        final isRelawan =
+            user.volunteerStatus == 'approved' || user.role == UserRole.relawan;
+
         final List<Widget> screens = [
           HomeScreen(accessToken: widget.accessToken, userId: widget.userId),
           const GuideScreen(),
@@ -97,15 +98,19 @@ class _MainScreenState extends State<MainScreen> {
         }
 
         return Scaffold(
-          body: _isLoading 
-            ? const Center(child: CircularProgressIndicator())
-            : IndexedStack(
-                index: _currentIndex,
-                children: screens,
-              ),
+          body: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : IndexedStack(index: _currentIndex, children: screens),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1), width: 1)),
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
             ),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
@@ -118,7 +123,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
         );
-      }
+      },
     );
   }
 }

@@ -15,7 +15,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _otpCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
+
   bool _isLoading = false;
   bool _isResending = false;
   bool _obscurePassword = true;
@@ -56,7 +56,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (_resendCountdown > 0) return;
     setState(() => _isResending = true);
     try {
-      await AuthService.resendOTP(email: widget.email, context: 'forgot_password');
+      await AuthService.resendOTP(
+        email: widget.email,
+        context: 'forgot_password',
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Kode OTP baru telah dikirim')),
@@ -84,7 +87,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password berhasil diubah. Silakan login kembali.'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Password berhasil diubah. Silakan login kembali.'),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pushAndRemoveUntil(
         context,
@@ -99,7 +105,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan, coba lagi nanti'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Terjadi kesalahan, coba lagi nanti'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -123,7 +132,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 Text(
                   'Kode telah dikirim ke:\n${widget.email}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
@@ -148,8 +160,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     labelText: 'Password Baru',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     border: const OutlineInputBorder(),
                   ),
@@ -168,19 +185,44 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     foregroundColor: colors.onPrimary,
                   ),
                   child: _isLoading
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Simpan Password Baru', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Simpan Password Baru',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Belum menerima kode?', style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6))),
+                    Text(
+                      'Belum menerima kode?',
+                      style: TextStyle(
+                        color: colors.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
                     TextButton(
-                      onPressed: _resendCountdown > 0 || _isResending ? null : _resendOTP,
+                      onPressed: _resendCountdown > 0 || _isResending
+                          ? null
+                          : _resendOTP,
                       child: _isResending
-                          ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(_resendCountdown > 0 ? 'Kirim ulang ($_resendCountdown)' : 'Kirim Ulang'),
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              _resendCountdown > 0
+                                  ? 'Kirim ulang ($_resendCountdown)'
+                                  : 'Kirim Ulang',
+                            ),
                     ),
                   ],
                 ),

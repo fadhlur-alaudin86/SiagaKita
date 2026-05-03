@@ -18,10 +18,38 @@ class _InstansiMainScreenState extends State<InstansiMainScreen> {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      PlaceholderTab(Icons.dashboard_outlined, Icons.dashboard, 'Dashboard'.tr(context), 'Dashboard'.tr(context), 'Ringkasan statistik kejadian aktif di wilayah Anda.'.tr(context), _roleColor),
-      PlaceholderTab(Icons.inbox_outlined, Icons.inbox, 'Laporan'.tr(context), 'Laporan Masuk'.tr(context), 'Kelola laporan darurat yang masuk dari masyarakat.'.tr(context), Colors.red),
-      PlaceholderTab(Icons.people_outline, Icons.people, 'Tim'.tr(context), 'Tim Lapangan'.tr(context), 'Kelola penugasan tim dan sumber daya lapangan.'.tr(context), Colors.blue),
-      PlaceholderTab(Icons.account_balance_outlined, Icons.account_balance, 'Profil'.tr(context), 'Profil Instansi'.tr(context), 'Informasi dan pengaturan instansi Anda.'.tr(context), Colors.teal),
+      PlaceholderTab(
+        Icons.dashboard_outlined,
+        Icons.dashboard,
+        'Dashboard'.tr(context),
+        'Dashboard'.tr(context),
+        'Ringkasan statistik kejadian aktif di wilayah Anda.'.tr(context),
+        _roleColor,
+      ),
+      PlaceholderTab(
+        Icons.inbox_outlined,
+        Icons.inbox,
+        'Laporan'.tr(context),
+        'Laporan Masuk'.tr(context),
+        'Kelola laporan darurat yang masuk dari masyarakat.'.tr(context),
+        Colors.red,
+      ),
+      PlaceholderTab(
+        Icons.people_outline,
+        Icons.people,
+        'Tim'.tr(context),
+        'Tim Lapangan'.tr(context),
+        'Kelola penugasan tim dan sumber daya lapangan.'.tr(context),
+        Colors.blue,
+      ),
+      PlaceholderTab(
+        Icons.account_balance_outlined,
+        Icons.account_balance,
+        'Profil'.tr(context),
+        'Profil Instansi'.tr(context),
+        'Informasi dan pengaturan instansi Anda.'.tr(context),
+        Colors.teal,
+      ),
     ];
     final tab = tabs[_currentIndex];
     return Scaffold(
@@ -39,17 +67,27 @@ class _InstansiMainScreenState extends State<InstansiMainScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1))),
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.1),
+            ),
+          ),
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           selectedItemColor: _roleColor,
           onTap: (i) => setState(() => _currentIndex = i),
-          items: tabs.map((t) => BottomNavigationBarItem(
-            icon: Icon(t.icon),
-            activeIcon: Icon(t.activeIcon),
-            label: t.label,
-          )).toList(),
+          items: tabs
+              .map(
+                (t) => BottomNavigationBarItem(
+                  icon: Icon(t.icon),
+                  activeIcon: Icon(t.activeIcon),
+                  label: t.label,
+                ),
+              )
+              .toList(),
         ),
       ),
     );

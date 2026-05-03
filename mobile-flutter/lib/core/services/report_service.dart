@@ -45,7 +45,8 @@ class ReportModel {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
       status: json['status'] ?? 'received',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-      photoPaths: (json['photo_paths'] as List<dynamic>?)
+      photoPaths:
+          (json['photo_paths'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
@@ -136,7 +137,9 @@ class ReportService {
       final body = jsonDecode(response.body);
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw ReportException(body['message'] as String? ?? 'Gagal mengirim laporan');
+        throw ReportException(
+          body['message'] as String? ?? 'Gagal mengirim laporan',
+        );
       }
     } on ReportException {
       rethrow;
@@ -150,18 +153,22 @@ class ReportService {
     required String accessToken,
   }) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/reports/my'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $accessToken',
-        },
-      ).timeout(_timeout);
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/reports/my'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+            },
+          )
+          .timeout(_timeout);
 
       final body = jsonDecode(response.body);
 
       if (response.statusCode != 200) {
-        throw ReportException(body['message'] as String? ?? 'Gagal memuat riwayat laporan');
+        throw ReportException(
+          body['message'] as String? ?? 'Gagal memuat riwayat laporan',
+        );
       }
 
       final data = body['data'] as List<dynamic>? ?? [];

@@ -11,16 +11,16 @@ class AuthService {
 
   // ─── Helper: safe HTTP call dengan timeout ────────────────────────────────
 
-  static Future<http.Response> _post(String url, Map<String, dynamic> body,
-      {Map<String, String>? headers}) async {
+  static Future<http.Response> _post(
+    String url,
+    Map<String, dynamic> body, {
+    Map<String, String>? headers,
+  }) async {
     try {
       return await http
           .post(
             Uri.parse(url),
-            headers: {
-              'Content-Type': 'application/json',
-              ...?headers,
-            },
+            headers: {'Content-Type': 'application/json', ...?headers},
             body: jsonEncode(body),
           )
           .timeout(
@@ -32,7 +32,9 @@ class AuthService {
     } on AuthException {
       rethrow;
     } catch (_) {
-      throw AuthException('Gagal menghubungi server. Periksa koneksi internet.');
+      throw AuthException(
+        'Gagal menghubungi server. Periksa koneksi internet.',
+      );
     }
   }
 
@@ -52,7 +54,8 @@ class AuthService {
       throw AuthException(body['message'] as String? ?? 'Pendaftaran gagal');
     }
     // Kembalikan email untuk dipakai di step OTP
-    return (body['data'] as Map<String, dynamic>?)?['email'] as String? ?? email;
+    return (body['data'] as Map<String, dynamic>?)?['email'] as String? ??
+        email;
   }
 
   // ─── Register Step 2: verifikasi OTP email → return token ────────────────
@@ -60,10 +63,10 @@ class AuthService {
     required String email,
     required String otpCode,
   }) async {
-    final response = await _post(
-      '$_baseUrl/auth/verify-register-otp',
-      {'email': email, 'otp_code': otpCode},
-    );
+    final response = await _post('$_baseUrl/auth/verify-register-otp', {
+      'email': email,
+      'otp_code': otpCode,
+    });
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
       throw AuthException(body['message'] as String? ?? 'Verifikasi OTP gagal');
@@ -76,10 +79,10 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final response = await _post(
-      '$_baseUrl/auth/login',
-      {'email': email, 'password': password},
-    );
+    final response = await _post('$_baseUrl/auth/login', {
+      'email': email,
+      'password': password,
+    });
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
       throw AuthException(body['message'] as String? ?? 'Login gagal');
@@ -92,10 +95,10 @@ class AuthService {
     required String email,
     required String otpCode,
   }) async {
-    final response = await _post(
-      '$_baseUrl/auth/verify-login-otp',
-      {'email': email, 'otp_code': otpCode},
-    );
+    final response = await _post('$_baseUrl/auth/verify-login-otp', {
+      'email': email,
+      'otp_code': otpCode,
+    });
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
       throw AuthException(body['message'] as String? ?? 'Verifikasi OTP gagal');
@@ -105,10 +108,14 @@ class AuthService {
 
   // ─── Forgot Password ───────────────────────────────────────────────────────
   static Future<void> forgotPassword(String email) async {
-    final response = await _post('$_baseUrl/auth/forgot-password', {'email': email});
+    final response = await _post('$_baseUrl/auth/forgot-password', {
+      'email': email,
+    });
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw AuthException(body['message'] as String? ?? 'Gagal memproses permintaan');
+      throw AuthException(
+        body['message'] as String? ?? 'Gagal memproses permintaan',
+      );
     }
   }
 
@@ -125,7 +132,9 @@ class AuthService {
     });
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw AuthException(body['message'] as String? ?? 'Gagal mereset password');
+      throw AuthException(
+        body['message'] as String? ?? 'Gagal mereset password',
+      );
     }
   }
 
@@ -140,7 +149,9 @@ class AuthService {
     });
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw AuthException(body['message'] as String? ?? 'Gagal mengirim ulang OTP');
+      throw AuthException(
+        body['message'] as String? ?? 'Gagal mengirim ulang OTP',
+      );
     }
   }
 }
@@ -159,10 +170,10 @@ class AuthResult {
   });
 
   factory AuthResult.fromJson(Map<String, dynamic> json) => AuthResult(
-        accessToken: json['access_token'] as String,
-        refreshToken: json['refresh_token'] as String,
-        user: UserInfo.fromJson(json['user'] as Map<String, dynamic>),
-      );
+    accessToken: json['access_token'] as String,
+    refreshToken: json['refresh_token'] as String,
+    user: UserInfo.fromJson(json['user'] as Map<String, dynamic>),
+  );
 }
 
 class UserInfo {
@@ -179,11 +190,11 @@ class UserInfo {
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) => UserInfo(
-        id: json['id'] as String,
-        fullName: json['full_name'] as String?,
-        email: json['email'] as String,
-        role: json['role'] as String,
-      );
+    id: json['id'] as String,
+    fullName: json['full_name'] as String?,
+    email: json['email'] as String,
+    role: json['role'] as String,
+  );
 }
 
 class AuthException implements Exception {

@@ -57,19 +57,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (RegExp(r'[!@#\$&*~%^()_\-+=\[\]{};:"\\|,.<>/?]').hasMatch(value)) {
       score++;
     }
-    setState(() => _passwordStrength = score <= 1 ? 1 : score <= 2 ? 2 : 3);
+    setState(
+      () => _passwordStrength = score <= 1
+          ? 1
+          : score <= 2
+          ? 2
+          : 3,
+    );
   }
 
-  Color get _strengthColor =>
-      [Colors.transparent, Colors.red, Colors.orange, Colors.green][_passwordStrength];
+  Color get _strengthColor => [
+    Colors.transparent,
+    Colors.red,
+    Colors.orange,
+    Colors.green,
+  ][_passwordStrength];
 
   String get _strengthLabel =>
       ['', 'Lemah', 'Sedang', 'Kuat ✓'][_passwordStrength];
 
   // ─── Validators ────────────────────────────────────────────────────────────
 
-  String? _validateName(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'Nama lengkap tidak boleh kosong' : null;
+  String? _validateName(String? v) => (v == null || v.trim().isEmpty)
+      ? 'Nama lengkap tidak boleh kosong'
+      : null;
 
   String? _validateEmail(String? v) {
     if (v == null || v.trim().isEmpty) return 'Email tidak boleh kosong';
@@ -91,7 +102,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validateRepeat(String? v) {
-    if (v == null || v.isEmpty) return 'Konfirmasi kata sandi tidak boleh kosong';
+    if (v == null || v.isEmpty)
+      return 'Konfirmasi kata sandi tidak boleh kosong';
     if (v != _passwordController.text) return 'Kata sandi tidak cocok';
     return null;
   }
@@ -265,47 +277,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'Buat Akun Baru'.tr(context),
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: colors.onSurface,
-                fontSize: 26,
-                fontWeight: FontWeight.w900),
+              color: colors.onSurface,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Bergabung dengan jejaring keselamatan SiagaKita.',
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: colors.onSurface.withValues(alpha: 0.6), fontSize: 14),
+              color: colors.onSurface.withValues(alpha: 0.6),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 28),
 
           // Nama Lengkap
-          _field(colors, primaryColor,
-              controller: _nameController,
-              hint: 'Nama Lengkap',
-              icon: Icons.person_outline,
-              validator: _validateName),
+          _field(
+            colors,
+            primaryColor,
+            controller: _nameController,
+            hint: 'Nama Lengkap',
+            icon: Icons.person_outline,
+            validator: _validateName,
+          ),
           const SizedBox(height: 16),
 
           // Email
-          _field(colors, primaryColor,
-              controller: _emailController,
-              hint: 'Email',
-              icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              validator: _validateEmail),
+          _field(
+            colors,
+            primaryColor,
+            controller: _emailController,
+            hint: 'Email',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            validator: _validateEmail,
+          ),
           const SizedBox(height: 16),
 
           // Password + strength bar
-          _field(colors, primaryColor,
-              controller: _passwordController,
-              hint: 'Kata Sandi',
-              icon: Icons.lock_outline,
-              obscure: _obscurePassword,
-              validator: _validatePassword,
-              onChanged: _updateStrength,
-              suffix: _visibilityToggle(
-                  colors, _obscurePassword,
-                  () => setState(() => _obscurePassword = !_obscurePassword))),
+          _field(
+            colors,
+            primaryColor,
+            controller: _passwordController,
+            hint: 'Kata Sandi',
+            icon: Icons.lock_outline,
+            obscure: _obscurePassword,
+            validator: _validatePassword,
+            onChanged: _updateStrength,
+            suffix: _visibilityToggle(
+              colors,
+              _obscurePassword,
+              () => setState(() => _obscurePassword = !_obscurePassword),
+            ),
+          ),
 
           // Strength bar
           if (_passwordStrength > 0) ...[
@@ -336,9 +362,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     _strengthLabel,
                     key: ValueKey(_passwordStrength),
                     style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: _strengthColor),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _strengthColor,
+                    ),
                   ),
                 ),
               ],
@@ -347,15 +374,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 16),
 
           // Konfirmasi password
-          _field(colors, primaryColor,
-              controller: _repeatPasswordController,
-              hint: 'Ulangi Kata Sandi',
-              icon: Icons.lock_reset,
-              obscure: _obscureRepeat,
-              validator: _validateRepeat,
-              suffix: _visibilityToggle(
-                  colors, _obscureRepeat,
-                  () => setState(() => _obscureRepeat = !_obscureRepeat))),
+          _field(
+            colors,
+            primaryColor,
+            controller: _repeatPasswordController,
+            hint: 'Ulangi Kata Sandi',
+            icon: Icons.lock_reset,
+            obscure: _obscureRepeat,
+            validator: _validateRepeat,
+            suffix: _visibilityToggle(
+              colors,
+              _obscureRepeat,
+              () => setState(() => _obscureRepeat = !_obscureRepeat),
+            ),
+          ),
 
           const SizedBox(height: 28),
           _submitButton(primaryColor, 'Lanjut'.tr(context), _submitForm),
@@ -367,13 +399,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 'Sudah punya akun?',
                 style: TextStyle(
-                    color: colors.onSurface.withValues(alpha: 0.6)),
+                  color: colors.onSurface.withValues(alpha: 0.6),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('Masuk sekarang',
-                    style: TextStyle(
-                        color: primaryColor, fontWeight: FontWeight.bold)),
+                child: Text(
+                  'Masuk sekarang',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -415,16 +452,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'Verifikasi Email'.tr(context),
           textAlign: TextAlign.center,
           style: TextStyle(
-              color: colors.onSurface,
-              fontSize: 26,
-              fontWeight: FontWeight.w900),
+            color: colors.onSurface,
+            fontSize: 26,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           'Kami telah mengirimkan kode OTP ke:\n${_emailController.text.trim()}\nKode berlaku 3 menit.',
           textAlign: TextAlign.center,
           style: TextStyle(
-              color: colors.onSurface.withValues(alpha: 0.6), fontSize: 14),
+            color: colors.onSurface.withValues(alpha: 0.6),
+            fontSize: 14,
+          ),
         ),
         const SizedBox(height: 32),
         TextField(
@@ -448,12 +488,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             counterText: '',
             filled: true,
             fillColor: colors.surface,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 20,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                  color: colors.onSurface.withValues(alpha: 0.15)),
+                color: colors.onSurface.withValues(alpha: 0.15),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -477,7 +520,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        _submitButton(primaryColor, 'Verifikasi & Masuk'.tr(context), _verifyOTP),
+        _submitButton(
+          primaryColor,
+          'Verifikasi & Masuk'.tr(context),
+          _verifyOTP,
+        ),
       ],
     );
   }
@@ -506,36 +553,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            TextStyle(color: colors.onSurface.withValues(alpha: 0.4)),
-        prefixIcon:
-            Icon(icon, color: colors.onSurface.withValues(alpha: 0.5)),
+        hintStyle: TextStyle(color: colors.onSurface.withValues(alpha: 0.4)),
+        prefixIcon: Icon(icon, color: colors.onSurface.withValues(alpha: 0.5)),
         suffixIcon: suffix,
         filled: true,
         fillColor: colors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         enabledBorder: OutlineInputBorder(
-            borderRadius: r,
-            borderSide:
-                BorderSide(color: colors.onSurface.withValues(alpha: 0.15))),
+          borderRadius: r,
+          borderSide: BorderSide(
+            color: colors.onSurface.withValues(alpha: 0.15),
+          ),
+        ),
         focusedBorder: OutlineInputBorder(
-            borderRadius: r,
-            borderSide: BorderSide(color: primaryColor, width: 2)),
+          borderRadius: r,
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
         errorBorder: OutlineInputBorder(
-            borderRadius: r,
-            borderSide:
-                BorderSide(color: Colors.red.shade400, width: 1.5)),
+          borderRadius: r,
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+        ),
         focusedErrorBorder: OutlineInputBorder(
-            borderRadius: r,
-            borderSide: BorderSide(color: Colors.red.shade400, width: 2)),
+          borderRadius: r,
+          borderSide: BorderSide(color: Colors.red.shade400, width: 2),
+        ),
         errorStyle: const TextStyle(fontSize: 11, height: 1.3),
       ),
     );
   }
 
   Widget _visibilityToggle(
-      ColorScheme colors, bool obscure, VoidCallback onTap) {
+    ColorScheme colors,
+    bool obscure,
+    VoidCallback onTap,
+  ) {
     return IconButton(
       icon: Icon(
         obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -547,15 +601,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _submitButton(
-      Color primaryColor, String label, VoidCallback onPressed) {
+    Color primaryColor,
+    String label,
+    VoidCallback onPressed,
+  ) {
     return ElevatedButton(
       onPressed: _isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 5,
         shadowColor: primaryColor.withValues(alpha: 0.5),
       ),
@@ -564,11 +620,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
-                  color: Colors.white, strokeWidth: 2),
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
             )
-          : Text(label,
-              style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold)),
+          : Text(
+              label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
     );
   }
 }

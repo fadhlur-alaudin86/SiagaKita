@@ -163,7 +163,8 @@ class AppLocalization {
     'Panduan Darurat': 'Emergency Guide',
     'Database Lokal Aktif (Offline/Online)':
         'Local Database Active (Offline/Online)',
-    'Cari tindakan (mis: Luka Bakar)...': 'Search actions (e.g. Burn injury)...',
+    'Cari tindakan (mis: Luka Bakar)...':
+        'Search actions (e.g. Burn injury)...',
     'Versi 1.0.0 (Build 20)': 'Version 1.0.0 (Build 20)',
     'SiagaKita adalah platform penanggulangan darurat terpadu yang menghubungkan masyarakat dengan relawan medis dan instansi penyelamat dalam satu ekosistem waktu nyata (real-time).':
         'SiagaKita is an integrated emergency response platform connecting communities with medical volunteers and rescue agencies in one real-time ecosystem.',
@@ -202,7 +203,8 @@ class AppLocalization {
     'RELAWAN SIAGA': 'ON-STANDBY VOLUNTEERS',
     '12 di sekitar': '12 nearby',
     'STATUS TRANSMISI (SIMULASI SOS)': 'TRANSMISSION STATUS (SOS SIMULATION)',
-    'Koordinat GPS Terkunci (Akurasi 3m)': 'GPS Coordinates Locked (3m accuracy)',
+    'Koordinat GPS Terkunci (Akurasi 3m)':
+        'GPS Coordinates Locked (3m accuracy)',
     'Menyiarkan ke relawan radius 5KM...':
         'Broadcasting to volunteers within 5KM...',
     'Menunggu respons Command Center 112':
@@ -238,8 +240,7 @@ class AppLocalization {
         'Submission accepted. Your status is now Pending Review.',
     'Tersimpan': 'Saved',
     'Unggah': 'Upload',
-    '(Tekan untuk simulasi unggah file)':
-        '(Tap to simulate file upload)',
+    '(Tekan untuk simulasi unggah file)': '(Tap to simulate file upload)',
     'PENDAFTARAN RELAWAN': 'VOLUNTEER REGISTRATION',
     'Misi Penyelamatan First Responder': 'First Responder Rescue Mission',
     'SiagaKita memanggil Anda yang memiliki kapabilitas medis / evakuasi gawat darurat. Pengajuan akan ditinjau oleh Admin daerah.':

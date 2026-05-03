@@ -67,7 +67,10 @@ class RolePlaceholderBody extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: roleColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -125,11 +128,16 @@ class RolePlaceholderBody extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors.onSurface.withValues(alpha: 0.1)),
+                      border: Border.all(
+                        color: colors.onSurface.withValues(alpha: 0.1),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
