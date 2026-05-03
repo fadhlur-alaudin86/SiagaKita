@@ -31,7 +31,7 @@ type Config struct {
 	FonnteToken string
 
 	// Email Gateway (Gmail API) — menggunakan HTTPS port 443
-	EmailFrom         string
+	EmailFrom string
 
 	// Email Gateway (Gmail API) — menggunakan HTTPS port 443
 	GmailClientID     string
@@ -64,29 +64,29 @@ func Load() *Config {
 	}
 
 	return &Config{
-		DBHost:           getEnv("DB_HOST", "localhost"),
-		DBPort:           getEnv("DB_PORT", "5432"),
-		DBUser:           getEnv("DB_USER", ""),
-		DBPassword:       getEnv("DB_PASSWORD", ""),
-		DBName:           getEnv("DB_NAME", ""),
-		RedisHost:        getEnv("REDIS_HOST", "localhost"),
-		RedisPort:        getEnv("REDIS_PORT", "6379"),
-		RedisPassword:    getEnv("REDIS_PASSWORD", ""),
-		JWTSecret:        getEnv("JWT_SECRET", ""),
-		JWTAccessTTL:     accessTTL,
-		JWTRefreshTTL:    refreshTTL,
-		SMSGatewaySecret: getEnv("SMS_GATEWAY_SECRET", ""),
-		FonnteToken:      getEnv("FONNTE_TOKEN", ""),
-		EmailFrom:        getEnv("EMAIL_FROM", ""),
-		GmailClientID:    getEnv("GMAIL_CLIENT_ID", ""),
+		DBHost:            getEnv("DB_HOST", "localhost"),
+		DBPort:            getEnv("DB_PORT", "5432"),
+		DBUser:            getEnv("DB_USER", ""),
+		DBPassword:        getEnv("DB_PASSWORD", ""),
+		DBName:            getEnv("DB_NAME", ""),
+		RedisHost:         getEnv("REDIS_HOST", "localhost"),
+		RedisPort:         getEnv("REDIS_PORT", "6379"),
+		RedisPassword:     getEnv("REDIS_PASSWORD", ""),
+		JWTSecret:         getEnv("JWT_SECRET", ""),
+		JWTAccessTTL:      accessTTL,
+		JWTRefreshTTL:     refreshTTL,
+		SMSGatewaySecret:  getEnv("SMS_GATEWAY_SECRET", ""),
+		FonnteToken:       getEnv("FONNTE_TOKEN", ""),
+		EmailFrom:         getEnv("EMAIL_FROM", ""),
+		GmailClientID:     getEnv("GMAIL_CLIENT_ID", ""),
 		GmailClientSecret: getEnv("GMAIL_CLIENT_SECRET", ""),
 		GmailRefreshToken: getEnv("GMAIL_REFRESH_TOKEN", ""),
-		HTTPPort:         getEnv("HTTP_PORT", "8080"),
-		WSPort:           getEnv("WS_PORT", "8081"),
-		SuperAdminEmail:  getEnv("SUPERADMIN_EMAIL", ""),
-		SuperAdminPass:   getEnv("SUPERADMIN_PASS", ""),
-		UploadDir:        getEnv("UPLOAD_DIR", "/app/uploads"),
-		UploadBaseURL:    getEnv("UPLOAD_BASE_URL", "http://localhost:8080/uploads"),
+		HTTPPort:          getEnv("HTTP_PORT", "8080"),
+		WSPort:            getEnv("WS_PORT", "8081"),
+		SuperAdminEmail:   getEnv("SUPERADMIN_EMAIL", ""),
+		SuperAdminPass:    getEnv("SUPERADMIN_PASS", ""),
+		UploadDir:         getEnv("UPLOAD_DIR", "/app/uploads"),
+		UploadBaseURL:     getEnv("UPLOAD_BASE_URL", "http://localhost:8080/uploads"),
 	}
 }
 

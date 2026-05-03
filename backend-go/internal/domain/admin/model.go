@@ -6,12 +6,12 @@ import "time"
 
 // VolunteerKYC adalah data relawan yang menunggu verifikasi KYC.
 type VolunteerKYC struct {
-	UserID      string     `json:"user_id"`
-	FullName    *string    `json:"full_name"`
-	Email       string     `json:"email"`
-	NIK         *string    `json:"nik,omitempty"`
-	Certs       []KYCCert  `json:"certifications"`
-	SubmittedAt time.Time  `json:"submitted_at"`
+	UserID      string    `json:"user_id"`
+	FullName    *string   `json:"full_name"`
+	Email       string    `json:"email"`
+	NIK         *string   `json:"nik,omitempty"`
+	Certs       []KYCCert `json:"certifications"`
+	SubmittedAt time.Time `json:"submitted_at"`
 }
 
 type KYCCert struct {
@@ -24,30 +24,30 @@ type KYCCert struct {
 
 // AdminUserItem adalah baris tabel manajemen pengguna.
 type AdminUserItem struct {
-	UserID         string     `json:"user_id"`
-	Email          string     `json:"email"`
-	Role           string     `json:"role"`
-	FullName       *string    `json:"full_name,omitempty"`
-	PhoneNumber    *string    `json:"phone_number,omitempty"`
-	IsEmailVerified bool      `json:"is_email_verified"`
-	IsPhoneVerified bool      `json:"is_phone_verified"`
-	SOSStrikeCount int        `json:"sos_strike_count"`
-	IsSOSBanned    bool       `json:"is_sos_banned"`
-	BannedUntil    *time.Time `json:"banned_until,omitempty"`
-	CreatedAt      time.Time  `json:"created_at"`
+	UserID          string     `json:"user_id"`
+	Email           string     `json:"email"`
+	Role            string     `json:"role"`
+	FullName        *string    `json:"full_name,omitempty"`
+	PhoneNumber     *string    `json:"phone_number,omitempty"`
+	IsEmailVerified bool       `json:"is_email_verified"`
+	IsPhoneVerified bool       `json:"is_phone_verified"`
+	SOSStrikeCount  int        `json:"sos_strike_count"`
+	IsSOSBanned     bool       `json:"is_sos_banned"`
+	BannedUntil     *time.Time `json:"banned_until,omitempty"`
+	CreatedAt       time.Time  `json:"created_at"`
 }
 
 // StatsResponse adalah respons endpoint GET /admin/stats.
 type StatsResponse struct {
-	TotalSOS            int64              `json:"total_sos"`
-	TotalResolved       int64              `json:"total_resolved"`
-	TotalFalseAlarm     int64              `json:"total_false_alarm"`
-	ActiveVolunteers    int64              `json:"active_volunteers"`
-	FalseAlarmRate      float64            `json:"false_alarm_rate"`
-	AvgResponseMinutes  float64            `json:"avg_response_minutes"`
-	ByType              map[string]int64   `json:"by_type"`
-	ByStatus            map[string]int64   `json:"by_status"`
-	Monthly             []MonthlyCount     `json:"monthly"`
+	TotalSOS           int64            `json:"total_sos"`
+	TotalResolved      int64            `json:"total_resolved"`
+	TotalFalseAlarm    int64            `json:"total_false_alarm"`
+	ActiveVolunteers   int64            `json:"active_volunteers"`
+	FalseAlarmRate     float64          `json:"false_alarm_rate"`
+	AvgResponseMinutes float64          `json:"avg_response_minutes"`
+	ByType             map[string]int64 `json:"by_type"`
+	ByStatus           map[string]int64 `json:"by_status"`
+	Monthly            []MonthlyCount   `json:"monthly"`
 }
 
 type MonthlyCount struct {
@@ -68,14 +68,14 @@ type CreateAdminRequest struct {
 }
 
 type CreateAgencyRequest struct {
-	Email          string  `json:"email"`
-	Password       string  `json:"password"`
-	Name           string  `json:"name"`
-	Type           string  `json:"type"`
-	CityCode       string  `json:"city_code"`
-	HotlineNumber  *string `json:"hotline_number,omitempty"`
-	Latitude       *float64 `json:"latitude,omitempty"`
-	Longitude      *float64 `json:"longitude,omitempty"`
+	Email         string   `json:"email"`
+	Password      string   `json:"password"`
+	Name          string   `json:"name"`
+	Type          string   `json:"type"`
+	CityCode      string   `json:"city_code"`
+	HotlineNumber *string  `json:"hotline_number,omitempty"`
+	Latitude      *float64 `json:"latitude,omitempty"`
+	Longitude     *float64 `json:"longitude,omitempty"`
 }
 
 type BanUserRequest struct {

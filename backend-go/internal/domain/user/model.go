@@ -21,24 +21,24 @@ func (User) TableName() string { return "users" }
 // UserProfile menyimpan data lengkap akun civilian dan volunteer.
 // Row ini dibuat secara transaksional bersamaan dengan pembuatan User.
 type UserProfile struct {
-	UserID               string     `gorm:"type:uuid;primaryKey" json:"user_id"`
-	FullName             *string    `json:"full_name,omitempty"`
-	NIK                  *string    `gorm:"uniqueIndex" json:"nik,omitempty"`
-	DateOfBirth          *time.Time `json:"date_of_birth,omitempty"`
-	PhoneNumber          *string    `gorm:"uniqueIndex" json:"phone_number,omitempty"`
-	IsEmailVerified      bool       `gorm:"default:false" json:"is_email_verified"`
-	IsPhoneVerified      bool       `gorm:"default:false" json:"is_phone_verified"`
-	IsVerifiedVolunteer  bool       `gorm:"default:false" json:"is_verified_volunteer"`
-	SOSStrikeCount       int        `gorm:"default:0" json:"sos_strike_count"`
-	IsSOSBanned          bool       `gorm:"default:false" json:"is_sos_banned"`
-	BannedUntil          *time.Time `json:"banned_until,omitempty"`
-	BloodType            *string    `json:"blood_type,omitempty"`
-	Allergies            *string    `json:"allergies,omitempty"`
-	MedicalConditions    *string    `json:"medical_conditions,omitempty"`
-	HeightCm             *int       `json:"height_cm,omitempty"`
-	WeightKg             *int       `json:"weight_kg,omitempty"`
-	Alamat               *string    `json:"alamat,omitempty"`
-	UpdatedAt            time.Time  `json:"updated_at"`
+	UserID              string     `gorm:"type:uuid;primaryKey" json:"user_id"`
+	FullName            *string    `json:"full_name,omitempty"`
+	NIK                 *string    `gorm:"uniqueIndex" json:"nik,omitempty"`
+	DateOfBirth         *time.Time `json:"date_of_birth,omitempty"`
+	PhoneNumber         *string    `gorm:"uniqueIndex" json:"phone_number,omitempty"`
+	IsEmailVerified     bool       `gorm:"default:false" json:"is_email_verified"`
+	IsPhoneVerified     bool       `gorm:"default:false" json:"is_phone_verified"`
+	IsVerifiedVolunteer bool       `gorm:"default:false" json:"is_verified_volunteer"`
+	SOSStrikeCount      int        `gorm:"default:0" json:"sos_strike_count"`
+	IsSOSBanned         bool       `gorm:"default:false" json:"is_sos_banned"`
+	BannedUntil         *time.Time `json:"banned_until,omitempty"`
+	BloodType           *string    `json:"blood_type,omitempty"`
+	Allergies           *string    `json:"allergies,omitempty"`
+	MedicalConditions   *string    `json:"medical_conditions,omitempty"`
+	HeightCm            *int       `json:"height_cm,omitempty"`
+	WeightKg            *int       `json:"weight_kg,omitempty"`
+	Alamat              *string    `json:"alamat,omitempty"`
+	UpdatedAt           time.Time  `json:"updated_at"`
 }
 
 func (UserProfile) TableName() string { return "user_profiles" }

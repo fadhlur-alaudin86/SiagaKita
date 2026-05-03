@@ -91,7 +91,6 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 	}, nil
 }
 
-
 // ─── VerifyRegisterOTP ────────────────────────────────────────────────────────
 
 func (s *Service) VerifyRegisterOTP(ctx context.Context, email, code string) (*AuthResponse, error) {
@@ -125,7 +124,7 @@ func (s *Service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		return nil, errors.New("email atau password salah")
 	}
 	profile, _ := s.repo.FindProfile(user.ID)
-	
+
 	// Tolak login jika email belum diverifikasi (mencegah ghost account login)
 	if profile != nil && !profile.IsEmailVerified {
 		return nil, errors.New("email belum diverifikasi, silakan daftar ulang")

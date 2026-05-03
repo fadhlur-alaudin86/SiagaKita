@@ -22,11 +22,11 @@ func NewRepository(db *gorm.DB) *Repository {
 // GetPendingKYC returns volunteers with at least one pending certification.
 func (r *Repository) GetPendingKYC() ([]VolunteerKYC, error) {
 	type row struct {
-		UserID      string     `gorm:"column:user_id"`
-		Email       string     `gorm:"column:email"`
-		FullName    *string    `gorm:"column:full_name"`
-		NIK         *string    `gorm:"column:nik"`
-		SubmittedAt time.Time  `gorm:"column:submitted_at"`
+		UserID      string    `gorm:"column:user_id"`
+		Email       string    `gorm:"column:email"`
+		FullName    *string   `gorm:"column:full_name"`
+		NIK         *string   `gorm:"column:nik"`
+		SubmittedAt time.Time `gorm:"column:submitted_at"`
 	}
 
 	var rows []row

@@ -89,7 +89,7 @@ func (r *Repository) UpdatePhoneNumber(userID, phone string) error {
 	return r.db.Model(&UserProfile{}).
 		Where("user_id = ?", userID).
 		Updates(map[string]interface{}{
-			"phone_number":     phone,
+			"phone_number":      phone,
 			"is_phone_verified": false,
 		}).Error
 }
@@ -178,18 +178,18 @@ func (r *Repository) GetProfile(userID string) (*ProfileResponse, error) {
 	}
 
 	if profile != nil && profile.UserID != "" {
-		resp.FullName            = profile.FullName
-		resp.NIK                 = profile.NIK
-		resp.PhoneNumber         = profile.PhoneNumber
-		resp.IsEmailVerified     = profile.IsEmailVerified
-		resp.IsPhoneVerified     = profile.IsPhoneVerified
+		resp.FullName = profile.FullName
+		resp.NIK = profile.NIK
+		resp.PhoneNumber = profile.PhoneNumber
+		resp.IsEmailVerified = profile.IsEmailVerified
+		resp.IsPhoneVerified = profile.IsPhoneVerified
 		resp.IsVerifiedVolunteer = profile.IsVerifiedVolunteer
-		resp.SOSStrikeCount      = profile.SOSStrikeCount
-		resp.IsSOSBanned         = profile.IsSOSBanned
-		resp.BloodType           = profile.BloodType
-		resp.Allergies           = profile.Allergies
-		resp.MedicalConditions   = profile.MedicalConditions
-		resp.Alamat              = profile.Alamat
+		resp.SOSStrikeCount = profile.SOSStrikeCount
+		resp.IsSOSBanned = profile.IsSOSBanned
+		resp.BloodType = profile.BloodType
+		resp.Allergies = profile.Allergies
+		resp.MedicalConditions = profile.MedicalConditions
+		resp.Alamat = profile.Alamat
 
 		if profile.DateOfBirth != nil {
 			dob := profile.DateOfBirth.Format("02-01-2006")

@@ -250,7 +250,7 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 		if err != nil {
 			return err
 		}
-		
+
 		// Pastikan row admin_profiles ada dengan nama "root"
 		type AdminProfile struct {
 			UserID   string `gorm:"column:user_id;primaryKey"`
@@ -291,7 +291,7 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 		if err := tx.Create(&superadmin).Error; err != nil {
 			return err
 		}
-		
+
 		type AdminProfile struct {
 			UserID   string `gorm:"column:user_id;primaryKey"`
 			FullName string `gorm:"column:full_name"`

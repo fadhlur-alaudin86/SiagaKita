@@ -101,7 +101,6 @@ func (r *Repository) FindReportsByUser(userID string) ([]IncidentReport, error) 
 	return reps, r.db.Where("reporter_id = ?", userID).Order("created_at DESC").Find(&reps).Error
 }
 
-
 // ─── Strike & Ban ─────────────────────────────────────────────────────────────
 
 // AddStrike inserts a sos_strikes row, increments user strike count in user_profiles,
