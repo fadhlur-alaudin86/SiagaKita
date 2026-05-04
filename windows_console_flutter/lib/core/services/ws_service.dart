@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
-import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../constants/api_constants.dart';
@@ -48,7 +45,9 @@ class WsMessage {
 class WsService extends ChangeNotifier {
   WebSocketChannel? _channel;
   StreamSubscription? _sub;
+  Timer? _heartbeatTimer;
   bool _connected = false;
+  bool _isReconnecting = false;
   String? _token;
 
   // Live state yang diupdate oleh event WS
@@ -64,20 +63,26 @@ class WsService extends ChangeNotifier {
   // ─── Connect ────────────────────────────────────────────────────────────────
 
   Future<void> connect(String token) async {
-    if (_connected) return;
+    if (_connected || _isReconnecting) return;
     _token = token;
 
     final uri = Uri.parse('${ApiConstants.wsUrl}?token=$token');
-    
-    // Gunakan dart:io WebSocket untuk mengakses opsi pingInterval agar koneksi tak terputus
-    final ws = await WebSocket.connect(uri.toString());
-    ws.pingInterval = const Duration(seconds: 15);
-    _channel = IOWebSocketChannel(ws);
-    
+    _channel = WebSocketChannel.connect(uri);
     _sub = _channel!.stream.listen(_onData, onError: _onError, onDone: _onDone);
     _connected = true;
+    _isReconnecting = false;
     notifyListeners();
     debugPrint('[WS] Connected');
+
+    // Heartbeat: kirim pesan PING JSON setiap 30 detik agar koneksi tidak di-idle-timeout oleh backend/proxy
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_connected) {
+        try {
+          _channel?.sink.add(jsonEncode({'event': 'PING', 'payload': {}}));
+        } catch (_) {}
+      }
+    });
 
     // Beritahu subscriber bahwa koneksi (ulang) sukses, agar bisa sinkronisasi ulang
     _controller.add(const WsMessage(event: WsEvent.connected, payload: {}));
@@ -130,9 +135,16 @@ class WsService extends ChangeNotifier {
   }
 
   void _reconnect() {
+    if (_isReconnecting) return;
+    _isReconnecting = true;
+    _connected = false;
+    _heartbeatTimer?.cancel();
     _sub?.cancel();
     _channel?.sink.close();
+    _sub = null;
+    _channel = null;
     Future.delayed(const Duration(seconds: 5), () {
+      _isReconnecting = false;
       if (_token != null) connect(_token!);
     });
   }

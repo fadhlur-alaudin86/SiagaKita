@@ -101,9 +101,9 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 // readLoop blocks and reads incoming messages from the client connection.
 func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
-	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetReadDeadline(time.Now().Add(90 * time.Second))
 	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		conn.SetReadDeadline(time.Now().Add(90 * time.Second))
 		return nil
 	})
 
@@ -116,9 +116,17 @@ func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
 			return
 		}
 
+		// Perpanjang deadline setiap ada pesan masuk (termasuk PING heartbeat)
+		conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+
 		var msg hub.Message
 		if err := json.Unmarshal(raw, &msg); err != nil {
 			log.Printf("[WS] Invalid JSON from user %s: %v", userID, err)
+			continue
+		}
+
+		// Skip PING heartbeat events — hanya untuk keep-alive, tidak perlu diproses
+		if msg.Event == "PING" {
 			continue
 		}
 
@@ -330,6 +338,30 @@ func (h *Handler) broadcastSOS(incidentID string) {
 		if err := h.hub.SendToUser(v.Name, msg); err == nil {
 			sent++
 		}
+	}
+
+	// ─── Broadcast ke Agency accounts satu kota ────────────────────────────────
+	// Ambil city_code dari profil pelapor
+	var reporterCityCode string
+	h.db.Raw(
+		"SELECT city_code FROM user_profiles WHERE user_id = ?",
+		reporterID,
+	).Scan(&reporterCityCode)
+
+	if reporterCityCode != "" {
+		// Ambil semua account_id instansi (agency) di kota yang sama
+		var agencyAccountIDs []string
+		h.db.Raw(
+			"SELECT account_id FROM agencies WHERE city_code = ?",
+			reporterCityCode,
+		).Scan(&agencyAccountIDs)
+
+		for _, agencyID := range agencyAccountIDs {
+			if err := h.hub.SendToUser(agencyID, msg); err == nil {
+				sent++
+			}
+		}
+		log.Printf("[WS] SOS #%s notified %d agencies in city %s", incidentID, len(agencyAccountIDs), reporterCityCode)
 	}
 
 	log.Printf("[WS] SOS #%s broadcast to %d/%d online volunteers", incidentID, sent, len(volunteers))
