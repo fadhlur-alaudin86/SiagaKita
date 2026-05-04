@@ -6,7 +6,7 @@ class ApiConstants {
   // ────────────────────────────────────────────────────────────────────
 
   static const String baseUrl = 'http://$_host:8080/api/v1';
-  static const String wsUrl = 'ws://$_host:8081/ws/connect';
+  static const String wsUrl = 'ws://$_host:8081/v1/ws/connect';
 
   // Auth
   static const String login = '$baseUrl/auth/console/login';

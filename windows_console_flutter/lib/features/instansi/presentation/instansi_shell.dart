@@ -57,6 +57,7 @@ class _InstansiShellState extends State<InstansiShell> {
     return ChangeNotifierProvider.value(
       value: widget.ws,
       child: Scaffold(
+        backgroundColor: const Color(0xFF0F172A), // Slate 900
         body: Row(
           children: [
             _SideNavigation(
@@ -102,7 +103,7 @@ class _SideNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 260,
-      color: const Color(0xFF0D1B3E),
+      color: const Color(0xFF111827), // Slate 900 - Sidebar
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 20, 14, 16),
@@ -244,13 +245,19 @@ class _TopHeader extends StatelessWidget {
     return Container(
       height: 74,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE5E9F2))),
+        color: Color(0xFF1A1F2E), // Slate 800 - Header
+        border: Border(bottom: BorderSide(color: Color(0xFF2A3040))),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            title,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.white),
+          ),
           const Spacer(),
           Consumer<WsService>(
             builder: (context, ws, child) => Container(
