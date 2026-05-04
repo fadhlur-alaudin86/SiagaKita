@@ -24,6 +24,7 @@ class ApiConstants {
   static String reportStatus(String id) => '$baseUrl/reports/$id/status';
 
   // Agency
+  static const String agencyMe = '$baseUrl/agencies/me';
   static const String agencyPersonnels = '$baseUrl/agencies/personnels';
 
   // Admin

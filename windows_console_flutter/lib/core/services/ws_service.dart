@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../constants/api_constants.dart';
@@ -14,6 +17,7 @@ enum WsEvent {
   sosCancelled,
   rescueAccepted,
   locationUpdate,
+  connected, // New event for reconnection
   unknown,
 }
 
@@ -64,11 +68,19 @@ class WsService extends ChangeNotifier {
     _token = token;
 
     final uri = Uri.parse('${ApiConstants.wsUrl}?token=$token');
-    _channel = WebSocketChannel.connect(uri);
+    
+    // Gunakan dart:io WebSocket untuk mengakses opsi pingInterval agar koneksi tak terputus
+    final ws = await WebSocket.connect(uri.toString());
+    ws.pingInterval = const Duration(seconds: 15);
+    _channel = IOWebSocketChannel(ws);
+    
     _sub = _channel!.stream.listen(_onData, onError: _onError, onDone: _onDone);
     _connected = true;
     notifyListeners();
     debugPrint('[WS] Connected');
+
+    // Beritahu subscriber bahwa koneksi (ulang) sukses, agar bisa sinkronisasi ulang
+    _controller.add(const WsMessage(event: WsEvent.connected, payload: {}));
   }
 
   // ─── Event handler ──────────────────────────────────────────────────────────
@@ -92,6 +104,7 @@ class WsService extends ChangeNotifier {
 
         case WsEvent.rescueAccepted:
         case WsEvent.locationUpdate:
+        case WsEvent.connected:
         case WsEvent.unknown:
           break;
       }
@@ -117,6 +130,8 @@ class WsService extends ChangeNotifier {
   }
 
   void _reconnect() {
+    _sub?.cancel();
+    _channel?.sink.close();
     Future.delayed(const Duration(seconds: 5), () {
       if (_token != null) connect(_token!);
     });

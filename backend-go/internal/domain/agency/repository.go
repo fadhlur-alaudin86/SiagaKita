@@ -28,6 +28,16 @@ func (r *Repository) GetAgencyIDByUser(userID string) (string, error) {
 	return agencyID, nil
 }
 
+// GetAgencyProfileByUser gets the full Agency model for the logged-in user.
+func (r *Repository) GetAgencyProfileByUser(userID string) (*Agency, error) {
+	var agency Agency
+	err := r.db.Table("agencies").Where("account_id = ?", userID).First(&agency).Error
+	if err != nil {
+		return nil, fmt.Errorf("profil instansi tidak ditemukan: %w", err)
+	}
+	return &agency, nil
+}
+
 // CreatePersonnel creates a new agency_personnel account.
 func (r *Repository) CreatePersonnel(req *CreatePersonnelRequest, agencyID string) error {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)

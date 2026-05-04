@@ -32,14 +32,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
       if (!mounted) return;
       if (msg.event == WsEvent.incomingEmergency) {
         AudioService.playAlarm();
-        setState(() => _incidents = widget.ws.liveIncidents);
-      } else if (msg.event == WsEvent.sosCancelled) {
-        setState(() {
-          _incidents = widget.ws.liveIncidents;
-          if (_selected?.id == msg.payload['sos_id']?.toString()) {
-            _selected = null;
-          }
-        });
+        _load();
+      } else if (msg.event == WsEvent.sosCancelled ||
+          msg.event == WsEvent.connected) {
+        _load();
       }
     });
   }

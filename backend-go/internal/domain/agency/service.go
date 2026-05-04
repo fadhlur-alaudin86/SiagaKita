@@ -24,3 +24,8 @@ func (s *Service) CreatePersonnel(req *CreatePersonnelRequest, agencyUserID stri
 
 	return s.repo.CreatePersonnel(req, agencyID)
 }
+
+// GetMyProfile returns the agency profile for the logged in agency user.
+func (s *Service) GetMyProfile(userID string) (*Agency, error) {
+	return s.repo.GetAgencyProfileByUser(userID)
+}

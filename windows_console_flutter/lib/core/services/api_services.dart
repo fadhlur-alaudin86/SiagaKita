@@ -249,4 +249,18 @@ class AgencyApiService {
     }
     return true;
   }
+
+  // ─── Profile ──────────────────────────────────────────────────────────────
+
+  static Future<Map<String, dynamic>?> getProfile(String token) async {
+    final resp = await http.get(
+      Uri.parse(ApiConstants.agencyMe),
+      headers: AuthService.headers(token),
+    );
+    if (resp.statusCode == 200) {
+      final body = jsonDecode(resp.body) as Map<String, dynamic>;
+      return body['data'] as Map<String, dynamic>;
+    }
+    return null;
+  }
 }

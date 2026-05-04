@@ -194,6 +194,7 @@ func main() {
 
 	// ── Agencies (protected — AgencyOnly) ─────────────────────────────────────
 	agencies := v1.Group("/agencies", authMw)
+	agencies.Get("/me", middleware.AgencyOnly(), agencyHandler.GetMyProfile)
 	agencies.Post("/personnels", middleware.AgencyOnly(), agencyHandler.CreatePersonnel)
 
 	// ── SMS Fallback (API key protected — no JWT) ─────────────────────────────

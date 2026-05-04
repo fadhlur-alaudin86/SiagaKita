@@ -22,19 +22,40 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
   final _mapController = MapController();
   List<IncidentModel> _incidents = [];
   StreamSubscription<WsMessage>? _wsSub;
-  final _defaultCenter = const LatLng(-5.55, 95.32); // Banda Aceh
+  LatLng _defaultCenter = const LatLng(
+    -5.55,
+    95.32,
+  ); // Banda Aceh default fallback
+  LatLng? _agencyLocation; // Lokasi agency sendiri
 
   @override
   void initState() {
     super.initState();
+    _loadAgencyProfile();
     _loadIncidents();
     _wsSub = widget.ws.eventStream.listen((msg) {
       if (!mounted) return;
       if (msg.event == WsEvent.incomingEmergency ||
-          msg.event == WsEvent.sosCancelled) {
-        setState(() => _incidents = widget.ws.liveIncidents);
+          msg.event == WsEvent.sosCancelled ||
+          msg.event == WsEvent.connected) {
+        _loadIncidents();
       }
     });
+  }
+
+  Future<void> _loadAgencyProfile() async {
+    final profile = await AgencyApiService.getProfile(widget.token);
+    if (mounted && profile != null) {
+      final lat = profile['latitude'] as num?;
+      final lng = profile['longitude'] as num?;
+      if (lat != null && lng != null) {
+        setState(() {
+          _agencyLocation = LatLng(lat.toDouble(), lng.toDouble());
+          _defaultCenter = _agencyLocation!;
+        });
+        _mapController.move(_defaultCenter, 13.0);
+      }
+    }
   }
 
   Future<void> _loadIncidents() async {
@@ -128,49 +149,75 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                   userAgentPackageName: 'com.siagakita.console',
                 ),
                 MarkerLayer(
-                  markers: _incidents.map((inc) {
-                    if (inc.latitude == 0 && inc.longitude == 0) {
-                      return const Marker(
-                        point: LatLng(0, 0),
-                        child: SizedBox.shrink(),
-                      );
-                    }
-                    return Marker(
-                      point: LatLng(inc.latitude, inc.longitude),
-                      width: 48,
-                      height: 56,
-                      child: GestureDetector(
-                        onTap: () => _showIncidentPopup(inc),
-                        child: Column(
+                  markers: [
+                    if (_agencyLocation != null)
+                      Marker(
+                        point: _agencyLocation!,
+                        width: 50,
+                        height: 50,
+                        child: const Column(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.red.withValues(alpha: 0.5),
-                                    blurRadius: 10,
-                                    spreadRadius: 3,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.warning_amber_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
+                            Icon(
+                              Icons.local_hospital_rounded,
+                              color: Colors.blue,
+                              size: 32,
                             ),
-                            CustomPaint(
-                              size: const Size(12, 8),
-                              painter: _TrianglePainter(),
+                            Text(
+                              'Pusat',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                                backgroundColor: Colors.white,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  }).toList(),
+                    ..._incidents.map((inc) {
+                      if (inc.latitude == 0 && inc.longitude == 0) {
+                        return const Marker(
+                          point: LatLng(0, 0),
+                          child: SizedBox.shrink(),
+                        );
+                      }
+                      return Marker(
+                        point: LatLng(inc.latitude, inc.longitude),
+                        width: 48,
+                        height: 56,
+                        child: GestureDetector(
+                          onTap: () => _showIncidentPopup(inc),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.red.withValues(alpha: 0.5),
+                                      blurRadius: 10,
+                                      spreadRadius: 3,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                              CustomPaint(
+                                size: const Size(12, 8),
+                                painter: _TrianglePainter(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
               ],
             ),

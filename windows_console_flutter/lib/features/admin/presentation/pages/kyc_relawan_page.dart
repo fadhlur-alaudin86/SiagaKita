@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,22 +18,25 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
   List<VolunteerModel> _volunteers = [];
   VolunteerModel? _selected;
   bool _loading = true;
+  Timer? _timer;
   final _rejectCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _load();
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) => _load(silent: true));
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _rejectCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) setState(() => _loading = true);
     final data = await AdminApiService.getPendingVolunteers(widget.token);
     if (mounted) {
       setState(() {
