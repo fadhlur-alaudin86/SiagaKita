@@ -59,6 +59,21 @@ class UserService {
         weightKg = int.tryParse(medData['weight'].toString());
       }
 
+      final payload = <String, dynamic>{
+        'full_name': updatedUser.name.isNotEmpty ? updatedUser.name : null,
+        'date_of_birth': updatedUser.birthDate,
+        'blood_type': medData['blood_type'],
+        'allergies': medData['allergies'],
+        'medical_conditions': medData['medical_history'],
+        'height_cm': heightCm,
+        'weight_kg': weightKg,
+        'alamat': medData['address'],
+        'bio': updatedUser.bio,
+        'emergency_contacts': contacts ?? [],
+      };
+      
+      payload.removeWhere((k, v) => v == null);
+
       final response = await http
           .put(
             Uri.parse('$_baseUrl/users/profile'),
@@ -66,18 +81,7 @@ class UserService {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token',
             },
-            body: jsonEncode({
-              'full_name': updatedUser.name.isNotEmpty ? updatedUser.name : null,
-              'date_of_birth': updatedUser.birthDate,
-              'blood_type': medData['blood_type'],
-              'allergies': medData['allergies'],
-              'medical_conditions': medData['medical_history'],
-              'height_cm': heightCm,
-              'weight_kg': weightKg,
-              'alamat': medData['address'],
-              'bio': updatedUser.bio,
-              'emergency_contacts': contacts ?? [],
-            }),
+            body: jsonEncode(payload),
           )
           .timeout(_timeout);
 

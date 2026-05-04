@@ -282,9 +282,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     final user = UserModel.currentUser.value;
 
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
+
+    // Simpan referensi SEBELUM await agar tidak pakai BuildContext stale
+    // (mencegah '_dependents.isEmpty' assertion error setelah pop)
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
 
     try {
       final updatedMedData = Map<String, dynamic>.from(user.medicalData ?? {});
@@ -307,17 +310,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         widget.accessToken,
         updatedUser,
       );
+
+      if (!mounted) return;
+
+      // Pop DULU sebelum update ValueNotifier.
+      // Jika ValueNotifier diupdate sebelum pop, ia memicu rebuild seluruh
+      // widget tree di frame yang sama -> '_dependents.isEmpty' assertion error.
+      navigator.pop();
+
+      // Update model SETELAH pop agar widget tree sudah clean
       UserModel.currentUser.value = returnedUser;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profil berhasil diperbarui.'.tr(context))),
-        );
-        Navigator.pop(context);
-      }
+      messenger.showSnackBar(
+        SnackBar(content: Text('Profil berhasil diperbarui.'.tr(context))),
+      );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Gagal memperbarui profil: $e'.tr(context)),
             backgroundColor: Colors.red,
@@ -325,11 +334,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
