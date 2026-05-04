@@ -1,6 +1,6 @@
 # 📋 SiagaKita — Laporan Kemajuan Pengembangan
 
-> **Terakhir diperbarui:** 3 Mei 2026
+> **Terakhir diperbarui:** 4 Mei 2026
 > **Branch aktif:** `main`
 > **Status keseluruhan:** 🟡 Dalam Pengembangan Aktif
 
@@ -75,17 +75,20 @@
 | `config/config.go` | ✅ | + SuperAdminEmail, SuperAdminPass |
 | `cmd/api/main.go` | ✅ | seedSuperAdmin(), 3 login routes, admin routes |
 
-### 🟡 Mobile Flutter — Citizen/Volunteer (`mobile-flutter/`)
+### 🟢 Mobile Flutter — Citizen/Volunteer (`mobile-flutter/`)
 
-| Layar | Status | Keterangan |
+| Layar / Modul | Status | Keterangan |
 |-------|--------|-----------|
-| Login | ✅ | `POST /auth/login` — hanya civilian/volunteer |
+| Login | ✅ | `POST /auth/login` — hanya civilian/volunteer; simpan sesi lokal |
 | Register | ✅ | 2-step: form → email OTP → JWT |
 | Biodata | 🟡 | UI selesai, API belum terhubung |
-| Home (SOS) | ✅ | 5-ketukan, GPS tracking, cancel SOS |
-| Profile | 🟡 | UI selesai, query ke `user_profiles` (belum terhubung) |
+| Home (SOS) | ✅ v2 | SOS instan (UUID lokal), retry background 5s, badge status upload |
+| Home (Offline) | ✅ Baru | Auto-login dari sesi tersimpan; indikator ● Online/Offline di header |
+| Profile | ✅ v2 | Tampilkan NIK (bukan UUID); badge verifikasi HP; tombol verifikasi identitas |
+| Edit Profile | ✅ v2 | Fix save berhasil; OTP WhatsApp wajib sebelum ubah nomor HP |
 | Map | 🔴 | Mock/static |
 | Relawan Dashboard | 🟡 | UI selesai, data mock |
+| Session Management | ✅ Baru | `SessionService` (SharedPreferences) — login persist, logout clear |
 
 ### 🟢 Desktop Console (`windows_console_flutter/`)
 
@@ -106,6 +109,45 @@
 ---
 
 ## 3. Changelog Per Sprint
+
+---
+
+### 🔖 Patch 1.0.5 — 4 Mei 2026 (Sprint Stabilisasi)
+
+#### 🔴 Fitur Baru: Offline Mode & Session Management
+
+- **`SessionService`** (`lib/core/services/session_service.dart`) — menyimpan `token`, `userId`, dan data user (nama, email, role) ke `SharedPreferences`. Data tetap tersedia meski app ditutup.
+- **`ConnectivityService`** (`lib/core/services/connectivity_service.dart`) — memantau status internet secara real-time via `connectivity_plus`. Exposes `ValueNotifier<bool> isOnline`.
+- **`_AppStartup`** di `main.dart` — widget startup yang memeriksa sesi tersimpan. Jika valid → langsung ke `MainScreen` tanpa login ulang (meski offline).
+- **Indikator Koneksi di Header** `HomeScreen` — dot ● berubah warna (hijau = Online, abu = Offline) plus label teks dinamis di bawah nama user.
+- **Skip Fetch Profil saat Offline** (`MainScreen._fetchProfile`) — jika tidak ada koneksi, langsung gunakan data sesi ter-cache tanpa hit server.
+
+#### 🔴 Fitur Baru: SOS Anti-Gagal (Robust SOS)
+
+- **Grace Period Instan** — tombol SOS langsung memberikan feedback visual (UUID lokal) tanpa menunggu respon server. Ini mencegah user menekan SOS berulang kali karena dikira tidak berfungsi.
+- **Background Retry Loop** — jika pengiriman SOS ke server gagal (jaringan tidak stabil), mekanisme retry otomatis setiap **5 detik** berjalan selama app terbuka dan user belum membatalkan.
+- **Badge Status Upload** — UI menampilkan status `Mengirim...` → `Terkirim ✓` pada banner SOS aktif.
+- **Local-to-Server ID Swap** — UUID lokal ditukar dengan Server ID begitu respon berhasil diterima.
+
+#### 🔴 Fitur Baru: Profil & Verifikasi
+
+- **Backend `PUT /api/v1/users/profile`** — endpoint baru untuk update profil (biodata + data medis + kontak darurat). Proses dilakukan dalam satu transaksi GORM (soft-delete kontak lama → insert baru).
+- **NIK di Profile Screen** — menampilkan NIK pengguna (bukan UUID internal). Jika NIK belum ada, tampilkan tombol "Verifikasi Identitas (NIK)".
+- **Badge Verifikasi HP** — icon ✅ (terverifikasi) atau ⚠️ (belum) di samping nomor WhatsApp.
+- **OTP WhatsApp wajib** — jika user mengubah nomor HP di Edit Profile, maka OTP 6-digit dikirim ke nomor baru via WhatsApp sebelum data disimpan.
+- **Label WhatsApp** — field nomor HP diubah label menjadi "Nomor WhatsApp Aktif" dengan prefix icon.
+
+#### 🔑 Keamanan: Clear Session saat Logout
+
+- Semua screen (masyarakat, relawan, admin, instansi) kini memanggil `SessionService.clearSession()` sebelum navigate ke `LoginScreen`. Sebelumnya sesi tersimpan tidak dihapus saat logout.
+
+#### 📦 Dependencies Baru (`pubspec.yaml`)
+
+| Package | Versi | Kegunaan |
+|---------|-------|----------|
+| `shared_preferences` | ^2.5.5 | Penyimpanan sesi lokal persisten |
+| `connectivity_plus` | ^6.1.5 | Monitor status jaringan |
+| `uuid` | ^4.5.3 | Generate UUID lokal untuk SOS sebelum server reply |
 
 ---
 
@@ -389,11 +431,18 @@ siagakita/
 │
 ├── mobile-flutter/
 │   └── lib/
-│       ├── core/services/
-│       │   └── auth_service.dart    ✅ UserInfo.fullName → String? (nullable)
-│       └── features/
-│           ├── auth/                ✅
-│           └── masyarakat/          🟡 Profile, Biodata belum terhubung API
+│        ├── core/services/
+│        │   ├── auth_service.dart      ✅
+│        │   ├── incident_service.dart  ✅
+│        │   ├── user_service.dart      ✅ GET+PUT profile, OTP phone
+│        │   ├── session_service.dart   🇨 BARU — simpan/baca/hapus sesi lokal
+│        │   └── connectivity_service.dart 🇨 BARU — monitor online/offline
+│        └── features/
+│            ├── auth/                  ✅ + simpan sesi setelah login
+│            ├── masyarakat/            ✅ SOS instan+retry; NIK di profil; OTP WA edit HP
+│            ├── relawan/               ✅ + clearSession logout
+│            ├── admin/                 ✅ + clearSession logout
+│            └── instansi/              ✅ + clearSession logout
 │
 ├── windows_console_flutter/
 │   └── lib/
@@ -405,7 +454,7 @@ siagakita/
 │           └── admin/               ✅ Semua halaman selesai
 │
 └── docs/
-    ├── FRONTEND_STRUCTURE.txt       ✅ Diperbarui 1 Mei 2026
+    ├── FRONTEND_STRUCTURE.txt       ✅ Diperbarui 4 Mei 2026
     └── DESKTOP_PLANNING_ADMIN_INSTANSI.txt  ✅ Diperbarui 1 Mei 2026
 ```
 
@@ -432,9 +481,10 @@ Base URL: `http://<host>:8080/api/v1`
 | Method | Endpoint | Keterangan |
 |--------|----------|-----------|
 | GET | `/users/profile` | Profil dari `user_profiles` |
-| POST | `/users/biodata` | Update `user_profiles` (upsert) |
-| POST | `/users/phone/request-otp` | OTP WA ke HP baru |
-| POST | `/users/phone/verify-otp` | Konfirmasi OTP HP |
+| PUT | `/users/profile` | 🇨 Update profil + data medis + kontak darurat |
+| POST | `/users/biodata` | Biodata awal (upsert, dipakai pasca-register) |
+| POST | `/users/phone/request-otp` | Kirim OTP 6-digit via WhatsApp ke nomor baru |
+| POST | `/users/phone/verify-otp` | Verifikasi OTP → update nomor + set is_phone_verified |
 
 ### Incidents (Protected — semua role)
 

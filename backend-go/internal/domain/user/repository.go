@@ -99,6 +99,69 @@ func (r *Repository) UpdatePhoneNumber(userID, phone string) error {
 		}).Error
 }
 
+// UpdateProfile updates editable fields of user_profiles, replacing emergency contacts.
+func (r *Repository) UpdateProfile(userID string, req *UpdateProfileRequest) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		profileMap := map[string]interface{}{
+			"updated_at": time.Now(),
+		}
+		if req.FullName != nil {
+			profileMap["full_name"] = *req.FullName
+		}
+		if req.BloodType != nil {
+			profileMap["blood_type"] = *req.BloodType
+		}
+		if req.Allergies != nil {
+			profileMap["allergies"] = *req.Allergies
+		}
+		if req.MedicalConditions != nil {
+			profileMap["medical_conditions"] = *req.MedicalConditions
+		}
+		if req.HeightCm != nil {
+			profileMap["height_cm"] = *req.HeightCm
+		}
+		if req.WeightKg != nil {
+			profileMap["weight_kg"] = *req.WeightKg
+		}
+		if req.Alamat != nil {
+			profileMap["alamat"] = *req.Alamat
+		}
+		if req.DateOfBirth != nil {
+			parsed, err := time.Parse("02-01-2006", *req.DateOfBirth)
+			if err != nil {
+				return fmt.Errorf("format date_of_birth tidak valid, gunakan DD-MM-YYYY: %w", err)
+			}
+			profileMap["date_of_birth"] = parsed
+		}
+
+		if err := tx.Model(&UserProfile{}).Where("user_id = ?", userID).Updates(profileMap).Error; err != nil {
+			return err
+		}
+
+		// Replace emergency contacts: soft-delete existing, then insert new
+		if req.EmergencyContacts != nil {
+			now := time.Now()
+			if err := tx.Model(&EmergencyContact{}).Where("user_id = ? AND deleted_at IS NULL", userID).Update("deleted_at", now).Error; err != nil {
+				return err
+			}
+			for _, c := range req.EmergencyContacts {
+				relation := c.Relation
+				contact := EmergencyContact{
+					UserID:       userID,
+					ContactName:  c.Name,
+					ContactPhone: c.Phone,
+					Relation:     &relation,
+				}
+				if err := tx.Create(&contact).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
 // SaveBiodata updates user_profiles and upserts emergency contact.
 func (r *Repository) SaveBiodata(userID string, req *BiodataRequest) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {

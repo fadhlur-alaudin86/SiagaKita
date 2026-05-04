@@ -5,11 +5,19 @@
 ===========================================================================
 
 CATATAN PENTING:
-  Integrasi API sudah aktif pada modul Auth dan SOS.
-  Modul lain (Profile, Biodata, Map, Relawan) masih menggunakan data MOCK.
+  Integrasi API sudah aktif pada modul Auth, SOS, Profil, dan Verifikasi OTP.
+  Modul lain (Biodata, Map, Relawan) masih menggunakan data MOCK.
   Dokumentasi ini menjelaskan state terkini dan kebutuhan integrasi berikutnya.
 
-  PERUBAHAN TERBARU (4 Mei 2026):
+  PERUBAHAN TERBARU (4 Mei 2026 — Sprint Stabilisasi):
+  - Offline Mode: SessionService + ConnectivityService + _AppStartup auto-login.
+  - SOS Anti-Gagal: grace period instan (UUID lokal), retry background 5 detik, badge status.
+  - Profile Screen: NIK (bukan UUID), badge verif HP, tombol verifikasi identitas.
+  - Edit Profile: fix save profile + OTP WhatsApp wajib sebelum ubah nomor HP.
+  - Semua logout kini memanggil SessionService.clearSession().
+  - MainScreen: skip fetch profil saat offline, pakai cached user.
+
+  PERUBAHAN SEBELUMNYA (4 Mei 2026):
   - Integrasi Menu Profil & Pengaturan di HomeScreen via BottomSheet.
   - Perbaikan Debouncing tombol SOS & dialog konfirmasi pembatalan.
   - Pemindahan fungsi Dark Mode global ke SettingsScreen.
@@ -25,11 +33,11 @@ CATATAN PENTING:
 ===========================================================================
 
 lib/
-├── main.dart                         — Entry point, konfigurasi tema + locale global (ID/EN)
+├── main.dart                         — Entry point + _AppStartup (auto-login via SessionService)
 │
 ├── core/
 │   ├── models/
-│   │   └── user_model.dart           — Model UserModel + Enum UserRole
+│   │   └── user_model.dart           — Model UserModel + Enum UserRole; field nik, isPhoneVerified
 │   ├── localization/
 │   │   └── app_localization.dart     — Kamus terjemahan ID→EN + extension .tr(context)
 │   ├── widgets/
@@ -38,29 +46,38 @@ lib/
 │   │   ├── auth_service.dart         ★ — API client auth (register, OTP, login)
 │   │   ├── incident_service.dart     ★ — API client SOS (trigger, cancel, location)
 │   │   ├── location_service.dart     ★ — GPS wrapper (permission, get position)
+│   │   ├── user_service.dart         ★ — GET/PUT /users/profile, OTP phone request/verify
+│   │   ├── session_service.dart      ★ BARU — SharedPrefs: simpan/baca/hapus sesi lokal
+│   │   ├── connectivity_service.dart ★ BARU — Monitor online/offline (ValueNotifier<bool>)
 │   │   └── otp_service.dart          — WA OTP client (phone verification)
 │   └── router.dart                   — AppRouter: routing berdasarkan role + token
 │
 ├── features/
 │   ├── auth/
-│   │   ├── login_screen.dart         — Login (Email+Password → JWT via /auth/login)
+│   │   ├── login_screen.dart         — Login → simpan sesi (SessionService) → MainScreen
 │   │   ├── register_screen.dart      — Register 2-step (Form → Email OTP)
-│   │   └── biodata_screen.dart       — Biodata kesehatan (POST /users/biodata)
+│   │   └── biodata_screen.dart       — Biodata kesehatan (POST /users/biodata) [API belum]
 │   │
 │   ├── masyarakat/                   — Fitur role Masyarakat & Relawan
-│   │   ├── main_screen.dart          — Navigasi utama (Bottom Nav), menerima token
-│   │   ├── home_screen.dart          — Tombol SOS, Status Online, GPS tracking, Profil Menu
+│   │   ├── main_screen.dart          — Bottom Nav; fetch profil (skip jika offline)
+│   │   ├── home_screen.dart          — SOS instan+retry, status koneksi, profil menu
 │   │   ├── guide_screen.dart         — Panduan Pertolongan Pertama (offline)
 │   │   ├── map_screen.dart           — Radar peta (MOCK)
-│   │   ├── profile_screen.dart       — Profil pengguna (MOCK)
-│   │   ├── edit_profile_screen.dart  — Form edit biodata & profil (MOCK)
+│   │   ├── profile_screen.dart       — NIK, badge verif HP, logout + clearSession
+│   │   ├── edit_profile_screen.dart  — Edit profil (fix save) + OTP WA sebelum ubah nomor
 │   │   ├── settings_screen.dart      — Mode Gelap (Global), privasi, bahasa, notifikasi
 │   │   ├── about_screen.dart         — Informasi aplikasi (statis)
-│   │   ├── report_screen.dart        — Form laporan darurat (MOCK)
+│   │   ├── report_screen.dart        — Form laporan darurat (GPS + foto + audio)
 │   │   └── volunteer_registration_screen.dart — Daftar jadi relawan (MOCK)
 │   │
-│   └── relawan/
-│       └── relawan_main_screen.dart  — Tactical Dashboard (MOCK)
+│   ├── relawan/
+│   │   └── relawan_main_screen.dart  — Tactical Dashboard; logout + clearSession
+│   │
+│   ├── admin/
+│   │   └── admin_main_screen.dart    — Admin placeholder; logout + clearSession
+│   │
+│   └── instansi/
+│       └── instansi_main_screen.dart — Instansi placeholder; logout + clearSession
 │
 └── components/
     └── logo_siagakita.jpg            — Aset logo

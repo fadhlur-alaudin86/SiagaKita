@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../auth/login_screen.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
+import '../../core/services/session_service.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
@@ -166,15 +167,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               color: primaryTextColor,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'ID/NIM: ${user.id}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: hintColor,
-                              fontFamily: 'monospace',
+                          const SizedBox(height: 4),
+                          // NIK sebagai identifikasi (bukan UUID)
+                          if (user.nik != null && user.nik!.isNotEmpty)
+                            Row(
+                              children: [
+                                Icon(Icons.badge,
+                                    size: 13, color: hintColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'NIK: ${user.nik}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: hintColor,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ],
+                            )
+                          else
+                            GestureDetector(
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Fitur verifikasi NIK akan segera hadir.',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(top: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color:
+                                        Colors.orange.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.verified_user_outlined,
+                                        size: 13, color: Colors.orange),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Verifikasi Identitas (NIK)',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
                           _buildVolunteerBadge(user),
                         ],
                       ),
@@ -230,18 +280,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : Colors.grey.shade200,
                       ),
                       ListTile(
-                        leading: Icon(Icons.phone, color: primaryTextColor),
+                        leading: const Icon(Icons.chat_bubble,
+                            color: Color(0xFF25D366)),
                         title: Text(
-                          'Nomor Telepon'.tr(context),
+                          'Nomor WhatsApp'.tr(context),
                           style: TextStyle(fontSize: 12, color: hintColor),
                         ),
-                        subtitle: Text(
-                          user.phoneNumber ?? '-',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: secondaryTextColor,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        subtitle: Row(
+                          children: [
+                            Text(
+                              user.phoneNumber ?? '-',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: secondaryTextColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (user.isPhoneVerified) ...
+                              [
+                                const SizedBox(width: 6),
+                                const Icon(Icons.verified,
+                                    size: 14, color: Colors.green),
+                              ]
+                            else if (user.phoneNumber != null) ...
+                              [
+                                const SizedBox(width: 6),
+                                const Icon(Icons.warning_amber,
+                                    size: 14, color: Colors.orange),
+                              ],
+                          ],
                         ),
                       ),
                       Divider(
@@ -703,18 +770,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 // Logout Button
                 OutlinedButton.icon(
-                  onPressed: () {
-                    // Reset user to clear session data locally
+                  onPressed: () async {
+                    await SessionService.clearSession();
+                    // Reset user model
                     UserModel.currentUser.value = const UserModel(
                       id: '',
                       name: '',
                       email: '',
                       role: UserRole.masyarakat,
                     );
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (route) => false,
-                    );
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
+                    }
                   },
                   icon: const Icon(Icons.logout, color: Colors.red),
                   label: Text(

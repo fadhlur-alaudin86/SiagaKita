@@ -3,9 +3,10 @@ import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/location_service.dart';
+import '../../core/services/session_service.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
-import '../masyarakat/home_screen.dart';
+import '../masyarakat/main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -55,7 +56,15 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (!mounted) return;
 
-      // TODO Task 6: simpan token ke secure storage
+      // Simpan sesi lokal untuk auto-login offline
+      await SessionService.saveSession(
+        token: result.accessToken,
+        userId: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+        name: result.user.fullName,
+      );
+
       debugPrint('[Auth] Login berhasil: ${result.user.email}');
 
       // Perbarui global state (nama, role, email, dsb.)
@@ -65,20 +74,18 @@ class _LoginScreenState extends State<LoginScreen> {
         email: result.user.email,
         role: result.user.role == 'admin'
             ? UserRole.admin
-            : result.user.role == 'instansi'
-                ? UserRole.instansi
-                : result.user.role == 'relawan'
-                    ? UserRole.relawan
-                    : UserRole.masyarakat,
+            : result.user.role == 'volunteer'
+                ? UserRole.relawan
+                : UserRole.masyarakat,
       );
 
-      // Minta izin GPS setelah auth berhasil (poin 4)
+      // Minta izin GPS setelah auth berhasil
       await LocationService.requestPermission();
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => HomeScreen(
+          builder: (_) => MainScreen(
             accessToken: result.accessToken,
             userId: result.user.id,
           ),

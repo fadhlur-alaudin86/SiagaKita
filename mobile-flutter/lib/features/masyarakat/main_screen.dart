@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/services/connectivity_service.dart';
 import 'home_screen.dart';
 import 'guide_screen.dart';
 import 'map_screen.dart';
@@ -33,17 +34,19 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _fetchProfile() async {
+    // Jika offline, gunakan data sesi yang sudah di-cache — tidak perlu hit server
+    if (!ConnectivityService.isOnline.value) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
     try {
       final user = await UserService.getProfile(widget.accessToken);
-      UserModel.currentUser.value = user;
+      if (mounted) UserModel.currentUser.value = user;
     } catch (e) {
-      // Ignored for now, fallback to default or error state
+      // Gagal fetch profil saat online → tetap pakai data lokal
+      debugPrint('[MainScreen] Gagal fetch profil: $e');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

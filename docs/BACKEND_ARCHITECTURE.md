@@ -1,6 +1,6 @@
 # 🏗️ SiagaKita — Arsitektur Backend
 
-> **Diperbarui:** 1 Mei 2026
+> **Diperbarui:** 4 Mei 2026
 > **Versi Schema:** v3
 > **Stack:** Go 1.23 + Fiber v2 + PostgreSQL 15 + Redis
 
@@ -94,7 +94,7 @@ PostgreSQL / Redis
 
 | Domain | Tanggung Jawab |
 |--------|---------------|
-| `user` | Autentikasi (register, login, JWT), manajemen profil citizen/volunteer, verifikasi phone |
+| `user` | Autentikasi (register, login, JWT), manajemen profil citizen/volunteer, verifikasi phone OTP, update profil |
 | `admin` | KYC relawan, ban/unban user, master data rank, statistik sistem, buat akun admin |
 | `incident` | SOS (Jalur A): trigger, cancel, GPS update, resolve, false alarm; Laporan (Jalur B): CRUD + status |
 | `otp` | OTP via Gmail API (REST), OTP WA via Fonnte, rate limiting di Redis |

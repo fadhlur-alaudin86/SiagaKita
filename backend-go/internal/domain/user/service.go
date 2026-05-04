@@ -230,6 +230,10 @@ func (s *Service) GetProfile(userID string) (*ProfileResponse, error) {
 	return s.repo.GetProfile(userID)
 }
 
+func (s *Service) UpdateProfile(userID string, req *UpdateProfileRequest) error {
+	return s.repo.UpdateProfile(userID, req)
+}
+
 // ─── Token builders ───────────────────────────────────────────────────────────
 
 // buildAuthResponse digunakan untuk civilian/volunteer (nama dari user_profiles).

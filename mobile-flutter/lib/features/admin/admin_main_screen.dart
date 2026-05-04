@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/widgets/role_placeholder.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/services/session_service.dart';
 import '../auth/login_screen.dart';
 
 class AdminMainScreen extends StatefulWidget {
@@ -61,10 +62,15 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
         tabDescription: tab.description,
         tabIcon: tab.activeIcon,
         tabColor: tab.color,
-        onLogout: () => Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (r) => false,
-        ),
+        onLogout: () async {
+          await SessionService.clearSession();
+          if (context.mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (r) => false,
+            );
+          }
+        },
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

@@ -199,6 +199,27 @@ type ProfileResponse struct {
 	VolunteerReputation *VolunteerReputation `json:"volunteer_reputation,omitempty"`
 }
 
+// UpdateProfileRequest untuk PUT /users/profile (civilian/volunteer).
+type UpdateProfileRequest struct {
+	FullName             *string `json:"full_name"`
+	DateOfBirth          *string `json:"date_of_birth"` // Format: DD-MM-YYYY
+	BloodType            *string `json:"blood_type"`
+	Allergies            *string `json:"allergies"`
+	MedicalConditions    *string `json:"medical_conditions"`
+	HeightCm             *int    `json:"height_cm"`
+	WeightKg             *int    `json:"weight_kg"`
+	Alamat               *string `json:"alamat"`
+	Bio                  *string `json:"bio"`
+	EmergencyContacts    []EmergencyContactInput `json:"emergency_contacts"`
+}
+
+// EmergencyContactInput untuk update kontak darurat.
+type EmergencyContactInput struct {
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
+	Relation string `json:"relation"`
+}
+
 // ─── DTOs for Password Reset & OTP Resend ─────────────────────────────────────
 
 type ForgotPasswordRequest struct {

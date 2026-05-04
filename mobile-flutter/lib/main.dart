@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/localization/app_localization.dart';
+import 'core/models/user_model.dart';
+import 'core/services/connectivity_service.dart';
+import 'core/services/location_service.dart';
+import 'core/services/session_service.dart';
 import 'features/auth/login_screen.dart';
+import 'features/masyarakat/main_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ConnectivityService.instance.init();
   runApp(const SiagaKitaApp());
 }
 
@@ -104,11 +111,73 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                   type: BottomNavigationBarType.fixed,
                 ),
               ),
-              home: const LoginScreen(),
+              home: const _AppStartup(),
             );
           },
         );
       },
+    );
+  }
+}
+
+/// Menangani logika startup: cek sesi tersimpan → auto-login atau ke LoginScreen.
+class _AppStartup extends StatefulWidget {
+  const _AppStartup();
+
+  @override
+  State<_AppStartup> createState() => _AppStartupState();
+}
+
+class _AppStartupState extends State<_AppStartup> {
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    final session = await SessionService.loadSession();
+    if (!mounted) return;
+
+    if (session != null) {
+      // Perbarui UserModel dengan data sesi tersimpan
+      UserModel.currentUser.value = UserModel(
+        id: session.userId,
+        name: session.name ?? 'Pengguna',
+        email: session.email,
+        role: session.role == 'volunteer'
+            ? UserRole.relawan
+            : session.role == 'admin'
+                ? UserRole.admin
+                : UserRole.masyarakat,
+      );
+
+      // Minta izin GPS jika online, abaikan jika offline
+      if (ConnectivityService.isOnline.value) {
+        await LocationService.requestPermission();
+        if (!mounted) return;
+      }
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => MainScreen(
+            accessToken: session.token,
+            userId: session.userId,
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Layar loading sementara sambil cek sesi
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }

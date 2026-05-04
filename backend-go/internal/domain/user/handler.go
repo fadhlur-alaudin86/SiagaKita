@@ -123,6 +123,23 @@ func (h *Handler) GetProfile(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, profile)
 }
 
+// ─── PUT /api/v1/users/profile  [Auth required — civilian/volunteer] ──────────
+func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+	var req UpdateProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+	if err := h.svc.UpdateProfile(userID, &req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	profile, err := h.svc.GetProfile(userID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat profil terbaru")
+	}
+	return utils.SuccessResponse(c, profile)
+}
+
 // ─── POST /api/v1/users/phone/request-otp  [Auth required] ───────────────────
 func (h *Handler) RequestPhoneVerification(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
+import '../../core/services/session_service.dart';
 import '../auth/login_screen.dart';
 
 class RelawanMainScreen extends StatefulWidget {
@@ -146,11 +147,14 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             icon: const Icon(Icons.logout),
             color: Colors.red,
             tooltip: 'Keluar'.tr(context),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-              );
+            onPressed: () async {
+              await SessionService.clearSession();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
           ),
         ],

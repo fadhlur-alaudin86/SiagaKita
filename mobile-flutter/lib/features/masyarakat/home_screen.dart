@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:uuid/uuid.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
+import '../../core/services/connectivity_service.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
 import '../auth/login_screen.dart';
+import '../../core/services/session_service.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'report_screen.dart';
@@ -37,6 +40,10 @@ class _HomeScreenState extends State<HomeScreen>
   // idle → gracePeriod → broadcasting → (cancelled)
   String _sosPhase = 'idle'; // 'idle' | 'gracePeriod' | 'broadcasting'
   bool _isTriggeringSOS = false;
+  // Status upload SOS ke server
+  // 'idle' | 'sending' | 'sent' | 'failed'
+  String _sosUploadStatus = 'idle';
+  Timer? _sosRetryTimer;
 
   // ─── Grace Period State ─────────────────────────────────────────────────────
   int _graceCountdown = 10;
@@ -63,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen>
     _tapResetTimer?.cancel();
     _locationUpdateTimer?.cancel();
     _graceTimer?.cancel();
+    _sosRetryTimer?.cancel();
     super.dispose();
   }
 
@@ -159,20 +167,69 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  // ─── Trigger SOS ─────────────────────────────────────────────────────────────
+  // ─── Trigger SOS — INSTANT GRACE PERIOD + background upload & retry ──────────
 
   Future<void> _triggerSOS({required String triggeredBy}) async {
     if (_isTriggeringSOS) return;
-    
+
     HapticFeedback.vibrate();
+
+    // Buat ID lokal sementara (UUID). Tidak ditampilkan ke UI.
+    final localId = const Uuid().v4();
+
     setState(() {
       _tapCount = 0;
       _isTriggeringSOS = true;
+      // Langsung masuk grace period — tidak menunggu server
+      _pendingIncidentId = localId;
+      _sosPhase = 'gracePeriod';
+      _graceCountdown = 10;
+      _sosUploadStatus = 'sending';
     });
+    _startGracePeriodCountdown();
 
+    // Ambil posisi GPS di background
     final pos = await LocationService.getCurrentPositionOrNull();
     final lat = pos?.latitude ?? 0.0;
     final lng = pos?.longitude ?? 0.0;
+
+    // Upload SOS di background — retry tiap 5 detik jika gagal
+    _attemptSOSUpload(
+      lat: lat,
+      lng: lng,
+      triggeredBy: triggeredBy,
+      localId: localId,
+    );
+
+    if (mounted) setState(() => _isTriggeringSOS = false);
+  }
+
+  /// Kirim SOS ke server. Jika gagal, ulangi tiap 5 detik.
+  void _attemptSOSUpload({
+    required double lat,
+    required double lng,
+    required String triggeredBy,
+    required String localId,
+  }) {
+    _sosRetryTimer?.cancel();
+    _performSOSUpload(
+      lat: lat,
+      lng: lng,
+      triggeredBy: triggeredBy,
+      localId: localId,
+    );
+  }
+
+  Future<void> _performSOSUpload({
+    required double lat,
+    required double lng,
+    required String triggeredBy,
+    required String localId,
+  }) async {
+    // Hentikan jika sudah tidak relevan (dibatalkan user / sudah ada server ID)
+    if (!mounted) return;
+    if (_sosPhase == 'idle') return;
+    if (_pendingIncidentId != null && _pendingIncidentId != localId) return;
 
     try {
       final result = await IncidentService.triggerSOS(
@@ -183,29 +240,42 @@ class _HomeScreenState extends State<HomeScreen>
       );
 
       if (!mounted) return;
-
-      // Masuk ke fase grace period — tampilkan 4 tombol tipe
+      // Ganti local ID dengan server ID (tidak tampil di UI)
       setState(() {
         _pendingIncidentId = result.incidentId;
-        _sosPhase = 'gracePeriod';
-        _graceCountdown = 10;
-        _isTriggeringSOS = false;
+        _sosUploadStatus = 'sent';
       });
-      _startGracePeriodCountdown();
     } on SOSBannedException catch (e) {
       if (!mounted) return;
-      setState(() => _isTriggeringSOS = false);
+      // SOS banned → batalkan grace period
+      _cancelGracePeriodLocally();
       _showSOSBannedDialog(e.toString());
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      setState(() => _isTriggeringSOS = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal mengirim SOS: $e'),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+      setState(() => _sosUploadStatus = 'sending');
+      // Retry setiap 5 detik selama phase masih aktif
+      _sosRetryTimer = Timer(const Duration(seconds: 5), () {
+        _performSOSUpload(
+          lat: lat,
+          lng: lng,
+          triggeredBy: triggeredBy,
+          localId: localId,
+        );
+      });
     }
+  }
+
+  /// Batalkan grace period secara lokal (karena SOS banned atau error kritis).
+  void _cancelGracePeriodLocally() {
+    _graceTimer?.cancel();
+    _sosRetryTimer?.cancel();
+    setState(() {
+      _sosPhase = 'idle';
+      _pendingIncidentId = null;
+      _isTriggeringSOS = false;
+      _sosUploadStatus = 'idle';
+      _graceCountdown = 10;
+    });
   }
 
   // ─── Grace Period: countdown & pilih tipe ────────────────────────────────────
@@ -294,6 +364,38 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  /// Badge kecil yang menampilkan status upload SOS ke server.
+  Widget _buildUploadStatusBadge() {
+    if (_sosUploadStatus == 'idle') return const SizedBox.shrink();
+    final isSent = _sosUploadStatus == 'sent';
+    final text = isSent ? 'Terkirim ✓' : 'Mengirim...';
+    final color = isSent ? Colors.green : Colors.orange;
+    final icon = isSent ? Icons.check_circle_outline : Icons.sync;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ─── Cancel Active SOS ───────────────────────────────────────────────────────
 
   void _showCancelConfirmationDialog() {
@@ -326,9 +428,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _executeCancelSOS() async {
-    setState(() {
-      _tapCount = 0;
-    });
+    setState(() => _tapCount = 0);
+
+    // Hentikan retry loop jika masih berjalan
+    _sosRetryTimer?.cancel();
 
     if (_activeIncident == null) return;
 
@@ -342,6 +445,7 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _activeIncident = null;
         _sosPhase = 'idle';
+        _sosUploadStatus = 'idle';
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -415,28 +519,56 @@ class _HomeScreenState extends State<HomeScreen>
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    isSOSActive ? 'SOS AKTIF' : 'Online',
-                                    style: TextStyle(
-                                      color: isSOSActive ? Colors.red : Colors.green,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '• ${user.roleLabel}',
-                                    style: TextStyle(
-                                      color: colors.onSurface.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
+                                  ValueListenableBuilder<bool>(
+                                    valueListenable:
+                                        ConnectivityService.isOnline,
+                                    builder: (_, online, child) {
+                                      final statusText = isSOSActive
+                                          ? 'SOS AKTIF'
+                                          : online
+                                              ? 'Online'
+                                              : 'Offline';
+                                      final statusColor = isSOSActive
+                                          ? Colors.red
+                                          : online
+                                              ? Colors.green
+                                              : Colors.grey;
+                                      return Row(
+                                        children: [
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: BoxDecoration(
+                                              color: statusColor,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            statusText,
+                                            style: TextStyle(
+                                              color: statusColor,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            '• ${user.roleLabel}',
+                                            style: TextStyle(
+                                              color: colors.onSurface
+                                                  .withValues(alpha: 0.6),
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),   // close ValueListenableBuilder
+                                ],     // close Row.children
+                               ),     // close Row (status row)
+                               const SizedBox(height: 4),
                               Text(
                                 isSOSActive
                                     ? 'SOS AKTIF — Ketuk 5× untuk batalkan'
@@ -516,10 +648,11 @@ class _HomeScreenState extends State<HomeScreen>
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontSize: 11,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
+                          // Badge status upload
+                          _buildUploadStatusBadge(),
                         ],
                       ),
                     ),
@@ -917,9 +1050,12 @@ class _HomeScreenState extends State<HomeScreen>
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text('Keluar Aplikasi', style: TextStyle(color: Colors.red)),
-                onTap: () {
+                onTap: () async {
+                  await SessionService.clearSession();
                   UserModel.currentUser.value = const UserModel(id: '', name: '', email: '', role: UserRole.masyarakat);
-                  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                  }
                 },
               ),
               const SizedBox(height: 16),

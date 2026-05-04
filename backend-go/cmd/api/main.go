@@ -141,6 +141,7 @@ func main() {
 	users := v1.Group("/users", authMw, middleware.CitizenVolunteer())
 	users.Post("/biodata", userHandler.SaveBiodata)
 	users.Get("/profile", userHandler.GetProfile)
+	users.Put("/profile", userHandler.UpdateProfile)
 	users.Post("/phone/request-otp", userHandler.RequestPhoneVerification)
 	users.Post("/phone/verify-otp", userHandler.ConfirmPhoneOTP)
 

@@ -16,7 +16,9 @@ class UserModel {
   final UserRole role;
 
   // New properties for profile & volunteer features
+  final String? nik;
   final String? phoneNumber;
+  final bool isPhoneVerified;
   final String? birthDate; // format: DD-MM-YYYY or YYYY-MM-DD
   final String? bio;
   final String? volunteerStatus; // 'none', 'pending', 'approved'
@@ -32,7 +34,9 @@ class UserModel {
     required this.name,
     required this.email,
     required this.role,
+    this.nik,
     this.phoneNumber,
+    this.isPhoneVerified = false,
     this.birthDate,
     this.bio,
     this.volunteerStatus,
@@ -84,7 +88,9 @@ class UserModel {
     String? name,
     String? email,
     UserRole? role,
+    String? nik,
     String? phoneNumber,
+    bool? isPhoneVerified,
     String? birthDate,
     String? bio,
     String? volunteerStatus,
@@ -100,7 +106,9 @@ class UserModel {
       name: name ?? this.name,
       email: email ?? this.email,
       role: role ?? this.role,
+      nik: nik ?? this.nik,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
       birthDate: birthDate ?? this.birthDate,
       bio: bio ?? this.bio,
       volunteerStatus: volunteerStatus ?? this.volunteerStatus,
@@ -174,18 +182,29 @@ class UserModel {
     }
   }
 
-  /// Digunakan untuk sinkronisasi — parsing dari API backend Supabase/Laravel
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Map emergency_contacts dari format backend
+    List<Map<String, dynamic>>? contacts;
+    if (json['emergency_contacts'] != null) {
+      final raw = json['emergency_contacts'] as List;
+      contacts = raw.map((e) {
+        final m = Map<String, dynamic>.from(e as Map);
+        return {
+          'name': m['contact_name'] ?? m['name'] ?? '',
+          'relation': m['relation'] ?? '',
+          'phone': m['contact_phone'] ?? m['phone'] ?? '',
+        };
+      }).toList();
+    }
     return UserModel(
       id: json['id'] ?? '',
-      name: json['name'] ?? '',
+      name: json['full_name'] ?? json['name'] ?? '',
       email: json['email'] ?? '',
-      role: UserRole.values.firstWhere(
-        (r) => r.name == json['role'],
-        orElse: () => UserRole.masyarakat,
-      ),
+      role: _roleFromString(json['role']),
+      nik: json['nik'],
       phoneNumber: json['phone_number'],
-      birthDate: json['birth_date'],
+      isPhoneVerified: json['is_phone_verified'] ?? false,
+      birthDate: json['date_of_birth'],
       bio: json['bio'],
       volunteerStatus: json['volunteer_status'],
       specialization: json['specialization'],
@@ -194,11 +213,43 @@ class UserModel {
       isAvailableForMission: json['is_available_for_mission'] ?? false,
       medicalData: json['medical_data'] != null
           ? Map<String, dynamic>.from(json['medical_data'])
-          : null,
-      emergencyContacts: json['emergency_contacts'] != null
-          ? List<Map<String, dynamic>>.from(json['emergency_contacts'])
-          : null,
+          : _buildMedicalData(json),
+      emergencyContacts: contacts,
     );
+  }
+
+  static UserRole _roleFromString(String? role) {
+    switch (role) {
+      case 'volunteer':
+        return UserRole.relawan;
+      case 'admin':
+      case 'superadmin':
+        return UserRole.admin;
+      case 'agency':
+      case 'agency_personnel':
+        return UserRole.instansi;
+      default:
+        return UserRole.masyarakat;
+    }
+  }
+
+  /// Build medicalData map from flat backend profile response.
+  static Map<String, dynamic>? _buildMedicalData(Map<String, dynamic> json) {
+    final hasData = json['blood_type'] != null ||
+        json['allergies'] != null ||
+        json['medical_conditions'] != null ||
+        json['height_cm'] != null ||
+        json['weight_kg'] != null ||
+        json['alamat'] != null;
+    if (!hasData) return null;
+    return {
+      'blood_type': json['blood_type'],
+      'allergies': json['allergies'],
+      'medical_history': json['medical_conditions'],
+      'height': json['height_cm']?.toString(),
+      'weight': json['weight_kg']?.toString(),
+      'address': json['alamat'],
+    };
   }
 
   /// Sinkronisasi Data JSON untuk dikirim ke Backend

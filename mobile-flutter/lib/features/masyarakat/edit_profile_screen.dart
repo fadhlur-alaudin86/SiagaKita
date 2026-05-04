@@ -13,6 +13,7 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isSaving = false;
+  String? _originalPhone; // untuk mendeteksi apakah nomor HP berubah
   // Informasi Pribadi
   final _phoneCtrl = TextEditingController();
   final _birthDateCtrl = TextEditingController();
@@ -35,6 +36,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = UserModel.currentUser.value;
 
     _phoneCtrl.text = user.phoneNumber ?? '';
+    _originalPhone = user.phoneNumber;
     _birthDateCtrl.text = user.birthDate ?? '';
     _bioCtrl.text = user.bio ?? '';
 
@@ -139,11 +141,117 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_phoneCtrl.text.isNotEmpty && _phoneCtrl.text.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Nomor telepon pengguna minimal 10 digit'.tr(context)),
+          content: Text(
+            'Nomor WhatsApp minimal 10 digit'.tr(context),
+          ),
         ),
       );
       return;
     }
+
+    // Jika nomor HP berubah, wajib verifikasi WhatsApp OTP terlebih dahulu
+    final newPhone = _phoneCtrl.text.trim();
+    final phoneChanged = newPhone.isNotEmpty && newPhone != (_originalPhone ?? '');
+    if (phoneChanged) {
+      await _requestAndVerifyPhoneOTP(newPhone);
+      return; // _saveData akan dipanggil lagi dari dalam OTP dialog setelah verified
+    }
+
+    await _doSaveProfile();
+  }
+
+  /// Request OTP WhatsApp ke nomor baru, lalu tampilkan dialog verifikasi.
+  Future<void> _requestAndVerifyPhoneOTP(String phoneNumber) async {
+    setState(() => _isSaving = true);
+    try {
+      await UserService.requestPhoneOTP(widget.accessToken, phoneNumber);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengirim OTP: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() => _isSaving = false);
+      return;
+    }
+    setState(() => _isSaving = false);
+    if (!mounted) return;
+
+    // Tampilkan dialog input OTP
+    final otpCtrl = TextEditingController();
+    bool? verified = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Verifikasi WhatsApp'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Kode OTP telah dikirim ke WhatsApp:\n$phoneNumber\nBerlaku 3 menit.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpCtrl,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, letterSpacing: 8),
+              decoration: const InputDecoration(
+                hintText: '______',
+                counterText: '',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await UserService.verifyPhoneOTP(
+                  widget.accessToken,
+                  phoneNumber,
+                  otpCtrl.text.trim(),
+                );
+                if (ctx.mounted) Navigator.pop(ctx, true);
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text('$e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('Verifikasi',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    otpCtrl.dispose();
+
+    if (verified == true) {
+      // Update original phone setelah verified
+      _originalPhone = phoneNumber;
+      await _doSaveProfile();
+    }
+  }
+
+  /// Lakukan penyimpanan profil ke server.
+  Future<void> _doSaveProfile() async {
 
     // Validate contacts
     for (var i = 0; i < _contacts.length; i++) {
@@ -281,10 +389,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     TextField(
                       controller: _phoneCtrl,
                       decoration: InputDecoration(
-                        labelText: 'Nomor Telepon Utama'.tr(context),
+                        labelText: 'Nomor WhatsApp Aktif'.tr(context),
+                        helperText: 'Perubahan nomor memerlukan verifikasi OTP via WhatsApp',
+                        helperMaxLines: 2,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        prefixIcon: const Icon(Icons.chat_bubble, color: Color(0xFF25D366)),
                       ),
                       keyboardType: TextInputType.phone,
                     ),
