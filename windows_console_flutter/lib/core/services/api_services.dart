@@ -222,3 +222,31 @@ class AdminApiService {
     return StatsModel.fromJson(body['data'] as Map<String, dynamic>);
   }
 }
+
+class AgencyApiService {
+  // ─── Personil ─────────────────────────────────────────────────────────────
+
+  static Future<bool> createPersonnel(
+    String token,
+    String fullName,
+    String email,
+    String password,
+    String badgeNumber,
+  ) async {
+    final resp = await http.post(
+      Uri.parse(ApiConstants.agencyPersonnels),
+      headers: AuthService.headers(token),
+      body: jsonEncode({
+        'full_name': fullName,
+        'email': email,
+        'password': password,
+        'badge_number': badgeNumber,
+      }),
+    );
+    if (resp.statusCode != 200 && resp.statusCode != 201) {
+      final body = jsonDecode(resp.body);
+      throw Exception(body['message'] ?? 'Gagal membuat personil');
+    }
+    return true;
+  }
+}
