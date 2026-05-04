@@ -22,7 +22,7 @@ func NewServer(h *hub.Hub, rdb *redis.Client, db *gorm.DB, cfg *config.Config) *
 
 	// Health check for WS server
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "WS OK")
+		_, _ = fmt.Fprintln(w, "WS OK")
 	})
 
 	addr := fmt.Sprintf(":%s", cfg.WSPort)

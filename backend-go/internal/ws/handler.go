@@ -101,9 +101,9 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 // readLoop blocks and reads incoming messages from the client connection.
 func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
-	conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
 	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+		_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
 		return nil
 	})
 
@@ -117,7 +117,7 @@ func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
 		}
 
 		// Perpanjang deadline setiap ada pesan masuk (termasuk PING heartbeat)
-		conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+		_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
 
 		var msg hub.Message
 		if err := json.Unmarshal(raw, &msg); err != nil {
@@ -172,7 +172,7 @@ func (h *Handler) onTriggerSOS(userID string, payload interface{}) {
 
 	// 2. Set grace period key in Redis (expires in 10s)
 	graceKey := fmt.Sprintf(incidentGraceKey, inc.ID)
-	h.rdb.SetEx(ctx, graceKey, "active", gracePeriod)
+	h.rdb.Set(ctx, graceKey, "active", gracePeriod)
 
 	// 3. Store location for later broadcasting
 	locKey := fmt.Sprintf(incidentLocKey, inc.ID)
@@ -262,7 +262,7 @@ func (h *Handler) startExpiredKeySubscriber() {
 	pubsub := h.rdb.PSubscribe(ctx, "__keyevent@0__:expired")
 
 	go func() {
-		defer pubsub.Close()
+		defer func() { _ = pubsub.Close() }()
 		log.Println("[WS] Redis expired-key subscriber started")
 		ch := pubsub.Channel()
 
@@ -304,12 +304,12 @@ func (h *Handler) broadcastSOS(incidentID string) {
 	}
 
 	var lat, lng float64
-	fmt.Sscanf(vals["lat"], "%f", &lat)
-	fmt.Sscanf(vals["lng"], "%f", &lng)
+	_, _ = fmt.Sscanf(vals["lat"], "%f", &lat)
+	_, _ = fmt.Sscanf(vals["lng"], "%f", &lng)
 	reporterID := vals["reporter_id"]
 
 	// 3. GEORADIUS — find volunteers within 5 km
-	volunteers, err := h.rdb.GeoRadius(ctx, relawanGeoKey, lng, lat, &redis.GeoRadiusQuery{
+	volunteers, err := h.rdb.GeoRadius(ctx, relawanGeoKey, lng, lat, &redis.GeoRadiusQuery{ //nolint:staticcheck
 		Radius:   5,
 		Unit:     "km",
 		WithDist: true,

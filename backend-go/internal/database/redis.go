@@ -35,7 +35,7 @@ func SubscribeExpiredKeys(ctx context.Context, rdb *redis.Client, prefix string,
 	ch := pubsub.Channel()
 
 	go func() {
-		defer pubsub.Close()
+		defer func() { _ = pubsub.Close() }()
 		log.Printf("[Redis] Subscribed to expired key events (prefix=%q)", prefix)
 		for {
 			select {

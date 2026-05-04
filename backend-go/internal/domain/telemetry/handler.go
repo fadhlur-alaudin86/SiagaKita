@@ -99,7 +99,7 @@ func broadcastEmergency(rdb *redis.Client, h *hub.Hub, incidentID interface{}, r
 	defer cancel()
 
 	// Find volunteers within 5 km
-	locations, err := rdb.GeoRadius(ctx, relawanGeoKey, lng, lat, &redis.GeoRadiusQuery{
+	locations, err := rdb.GeoRadius(ctx, relawanGeoKey, lng, lat, &redis.GeoRadiusQuery{ //nolint:staticcheck
 		Radius:    5,
 		Unit:      "km",
 		WithCoord: true,

@@ -75,15 +75,15 @@ func (s *service) RequestOTP(ctx context.Context, phone string) error {
 	if exists, err := s.rdb.Exists(ctx, phoneCooldownKey(phone)).Result(); err != nil {
 		return fmt.Errorf("otp: cek cooldown phone gagal: %w", err)
 	} else if exists > 0 {
-		return errors.New("Tunggu 1 menit sebelum meminta kode baru")
+		return errors.New("Tunggu 1 menit sebelum meminta kode baru") //nolint:staticcheck
 	}
 
 	code := generateCode()
 
-	if err := s.rdb.SetEx(ctx, otpKey(phone), code, otpTTL).Err(); err != nil {
+	if err := s.rdb.Set(ctx, otpKey(phone), code, otpTTL).Err(); err != nil {
 		return fmt.Errorf("otp: simpan OTP phone gagal: %w", err)
 	}
-	if err := s.rdb.SetEx(ctx, phoneCooldownKey(phone), "1", cooldownTTL).Err(); err != nil {
+	if err := s.rdb.Set(ctx, phoneCooldownKey(phone), "1", cooldownTTL).Err(); err != nil {
 		return fmt.Errorf("otp: simpan cooldown phone gagal: %w", err)
 	}
 
@@ -110,16 +110,16 @@ func (s *service) RequestEmailOTP(ctx context.Context, email, purpose string) er
 	if exists, err := s.rdb.Exists(ctx, emailCooldownKey(email)).Result(); err != nil {
 		return fmt.Errorf("otp: cek cooldown email gagal: %w", err)
 	} else if exists > 0 {
-		return errors.New("Tunggu 1 menit sebelum meminta kode baru")
+		return errors.New("Tunggu 1 menit sebelum meminta kode baru") //nolint:staticcheck
 	}
 
 	code := generateCode()
 
 	key := emailOTPKey(email, purpose)
-	if err := s.rdb.SetEx(ctx, key, code, otpTTL).Err(); err != nil {
+	if err := s.rdb.Set(ctx, key, code, otpTTL).Err(); err != nil {
 		return fmt.Errorf("otp: simpan OTP email gagal: %w", err)
 	}
-	if err := s.rdb.SetEx(ctx, emailCooldownKey(email), "1", cooldownTTL).Err(); err != nil {
+	if err := s.rdb.Set(ctx, emailCooldownKey(email), "1", cooldownTTL).Err(); err != nil {
 		return fmt.Errorf("otp: simpan cooldown email gagal: %w", err)
 	}
 
@@ -147,7 +147,7 @@ func (s *service) verifyFromRedis(ctx context.Context, key, code, label string) 
 		return fmt.Errorf("otp: ambil OTP gagal: %w", err)
 	}
 	if stored != code {
-		return errors.New("Kode OTP salah")
+		return errors.New("Kode OTP salah") //nolint:staticcheck
 	}
 	_ = s.rdb.Del(ctx, key) // anti-replay
 	return nil

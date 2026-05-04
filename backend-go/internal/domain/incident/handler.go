@@ -1,7 +1,6 @@
 package incident
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -297,29 +296,25 @@ func isBanError(err error) bool {
 	return err != nil && len(err.Error()) >= 10 && err.Error()[:10] == "sos_banned"
 }
 
-// parseIDInt kept for compatibility (unused but prevents import errors)
-func parseIDInt(_ string) (uint, error) {
-	return 0, errors.New("use UUID string IDs")
-}
 
 func saveFile(fh *multipart.FileHeader, dst string) error {
 	src, err := fh.Open()
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 	out, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 	_, err = io.Copy(out, src)
 	return err
 }
 
 func parseFloat(s string) float64 {
 	var f float64
-	fmt.Sscanf(s, "%f", &f)
+	_, _ = fmt.Sscanf(s, "%f", &f)
 	return f
 }
 

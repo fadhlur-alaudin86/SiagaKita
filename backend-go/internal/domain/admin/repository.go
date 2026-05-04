@@ -85,13 +85,7 @@ func (r *Repository) getCertsForUser(userID, status string) ([]KYCCert, error) {
 	}
 	certs := make([]KYCCert, 0, len(rows))
 	for _, c := range rows {
-		certs = append(certs, KYCCert{
-			ID:              c.ID,
-			CertificateType: c.CertificateType,
-			DocumentURL:     c.DocumentURL,
-			ExpiresAt:       c.ExpiresAt,
-			CreatedAt:       c.CreatedAt,
-		})
+		certs = append(certs, KYCCert(c))
 	}
 	return certs, nil
 }
@@ -270,19 +264,7 @@ func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search s
 
 	items := make([]AdminUserItem, 0, len(rows))
 	for _, r2 := range rows {
-		items = append(items, AdminUserItem{
-			UserID:          r2.UserID,
-			Email:           r2.Email,
-			Role:            r2.Role,
-			FullName:        r2.FullName,
-			PhoneNumber:     r2.PhoneNumber,
-			IsEmailVerified: r2.IsEmailVerified,
-			IsPhoneVerified: r2.IsPhoneVerified,
-			SOSStrikeCount:  r2.SOSStrikeCount,
-			IsSOSBanned:     r2.IsSOSBanned,
-			BannedUntil:     r2.BannedUntil,
-			CreatedAt:       r2.CreatedAt,
-		})
+		items = append(items, AdminUserItem(r2))
 	}
 	return items, nil
 }

@@ -50,7 +50,7 @@ func (g *gmailAPIGateway) getAccessToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		respBody, _ := io.ReadAll(resp.Body)
@@ -100,7 +100,7 @@ func (g *gmailAPIGateway) SendEmail(toEmail, subject, body string) error {
 	if err != nil {
 		return fmt.Errorf("gmail_api: HTTP request gagal dikirim: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return nil

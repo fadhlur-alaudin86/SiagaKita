@@ -233,8 +233,12 @@ func main() {
 		log.Printf("[WS] Shutdown error: %v", err)
 	}
 	sqlDB, _ := db.DB()
-	sqlDB.Close()
-	rdb.Close()
+	if err := sqlDB.Close(); err != nil {
+		log.Printf("[DB] Close error: %v", err)
+	}
+	if err := rdb.Close(); err != nil {
+		log.Printf("[Redis] Close error: %v", err)
+	}
 	log.Println("[Main] Goodbye.")
 }
 

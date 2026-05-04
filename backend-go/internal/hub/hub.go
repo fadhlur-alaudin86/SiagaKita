@@ -35,7 +35,7 @@ func (h *Hub) Register(userID string, conn *websocket.Conn) {
 
 	// Close existing connection if already present
 	if existing, ok := h.clients[userID]; ok {
-		existing.Close()
+		_ = existing.Close()
 	}
 	h.clients[userID] = conn
 	log.Printf("[Hub] User %s connected (total=%d)", userID, len(h.clients))
@@ -47,7 +47,7 @@ func (h *Hub) Unregister(userID string) {
 	defer h.mu.Unlock()
 
 	if conn, ok := h.clients[userID]; ok {
-		conn.Close()
+		_ = conn.Close()
 		delete(h.clients, userID)
 		log.Printf("[Hub] User %s disconnected (total=%d)", userID, len(h.clients))
 	}
