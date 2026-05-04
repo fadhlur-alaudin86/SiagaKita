@@ -57,6 +57,9 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _locationUpdateTimer;
   bool _isLoadingActiveIncident = true;
 
+  // Untuk menyimpan ID insiden lokal jika user membatalkan saat proses upload masih berlangsung
+  String? _cancelledLocalId;
+
   // ─── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
@@ -240,11 +243,35 @@ class _HomeScreenState extends State<HomeScreen>
       );
 
       if (!mounted) return;
+      
+      final bool wasCancelled = _cancelledLocalId == localId;
+
       // Ganti local ID dengan server ID (tidak tampil di UI)
       setState(() {
-        _pendingIncidentId = result.incidentId;
+        if (_pendingIncidentId == localId) {
+          _pendingIncidentId = result.incidentId;
+        }
         _sosUploadStatus = 'sent';
+        if (_activeIncident != null && _activeIncident!.incidentId == localId) {
+          _activeIncident = ActiveIncident(
+            incidentId: result.incidentId,
+            status: _activeIncident!.status,
+            incidentType: _activeIncident!.incidentType,
+            latitude: _activeIncident!.latitude,
+            longitude: _activeIncident!.longitude,
+            createdAt: _activeIncident!.createdAt,
+            reporterTrustLabel: _activeIncident!.reporterTrustLabel,
+          );
+        }
       });
+      
+      if (wasCancelled) {
+        IncidentService.cancelSOS(
+          accessToken: widget.accessToken,
+          incidentId: result.incidentId,
+        ).catchError((_) {}); // silent background cancel
+        _cancelledLocalId = null;
+      }
     } on SOSBannedException catch (e) {
       if (!mounted) return;
       // SOS banned → batalkan grace period
@@ -435,33 +462,41 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (_activeIncident == null) return;
 
-    try {
-      await IncidentService.cancelSOS(
-        accessToken: widget.accessToken,
-        incidentId: _activeIncident!.incidentId,
-      );
-      if (!mounted) return;
-      _stopLocationUpdates();
-      setState(() {
-        _activeIncident = null;
-        _sosPhase = 'idle';
-        _sosUploadStatus = 'idle';
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('SOS berhasil dibatalkan.'),
-          backgroundColor: Colors.green.shade700,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal membatalkan SOS: $e'),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+    final targetId = _activeIncident!.incidentId;
+
+    if (_sosUploadStatus == 'sending') {
+      _cancelledLocalId = targetId;
+    } else {
+      try {
+        await IncidentService.cancelSOS(
+          accessToken: widget.accessToken,
+          incidentId: targetId,
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membatalkan SOS: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+        return; // jangan clear state jika gagal di server (biar bisa dicoba lagi)
+      }
     }
+
+    if (!mounted) return;
+    _stopLocationUpdates();
+    setState(() {
+      _activeIncident = null;
+      _sosPhase = 'idle';
+      _sosUploadStatus = 'idle';
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('SOS berhasil dibatalkan.'),
+        backgroundColor: Colors.green.shade700,
+      ),
+    );
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────────
@@ -1167,13 +1202,22 @@ class _HomeScreenState extends State<HomeScreen>
                 child: OutlinedButton(
                   onPressed: () {
                     _graceTimer?.cancel();
-                    IncidentService.cancelSOS(
-                      accessToken: widget.accessToken,
-                      incidentId: _pendingIncidentId!,
-                    );
+                    
+                    if (_sosUploadStatus == 'sending') {
+                      _cancelledLocalId = _pendingIncidentId;
+                    } else {
+                      IncidentService.cancelSOS(
+                        accessToken: widget.accessToken,
+                        incidentId: _pendingIncidentId!,
+                      ).catchError((_) {});
+                    }
+
                     setState(() {
                       _sosPhase = 'idle';
                       _pendingIncidentId = null;
+                      _isTriggeringSOS = false;
+                      _sosUploadStatus = 'idle';
+                      _graceCountdown = 10;
                     });
                   },
                   style: OutlinedButton.styleFrom(
