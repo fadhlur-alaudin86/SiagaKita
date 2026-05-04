@@ -45,5 +45,21 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Location Permissions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Aplikasi ini memerlukan akses lokasi untuk mengirimkan sinyal SOS dan posisi Anda ke petugas penyelamat terdekat.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Aplikasi ini memerlukan akses lokasi latar belakang untuk terus memperbarui posisi Anda selama sinyal darurat SOS aktif.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Aplikasi ini memerlukan akses lokasi latar belakang untuk terus memperbarui posisi Anda selama sinyal darurat SOS aktif.</string>
+
+	<!-- Camera, Microphone, and Media Permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikasi ini memerlukan akses kamera agar Anda dapat mengambil bukti foto kejadian saat mengirimkan laporan darurat.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Aplikasi ini memerlukan akses mikrofon agar Anda dapat merekam bukti suara kejadian saat mengirimkan laporan.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikasi ini memerlukan akses ke galeri agar Anda dapat mengunggah bukti gambar yang sudah ada saat mengirim laporan.</string>
 </dict>
 </plist>
