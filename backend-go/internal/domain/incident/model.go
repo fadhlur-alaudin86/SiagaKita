@@ -145,8 +145,8 @@ type AllActiveIncidentResponse struct {
 	Latitude           float64 `json:"latitude"`
 	Longitude          float64 `json:"longitude"`
 	ReporterTrustLabel string  `json:"reporter_trust_label"`
-	CreatedAt          string  `json:"created_at"`
-	ResolvedAt         *string `json:"resolved_at,omitempty"`
+	CreatedAt          time.Time  `json:"created_at"`
+	ResolvedAt         *time.Time `json:"resolved_at,omitempty"`
 }
 
 type ResolveResponse struct {
