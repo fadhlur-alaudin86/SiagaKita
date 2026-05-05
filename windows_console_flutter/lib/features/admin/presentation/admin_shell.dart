@@ -11,6 +11,7 @@ import 'pages/user_management_page.dart';
 import 'pages/gamifikasi_page.dart';
 import 'pages/statistik_page.dart';
 import 'pages/pendaftaran_akun_page.dart';
+import '../../auth/login_screen.dart';
 
 enum AdminMenu { kyc, users, pendaftaran, gamifikasi, statistik }
 
@@ -339,6 +340,14 @@ class _AdminTopHeader extends StatelessWidget {
   const _AdminTopHeader({required this.title, required this.role});
   final String title;
   final String role;
+  
+  void _logout(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -377,6 +386,54 @@ class _AdminTopHeader extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
+          ),
+          const SizedBox(width: 16),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.account_circle, color: Colors.white70, size: 28),
+            color: const Color(0xFF1E293B),
+            offset: const Offset(0, 40),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    Icon(Icons.person, color: Colors.white, size: 20),
+                    SizedBox(width: 10),
+                    Text('Profil Saya', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    Icon(Icons.settings, color: Colors.white, size: 20),
+                    SizedBox(width: 10),
+                    Text('Pengaturan', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(height: 1),
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                    SizedBox(width: 10),
+                    Text('Keluar', style: TextStyle(color: Colors.redAccent)),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'logout') {
+                _logout(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Menu $value segera hadir')),
+                );
+              }
+            },
           ),
         ],
       ),

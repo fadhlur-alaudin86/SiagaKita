@@ -8,6 +8,7 @@ import 'pages/laporan_masuk_page.dart';
 import 'pages/manajemen_personil_page.dart';
 import 'pages/peta_operasional_page.dart';
 import 'pages/sos_aktif_page.dart';
+import '../../auth/login_screen.dart';
 
 enum InstansiMenu {
   dashboard,
@@ -264,10 +265,9 @@ class _TopHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(color: Colors.white),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: Colors.white),
           ),
           const Spacer(),
           Consumer<WsService>(
@@ -302,6 +302,59 @@ class _TopHeader extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          const SizedBox(width: 16),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.account_circle, color: Colors.white70, size: 28),
+            color: const Color(0xFF1E293B),
+            offset: const Offset(0, 40),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    Icon(Icons.person, color: Colors.white, size: 20),
+                    SizedBox(width: 10),
+                    Text('Profil Saya', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    Icon(Icons.settings, color: Colors.white, size: 20),
+                    SizedBox(width: 10),
+                    Text('Pengaturan', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(height: 1),
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                    SizedBox(width: 10),
+                    Text('Keluar', style: TextStyle(color: Colors.redAccent)),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'logout') {
+                ws.dispose();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Menu $value segera hadir')),
+                );
+              }
+            },
           ),
         ],
       ),
