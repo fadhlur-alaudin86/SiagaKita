@@ -196,6 +196,19 @@ class _HomeScreenState extends State<HomeScreen>
     final lat = pos?.latitude ?? 0.0;
     final lng = pos?.longitude ?? 0.0;
 
+    if (lat == 0.0 && lng == 0.0) {
+      _cancelGracePeriodLocally();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Gagal mengirim SOS: Mohon aktifkan GPS/Lokasi Anda.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+      return;
+    }
+
     // Upload SOS di background — retry tiap 5 detik jika gagal
     _attemptSOSUpload(
       lat: lat,
