@@ -132,6 +132,23 @@ type ActiveIncidentResponse struct {
 	ReporterTrustLabel string  `json:"reporter_trust_label"`
 }
 
+// AllActiveIncidentResponse — data SOS aktif LENGKAP untuk console desktop (JOIN ke users & profiles).
+type AllActiveIncidentResponse struct {
+	ID                 string  `json:"id"`
+	ReporterID         string  `json:"reporter_id"`
+	ReporterName       string  `json:"reporter_name"`
+	ReporterPhone      *string `json:"reporter_phone,omitempty"`
+	BloodType          *string `json:"blood_type,omitempty"`
+	Allergies          *string `json:"allergies,omitempty"`
+	IncidentType       string  `json:"incident_type"`
+	Status             string  `json:"status"`
+	Latitude           float64 `json:"latitude"`
+	Longitude          float64 `json:"longitude"`
+	ReporterTrustLabel string  `json:"reporter_trust_label"`
+	CreatedAt          string  `json:"created_at"`
+	ResolvedAt         *string `json:"resolved_at,omitempty"`
+}
+
 type ResolveResponse struct {
 	Resolved     bool   `json:"resolved"`
 	XPEarned     int    `json:"xp_earned"`

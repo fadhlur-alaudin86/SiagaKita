@@ -67,7 +67,7 @@ func main() {
 	// Incident domain
 	incidentRepo := incidentDomain.NewRepository(db)
 	incidentSvc := incidentDomain.NewService(incidentRepo)
-	incidentHandler := incidentDomain.NewHandler(incidentSvc, cfg)
+	incidentHandler := incidentDomain.NewHandler(incidentSvc, cfg, wsHub, rdb)
 
 	// Admin domain
 	adminSvc := adminDomain.NewService(db)
@@ -148,6 +148,7 @@ func main() {
 	// ── Incidents (protected — semua role yang sudah login) ───────────────────
 	incidents := v1.Group("/incidents", authMw)
 	incidents.Get("/active", incidentHandler.GetActive)
+	incidents.Get("/all-active", middleware.ConsoleOnly(), incidentHandler.GetAllActive)
 	incidents.Post("/trigger", incidentHandler.TriggerSOS)
 	incidents.Patch("/:id/type", incidentHandler.UpdateType)
 	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)

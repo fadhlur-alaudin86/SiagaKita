@@ -13,6 +13,7 @@ class ApiConstants {
 
   // Incidents
   static const String incidents = '$baseUrl/incidents';
+  static const String incidentsAllActive = '$baseUrl/incidents/all-active';
   static String incidentDetail(String id) => '$baseUrl/incidents/$id';
   static String incidentMarkFalseAlarm(String id) =>
       '$baseUrl/incidents/$id/mark-false-alarm';

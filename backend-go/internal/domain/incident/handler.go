@@ -1,26 +1,32 @@
 package incident
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 	"time"
 
 	"siagakita-backend/internal/config"
+	"siagakita-backend/internal/hub"
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 )
 
 type Handler struct {
 	svc *Service
 	cfg *config.Config
+	hub *hub.Hub
+	rdb *redis.Client
 }
 
-func NewHandler(svc *Service, cfg *config.Config) *Handler {
-	return &Handler{svc: svc, cfg: cfg}
+func NewHandler(svc *Service, cfg *config.Config, h *hub.Hub, rdb *redis.Client) *Handler {
+	return &Handler{svc: svc, cfg: cfg, hub: h, rdb: rdb}
 }
 
 // POST /api/v1/incidents/trigger
@@ -66,6 +72,9 @@ func (h *Handler) UpdateType(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, status, err.Error())
 	}
 
+	// Broadcast via WS setelah tipe diubah dan status menjadi broadcasting
+	go h.broadcastSOSViaREST(incidentID)
+
 	return utils.SuccessResponse(c, fiber.Map{"updated": true, "message": "Tipe insiden diperbarui, SOS sedang disiarkan."})
 }
 
@@ -81,6 +90,9 @@ func (h *Handler) Broadcast(c *fiber.Ctx) error {
 		}
 		return utils.ErrorResponse(c, status, err.Error())
 	}
+
+	// Broadcast via WS setelah grace period berakhir (dipanggil dari REST)
+	go h.broadcastSOSViaREST(incidentID)
 
 	return utils.SuccessResponse(c, fiber.Map{"broadcasting": true, "message": "SOS sedang disiarkan ke relawan dan instansi terdekat."})
 }
@@ -127,6 +139,15 @@ func (h *Handler) GetActive(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, resp)
+}
+
+// GET /api/v1/incidents/all-active — untuk console desktop (agency/admin)
+func (h *Handler) GetAllActive(c *fiber.Ctx) error {
+	incidents, err := h.svc.GetAllActive()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, incidents)
 }
 
 // POST /api/v1/incidents/:id/mark-false-alarm
@@ -294,6 +315,59 @@ func determineTrustLabel(c *fiber.Ctx) string {
 
 func isBanError(err error) bool {
 	return err != nil && len(err.Error()) >= 10 && err.Error()[:10] == "sos_banned"
+}
+
+// broadcastSOSViaREST dipanggil dari REST handler setelah PromoteToBroadcasting.
+// Mengambil koordinat dari DB lalu mengirim INCOMING_EMERGENCY ke agency & volunteer online.
+func (h *Handler) broadcastSOSViaREST(incidentID string) {
+	if h.hub == nil {
+		return
+	}
+
+	// Ambil data incident dari DB
+	inc, err := h.svc.repo.FindByID(incidentID)
+	if err != nil || inc == nil {
+		log.Printf("[IncidentHandler] broadcastSOSViaREST: incident %s not found: %v", incidentID, err)
+		return
+	}
+
+	msg := hub.Message{
+		Event: "INCOMING_EMERGENCY",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+			"reporter_id": inc.ReporterID,
+			"latitude":    inc.Latitude,
+			"longitude":   inc.Longitude,
+			"incident_type": inc.IncidentType,
+			"status":      inc.Status,
+		},
+	}
+
+	// Broadcast ke semua user online yang bukan reporter:
+	// cek role → kirim ke agency/admin/superadmin
+	ctx := context.Background()
+	sent := 0
+	for _, userID := range h.hub.OnlineUsers() {
+		if userID == inc.ReporterID {
+			continue
+		}
+		// Cek role dari Redis cache dulu, fallback ke DB
+		roleKey := fmt.Sprintf("user:role:%s", userID)
+		role, _ := h.rdb.Get(ctx, roleKey).Result()
+		if role == "" {
+			// Cache belum ada — ambil dari DB dan simpan 1 jam
+			h.svc.repo.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
+			if role != "" {
+				h.rdb.Set(ctx, roleKey, role, time.Hour)
+			}
+		}
+		if role == "agency" || role == "admin" || role == "superadmin" {
+			if err := h.hub.SendToUser(userID, msg); err == nil {
+				sent++
+			}
+		}
+	}
+	log.Printf("[IncidentHandler] REST-triggered SOS broadcast: incident %s → %d console users", incidentID, sent)
 }
 
 

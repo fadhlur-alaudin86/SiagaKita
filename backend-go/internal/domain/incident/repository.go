@@ -76,6 +76,33 @@ func (r *Repository) FindActiveByReporter(reporterID string) (*Incident, error) 
 	return &inc, err
 }
 
+// FindAllActive mengembalikan semua incident aktif dengan data reporter lengkap (JOIN).
+func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
+	var results []AllActiveIncidentResponse
+	err := r.db.Raw(`
+		SELECT
+			i.id,
+			i.reporter_id,
+			COALESCE(up.full_name, u.email, 'Tidak diketahui') AS reporter_name,
+			up.phone_number AS reporter_phone,
+			up.blood_type,
+			up.allergies,
+			i.incident_type,
+			i.status,
+			i.latitude,
+			i.longitude,
+			i.reporter_trust_label,
+			i.created_at,
+			i.resolved_at
+		FROM incidents i
+		LEFT JOIN users u ON u.id = i.reporter_id
+		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
+		WHERE i.status NOT IN ('resolved', 'false_alarm')
+		ORDER BY i.created_at DESC
+	`).Scan(&results).Error
+	return results, err
+}
+
 // ─── Incident Report (Jalur B — Laporan Warga) ────────────────────────────────
 
 func (r *Repository) CreateReport(rep *IncidentReport) error {

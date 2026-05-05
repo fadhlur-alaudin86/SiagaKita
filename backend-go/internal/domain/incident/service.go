@@ -178,6 +178,11 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 	}, nil
 }
 
+// GetAllActive mengembalikan semua incident aktif (untuk console desktop).
+func (s *Service) GetAllActive() ([]AllActiveIncidentResponse, error) {
+	return s.repo.FindAllActive()
+}
+
 // ─── Laporan Warga (Jalur B) ──────────────────────────────────────────────────
 
 func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, photoPaths []string, audioPath *string) (*IncidentReport, error) {

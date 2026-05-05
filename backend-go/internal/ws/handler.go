@@ -340,31 +340,30 @@ func (h *Handler) broadcastSOS(incidentID string) {
 		}
 	}
 
-	// ─── Broadcast ke Agency accounts satu kota ────────────────────────────────
-	// Ambil city_code dari profil pelapor
-	var reporterCityCode string
-	h.db.Raw(
-		"SELECT city_code FROM user_profiles WHERE user_id = ?",
-		reporterID,
-	).Scan(&reporterCityCode)
-
-	if reporterCityCode != "" {
-		// Ambil semua account_id instansi (agency) di kota yang sama
-		var agencyAccountIDs []string
-		h.db.Raw(
-			"SELECT account_id FROM agencies WHERE city_code = ?",
-			reporterCityCode,
-		).Scan(&agencyAccountIDs)
-
-		for _, agencyID := range agencyAccountIDs {
-			if err := h.hub.SendToUser(agencyID, msg); err == nil {
+	// ─── Broadcast ke Agency/Admin yang sedang online ───────────────────────────
+	// Ganti query city_code (kolom tidak ada) dengan pengecekan role pada user online
+	for _, userID := range h.hub.OnlineUsers() {
+		if userID == reporterID {
+			continue
+		}
+		// Cek role dari Redis cache dulu, fallback ke DB
+		var role string
+		roleKey := fmt.Sprintf("user:role:%s", userID)
+		role, _ = h.rdb.Get(ctx, roleKey).Result()
+		if role == "" {
+			h.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
+			if role != "" {
+				h.rdb.Set(ctx, roleKey, role, time.Hour)
+			}
+		}
+		if role == "agency" || role == "admin" || role == "superadmin" {
+			if err := h.hub.SendToUser(userID, msg); err == nil {
 				sent++
 			}
 		}
-		log.Printf("[WS] SOS #%s notified %d agencies in city %s", incidentID, len(agencyAccountIDs), reporterCityCode)
 	}
 
-	log.Printf("[WS] SOS #%s broadcast to %d/%d online volunteers", incidentID, sent, len(volunteers))
+	log.Printf("[WS] SOS #%s broadcast to %d volunteers+agencies online", incidentID, sent)
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

@@ -34,7 +34,8 @@ class IncidentModel {
   });
 
   factory IncidentModel.fromJson(Map<String, dynamic> json) => IncidentModel(
-    id: json['id'] as String,
+    // Handle kedua format: REST pakai 'id', WS payload pakai 'incident_id'
+    id: (json['id'] ?? json['incident_id'] ?? '') as String,
     reporterId: json['reporter_id'] as String? ?? '',
     reporterName: json['reporter_name'] as String? ?? 'Tidak diketahui',
     reporterPhone: json['reporter_phone'] as String?,

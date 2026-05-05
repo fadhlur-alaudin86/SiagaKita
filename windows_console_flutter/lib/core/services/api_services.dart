@@ -10,9 +10,7 @@ class IncidentApiService {
 
   static Future<List<IncidentModel>> getActiveIncidents(String token) async {
     final resp = await http.get(
-      Uri.parse(
-        '${ApiConstants.incidents}?status=active,broadcasting,grace_period',
-      ),
+      Uri.parse(ApiConstants.incidentsAllActive),
       headers: AuthService.headers(token),
     );
     if (resp.statusCode != 200) return [];
