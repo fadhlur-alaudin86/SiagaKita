@@ -13,6 +13,7 @@ import '../../core/services/session_service.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'report_screen.dart';
+import 'guide_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accessToken;
@@ -56,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _showSOSSentBanner = false;
   String? _lastTriggerMethod;
   Timer? _locationUpdateTimer;
+  Timer? _statusCheckTimer; // polling cepat (10 detik) khusus saat SOS aktif
   bool _isLoadingActiveIncident = true;
 
   // Untuk menyimpan ID insiden lokal jika user membatalkan saat proses upload masih berlangsung
@@ -73,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _tapResetTimer?.cancel();
     _locationUpdateTimer?.cancel();
+    _statusCheckTimer?.cancel();
     _graceTimer?.cancel();
     _sosRetryTimer?.cancel();
     super.dispose();
@@ -144,6 +147,8 @@ class _HomeScreenState extends State<HomeScreen>
   void _stopLocationUpdates() {
     _locationUpdateTimer?.cancel();
     _locationUpdateTimer = null;
+    _statusCheckTimer?.cancel();
+    _statusCheckTimer = null;
   }
 
   // ─── SOS Tap Logic (Send) ────────────────────────────────────────────────────
@@ -428,8 +433,45 @@ class _HomeScreenState extends State<HomeScreen>
       _showSOSSentBanner = true;
     });
     _startLocationUpdates();
+    _startStatusPolling(); // start fast polling setelah SOS aktif
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _showSOSSentBanner = false);
+    });
+  }
+
+  // ─── Fast Status Polling (setiap 10 detik saat SOS aktif) ─────────────────
+
+  void _startStatusPolling() {
+    _statusCheckTimer?.cancel();
+    _statusCheckTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      if (!mounted || _activeIncident == null) return;
+      try {
+        final active = await IncidentService.getActive(
+          accessToken: widget.accessToken,
+        );
+        if (!mounted) return;
+        if (active == null) {
+          _stopLocationUpdates();
+          setState(() {
+            _activeIncident = null;
+            _sosPhase = 'idle';
+            _sosUploadStatus = 'idle';
+            _tapCount = 0;
+            _cancelledLocalId = null;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Status SOS telah diselesaikan oleh instansi.'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } catch (_) {
+        // Jika error jaringan, biarkan (jangan reset UI)
+      }
     });
   }
 
@@ -554,6 +596,8 @@ class _HomeScreenState extends State<HomeScreen>
       _activeIncident = null;
       _sosPhase = 'idle';
       _sosUploadStatus = 'idle';
+      _tapCount = 0;
+      _cancelledLocalId = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -618,56 +662,54 @@ class _HomeScreenState extends State<HomeScreen>
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  ValueListenableBuilder<bool>(
-                                    valueListenable:
-                                        ConnectivityService.isOnline,
-                                    builder: (_, online, child) {
-                                      final statusText = isSOSActive
-                                          ? 'SOS AKTIF'
-                                          : online
-                                              ? 'Online'
-                                              : 'Offline';
-                                      final statusColor = isSOSActive
-                                          ? Colors.red
-                                          : online
-                                              ? Colors.green
-                                              : Colors.grey;
-                                      return Row(
-                                        children: [
-                                          Container(
-                                            width: 6,
-                                            height: 6,
-                                            decoration: BoxDecoration(
-                                              color: statusColor,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            statusText,
-                                            style: TextStyle(
-                                              color: statusColor,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            '• ${user.roleLabel}',
-                                            style: TextStyle(
-                                              color: colors.onSurface
-                                                  .withValues(alpha: 0.6),
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),   // close ValueListenableBuilder
-                                ],     // close Row.children
-                               ),     // close Row (status row)
-                               const SizedBox(height: 4),
+                              ValueListenableBuilder<bool>(
+                                valueListenable: ConnectivityService.isOnline,
+                                builder: (_, online, child) {
+                                  final statusText = isSOSActive
+                                      ? 'SOS AKTIF'
+                                      : online
+                                          ? 'Online'
+                                          : 'Offline';
+                                  final statusColor = isSOSActive
+                                      ? Colors.red
+                                      : online
+                                          ? Colors.green
+                                          : Colors.grey;
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: statusColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        statusText,
+                                        style: TextStyle(
+                                          color: statusColor,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '• ${user.roleLabel.tr(context)}',
+                                        style: TextStyle(
+                                          color: colors.onSurface
+                                              .withValues(alpha: 0.6),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 4),
                               Text(
                                 isSOSActive
                                     ? 'SOS AKTIF — Ketuk 5× untuk batalkan'
@@ -686,37 +728,10 @@ class _HomeScreenState extends State<HomeScreen>
                           );
                         },
                       ),
-                      GestureDetector(
-                        onTap: () => _showProfileMenu(context, UserModel.currentUser.value, isDarkMode),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: primaryColor.withValues(alpha: 0.3), 
-                              width: 2,
-                            ),
-                            boxShadow: isDarkMode
-                                ? []
-                                : [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.05,
-                                      ),
-                                      blurRadius: 10,
-                                    ),
-                                  ],
-                          ),
-                          child: Icon(
-                            Icons.person,
-                            color: primaryColor,
-                            size: 20,
-                          ),
-                        ),
-                      ),
+                      const SizedBox(width: 40), // placeholder to balance header
                     ],
                   ),
+
 
                   // ── Active SOS status banner ─────────────────────────────────
                   if (isSOSActive && !_isLoadingActiveIncident) ...[
@@ -962,13 +977,21 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _actionCard(
-                          colors: colors,
-                          isDarkMode: isDarkMode,
-                          icon: Icons.menu_book_outlined,
-                          iconColor: primaryColor,
-                          title: 'Edukasi'.tr(context),
-                          subtitle: 'Panduan\npenyelamatan'.tr(context),
+                        child: GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const GuideScreen(),
+                            ),
+                          ),
+                          child: _actionCard(
+                            colors: colors,
+                            isDarkMode: isDarkMode,
+                            icon: Icons.menu_book_outlined,
+                            iconColor: primaryColor,
+                            title: 'Edukasi'.tr(context),
+                            subtitle: 'Panduan\npenyelamatan'.tr(context),
+                          ),
                         ),
                       ),
                     ],
@@ -1148,7 +1171,7 @@ class _HomeScreenState extends State<HomeScreen>
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('Keluar Aplikasi', style: TextStyle(color: Colors.red)),
+                title: Text('Keluar'.tr(context), style: const TextStyle(color: Colors.red)),
                 onTap: () async {
                   await SessionService.clearSession();
                   UserModel.currentUser.value = const UserModel(id: '', name: '', email: '', role: UserRole.masyarakat);
@@ -1173,6 +1196,7 @@ class _HomeScreenState extends State<HomeScreen>
       {'label': 'MEDIS', 'icon': '🚑', 'value': 'medical'},
       {'label': 'KRIMINAL', 'icon': '🔪', 'value': 'crime'},
       {'label': 'KECELAKAAN', 'icon': '💥', 'value': 'rescue'},
+      {'label': 'BENCANA ALAM', 'icon': '🌪️', 'value': 'disaster'},
     ];
 
     return Container(
@@ -1203,16 +1227,17 @@ class _HomeScreenState extends State<HomeScreen>
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white54, fontSize: 11),
               ),
-              const SizedBox(height: 32),
+              const Spacer(),
               GridView.count(
                 shrinkWrap: true,
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 childAspectRatio: 1.4,
+                physics: const NeverScrollableScrollPhysics(),
                 children: types.map((t) {
                   return GestureDetector(
-                    onTap: () => _onSelectIncidentType(t['value']!),
+                    onTap: () => _showTypeConfirmDialog(t['label']!, t['value']!),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
@@ -1227,16 +1252,17 @@ class _HomeScreenState extends State<HomeScreen>
                         children: [
                           Text(
                             t['icon']!,
-                            style: const TextStyle(fontSize: 36),
+                            style: const TextStyle(fontSize: 32),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             t['label']!,
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              letterSpacing: 1,
+                              fontSize: 12,
+                              letterSpacing: 0.8,
                             ),
                           ),
                         ],
@@ -1245,7 +1271,7 @@ class _HomeScreenState extends State<HomeScreen>
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
@@ -1260,7 +1286,7 @@ class _HomeScreenState extends State<HomeScreen>
                 '$_graceCountdown detik',
                 style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
-              const Spacer(),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -1307,4 +1333,38 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
-}
+
+  void _showTypeConfirmDialog(String label, String value) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF990000),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Konfirmasi Tipe Darurat',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Anda memilih: $label\n\nApakah ini jenis darurat yang tepat?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('TIDAK', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _onSelectIncidentType(value);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFCC0000),
+            ),
+            child: const Text('YA, LANJUTKAN', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }

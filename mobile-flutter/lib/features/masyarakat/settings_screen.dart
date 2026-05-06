@@ -54,6 +54,92 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     }
   }
 
+  Future<void> _onCameraGalleryTap() async {
+    final cameraStatus = await Permission.camera.status;
+    final storageStatus = await Permission.photos.status;
+    final cameraGranted = cameraStatus.isGranted;
+    final storageGranted = storageStatus.isGranted;
+
+    if (cameraGranted && storageGranted) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Izin kamera & galeri sudah diberikan.'.tr(context)),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return;
+    }
+
+    // Minta izin yang belum diberikan
+    final Map<Permission, PermissionStatus> statuses = await [
+      Permission.camera,
+      Permission.photos,
+    ].request();
+
+    if (!mounted) return;
+    final allGranted = statuses.values.every((s) => s.isGranted);
+    if (!allGranted) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Izin Diperlukan'.tr(context),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(
+            'Izin kamera atau galeri ditolak. Buka pengaturan perangkat untuk mengaktifkannya secara manual.'
+                .tr(context),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Batal'.tr(context),
+                  style: const TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white),
+              onPressed: () {
+                Navigator.pop(ctx);
+                openAppSettings();
+              },
+              child: Text('Buka Pengaturan'.tr(context)),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _showComingSoonDialog(String featureName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.construction_outlined, color: Colors.orange),
+            const SizedBox(width: 8),
+            Text('Segera Hadir'.tr(context),
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          '$featureName sedang dalam tahap pengembangan dan akan segera tersedia.',
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Mengerti'.tr(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onLocationToggle(bool val) async {
     if (val) {
       final granted = await LocationService.requestPermission(context);
@@ -231,7 +317,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     ),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  onTap: () {},
+                  onTap: _onCameraGalleryTap,
                 ),
               ],
             ),
@@ -327,7 +413,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     ),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  onTap: () {},
+                  onTap: () => _showComingSoonDialog('Ubah Kata Sandi'),
                 ),
                 Divider(
                   height: 1,
@@ -357,7 +443,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onTap: () {},
+                  onTap: () => _showComingSoonDialog('Autentikasi Dua Langkah (2FA)'),
                 ),
                 Divider(
                   height: 1,

@@ -126,6 +126,9 @@ func (r *Repository) UpdateProfile(userID string, req *UpdateProfileRequest) err
 		if req.Alamat != nil {
 			profileMap["alamat"] = *req.Alamat
 		}
+		if req.Bio != nil {
+			profileMap["bio"] = *req.Bio
+		}
 		if req.DateOfBirth != nil {
 			parsed, err := time.Parse("02-01-2006", *req.DateOfBirth)
 			if err != nil {
@@ -260,6 +263,7 @@ func (r *Repository) GetProfile(userID string) (*ProfileResponse, error) {
 		resp.HeightCm = profile.HeightCm
 		resp.WeightKg = profile.WeightKg
 		resp.Alamat = profile.Alamat
+		resp.Bio = profile.Bio
 
 		if profile.DateOfBirth != nil {
 			dob := profile.DateOfBirth.Format("02-01-2006")

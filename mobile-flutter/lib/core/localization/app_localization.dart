@@ -21,6 +21,12 @@ class AppLocalization {
     'Sangat disarankan untuk evakuasi cepat':
         'Highly recommended for faster evacuation',
     'Izin Akses Kamera & Galeri': 'Camera & Gallery Permissions',
+    'Izin kamera & galeri sudah diberikan.': 'Camera & gallery permissions already granted.',
+    'Izin Diperlukan': 'Permission Required',
+    'Izin kamera atau galeri ditolak. Buka pengaturan perangkat untuk mengaktifkannya secara manual.':
+        'Camera or gallery permission denied. Open device settings to enable it manually.',
+    'Buka Pengaturan': 'Open Settings',
+    'Mengerti': 'Understood',
     'TAMPILAN & AKSESIBILITAS': 'DISPLAY & ACCESSIBILITY',
     'Mode Gelap (Dark Mode)': 'Dark Mode',
     'Tema dikendalikan oleh sistem saat ini.':
@@ -45,6 +51,11 @@ class AppLocalization {
     'Relawan (Terverifikasi)': 'Volunteer (Verified)',
     'Instansi Penyelamat': 'Rescue Agency',
     'Admin Sistem': 'System Admin',
+    // Role labels (short form used in header)
+    'Masyarakat': 'Public',
+    'Agency': 'Agency',
+    'Admin': 'Admin',
+    'Superadmin': 'Superadmin',
     'Lupa sandi?': 'Forgot password?',
     'Masuk': 'Sign In',
     'Belum punya akun?': 'Don\'t have an account?',
@@ -59,6 +70,8 @@ class AppLocalization {
     'Profil': 'Profile',
     'Tekan dan tahan untuk bantuan': 'Press and hold for help',
     'TAHAN 10 DETIK': 'HOLD 10 SECONDS',
+    'Ketuk 5× untuk mengirim SOS': 'Tap 5× to send SOS',
+    'KETUK 5×': 'TAP 5×',
     'Laporkan': 'Report',
     'Kirim bukti & titik\nlokasi': 'Send proof & location\npoint',
     'Edukasi': 'Education',
@@ -192,6 +205,8 @@ class AppLocalization {
     'Bencana Alam': 'Natural Disaster',
     'Kriminalitas': 'Crime',
     'Medis': 'Medical',
+    'Bencana': 'Disaster',
+    'BENCANA ALAM': 'NATURAL DISASTER',
     'JEJARING KESELAMATAN LOKAL': 'LOCAL SAFETY NETWORK',
     'RADAR SIAGA & EVAKUASI': 'ALERT & EVACUATION RADAR',
     'Radius 5KM': '5KM Radius',

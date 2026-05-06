@@ -38,6 +38,7 @@ type UserProfile struct {
 	HeightCm            *int       `json:"height_cm,omitempty"`
 	WeightKg            *int       `json:"weight_kg,omitempty"`
 	Alamat              *string    `json:"alamat,omitempty"`
+	Bio                 *string    `json:"bio,omitempty"`
 	UpdatedAt           time.Time  `json:"updated_at"`
 }
 
@@ -197,6 +198,7 @@ type ProfileResponse struct {
 	HeightCm            *int                 `json:"height_cm,omitempty"`
 	WeightKg            *int                 `json:"weight_kg,omitempty"`
 	Alamat              *string              `json:"alamat,omitempty"`
+	Bio                 *string              `json:"bio,omitempty"`
 	EmergencyContacts   []EmergencyContact   `json:"emergency_contacts"`
 	VolunteerReputation *VolunteerReputation `json:"volunteer_reputation,omitempty"`
 }
