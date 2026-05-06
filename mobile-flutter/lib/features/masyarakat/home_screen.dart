@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
@@ -9,7 +10,6 @@ import '../../core/services/connectivity_service.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
 import 'report_screen.dart';
-import 'guide_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accessToken;
@@ -641,6 +641,25 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Future<void> _call112() async {
+    final Uri phoneUri = Uri(scheme: 'tel', path: '112');
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tidak dapat membuka telepon.'.tr(context))),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${'Gagal menelpon 112:'.tr(context)} $e')),
+      );
+    }
+  }
+
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -1015,19 +1034,14 @@ class _HomeScreenState extends State<HomeScreen>
                       const SizedBox(width: 16),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const GuideScreen(),
-                            ),
-                          ),
+                          onTap: _call112,
                           child: _actionCard(
                             colors: colors,
                             isDarkMode: isDarkMode,
-                            icon: Icons.menu_book_outlined,
-                            iconColor: primaryColor,
-                            title: 'Edukasi'.tr(context),
-                            subtitle: 'Panduan\npenyelamatan'.tr(context),
+                            icon: Icons.phone_in_talk,
+                            iconColor: Colors.red.shade700,
+                            title: 'Telepon 112'.tr(context),
+                            subtitle: 'Panggilan\ndarurat'.tr(context),
                           ),
                         ),
                       ),
