@@ -8,10 +8,6 @@ import '../../core/models/user_model.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
-import '../auth/login_screen.dart';
-import '../../core/services/session_service.dart';
-import 'profile_screen.dart';
-import 'settings_screen.dart';
 import 'report_screen.dart';
 import 'guide_screen.dart';
 
@@ -114,7 +110,9 @@ class _HomeScreenState extends State<HomeScreen>
 
       // 1. Cek apakah SOS masih aktif di server (mungkin diselesaikan oleh agency)
       try {
-        final active = await IncidentService.getActive(accessToken: widget.accessToken);
+        final active = await IncidentService.getActive(
+          accessToken: widget.accessToken,
+        );
         if (!mounted) return;
         if (active == null) {
           _stopLocationUpdates();
@@ -230,7 +228,9 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Gagal mengirim SOS: GPS perangkat Anda dimatikan.'),
+            content: const Text(
+              'Gagal mengirim SOS: GPS perangkat Anda dimatikan.',
+            ),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -243,7 +243,9 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Gagal mengirim SOS: Izin akses lokasi belum diberikan.'),
+            content: const Text(
+              'Gagal mengirim SOS: Izin akses lokasi belum diberikan.',
+            ),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -256,7 +258,9 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Gagal mengirim SOS: Tidak dapat mengambil lokasi Anda.'),
+            content: const Text(
+              'Gagal mengirim SOS: Tidak dapat mengambil lokasi Anda.',
+            ),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -312,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen>
       );
 
       if (!mounted) return;
-      
+
       final bool wasCancelled = _cancelledLocalId == localId;
 
       // Ganti local ID dengan server ID (tidak tampil di UI)
@@ -333,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen>
           );
         }
       });
-      
+
       if (wasCancelled) {
         IncidentService.cancelSOS(
           accessToken: widget.accessToken,
@@ -632,106 +636,104 @@ class _HomeScreenState extends State<HomeScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const SizedBox(width: 40),
-                      ValueListenableBuilder<UserModel>(
-                        valueListenable: UserModel.currentUser,
-                        builder: (context, user, child) {
-                          return Column(
-                            children: [
-                              Text(
-                                user.name,
-                                style: TextStyle(
-                                  color: isSOSActive
-                                      ? Colors.red
-                                      : primaryColor,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: isSOSActive
-                                          ? Colors.red
-                                          : Colors.green,
-                                      shape: BoxShape.circle,
-                                    ),
+                      const SizedBox(
+                        width: 40,
+                      ), // placeholder to balance header
+                      Expanded(
+                        child: ValueListenableBuilder<UserModel>(
+                          valueListenable: UserModel.currentUser,
+                          builder: (context, user, child) {
+                            return Column(
+                              children: [
+                                Text(
+                                  user.name,
+                                  style: TextStyle(
+                                    color: isSOSActive
+                                        ? Colors.red
+                                        : primaryColor,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  const SizedBox(width: 6),
-                              ValueListenableBuilder<bool>(
-                                valueListenable: ConnectivityService.isOnline,
-                                builder: (_, online, child) {
-                                  final statusText = isSOSActive
-                                      ? 'SOS AKTIF'
-                                      : online
-                                          ? 'Online'
-                                          : 'Offline';
-                                  final statusColor = isSOSActive
-                                      ? Colors.red
-                                      : online
-                                          ? Colors.green
-                                          : Colors.grey;
-                                  return Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color: statusColor,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        statusText,
-                                        style: TextStyle(
-                                          color: statusColor,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '• ${user.roleLabel.tr(context)}',
-                                        style: TextStyle(
-                                          color: colors.onSurface
-                                              .withValues(alpha: 0.6),
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                isSOSActive
-                                    ? 'SOS AKTIF — Ketuk 5× untuk batalkan'
-                                    : 'Ketuk 5× untuk mengirim SOS'.tr(context),
-                                style: TextStyle(
-                                  color: isSOSActive
-                                      ? Colors.red.withValues(alpha: 0.8)
-                                      : colors.onSurface.withValues(alpha: 0.6),
-                                  fontSize: 11,
-                                  fontWeight: isSOSActive
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
                                 ),
-                              ),
-                            ],
-                          );
-                        },
+                                const SizedBox(height: 4),
+                                ValueListenableBuilder<bool>(
+                                  valueListenable: ConnectivityService.isOnline,
+                                  builder: (_, online, child) {
+                                    final statusText = isSOSActive
+                                        ? 'SOS AKTIF'
+                                        : online
+                                        ? 'Online'
+                                        : 'Offline';
+                                    final statusColor = isSOSActive
+                                        ? Colors.red
+                                        : online
+                                        ? Colors.green
+                                        : Colors.grey;
+                                    return Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: statusColor,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          statusText,
+                                          style: TextStyle(
+                                            color: statusColor,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '• ${user.roleLabel.tr(context)}',
+                                          style: TextStyle(
+                                            color: colors.onSurface.withValues(
+                                              alpha: 0.6,
+                                            ),
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  isSOSActive
+                                      ? 'SOS AKTIF — Ketuk 5× untuk batalkan'
+                                      : 'Ketuk 5× untuk mengirim SOS'.tr(
+                                          context,
+                                        ),
+                                  style: TextStyle(
+                                    color: isSOSActive
+                                        ? Colors.red.withValues(alpha: 0.8)
+                                        : colors.onSurface.withValues(
+                                            alpha: 0.6,
+                                          ),
+                                    fontSize: 11,
+                                    fontWeight: isSOSActive
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
-                      const SizedBox(width: 40), // placeholder to balance header
+                      const SizedBox(
+                        width: 40,
+                      ), // placeholder to balance header
                     ],
                   ),
-
 
                   // ── Active SOS status banner ─────────────────────────────────
                   if (isSOSActive && !_isLoadingActiveIncident) ...[
@@ -1134,60 +1136,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ─── Confirmation Dialog ────────────────────────────────────────────────────
 
-  // ─── Profile Menu ──────────────────────────────────────────────────────────
-
-  void _showProfileMenu(BuildContext context, UserModel user, bool isDarkMode) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 16),
-              Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              Text(user.email, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              const SizedBox(height: 16),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: const Text('Profil Saya'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen(accessToken: widget.accessToken)));
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings_outlined),
-                title: const Text('Pengaturan'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: Text('Keluar'.tr(context), style: const TextStyle(color: Colors.red)),
-                onTap: () async {
-                  await SessionService.clearSession();
-                  UserModel.currentUser.value = const UserModel(id: '', name: '', email: '', role: UserRole.masyarakat);
-                  if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   // ─── Grace Period Overlay ─────────────────────────────────────────────────────
 
   Widget _buildGracePeriodOverlay(ColorScheme colors) {
@@ -1237,7 +1185,8 @@ class _HomeScreenState extends State<HomeScreen>
                 physics: const NeverScrollableScrollPhysics(),
                 children: types.map((t) {
                   return GestureDetector(
-                    onTap: () => _showTypeConfirmDialog(t['label']!, t['value']!),
+                    onTap: () =>
+                        _showTypeConfirmDialog(t['label']!, t['value']!),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
@@ -1292,7 +1241,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: OutlinedButton(
                   onPressed: () {
                     _graceTimer?.cancel();
-                    
+
                     if (_sosUploadStatus == 'sending') {
                       _cancelledLocalId = _pendingIncidentId;
                     } else {
@@ -1362,9 +1311,13 @@ class _HomeScreenState extends State<HomeScreen>
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFFCC0000),
             ),
-            child: const Text('YA, LANJUTKAN', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'YA, LANJUTKAN',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
+}
