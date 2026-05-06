@@ -24,3 +24,4 @@ plugins {
 }
 
 include(":app")
+rootProject.name = "windows_console_flutter_android"

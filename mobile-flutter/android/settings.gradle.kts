@@ -24,3 +24,4 @@ plugins {
 }
 
 include(":app")
+rootProject.name = "mobile_flutter_android"
