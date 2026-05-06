@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/report_service.dart';
+import '../../core/services/incident_service.dart';
 
 class ReportHistoryScreen extends StatefulWidget {
   final String accessToken;
@@ -12,19 +13,24 @@ class ReportHistoryScreen extends StatefulWidget {
 
 class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   List<ReportModel> _reports = [];
-  bool _isLoading = true;
-  String? _error;
+  bool _isLoadingReports = true;
+  String? _errorReports;
+
+  List<ActiveIncident> _sosHistory = [];
+  bool _isLoadingSOS = true;
+  String? _errorSOS;
 
   @override
   void initState() {
     super.initState();
     _loadReports();
+    _loadSOSHistory();
   }
 
   Future<void> _loadReports() async {
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _isLoadingReports = true;
+      _errorReports = null;
     });
     try {
       final reports = await ReportService.getMyReports(
@@ -33,21 +39,53 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       if (mounted) {
         setState(() {
           _reports = reports;
-          _isLoading = false;
+          _isLoadingReports = false;
         });
       }
     } on ReportException catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.message;
-          _isLoading = false;
+          _errorReports = e.message;
+          _isLoadingReports = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Gagal memuat riwayat.';
-          _isLoading = false;
+          _errorReports = 'Gagal memuat riwayat laporan.';
+          _isLoadingReports = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadSOSHistory() async {
+    setState(() {
+      _isLoadingSOS = true;
+      _errorSOS = null;
+    });
+    try {
+      final history = await IncidentService.getMyHistory(
+        accessToken: widget.accessToken,
+      );
+      if (mounted) {
+        setState(() {
+          _sosHistory = history;
+          _isLoadingSOS = false;
+        });
+      }
+    } on IncidentException catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorSOS = e.message;
+          _isLoadingSOS = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorSOS = 'Gagal memuat riwayat SOS.';
+          _isLoadingSOS = false;
         });
       }
     }
@@ -98,31 +136,54 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryTextColor = isDark ? Colors.white : const Color(0xFF0D1B3E);
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: Text(
-          'Riwayat Laporan'.tr(context),
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: primaryTextColor,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        appBar: AppBar(
+          title: Text(
+            'Riwayat'.tr(context),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: primaryTextColor,
+            ),
           ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: IconThemeData(color: primaryTextColor),
+          bottom: TabBar(
+            labelColor: colors.primary,
+            unselectedLabelColor: colors.onSurface.withValues(alpha: 0.5),
+            indicatorColor: colors.primary,
+            tabs: const [
+              Tab(text: 'Laporan'),
+              Tab(text: 'SOS Darurat'),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                _loadReports();
+                _loadSOSHistory();
+              },
+            ),
+          ],
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: primaryTextColor),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadReports),
-        ],
+        body: TabBarView(
+          children: [
+            _buildReportsBody(colors, isDark),
+            _buildSOSBody(colors, isDark),
+          ],
+        ),
       ),
-      body: _buildBody(colors, isDark),
     );
   }
 
-  Widget _buildBody(ColorScheme colors, bool isDark) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
+  Widget _buildReportsBody(ColorScheme colors, bool isDark) {
+    if (_isLoadingReports) return const Center(child: CircularProgressIndicator());
 
-    if (_error != null) {
+    if (_errorReports != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -134,7 +195,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              _error!,
+              _errorReports!,
               style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 16),
@@ -185,12 +246,75 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
         padding: const EdgeInsets.all(16),
         itemCount: _reports.length,
         itemBuilder: (context, index) =>
-            _buildCard(_reports[index], colors, isDark),
+            _buildReportCard(_reports[index], colors, isDark),
       ),
     );
   }
 
-  Widget _buildCard(ReportModel report, ColorScheme colors, bool isDark) {
+  Widget _buildSOSBody(ColorScheme colors, bool isDark) {
+    if (_isLoadingSOS) return const Center(child: CircularProgressIndicator());
+
+    if (_errorSOS != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_off,
+              size: 64,
+              color: colors.onSurface.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorSOS!,
+              style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6)),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadSOSHistory,
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_sosHistory.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.emergency_outlined,
+              size: 72,
+              color: colors.onSurface.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Belum ada riwayat SOS',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colors.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadSOSHistory,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _sosHistory.length,
+        itemBuilder: (context, index) =>
+            _buildSOSCard(_sosHistory[index], colors, isDark),
+      ),
+    );
+  }
+
+  Widget _buildReportCard(ReportModel report, ColorScheme colors, bool isDark) {
     final cardColor = isDark ? colors.surfaceContainerHighest : Colors.white;
     final statusColor = _statusColor(report.status);
     final urgencyColor = _urgencyColor(report.urgencyLevel);
@@ -299,6 +423,96 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                   _chip('audio', Colors.purple),
                 ],
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSOSCard(ActiveIncident sos, ColorScheme colors, bool isDark) {
+    final cardColor = isDark ? colors.surfaceContainerHighest : Colors.white;
+    final isFalseAlarm = sos.status == 'false_alarm';
+    final statusColor = isFalseAlarm ? Colors.orange : Colors.green;
+    final statusLabel = isFalseAlarm ? 'Batal / False Alarm' : 'Selesai';
+    
+    // Asumsikan darurat selalu tinggi
+    const urgencyColor = Colors.red;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                ),
+              ],
+        border: isDark
+            ? Border.all(color: Colors.grey.withValues(alpha: 0.15))
+            : null,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: urgencyColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _categoryIcon(sos.incidentType),
+                color: urgencyColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _incidentLabel(sos.incidentType),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatDate(DateTime.tryParse(sos.createdAt) ?? DateTime.now()),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                statusLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: statusColor,
+                ),
+              ),
             ),
           ],
         ),

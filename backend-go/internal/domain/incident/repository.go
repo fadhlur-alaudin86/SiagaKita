@@ -76,6 +76,15 @@ func (r *Repository) FindActiveByReporter(reporterID string) (*Incident, error) 
 	return &inc, err
 }
 
+// FindHistoryByReporter mengembalikan daftar insiden yang sudah selesai (resolved/false_alarm) untuk reporter tertentu.
+func (r *Repository) FindHistoryByReporter(reporterID string) ([]Incident, error) {
+	var incs []Incident
+	err := r.db.Where(
+		"reporter_id = ? AND status IN ('resolved','false_alarm')", reporterID,
+	).Order("created_at DESC").Find(&incs).Error
+	return incs, err
+}
+
 // FindAllActive mengembalikan semua incident aktif dengan data reporter lengkap (JOIN).
 func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 	var results []AllActiveIncidentResponse

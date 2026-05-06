@@ -108,6 +108,27 @@ class _HomeScreenState extends State<HomeScreen>
       _,
     ) async {
       if (_activeIncident == null || !mounted) return;
+
+      // 1. Cek apakah SOS masih aktif di server (mungkin diselesaikan oleh agency)
+      try {
+        final active = await IncidentService.getActive(accessToken: widget.accessToken);
+        if (!mounted) return;
+        if (active == null) {
+          _stopLocationUpdates();
+          setState(() => _activeIncident = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Status SOS telah diselesaikan oleh instansi.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          return;
+        }
+      } catch (_) {
+        // Jika error jaringan, biarkan saja (jangan reset UI)
+      }
+
+      // 2. Jika masih aktif, update lokasi GPS ke server
       final pos = await LocationService.getCurrentPositionOrNull();
       if (pos != null && _activeIncident != null) {
         await IncidentService.updateLocation(

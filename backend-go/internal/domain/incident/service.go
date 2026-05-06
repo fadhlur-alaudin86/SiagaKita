@@ -178,6 +178,33 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 	}, nil
 }
 
+// ─── GetHistory ───────────────────────────────────────────────────────────────
+
+func (s *Service) GetHistory(reporterID string) ([]ActiveIncidentResponse, error) {
+	incs, err := s.repo.FindHistoryByReporter(reporterID)
+	if err != nil {
+		return nil, err
+	}
+
+	var history []ActiveIncidentResponse
+	for _, inc := range incs {
+		history = append(history, ActiveIncidentResponse{
+			IncidentID:         inc.ID,
+			Status:             inc.Status,
+			IncidentType:       inc.IncidentType,
+			Latitude:           inc.Latitude,
+			Longitude:          inc.Longitude,
+			ReporterTrustLabel: inc.ReporterTrustLabel,
+			CreatedAt:          inc.CreatedAt.Format(time.RFC3339),
+		})
+	}
+	// Return empty array instead of null for empty history
+	if history == nil {
+		history = []ActiveIncidentResponse{}
+	}
+	return history, nil
+}
+
 // GetAllActive mengembalikan semua incident aktif (untuk console desktop).
 func (s *Service) GetAllActive() ([]AllActiveIncidentResponse, error) {
 	return s.repo.FindAllActive()

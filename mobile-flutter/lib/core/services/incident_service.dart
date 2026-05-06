@@ -161,21 +161,38 @@ class IncidentService {
   static Future<ActiveIncident?> getActive({
     required String accessToken,
   }) async {
-    try {
-      final response = await http
-          .get(
-            Uri.parse('$_baseUrl/incidents/active'),
-            headers: {'Authorization': 'Bearer $accessToken'},
-          )
-          .timeout(_defaultTimeout);
-      if (response.statusCode != 200) return null;
+    final response = await _req(
+      () => http.get(
+        Uri.parse('$_baseUrl/incidents/active'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      ),
+    );
+    if (response.statusCode != 200) return null;
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = body['data'];
+    if (data == null) return null;
+    return ActiveIncident.fromJson(data as Map<String, dynamic>);
+  }
+
+  // ─── Get My History ───────────────────────────────────────────────────────
+
+  static Future<List<ActiveIncident>> getMyHistory({
+    required String accessToken,
+  }) async {
+    final response = await _req(
+      () => http.get(
+        Uri.parse('$_baseUrl/incidents/my-history'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      ),
+    );
+    if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      final data = body['data'];
-      if (data == null) return null;
-      return ActiveIncident.fromJson(data as Map<String, dynamic>);
-    } catch (_) {
-      return null; // Silent fail — UI tetap tampil tanpa data aktif
+      throw IncidentException(body['message'] as String? ?? 'Gagal memuat riwayat SOS');
     }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = body['data'] as List?;
+    if (data == null) return [];
+    return data.map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   // ─── Create Report (Jalur B — Laporan Warga) ─────────────────────────────
