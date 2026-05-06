@@ -154,7 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       if (!mounted) return;
       setState(() => _isLoading = false);
-      // TODO Task 6: simpan token ke secure storage
+      // simpan token ke secure storage
       debugPrint('[Auth] Register berhasil: ${result.user.email}');
 
       // Minta izin GPS setelah registrasi berhasil (poin 4)

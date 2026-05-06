@@ -181,7 +181,9 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   }
 
   Widget _buildReportsBody(ColorScheme colors, bool isDark) {
-    if (_isLoadingReports) return const Center(child: CircularProgressIndicator());
+    if (_isLoadingReports) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (_errorReports != null) {
       return Center(
@@ -435,7 +437,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     final isFalseAlarm = sos.status == 'false_alarm';
     final statusColor = isFalseAlarm ? Colors.orange : Colors.green;
     final statusLabel = isFalseAlarm ? 'Batal / False Alarm' : 'Selesai';
-    
+
     // Asumsikan darurat selalu tinggi
     const urgencyColor = Colors.red;
 
@@ -487,7 +489,9 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _formatDate(DateTime.tryParse(sos.createdAt) ?? DateTime.now()),
+                    _formatDate(
+                      DateTime.tryParse(sos.createdAt) ?? DateTime.now(),
+                    ),
                     style: TextStyle(
                       fontSize: 12,
                       color: colors.onSurface.withValues(alpha: 0.5),
@@ -497,10 +501,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
