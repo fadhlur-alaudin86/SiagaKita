@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "SiagaKita" "\0"
+            VALUE "CompanyName", "com.siagakita" "\0"
+            VALUE "FileDescription", "SiagaKita Console" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "siagakita" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "siagakita.exe" "\0"
-            VALUE "ProductName", "SiagaKita" "\0"
+            VALUE "InternalName", "siagakita_console" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.siagakita. All rights reserved." "\0"
+            VALUE "OriginalFilename", "siagakita_console.exe" "\0"
+            VALUE "ProductName", "SiagaKita Console" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
