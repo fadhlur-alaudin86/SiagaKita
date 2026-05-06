@@ -172,8 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (user.nik != null && user.nik!.isNotEmpty)
                             Row(
                               children: [
-                                Icon(Icons.badge,
-                                    size: 13, color: hintColor),
+                                Icon(Icons.badge, size: 13, color: hintColor),
                                 const SizedBox(width: 4),
                                 Text(
                                   'NIK: ${user.nik}',
@@ -199,27 +198,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: Container(
                                 margin: const EdgeInsets.only(top: 4),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.orange.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color:
-                                        Colors.orange.withValues(alpha: 0.5),
+                                    color: Colors.orange.withValues(alpha: 0.5),
                                   ),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.verified_user_outlined,
-                                        size: 13, color: Colors.orange),
+                                    Icon(
+                                      Icons.verified_user_outlined,
+                                      size: 13,
+                                      color: Colors.orange,
+                                    ),
                                     SizedBox(width: 4),
                                     Text(
                                       'Verifikasi Identitas (NIK)',
                                       style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.orange,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 11,
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -280,8 +284,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : Colors.grey.shade200,
                       ),
                       ListTile(
-                        leading: const Icon(Icons.chat_bubble,
-                            color: Color(0xFF25D366)),
+                        leading: const Icon(
+                          Icons.chat_bubble,
+                          color: Color(0xFF25D366),
+                        ),
                         title: Text(
                           'Nomor WhatsApp'.tr(context),
                           style: TextStyle(fontSize: 12, color: hintColor),
@@ -296,18 +302,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            if (user.isPhoneVerified) ...
-                              [
-                                const SizedBox(width: 6),
-                                const Icon(Icons.verified,
-                                    size: 14, color: Colors.green),
-                              ]
-                            else if (user.phoneNumber != null) ...
-                              [
-                                const SizedBox(width: 6),
-                                const Icon(Icons.warning_amber,
-                                    size: 14, color: Colors.orange),
-                              ],
+                            if (user.isPhoneVerified) ...[
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.verified,
+                                size: 14,
+                                color: Colors.green,
+                              ),
+                            ] else if (user.phoneNumber != null) ...[
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.warning_amber,
+                                size: 14,
+                                color: Colors.orange,
+                              ),
+                            ],
                           ],
                         ),
                       ),

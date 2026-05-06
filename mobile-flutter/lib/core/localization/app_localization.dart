@@ -21,7 +21,8 @@ class AppLocalization {
     'Sangat disarankan untuk evakuasi cepat':
         'Highly recommended for faster evacuation',
     'Izin Akses Kamera & Galeri': 'Camera & Gallery Permissions',
-    'Izin kamera & galeri sudah diberikan.': 'Camera & gallery permissions already granted.',
+    'Izin kamera & galeri sudah diberikan.':
+        'Camera & gallery permissions already granted.',
     'Izin Diperlukan': 'Permission Required',
     'Izin kamera atau galeri ditolak. Buka pengaturan perangkat untuk mengaktifkannya secara manual.':
         'Camera or gallery permission denied. Open device settings to enable it manually.',
@@ -214,6 +215,11 @@ class AppLocalization {
     'Relawan': 'Volunteer',
     'Titik Kumpul': 'Assembly Point',
     'Klinik': 'Clinic',
+    'SOS AKTIF — Lokasi diperbarui tiap 10 detik':
+        'SOS ACTIVE — Location updated every 10 seconds',
+    'SOS AKTIF — Ketuk 5× untuk batalkan': 'SOS ACTIVE — Tap 5× to cancel',
+    'KETUK 5× BATALKAN': 'TAP 5× CANCEL',
+    'Riwayat Laporan': 'Report History',
     'LOKASI ANDA': 'YOUR LOCATION',
     'RELAWAN SIAGA': 'ON-STANDBY VOLUNTEERS',
     '12 di sekitar': '12 nearby',

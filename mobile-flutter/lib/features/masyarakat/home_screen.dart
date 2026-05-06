@@ -99,11 +99,11 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // ─── GPS Location Update (setiap 1 menit) ───────────────────────────────────
+  // ─── GPS Location Update (setiap 10 detik) ───────────────────────────────────
 
   void _startLocationUpdates() {
     _locationUpdateTimer?.cancel();
-    _locationUpdateTimer = Timer.periodic(const Duration(minutes: 1), (
+    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 10), (
       _,
     ) async {
       if (_activeIncident == null || !mounted) return;
@@ -118,8 +118,10 @@ class _HomeScreenState extends State<HomeScreen>
           _stopLocationUpdates();
           setState(() => _activeIncident = null);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Status SOS telah diselesaikan oleh instansi.'),
+            SnackBar(
+              content: Text(
+                'Status SOS telah diselesaikan oleh instansi.'.tr(context),
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -228,8 +230,8 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-              'Gagal mengirim SOS: GPS perangkat Anda dimatikan.',
+            content: Text(
+              'Gagal mengirim SOS: GPS perangkat Anda dimatikan.'.tr(context),
             ),
             backgroundColor: Colors.red.shade700,
           ),
@@ -243,8 +245,10 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-              'Gagal mengirim SOS: Izin akses lokasi belum diberikan.',
+            content: Text(
+              'Gagal mengirim SOS: Izin akses lokasi belum diberikan.'.tr(
+                context,
+              ),
             ),
             backgroundColor: Colors.red.shade700,
           ),
@@ -258,8 +262,10 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-              'Gagal mengirim SOS: Tidak dapat mengambil lokasi Anda.',
+            content: Text(
+              'Gagal mengirim SOS: Tidak dapat mengambil lokasi Anda.'.tr(
+                context,
+              ),
             ),
             backgroundColor: Colors.red.shade700,
           ),
@@ -465,10 +471,12 @@ class _HomeScreenState extends State<HomeScreen>
           });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Status SOS telah diselesaikan oleh instansi.'),
+              SnackBar(
+                content: Text(
+                  'Status SOS telah diselesaikan oleh instansi.'.tr(context),
+                ),
                 backgroundColor: Colors.green,
-                duration: Duration(seconds: 5),
+                duration: const Duration(seconds: 5),
               ),
             );
           }
@@ -483,18 +491,18 @@ class _HomeScreenState extends State<HomeScreen>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.block, color: Colors.red),
-            SizedBox(width: 8),
-            Text('SOS Dinonaktifkan'),
+            const Icon(Icons.block, color: Colors.red),
+            const SizedBox(width: 8),
+            Text('SOS Dinonaktifkan'.tr(context)),
           ],
         ),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup'),
+            child: Text('Tutup'.tr(context)),
           ),
         ],
       ),
@@ -505,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildUploadStatusBadge() {
     if (_sosUploadStatus == 'idle') return const SizedBox.shrink();
     final isSent = _sosUploadStatus == 'sent';
-    final text = isSent ? 'Terkirim ✓' : 'Mengirim...';
+    final text = isSent ? 'Terkirim ✓'.tr(context) : 'Mengirim...'.tr(context);
     final color = isSent ? Colors.green : Colors.orange;
     final icon = isSent ? Icons.check_circle_outline : Icons.sync;
     return Container(
@@ -539,14 +547,18 @@ class _HomeScreenState extends State<HomeScreen>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Batalkan SOS?'),
-        content: const Text(
-          'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?',
+        title: Text('Batalkan SOS?'.tr(context)),
+        content: Text(
+          'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?'
+              .tr(context),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('TIDAK', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              'TIDAK'.tr(context),
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -557,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen>
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('YA, BATALKAN'),
+            child: Text('YA, BATALKAN'.tr(context)),
           ),
         ],
       ),
@@ -586,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen>
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal membatalkan SOS: $e'),
+            content: Text('Gagal membatalkan SOS: $e'.tr(context)),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -605,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen>
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('SOS berhasil dibatalkan.'),
+        content: Text('SOS berhasil dibatalkan.'.tr(context)),
         backgroundColor: Colors.green.shade700,
       ),
     );
@@ -660,10 +672,10 @@ class _HomeScreenState extends State<HomeScreen>
                                   valueListenable: ConnectivityService.isOnline,
                                   builder: (_, online, child) {
                                     final statusText = isSOSActive
-                                        ? 'SOS AKTIF'
+                                        ? 'SOS AKTIF'.tr(context)
                                         : online
-                                        ? 'Online'
-                                        : 'Offline';
+                                        ? 'Online'.tr(context)
+                                        : 'Offline'.tr(context);
                                     final statusColor = isSOSActive
                                         ? Colors.red
                                         : online
@@ -709,6 +721,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 Text(
                                   isSOSActive
                                       ? 'SOS AKTIF — Ketuk 5× untuk batalkan'
+                                            .tr(context)
                                       : 'Ketuk 5× untuk mengirim SOS'.tr(
                                           context,
                                         ),
@@ -760,7 +773,9 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'SOS AKTIF — Lokasi diperbarui tiap 1 menit',
+                              'SOS AKTIF: Lokasi diperbarui tiap 10 detik'.tr(
+                                context,
+                              ),
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontSize: 11,
@@ -874,7 +889,9 @@ class _HomeScreenState extends State<HomeScreen>
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        isSOSActive ? 'AKTIF' : 'SOS',
+                                        isSOSActive
+                                            ? 'AKTIF'.tr(context)
+                                            : 'SOS',
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 40,
@@ -883,7 +900,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       ),
                                       Text(
                                         isSOSActive
-                                            ? 'KETUK 5× BATALKAN'
+                                            ? 'KETUK 5× BATALKAN'.tr(context)
                                             : 'KETUK 5×'.tr(context),
                                         style: TextStyle(
                                           color: Colors.white.withValues(
