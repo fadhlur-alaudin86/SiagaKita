@@ -51,8 +51,17 @@ func (r *Repository) MarkResolved(id string) (*Incident, error) {
 }
 
 func (r *Repository) MarkCancelled(id string) error {
-	return r.db.Model(&Incident{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"status": "false_alarm", "updated_at": time.Now()}).Error
+	db := r.db.Model(&Incident{}).
+		Where("id = ? AND status IN (?, ?)", id, "active", "broadcasting").
+		Updates(map[string]interface{}{"status": "false_alarm", "updated_at": time.Now()})
+	
+	if db.Error != nil {
+		return db.Error
+	}
+	if db.RowsAffected == 0 {
+		return errors.New("conflict: incident is not active or broadcasting")
+	}
+	return nil
 }
 
 func (r *Repository) MarkFalseAlarm(id string) error {

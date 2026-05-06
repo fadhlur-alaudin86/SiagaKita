@@ -106,6 +106,8 @@ func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 		status := fiber.StatusInternalServerError
 		if err.Error() == "unauthorized" {
 			status = fiber.StatusForbidden
+		} else if len(err.Error()) >= 8 && err.Error()[:8] == "conflict" {
+			status = fiber.StatusConflict
 		}
 		return utils.ErrorResponse(c, status, err.Error())
 	}

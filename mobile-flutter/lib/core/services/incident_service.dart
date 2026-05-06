@@ -127,6 +127,9 @@ class IncidentService {
       ),
       timeout: _sosTimeout,
     );
+    if (response.statusCode == 409) {
+      throw const SOSConflictException('SOS sudah diselesaikan oleh instansi.');
+    }
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       throw IncidentException(
@@ -295,6 +298,14 @@ class IncidentException implements Exception {
 class SOSBannedException implements Exception {
   final String message;
   const SOSBannedException(this.message);
+  @override
+  String toString() => message;
+}
+
+/// Dilempar saat terjadi race condition (misal instansi sudah menyelesaikan SOS saat user membatalkan)
+class SOSConflictException implements Exception {
+  final String message;
+  const SOSConflictException(this.message);
   @override
   String toString() => message;
 }

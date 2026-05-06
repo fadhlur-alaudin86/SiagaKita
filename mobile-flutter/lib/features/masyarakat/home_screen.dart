@@ -594,6 +594,24 @@ class _HomeScreenState extends State<HomeScreen>
           accessToken: widget.accessToken,
           incidentId: targetId,
         );
+      } on SOSConflictException catch (e) {
+        if (!mounted) return;
+        _stopLocationUpdates();
+        setState(() {
+          _activeIncident = null;
+          _sosPhase = 'idle';
+          _sosUploadStatus = 'idle';
+          _tapCount = 0;
+          _cancelledLocalId = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message.tr(context)),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
