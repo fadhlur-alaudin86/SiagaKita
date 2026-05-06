@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/services/location_service.dart';
 import '../../main.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -9,11 +11,11 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   // Mock states for settings toggles
   bool _pushNotifications = true;
   bool _smsAlerts = false;
-  bool _locationTracking = true;
+  bool _locationTracking = false;
   late String _language;
   static const List<String> _availableLanguages = <String>[
     'Bahasa Indonesia',
@@ -23,11 +25,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _language =
         SiagaKitaApp.localeNotifier.value.languageCode ==
             AppLocalization.localeEn.languageCode
         ? 'English'
         : 'Bahasa Indonesia';
+    _checkLocationPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkLocationPermission();
+    }
+  }
+
+  Future<void> _checkLocationPermission() async {
+    final hasPerm = await LocationService.hasPermission();
+    if (mounted && _locationTracking != hasPerm) {
+      setState(() => _locationTracking = hasPerm);
+    }
+  }
+
+  void _onLocationToggle(bool val) async {
+    if (val) {
+      final granted = await LocationService.requestPermission(context);
+      if (mounted) setState(() => _locationTracking = granted);
+    } else {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Cabut Izin Lokasi', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: const Text(
+            'Untuk mencabut izin lokasi, Anda perlu melakukannya secara manual melalui pengaturan OS perangkat Anda.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                openAppSettings();
+              },
+              child: const Text('Buka Pengaturan'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -153,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   activeThumbColor: Colors.orange,
                   value: _locationTracking,
-                  onChanged: (val) => setState(() => _locationTracking = val),
+                  onChanged: _onLocationToggle,
                 ),
                 Divider(
                   height: 1,

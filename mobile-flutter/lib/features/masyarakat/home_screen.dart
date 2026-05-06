@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
@@ -192,20 +193,49 @@ class _HomeScreenState extends State<HomeScreen>
     _startGracePeriodCountdown();
 
     // Ambil posisi GPS di background
-    final pos = await LocationService.getCurrentPositionOrNull();
-    final lat = pos?.latitude ?? 0.0;
-    final lng = pos?.longitude ?? 0.0;
-
-    if (lat == 0.0 && lng == 0.0) {
+    double lat = 0.0;
+    double lng = 0.0;
+    try {
+      final pos = await LocationService.getCurrentPosition();
+      lat = pos.latitude;
+      lng = pos.longitude;
+    } on AppLocationServiceDisabledException {
       _cancelGracePeriodLocally();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Gagal mengirim SOS: Mohon aktifkan GPS/Lokasi Anda.'),
+            content: const Text('Gagal mengirim SOS: GPS perangkat Anda dimatikan.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+        Geolocator.openLocationSettings();
+      }
+      if (mounted) setState(() => _isTriggeringSOS = false);
+      return;
+    } on AppLocationPermissionException {
+      _cancelGracePeriodLocally();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Gagal mengirim SOS: Izin akses lokasi belum diberikan.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+        LocationService.requestPermission(context);
+      }
+      if (mounted) setState(() => _isTriggeringSOS = false);
+      return;
+    } catch (_) {
+      _cancelGracePeriodLocally();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Gagal mengirim SOS: Tidak dapat mengambil lokasi Anda.'),
             backgroundColor: Colors.red.shade700,
           ),
         );
       }
+      if (mounted) setState(() => _isTriggeringSOS = false);
       return;
     }
 

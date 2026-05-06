@@ -80,7 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Minta izin GPS setelah auth berhasil
-      await LocationService.requestPermission();
+      if (!mounted) return;
+      await LocationService.requestPermission(context);
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(

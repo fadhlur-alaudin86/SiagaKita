@@ -112,6 +112,19 @@
 
 ---
 
+### 🔖 Patch 1.0.6 — 6 Mei 2026 (Perbaikan UX Izin Lokasi & GPS)
+
+#### 🚀 Peningkatan UX Darurat (Location & GPS Handling)
+
+- **Dialog Penjelasan Izin Kustom:** Saat aplikasi meminta akses lokasi dan user memilih "Jangan Izinkan" atau izin ditolak permanen, aplikasi tidak lagi sekadar membuka pengaturan perangkat secara buta. Kini muncul dialog penjelasan kustom mengenai mengapa SiagaKita membutuhkan akses lokasi untuk evakuasi darurat.
+- **Pemisahan Error SOS (GPS Mati vs Izin Ditolak):** 
+  - Jika GPS perangkat dimatikan: Tombol SOS akan gagal dengan pesan spesifik *"GPS perangkat Anda dimatikan"* dan otomatis membuka popup *Location Settings* dari OS.
+  - Jika izin aplikasi belum diberikan: Pesan menjadi *"Izin akses lokasi belum diberikan"* dan dialog kustom perizinan lokasi akan otomatis muncul.
+- **Menu Pengaturan Terintegrasi:** *Toggle* `Akses Lokasi Latar Belakang` di menu Pengaturan aplikasi tidak lagi berupa *mock state*. Toggle ini kini terkoneksi secara _real-time_ (dengan `WidgetsBindingObserver`) dengan status perizinan sesungguhnya di sistem operasi.
+- **Refaktorisasi Exception:** `LocationService` kini memiliki exception yang spesifik: `LocationServiceDisabledException` dan `LocationPermissionException` untuk memfasilitasi integrasi UI yang lebih baik.
+
+---
+
 ### 🔖 Patch 1.0.5 — 4 Mei 2026 (Sprint Stabilisasi)
 
 #### 🔴 Fitur Baru: Offline Mode & Session Management

@@ -158,7 +158,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       debugPrint('[Auth] Register berhasil: ${result.user.email}');
 
       // Minta izin GPS setelah registrasi berhasil (poin 4)
-      await LocationService.requestPermission();
+      if (!mounted) return;
+      await LocationService.requestPermission(context);
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(

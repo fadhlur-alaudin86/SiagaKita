@@ -154,7 +154,7 @@ class _AppStartupState extends State<_AppStartup> {
 
       // Minta izin GPS jika online, abaikan jika offline
       if (ConnectivityService.isOnline.value) {
-        await LocationService.requestPermission();
+        await LocationService.requestPermission(context);
         if (!mounted) return;
       }
 
