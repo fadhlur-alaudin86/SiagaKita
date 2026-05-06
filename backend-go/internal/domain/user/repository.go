@@ -257,6 +257,8 @@ func (r *Repository) GetProfile(userID string) (*ProfileResponse, error) {
 		resp.BloodType = profile.BloodType
 		resp.Allergies = profile.Allergies
 		resp.MedicalConditions = profile.MedicalConditions
+		resp.HeightCm = profile.HeightCm
+		resp.WeightKg = profile.WeightKg
 		resp.Alamat = profile.Alamat
 
 		if profile.DateOfBirth != nil {

@@ -194,6 +194,8 @@ type ProfileResponse struct {
 	BloodType           *string              `json:"blood_type,omitempty"`
 	Allergies           *string              `json:"allergies,omitempty"`
 	MedicalConditions   *string              `json:"medical_conditions,omitempty"`
+	HeightCm            *int                 `json:"height_cm,omitempty"`
+	WeightKg            *int                 `json:"weight_kg,omitempty"`
 	Alamat              *string              `json:"alamat,omitempty"`
 	EmergencyContacts   []EmergencyContact   `json:"emergency_contacts"`
 	VolunteerReputation *VolunteerReputation `json:"volunteer_reputation,omitempty"`
