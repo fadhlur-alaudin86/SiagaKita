@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/domain/otp"
 	"siagakita-backend/internal/utils"
 
+	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -301,4 +303,56 @@ func (s *Service) ResendOTP(ctx context.Context, email, otpContext string) error
 		return errors.New("akun tidak ditemukan")
 	}
 	return s.otpSvc.RequestEmailOTP(ctx, email, otpContext)
+}
+
+// ─── KYC Warga ────────────────────────────────────────────────────────────────
+
+// SubmitKYC memproses pengajuan verifikasi NIK warga: upload foto KTP & selfie,
+// lalu simpan URL dan set status menjadi 'pending'.
+func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
+	uploadDir := s.cfg.UploadDir + "/kyc"
+
+	// Upload foto KTP
+	ktpFile, err := c.FormFile("ktp")
+	if err != nil {
+		return errors.New("foto KTP wajib dilampirkan")
+	}
+	ktpExt := filepath.Ext(ktpFile.Filename)
+	ktpPath := uploadDir + "/" + userID + "_ktp" + ktpExt
+	if err := c.SaveFile(ktpFile, "."+ktpPath); err != nil {
+		return fmt.Errorf("gagal menyimpan foto KTP: %w", err)
+	}
+
+	// Upload selfie (opsional tapi direkomendasikan)
+	selfieURL := ""
+	selfieFile, err := c.FormFile("selfie")
+	if err == nil {
+		selfieExt := filepath.Ext(selfieFile.Filename)
+		selfiePath := uploadDir + "/" + userID + "_selfie" + selfieExt
+		if err := c.SaveFile(selfieFile, "."+selfiePath); err != nil {
+			return fmt.Errorf("gagal menyimpan selfie: %w", err)
+		}
+		selfieURL = selfiePath
+	}
+
+	return s.repo.SubmitKYC(userID, nik, fullName, ktpPath, selfieURL)
+}
+
+// GetKYCStatus mengembalikan status verifikasi NIK warga.
+func (s *Service) GetKYCStatus(userID string) (*KYCStatusResponse, error) {
+	profile, err := s.repo.GetKYCStatus(userID)
+	if err != nil {
+		return nil, err
+	}
+	msg := map[string]string{
+		"none":     "Anda belum mengajukan verifikasi NIK.",
+		"pending":  "Pengajuan sedang diproses oleh admin (1-3 hari kerja).",
+		"approved": "Identitas Anda telah terverifikasi ✅",
+		"rejected": "Pengajuan ditolak. Silakan ajukan ulang dengan foto yang lebih jelas.",
+	}[profile.NIKVerificationStatus]
+	return &KYCStatusResponse{
+		Status:  KYCStatus(profile.NIKVerificationStatus),
+		NIK:     profile.NIK,
+		Message: msg,
+	}, nil
 }

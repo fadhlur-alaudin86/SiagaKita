@@ -23,6 +23,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
   bool _loading = true;
   StreamSubscription<WsMessage>? _wsSub;
   final _falseAlarmCtrl = TextEditingController();
+  Timer? _refreshTimer; // refresh tiap 5 detik agar indikator online/offline akurat
 
   @override
   void initState() {
@@ -37,6 +38,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
           msg.event == WsEvent.connected) {
         _load();
       }
+    });
+    // Refresh UI setiap 5 detik agar indikator online/offline akurat
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) setState(() {});
     });
   }
 
@@ -143,6 +148,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
   void dispose() {
     _wsSub?.cancel();
     _falseAlarmCtrl.dispose();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -275,6 +281,18 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                           ],
                                         ),
                                       ),
+                                      // Indikator Online/Offline korban
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: inc.isOnline
+                                              ? Colors.greenAccent
+                                              : Colors.grey,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
                                       if (isSelected)
                                         const Icon(
                                           Icons.chevron_right,
@@ -421,6 +439,74 @@ class _SosAktifPageState extends State<SosAktifPage> {
                 );
                 if (await canLaunchUrl(uri)) launchUrl(uri);
               },
+            ),
+
+            // ── Telemetri Korban ─────────────────────────────────────────────
+            const SizedBox(height: 20),
+            const Divider(color: Colors.white12),
+            const SizedBox(height: 16),
+            const Text(
+              '📡 TELEMETRI KORBAN',
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                // Status online/offline
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: inc.isOnline
+                        ? Colors.green.withValues(alpha: 0.15)
+                        : Colors.grey.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: inc.isOnline
+                          ? Colors.green.withValues(alpha: 0.4)
+                          : Colors.grey.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: inc.isOnline
+                              ? Colors.greenAccent
+                              : Colors.grey,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        inc.isOnline ? 'Online' : 'Offline / Sinyal Hilang',
+                        style: TextStyle(
+                          color: inc.isOnline
+                              ? Colors.greenAccent
+                              : Colors.grey,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              icon: Icons.update_outlined,
+              label: 'Terakhir',
+              value: 'Lokasi diperbarui pukul ${inc.lastUpdateLabel}',
             ),
 
             const SizedBox(height: 20),

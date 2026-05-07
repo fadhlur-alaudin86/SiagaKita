@@ -6,8 +6,8 @@ import '../../core/services/session_service.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
+import 'kyc_screen.dart';
 import 'volunteer_registration_screen.dart';
-import 'report_history_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String accessToken;
@@ -657,26 +657,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
+                      // KYC: Verifikasi Identitas NIK
                       ListTile(
-                        leading: Icon(
-                          Icons.assignment_outlined,
-                          color: primaryTextColor,
-                        ),
+                        leading: Icon(Icons.verified_user_outlined,
+                            color: primaryTextColor),
                         title: Text(
-                          'Riwayat Laporan'.tr(context),
+                          'Verifikasi Identitas (KYC)'.tr(context),
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: primaryTextColor,
                           ),
                         ),
-                        trailing: Icon(Icons.chevron_right, color: hintColor),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (user.nikVerificationStatus == 'approved')
+                              const Icon(Icons.verified,
+                                  color: Colors.green, size: 16),
+                            if (user.nikVerificationStatus == 'pending')
+                              const Icon(Icons.hourglass_top,
+                                  color: Colors.orange, size: 16),
+                            const SizedBox(width: 4),
+                            Icon(Icons.chevron_right, color: hintColor),
+                          ],
+                        ),
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ReportHistoryScreen(
-                                accessToken: widget.accessToken,
-                              ),
+                              builder: (_) =>
+                                  KycScreen(accessToken: widget.accessToken),
                             ),
                           );
                         },

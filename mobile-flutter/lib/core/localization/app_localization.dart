@@ -330,6 +330,29 @@ class AppLocalization {
     'Transmitting': 'Transmitting',
     'Signal Lost': 'Signal Lost',
     'Next update: ': 'Next update: ',
+    // Navbar
+    'Riwayat': 'History',
+    // KYC Screen
+    'Verifikasi Identitas (KYC)': 'Identity Verification (KYC)',
+    'Verifikasi Identitas NIK Warga': 'Civilian NIK Identity Verification',
+    'Status: Belum Diverifikasi': 'Status: Unverified',
+    'Status: Menunggu Verifikasi': 'Status: Pending Verification',
+    'Status: Terverifikasi': 'Status: Verified',
+    'Status: Ditolak': 'Status: Rejected',
+    'Mengapa perlu verifikasi?': 'Why verify?',
+    'NIK (16 digit)': 'NIK (16 digits)',
+    'Nama Lengkap (sesuai KTP)': 'Full Name (as on ID card)',
+    'Selfie dengan KTP (opsional)': 'Selfie with ID card (optional)',
+    'Ambil / Pilih Foto KTP': 'Take / Choose ID Photo',
+    'KTP terpilih ✓': 'ID Photo selected ✓',
+    'Ambil Selfie': 'Take Selfie',
+    'Selfie terpilih ✓': 'Selfie selected ✓',
+    'Foto KTP wajib dilampirkan': 'ID card photo is required',
+    'Ajukan Verifikasi NIK': 'Submit NIK Verification',
+    'Mengirim pengajuan...': 'Submitting...',
+    // Profile KYC tile label
+    'Masukkan 16 digit NIK KTP': 'Enter 16-digit NIK',
+    'Masukkan nama sesuai KTP': 'Enter name as on ID card',
   };
 
   static String tr(BuildContext context, String text) {

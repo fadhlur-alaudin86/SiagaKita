@@ -144,6 +144,9 @@ func main() {
 	users.Put("/profile", userHandler.UpdateProfile)
 	users.Post("/phone/request-otp", userHandler.RequestPhoneVerification)
 	users.Post("/phone/verify-otp", userHandler.ConfirmPhoneOTP)
+	// KYC: Verifikasi Identitas NIK Warga
+	users.Post("/kyc", userHandler.SubmitKYC)
+	users.Get("/kyc/status", userHandler.GetKYCStatus)
 
 	// ── Incidents (protected — semua role yang sudah login) ───────────────────
 	incidents := v1.Group("/incidents", authMw)

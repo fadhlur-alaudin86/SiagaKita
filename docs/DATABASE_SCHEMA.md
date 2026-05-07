@@ -1,8 +1,8 @@
 # 🗄️ SiagaKita — Database Schema Reference
 
-> **Versi Aktif:** Schema v5 (reports_v2)
-> **Migration File:** `backend-go/migrations/005_reports_v2.sql`
-> **Dijalankan:** 3 Mei 2026
+> **Versi Aktif:** Schema v9 (kyc_warga)
+> **Migration File:** `backend-go/migrations/009_kyc_warga.sql`
+> **Dijalankan:** 7 Mei 2026
 > **Database:** PostgreSQL 15
 
 ---
@@ -135,6 +135,11 @@ CREATE TABLE public.user_profiles (
     height_cm             int CHECK (height_cm > 0),
     weight_kg             int CHECK (weight_kg > 0),
     alamat                text,
+    -- KYC Warga (ditambahkan v9)
+    kyc_ktp_url              text,          -- Path foto KTP yang diunggah
+    kyc_selfie_url           text,          -- Path selfie dengan KTP (opsional)
+    nik_verification_status  varchar(20) DEFAULT 'none'
+        CHECK (nik_verification_status IN ('none', 'pending', 'approved', 'rejected')),
     updated_at            timestamptz DEFAULT now()
 );
 ```

@@ -130,6 +130,32 @@
 
 ---
 
+### 🔖 Patch 1.0.9 — 7 Mei 2026 (Refactor Navbar, Telemetri Desktop & KYC Warga - Tahap 5-6)
+
+#### 📱 Perbaikan Mobile App (SiagaKita Warga)
+- **Navbar Riwayat**: Menggantikan tab "Panduan" di *bottom navigation bar* dengan tab "Riwayat" (`ReportHistoryScreen`) agar riwayat SOS dan laporan dapat diakses langsung tanpa harus masuk ke Profil terlebih dahulu.
+- **KYC Screen**: Membuat layar baru `kyc_screen.dart` untuk warga mengajukan verifikasi identitas NIK. Fitur meliputi:
+  - Upload foto KTP (kamera / galeri) dan selfie (opsional) menggunakan `image_picker`.
+  - Status verification banner yang menampilkan status terkini (`none` / `pending` / `approved` / `rejected`).
+  - Form validasi NIK 16 digit dan nama sesuai KTP.
+- **Profile KYC Tile**: Menambahkan item "Verifikasi Identitas (KYC)" di halaman Profil dengan badge indikator status (✅ approved / ⏳ pending).
+- **Lokalisasi**: Menambahkan string-string KYC dan "Riwayat" ke kamus English.
+
+#### 🖥️ Perbaikan Desktop Console (Instansi)
+- **Indikator Online/Offline Korban**: Menambahkan indikator real-time (🟢 Online / ⚫ Offline) pada panel detail dan baris daftar insiden SOS aktif. Status dihitung berdasarkan `updated_at` — korban dianggap **Online** jika lokasi diperbarui dalam 30 detik terakhir.
+- **Timestamp Lokasi Terakhir**: Menampilkan pukul terakhir lokasi berhasil dikirim pada section "📡 TELEMETRI KORBAN" di panel detail insiden.
+- **Auto-refresh**: Timer periodik 5 detik memperbarui status Online/Offline tanpa perlu memuat ulang seluruh daftar insiden.
+
+#### 🛡️ Backend & Migrasi
+- **Migrasi SQL 009** (`009_kyc_warga.sql`): Menambahkan kolom `kyc_ktp_url`, `kyc_selfie_url`, dan `nik_verification_status` (`none|pending|approved|rejected`) ke tabel `user_profiles`.
+- **API KYC Warga**: Dua endpoint baru di bawah `/api/v1/users/`:
+  - `POST /users/kyc` — Submit pengajuan verifikasi NIK (multipart: NIK, nama, foto KTP, selfie).
+  - `GET /users/kyc/status` — Cek status pengajuan KYC.
+- **Model Go**: Update `UserProfile` struct dengan field `KYCKtpURL`, `KYCSelfieURL`, `NIKVerificationStatus`.
+- **IncidentModel (Desktop)**: Menambahkan field `updatedAt` ke `IncidentModel` serta computed getter `isOnline` dan `lastUpdateLabel`.
+
+---
+
 ### 🔖 Patch 1.0.6 — 6 Mei 2026 (Perbaikan UX Izin Lokasi & GPS)
 
 #### 🚀 Peningkatan UX Darurat (Location & GPS Handling)

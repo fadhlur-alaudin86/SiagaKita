@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/connectivity_service.dart';
 import 'home_screen.dart';
-import 'guide_screen.dart';
 import 'map_screen.dart';
 import 'profile_screen.dart';
+import 'report_history_screen.dart';
 import '../relawan/relawan_main_screen.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/user_service.dart';
@@ -60,7 +60,8 @@ class _MainScreenState extends State<MainScreen> {
 
         final List<Widget> screens = [
           HomeScreen(accessToken: widget.accessToken, userId: widget.userId),
-          const GuideScreen(),
+          // Riwayat: tab dedicated untuk laporan & riwayat SOS
+          ReportHistoryScreen(accessToken: widget.accessToken),
           if (isRelawan) const RelawanMainScreen(),
           const MapScreen(),
           ProfileScreen(accessToken: widget.accessToken),
@@ -68,29 +69,30 @@ class _MainScreenState extends State<MainScreen> {
 
         final List<BottomNavigationBarItem> navItems = [
           BottomNavigationBarItem(
-            icon: Icon(Icons.shield_outlined),
-            activeIcon: Icon(Icons.shield),
+            icon: const Icon(Icons.shield_outlined),
+            activeIcon: const Icon(Icons.shield),
             label: 'Beranda'.tr(context),
           ),
+          // Menggantikan tab Panduan — riwayat lebih sering diakses
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined),
-            activeIcon: Icon(Icons.menu_book),
-            label: 'Panduan'.tr(context),
+            icon: const Icon(Icons.history_outlined),
+            activeIcon: const Icon(Icons.history),
+            label: 'Riwayat'.tr(context),
           ),
           if (isRelawan)
             BottomNavigationBarItem(
-              icon: Icon(Icons.radar_outlined),
-              activeIcon: Icon(Icons.radar),
+              icon: const Icon(Icons.radar_outlined),
+              activeIcon: const Icon(Icons.radar),
               label: 'Operasi'.tr(context),
             ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            activeIcon: Icon(Icons.map),
+            icon: const Icon(Icons.map_outlined),
+            activeIcon: const Icon(Icons.map),
             label: 'Map'.tr(context),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
+            icon: const Icon(Icons.person_outline),
+            activeIcon: const Icon(Icons.person),
             label: 'Profil'.tr(context),
           ),
         ];

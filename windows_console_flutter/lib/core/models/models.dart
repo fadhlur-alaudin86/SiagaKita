@@ -15,6 +15,7 @@ class IncidentModel {
   final double longitude;
   final String trustLabel; // 'verified' | 'standard' | 'unverified'
   final DateTime createdAt;
+  final DateTime updatedAt; // timestamp terakhir update lokasi
   final DateTime? resolvedAt;
 
   const IncidentModel({
@@ -30,8 +31,9 @@ class IncidentModel {
     required this.longitude,
     required this.trustLabel,
     required this.createdAt,
+    DateTime? updatedAt,
     this.resolvedAt,
-  });
+  }) : updatedAt = updatedAt ?? createdAt;
 
   factory IncidentModel.fromJson(Map<String, dynamic> json) => IncidentModel(
     // Handle kedua format: REST pakai 'id', WS payload pakai 'incident_id'
@@ -49,6 +51,9 @@ class IncidentModel {
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
         DateTime.now(),
+    updatedAt: json['updated_at'] != null
+        ? DateTime.tryParse(json['updated_at'] as String)
+        : null,
     resolvedAt: json['resolved_at'] != null
         ? DateTime.tryParse(json['resolved_at'] as String)
         : null,
@@ -59,6 +64,18 @@ class IncidentModel {
     if (diff.inMinutes < 1) return 'Baru saja';
     if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
     return '${diff.inHours} jam lalu';
+  }
+
+  /// Online jika lokasi diperbarui dalam 30 detik terakhir.
+  bool get isOnline => DateTime.now().difference(updatedAt).inSeconds <= 30;
+
+  /// Label waktu update lokasi terakhir (HH:mm:ss).
+  String get lastUpdateLabel {
+    final local = updatedAt.toLocal();
+    final h = local.hour.toString().padLeft(2, '0');
+    final m = local.minute.toString().padLeft(2, '0');
+    final s = local.second.toString().padLeft(2, '0');
+    return '$h:$m:$s';
   }
 
   String get formattedTime => DateFormat('HH:mm').format(createdAt.toLocal());

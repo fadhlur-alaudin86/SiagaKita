@@ -21,25 +21,29 @@ func (User) TableName() string { return "users" }
 // UserProfile menyimpan data lengkap akun civilian dan volunteer.
 // Row ini dibuat secara transaksional bersamaan dengan pembuatan User.
 type UserProfile struct {
-	UserID              string     `gorm:"type:uuid;primaryKey" json:"user_id"`
-	FullName            *string    `json:"full_name,omitempty"`
-	NIK                 *string    `gorm:"uniqueIndex" json:"nik,omitempty"`
-	DateOfBirth         *time.Time `json:"date_of_birth,omitempty"`
-	PhoneNumber         *string    `gorm:"uniqueIndex" json:"phone_number,omitempty"`
-	IsEmailVerified     bool       `gorm:"default:false" json:"is_email_verified"`
-	IsPhoneVerified     bool       `gorm:"default:false" json:"is_phone_verified"`
-	IsVerifiedVolunteer bool       `gorm:"default:false" json:"is_verified_volunteer"`
-	SOSStrikeCount      int        `gorm:"default:0" json:"sos_strike_count"`
-	IsSOSBanned         bool       `gorm:"default:false" json:"is_sos_banned"`
-	BannedUntil         *time.Time `json:"banned_until,omitempty"`
-	BloodType           *string    `json:"blood_type,omitempty"`
-	Allergies           *string    `json:"allergies,omitempty"`
-	MedicalConditions   *string    `json:"medical_conditions,omitempty"`
-	HeightCm            *int       `json:"height_cm,omitempty"`
-	WeightKg            *int       `json:"weight_kg,omitempty"`
-	Alamat              *string    `json:"alamat,omitempty"`
-	Bio                 *string    `json:"bio,omitempty"`
-	UpdatedAt           time.Time  `json:"updated_at"`
+	UserID                string     `gorm:"type:uuid;primaryKey" json:"user_id"`
+	FullName              *string    `json:"full_name,omitempty"`
+	NIK                   *string    `gorm:"uniqueIndex" json:"nik,omitempty"`
+	DateOfBirth           *time.Time `json:"date_of_birth,omitempty"`
+	PhoneNumber           *string    `gorm:"uniqueIndex" json:"phone_number,omitempty"`
+	IsEmailVerified       bool       `gorm:"default:false" json:"is_email_verified"`
+	IsPhoneVerified       bool       `gorm:"default:false" json:"is_phone_verified"`
+	IsVerifiedVolunteer   bool       `gorm:"default:false" json:"is_verified_volunteer"`
+	SOSStrikeCount        int        `gorm:"default:0" json:"sos_strike_count"`
+	IsSOSBanned           bool       `gorm:"default:false" json:"is_sos_banned"`
+	BannedUntil           *time.Time `json:"banned_until,omitempty"`
+	BloodType             *string    `json:"blood_type,omitempty"`
+	Allergies             *string    `json:"allergies,omitempty"`
+	MedicalConditions     *string    `json:"medical_conditions,omitempty"`
+	HeightCm              *int       `json:"height_cm,omitempty"`
+	WeightKg              *int       `json:"weight_kg,omitempty"`
+	Alamat                *string    `json:"alamat,omitempty"`
+	Bio                   *string    `json:"bio,omitempty"`
+	// KYC Warga (NIK Verification)
+	KYCKtpURL             *string    `gorm:"column:kyc_ktp_url" json:"kyc_ktp_url,omitempty"`
+	KYCSelfieURL          *string    `gorm:"column:kyc_selfie_url" json:"kyc_selfie_url,omitempty"`
+	NIKVerificationStatus string     `gorm:"default:'none'" json:"nik_verification_status"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 }
 
 func (UserProfile) TableName() string { return "user_profiles" }
@@ -240,3 +244,31 @@ type ResendOTPRequest struct {
 	Email   string `json:"email"`
 	Context string `json:"context"` // "register", "login", "forgot_password"
 }
+
+// ─── KYC Warga (Civilian Identity Verification) ────────────────────────────────
+
+// KYCStatus adalah status verifikasi identitas NIK warga.
+// Nilainya disimpan di user_profiles sebagai nik_verification_status.
+type KYCStatus string
+
+const (
+	KYCStatusNone     KYCStatus = "none"
+	KYCStatusPending  KYCStatus = "pending"
+	KYCStatusApproved KYCStatus = "approved"
+	KYCStatusRejected KYCStatus = "rejected"
+)
+
+// SubmitKYCRequest adalah body untuk POST /users/kyc.
+// Diterima sebagai multipart/form-data karena menyertakan foto KTP dan selfie.
+type SubmitKYCRequest struct {
+	NIK      string `form:"nik"` // 16 digit NIK KTP
+	FullName string `form:"full_name"`
+}
+
+// KYCStatusResponse adalah respons GET /users/kyc/status.
+type KYCStatusResponse struct {
+	Status  KYCStatus `json:"status"`
+	NIK     *string   `json:"nik,omitempty"`
+	Message string    `json:"message"`
+}
+

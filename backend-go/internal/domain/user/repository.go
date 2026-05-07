@@ -305,3 +305,27 @@ func (r *Repository) FindPersonnelByAgencyID(agencyID string) ([]AgencyPersonnel
 	err := r.db.Where("agency_id = ?", agencyID).Find(&ps).Error
 	return ps, err
 }
+
+// ─── KYC Warga ────────────────────────────────────────────────────────────────
+
+// SubmitKYC menyimpan pengajuan verifikasi NIK & foto KTP warga.
+// Foto KTP dan selfie disimpan di kolom kyc_ktp_url dan kyc_selfie_url.
+func (r *Repository) SubmitKYC(userID, nik, fullName, ktpURL, selfieURL string) error {
+	updates := map[string]interface{}{
+		"nik":                      nik,
+		"full_name":                fullName,
+		"kyc_ktp_url":              ktpURL,
+		"kyc_selfie_url":           selfieURL,
+		"nik_verification_status":  "pending",
+		"updated_at":               time.Now(),
+	}
+	return r.db.Model(&UserProfile{}).Where("user_id = ?", userID).Updates(updates).Error
+}
+
+// GetKYCStatus mengambil status verifikasi NIK warga.
+func (r *Repository) GetKYCStatus(userID string) (*UserProfile, error) {
+	var p UserProfile
+	err := r.db.Select("user_id, nik, nik_verification_status").
+		Where("user_id = ?", userID).First(&p).Error
+	return &p, err
+}

@@ -223,3 +223,39 @@ func (h *Handler) ResendOTP(c *fiber.Ctx) error {
 	}
 	return utils.SuccessResponse(c, "Kode OTP telah dikirim ulang ke email")
 }
+
+// ─── KYC Warga ───────────────────────────────────────────────────────────────
+
+// POST /api/v1/users/kyc  [Auth required — civilian/volunteer]
+// Menerima multipart/form-data: nik, full_name, ktp (file), selfie (file)
+func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	nik := c.FormValue("nik")
+	fullName := c.FormValue("full_name")
+	if nik == "" || fullName == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "nik dan full_name wajib diisi")
+	}
+	if len(nik) != 16 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "NIK harus 16 digit")
+	}
+
+	if err := h.svc.SubmitKYC(c, userID, nik, fullName); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, fiber.Map{
+		"message": "Pengajuan verifikasi NIK berhasil dikirim. Tunggu proses verifikasi admin (1-3 hari kerja).",
+		"status":  "pending",
+	})
+}
+
+// GET /api/v1/users/kyc/status  [Auth required — civilian/volunteer]
+func (h *Handler) GetKYCStatus(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+	resp, err := h.svc.GetKYCStatus(userID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusNotFound, "Data profil tidak ditemukan")
+	}
+	return utils.SuccessResponse(c, resp)
+}
+

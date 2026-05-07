@@ -22,6 +22,7 @@ class UserModel {
   final String? birthDate; // format: DD-MM-YYYY or YYYY-MM-DD
   final String? bio;
   final String? volunteerStatus; // 'none', 'pending', 'approved'
+  final String nikVerificationStatus; // 'none', 'pending', 'approved', 'rejected'
   final String? specialization;
   final int volunteerPoints;
   final String volunteerLevel;
@@ -40,6 +41,7 @@ class UserModel {
     this.birthDate,
     this.bio,
     this.volunteerStatus,
+    this.nikVerificationStatus = 'none',
     this.specialization,
     this.volunteerPoints = 0,
     this.volunteerLevel = 'Pemula',
@@ -94,6 +96,7 @@ class UserModel {
     String? birthDate,
     String? bio,
     String? volunteerStatus,
+    String? nikVerificationStatus,
     String? specialization,
     int? volunteerPoints,
     String? volunteerLevel,
@@ -112,6 +115,8 @@ class UserModel {
       birthDate: birthDate ?? this.birthDate,
       bio: bio ?? this.bio,
       volunteerStatus: volunteerStatus ?? this.volunteerStatus,
+      nikVerificationStatus:
+          nikVerificationStatus ?? this.nikVerificationStatus,
       specialization: specialization ?? this.specialization,
       volunteerPoints: volunteerPoints ?? this.volunteerPoints,
       volunteerLevel: volunteerLevel ?? this.volunteerLevel,
@@ -207,6 +212,8 @@ class UserModel {
       birthDate: json['date_of_birth'],
       bio: json['bio'],
       volunteerStatus: json['volunteer_status'],
+      nikVerificationStatus:
+          json['nik_verification_status'] as String? ?? 'none',
       specialization: json['specialization'],
       volunteerPoints: json['volunteer_points'] ?? 0,
       volunteerLevel: json['volunteer_level'] ?? 'Pemula',
@@ -263,6 +270,7 @@ class UserModel {
       'birth_date': birthDate,
       'bio': bio,
       'volunteer_status': volunteerStatus,
+      'nik_verification_status': nikVerificationStatus,
       'specialization': specialization,
       'volunteer_points': volunteerPoints,
       'volunteer_level': volunteerLevel,
