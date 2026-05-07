@@ -112,6 +112,19 @@
 
 ---
 
+### 🔖 Patch 1.0.8 — 7 Mei 2026 (SOS Anti False-Alarm & UI Fixes - Tahap 1 & 2)
+
+#### 🛡️ Peningkatan Sistem Database & Backend
+- **Migrasi SQL 008**: Menambahkan nilai `cancel` ke enum `incident_status`, menghapus `trigger_method`, dan menambahkan kolom array `photo_paths` serta `audio_path` ke tabel `incidents` untuk keperluan bukti penanganan SOS.
+- **Locking Batal SOS**: Memodifikasi `MarkCancelled` di backend Go agar pengguna tidak dapat membatalkan insiden darurat yang sudah bersatus `handled`, `resolved`, atau `false_alarm`. Pembatalan dari sisi masyarakat kini menggunakan status `cancel`.
+- **API Bukti SOS (Evidence)**: Membuat endpoint `POST /api/v1/incidents/:id/evidence` dengan tipe `multipart/form-data` untuk memfasilitasi pengambilan bukti lingkungan korban yang terjadi secara otomatis saat masuk fase penyiaran darurat (*broadcasting*).
+
+#### 📱 Perbaikan Mobile App
+- **Panggilan Darurat Langsung**: Menambahkan blok `<queries>` untuk skema `tel` pada AndroidManifest.xml guna memperbaiki tombol "Telepon 112" yang sebelumnya tertahan oleh restriksi privasi Android terbaru.
+- **Penyempurnaan Bahasa UI**: Melokalisasi sisa-sisa string darurat yang muncul dalam format Bahasa Inggris di dialog konfirmasi batal, teks "SOS AKTIF", dan notifikasi peringatan.
+
+---
+
 ### 🔖 Patch 1.0.6 — 6 Mei 2026 (Perbaikan UX Izin Lokasi & GPS)
 
 #### 🚀 Peningkatan UX Darurat (Location & GPS Handling)

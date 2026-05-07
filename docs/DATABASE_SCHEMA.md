@@ -78,11 +78,12 @@ Output yang diharapkan di akhir:
 
 ### `incident_status`
 ```sql
-'grace_period'   -- Jeda 30 detik sebelum broadcast
+'grace_period'   -- Jeda 10 detik sebelum broadcast
 'broadcasting'   -- SOS aktif, disiarkan ke semua responder
 'handled'        -- Ada responder yang menerima
 'resolved'       -- Insiden selesai
 'false_alarm'    -- Ditandai false alarm oleh admin/agency
+'cancel'         -- Dibatalkan oleh warga (reporter)
 ```
 
 ### `response_status`
@@ -237,7 +238,8 @@ CREATE TABLE public.incidents (
     urgency_level        varchar(10) DEFAULT 'unknown',
     reporter_trust_label varchar(20) DEFAULT 'standard',  -- 'verified'|'standard'|'unverified'
     address_detail       text,
-    trigger_method       varchar(20) DEFAULT 'timeout',   -- 'user'|'timeout'
+    photo_paths          text[] DEFAULT '{}',             -- Bukti foto (diambil otomatis)
+    audio_path           text,                            -- Bukti audio 5 detik
     created_at           timestamptz DEFAULT now() NOT NULL,
     updated_at           timestamptz DEFAULT now(),
     resolved_at          timestamptz
@@ -442,7 +444,9 @@ Untuk audit trail — jika ada laporan penyalahgunaan, data historis bisa dipuli
 | v2 (patch manual) | Apr 2026 | + kolom `trigger_method` di incidents, beberapa kolom nullable |
 | **v3** (`003_schema_v3.sql`) | **1 Mei 2026** | **Slim users, + user_profiles, + admin_profiles, ENUM baru (superadmin/agency/agency_personnel), agencies + account_id, hapus agency_responder** |
 | v4 (`004_add_agency_location.sql`) | 1 Mei 2026 | + `latitude` dan `longitude` di tabel `agencies` |
-| **v5** (`005_reports_v2.sql`) | **3 Mei 2026** | **Upgrade `incident_reports`: ganti `photo_url`/`audio_url` (single) → `photo_paths TEXT[]`/`audio_path`, ganti `urgency VARCHAR` → `urgency_level SMALLINT`, status default `received` (dari `pending`)** |
+| v5 (`005_reports_v2.sql`) | 3 Mei 2026 | Upgrade `incident_reports` ke v2 (array foto, urgency level) |
+| v6 & v7 | Mei 2026 | Minor patch (blood_type, user_profiles bio, disaster category) |
+| **v8** (`008_incident_enhancements.sql`) | **7 Mei 2026** | **Menambahkan status `cancel`, menghapus `trigger_method`, menambahkan kolom `photo_paths` dan `audio_path` ke `incidents`** |
 
 ---
 
