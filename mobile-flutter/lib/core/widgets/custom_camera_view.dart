@@ -91,48 +91,12 @@ class _CustomCameraViewState extends State<CustomCameraView> {
         titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18),
       ),
       extendBodyBehindAppBar: true,
-      body: Stack(
-        fit: StackFit.expand,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Camera Preview
-          CameraPreview(_controller!),
-
-          // Overlay (Oval untuk wajah)
-          ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              Colors.black.withValues(alpha: 0.6),
-              BlendMode.srcOut,
-            ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                    backgroundBlendMode: BlendMode.dstOut,
-                  ),
-                ),
-                Center(
-                  child: Container(
-                    width: size.width * 0.7,
-                    height: size.width * 0.9, // Rasio wajah
-                    decoration: BoxDecoration(
-                      color: Colors.white, // Membuat oval tembus pandang
-                      borderRadius: BorderRadius.all(
-                        Radius.elliptical(size.width * 0.35, size.width * 0.45),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           // Instruksi Text
-          Positioned(
-            top: 100,
-            left: 0,
-            right: 0,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 24, left: 24, right: 24),
             child: Text(
               'Posisikan wajah Anda di dalam area oval\ndan pastikan pencahayaan cukup',
               textAlign: TextAlign.center,
@@ -149,11 +113,62 @@ class _CustomCameraViewState extends State<CustomCameraView> {
             ),
           ),
 
+          // Camera Preview (1:1 Aspect Ratio)
+          Center(
+            child: ClipRect(
+              child: SizedBox(
+                width: size.width,
+                height: size.width,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: _controller!.value.previewSize?.height ?? 1,
+                        height: _controller!.value.previewSize?.width ?? 1,
+                        child: CameraPreview(_controller!),
+                      ),
+                    ),
+                    // Overlay (Oval untuk wajah)
+                    ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        Colors.black.withValues(alpha: 0.6),
+                        BlendMode.srcOut,
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.black,
+                              backgroundBlendMode: BlendMode.dstOut,
+                            ),
+                          ),
+                          Center(
+                            child: Container(
+                              width: size.width * 0.7,
+                              height: size.width * 0.85, // Rasio wajah
+                              decoration: BoxDecoration(
+                                color: Colors.white, // Membuat oval tembus pandang
+                                borderRadius: BorderRadius.all(
+                                  Radius.elliptical(size.width * 0.35, size.width * 0.425),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           // Tombol Capture
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
             child: Center(
               child: GestureDetector(
                 onTap: _takePicture,
@@ -184,3 +199,4 @@ class _CustomCameraViewState extends State<CustomCameraView> {
     );
   }
 }
+

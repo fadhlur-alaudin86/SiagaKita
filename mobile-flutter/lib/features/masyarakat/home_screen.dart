@@ -693,9 +693,8 @@ class _HomeScreenState extends State<HomeScreen>
     // Hentikan retry loop jika masih berjalan
     _sosRetryTimer?.cancel();
 
-    if (_activeIncident == null) return;
-
-    final targetId = _activeIncident!.incidentId;
+    final targetId = _activeIncident?.incidentId ?? _pendingIncidentId;
+    if (targetId == null) return;
 
     if (_sosUploadStatus == 'sending') {
       _cancelledLocalId = targetId;
@@ -739,6 +738,7 @@ class _HomeScreenState extends State<HomeScreen>
     _stopLocationUpdates();
     setState(() {
       _activeIncident = null;
+      _pendingIncidentId = null;
       _sosPhase = 'idle';
       _sosUploadStatus = 'idle';
       _tapCount = 0;
