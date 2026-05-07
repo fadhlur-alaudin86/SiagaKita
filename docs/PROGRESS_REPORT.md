@@ -147,7 +147,28 @@
 - **Auto-refresh**: Timer periodik 5 detik memperbarui status Online/Offline tanpa perlu memuat ulang seluruh daftar insiden.
 
 #### 🛡️ Backend & Migrasi
-- **Migrasi SQL 009** (`009_kyc_warga.sql`): Menambahkan kolom `kyc_ktp_url`, `kyc_selfie_url`, dan `nik_verification_status` (`none|pending|approved|rejected`) ke tabel `user_profiles`.
+- **Migrasi SQL 009** (`009_kyc_warga.sql`): Menambahkan kolom `kyc_ktp_url`, `profile_photo_url`, dan `nik_verification_status` (`none|pending|approved|rejected`) ke tabel `user_profiles`.
+
+---
+
+### 🔖 Patch 1.0.10 — 7 Mei 2026 (Refactor KYC, Profile & Volunteer)
+
+#### 📱 Perbaikan Mobile App (SiagaKita Warga)
+- **KYC & Foto Profil**: Memperbarui alur KYC. Foto KTP tetap wajib di-upload, namun porsi Selfie kini menggunakan widget in-app camera dan foto selfie tersebut otomatis dijadikan sebagai Foto Profil di dalam aplikasi.
+- **In-App Camera**: Membuat widget `CustomCameraView` dengan overlay wajah berbentuk oval (khusus kamera depan) untuk KYC. Ini juga mengurangi ukuran/resolusi file sebelum di-upload ke server.
+- **Navigasi Utama**: Mengembalikan tab "Panduan" ke urutan kedua *bottom navigation bar*, sehingga kini memiliki 5 tab menu.
+- **Profile Screen**: 
+  - Avatar profil menggunakan foto dari KYC.
+  - Menampilkan informasi NIK di daftar info pribadi.
+  - Badge KYC dipindah ke bawah nama pengguna dan dapat diklik untuk menuju layar verifikasi.
+- **Pendaftaran Relawan**: Merombak layar `VolunteerRegistrationScreen`:
+  - Menambahkan pengecekan *prerequisite* awal (NIK, nama, tgl lahir, nomor HP wajib terisi).
+  - Mengubah spesialisasi relawan menjadi *multiple-selection* via Checkboxes.
+  - Mewajibkan upload sertifikat untuk setiap spesialisasi yang dipilih.
+
+#### 🛡️ Backend & Migrasi
+- **Update Profil Schema**: Mengubah implementasi backend (DTO, repository, service) untuk menggunakan `kyc_ktp_url` untuk dokumen KTP, dan `profile_photo_url` untuk selfie wajah.
+- **Fix Folder Upload**: Menambahkan pemanggilan `os.MkdirAll` di `SubmitKYC` agar server Go dapat membuat folder `/uploads/kyc` secara otomatis bila belum ada.
 - **API KYC Warga**: Dua endpoint baru di bawah `/api/v1/users/`:
   - `POST /users/kyc` — Submit pengajuan verifikasi NIK (multipart: NIK, nama, foto KTP, selfie).
   - `GET /users/kyc/status` — Cek status pengajuan KYC.

@@ -6,9 +6,10 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/localization/app_localization.dart';
 import '../../core/services/kyc_service.dart';
+import '../../core/widgets/custom_camera_view.dart';
 
 /// KycScreen memungkinkan warga mengajukan verifikasi identitas NIK.
-/// Pengguna perlu mengisi NIK 16 digit, nama lengkap, foto KTP, dan selfie.
+/// Pengguna perlu mengisi NIK 16 digit, nama lengkap, foto KTP, dan foto wajah (selfie).
 ///
 /// Setelah submit berhasil, status menjadi 'pending' dan admin verifikasi
 /// dalam 1-3 hari kerja.
@@ -63,6 +64,22 @@ class _KycScreenState extends State<KycScreen> {
     }
   }
 
+  void _takeSelfie() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomCameraView(
+          title: 'Ambil Foto Profil (Selfie)'.tr(context),
+          onPictureTaken: (file) {
+            if (mounted) {
+              setState(() => _selfiePhoto = File(file.path));
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickKTP() async {
     final img = await ImagePicker().pickImage(
       source: ImageSource.camera,
@@ -83,21 +100,14 @@ class _KycScreenState extends State<KycScreen> {
     }
   }
 
-  Future<void> _takeSelfie() async {
-    final img = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      preferredCameraDevice: CameraDevice.front,
-      imageQuality: 80,
-    );
-    if (img != null && mounted) {
-      setState(() => _selfiePhoto = File(img.path));
-    }
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_ktpPhoto == null) {
       _showSnack('Foto KTP wajib dilampirkan'.tr(context), Colors.orange);
+      return;
+    }
+    if (_selfiePhoto == null) {
+      _showSnack('Foto profil (selfie) wajib dilampirkan'.tr(context), Colors.orange);
       return;
     }
 
@@ -108,7 +118,7 @@ class _KycScreenState extends State<KycScreen> {
         nik: _nikCtrl.text.trim(),
         fullName: _nameCtrl.text.trim(),
         ktpPhoto: _ktpPhoto!,
-        selfiePhoto: _selfiePhoto,
+        selfiePhoto: _selfiePhoto!,
       );
       if (mounted) {
         setState(() {
@@ -276,8 +286,8 @@ class _KycScreenState extends State<KycScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Verifikasi NIK meningkatkan kepercayaan responden terhadap laporan darurat Anda '
-            'dan membantu memastikan bantuan cepat sampai ke lokasi yang tepat.',
+            'Verifikasi NIK dan wajah meningkatkan kepercayaan responden terhadap laporan darurat Anda '
+            'dan akan digunakan sebagai foto profil resmi Anda di aplikasi.',
             style: TextStyle(
               color: textColor.withValues(alpha: 0.7),
               fontSize: 13,
@@ -286,7 +296,7 @@ class _KycScreenState extends State<KycScreen> {
           const SizedBox(height: 8),
           Text(
             '• Data diproses dalam 1-3 hari kerja\n'
-            '• Foto KTP tidak dibagikan ke pihak ketiga\n'
+            '• Wajah harus terlihat jelas tanpa aksesoris penutup\n'
             '• NIK terenkripsi dan aman',
             style: TextStyle(
               color: textColor.withValues(alpha: 0.6),
@@ -383,11 +393,11 @@ class _KycScreenState extends State<KycScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Selfie (opsional)
+          // Selfie (wajib dan ganti foto profil)
           Text(
-            'Selfie dengan KTP (opsional)'.tr(context),
+            'Foto Profil (Selfie)'.tr(context),
             style: TextStyle(
-              color: textColor.withValues(alpha: 0.7),
+              color: textColor,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
@@ -395,7 +405,7 @@ class _KycScreenState extends State<KycScreen> {
           const SizedBox(height: 8),
           _buildPhotoSelector(
             label: _selfiePhoto == null
-                ? 'Ambil Selfie'.tr(context)
+                ? 'Ambil Selfie Wajah'.tr(context)
                 : 'Selfie terpilih ✓'.tr(context),
             photo: _selfiePhoto,
             color: _selfiePhoto != null ? Colors.green : Colors.blueGrey,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"siagakita-backend/internal/config"
@@ -14,6 +15,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
+
 
 // Service contains the business logic for the user domain.
 type Service struct {
@@ -307,12 +309,17 @@ func (s *Service) ResendOTP(ctx context.Context, email, otpContext string) error
 
 // ─── KYC Warga ────────────────────────────────────────────────────────────────
 
-// SubmitKYC memproses pengajuan verifikasi NIK warga: upload foto KTP & selfie,
-// lalu simpan URL dan set status menjadi 'pending'.
+// SubmitKYC memproses pengajuan verifikasi NIK warga.
+// Warga perlu mengirimkan foto KTP dan selfie (sebagai foto profil).
 func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
 	uploadDir := s.cfg.UploadDir + "/kyc"
 
-	// Upload foto KTP
+	// Pastikan folder upload ada — cegah error jika belum dibuat
+	if err := os.MkdirAll("."+uploadDir, os.ModePerm); err != nil {
+		return fmt.Errorf("gagal membuat folder upload: %w", err)
+	}
+
+	// Upload foto KTP (wajib)
 	ktpFile, err := c.FormFile("ktp")
 	if err != nil {
 		return errors.New("foto KTP wajib dilampirkan")
@@ -323,19 +330,18 @@ func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
 		return fmt.Errorf("gagal menyimpan foto KTP: %w", err)
 	}
 
-	// Upload selfie (opsional tapi direkomendasikan)
-	selfieURL := ""
+	// Upload selfie (wajib) — sekaligus digunakan sebagai foto profil
 	selfieFile, err := c.FormFile("selfie")
-	if err == nil {
-		selfieExt := filepath.Ext(selfieFile.Filename)
-		selfiePath := uploadDir + "/" + userID + "_selfie" + selfieExt
-		if err := c.SaveFile(selfieFile, "."+selfiePath); err != nil {
-			return fmt.Errorf("gagal menyimpan selfie: %w", err)
-		}
-		selfieURL = selfiePath
+	if err != nil {
+		return errors.New("foto selfie wajib dilampirkan untuk verifikasi identitas")
+	}
+	selfieExt := filepath.Ext(selfieFile.Filename)
+	photoPath := uploadDir + "/" + userID + "_selfie" + selfieExt
+	if err := c.SaveFile(selfieFile, "."+photoPath); err != nil {
+		return fmt.Errorf("gagal menyimpan foto selfie: %w", err)
 	}
 
-	return s.repo.SubmitKYC(userID, nik, fullName, ktpPath, selfieURL)
+	return s.repo.SubmitKYC(userID, nik, fullName, ktpPath, photoPath)
 }
 
 // GetKYCStatus mengembalikan status verifikasi NIK warga.
@@ -351,8 +357,9 @@ func (s *Service) GetKYCStatus(userID string) (*KYCStatusResponse, error) {
 		"rejected": "Pengajuan ditolak. Silakan ajukan ulang dengan foto yang lebih jelas.",
 	}[profile.NIKVerificationStatus]
 	return &KYCStatusResponse{
-		Status:  KYCStatus(profile.NIKVerificationStatus),
-		NIK:     profile.NIK,
-		Message: msg,
+		Status:          KYCStatus(profile.NIKVerificationStatus),
+		NIK:             profile.NIK,
+		ProfilePhotoURL: profile.ProfilePhotoURL,
+		Message:         msg,
 	}, nil
 }

@@ -128,27 +128,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.blue.shade900.withValues(alpha: 0.3)
-                            : Colors.blue.shade50,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: cardColor, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                    // Avatar — gunakan foto profil dari KYC jika tersedia
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              KycScreen(accessToken: widget.accessToken),
+                        ),
                       ),
-                      child: Icon(
-                        Icons.person,
-                        size: 40,
-                        color: primaryTextColor,
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.blue.shade900.withValues(alpha: 0.3)
+                              : Colors.blue.shade50,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: cardColor, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: user.profilePhotoUrl != null
+                            ? Image.network(
+                                'http://139.59.99.230:8080${user.profilePhotoUrl}',
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: primaryTextColor,
+                                ),
+                              )
+                            : Icon(
+                                Icons.person,
+                                size: 40,
+                                color: primaryTextColor,
+                              ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -186,15 +207,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             )
                           else
                             GestureDetector(
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Fitur verifikasi NIK akan segera hadir.',
-                                    ),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => KycScreen(
+                                    accessToken: widget.accessToken,
                                   ),
-                                );
-                              },
+                                ),
+                              ),
                               child: Container(
                                 margin: const EdgeInsets.only(top: 4),
                                 padding: const EdgeInsets.symmetric(
@@ -202,26 +222,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.orange.withValues(alpha: 0.12),
+                                  color:
+                                      (user.nikVerificationStatus == 'approved'
+                                              ? Colors.green
+                                              : Colors.orange)
+                                          .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: Colors.orange.withValues(alpha: 0.5),
+                                    color:
+                                        (user.nikVerificationStatus ==
+                                                    'approved'
+                                                ? Colors.green
+                                                : Colors.orange)
+                                            .withValues(alpha: 0.5),
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      Icons.verified_user_outlined,
+                                      user.nikVerificationStatus == 'approved'
+                                          ? Icons.verified_user
+                                          : Icons.verified_user_outlined,
                                       size: 13,
-                                      color: Colors.orange,
+                                      color:
+                                          user.nikVerificationStatus ==
+                                              'approved'
+                                          ? Colors.green
+                                          : Colors.orange,
                                     ),
-                                    SizedBox(width: 4),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      'Verifikasi Identitas (NIK)',
+                                      user.nikVerificationStatus == 'approved'
+                                          ? 'Terverifikasi'.tr(context)
+                                          : 'Verifikasi Identitas (NIK)'.tr(
+                                              context,
+                                            ),
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.orange,
+                                        color:
+                                            user.nikVerificationStatus ==
+                                                'approved'
+                                            ? Colors.green
+                                            : Colors.orange,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -260,6 +303,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
+                      // NIK (hanya tampil jika sudah ada)
+                      if (user.nik != null && user.nik!.isNotEmpty)
+                        ListTile(
+                          leading: Icon(
+                            Icons.badge_outlined,
+                            color: primaryTextColor,
+                          ),
+                          title: Text(
+                            'NIK'.tr(context),
+                            style: TextStyle(fontSize: 12, color: hintColor),
+                          ),
+                          subtitle: Row(
+                            children: [
+                              Text(
+                                user.nik!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: secondaryTextColor,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              if (user.nikVerificationStatus == 'approved') ...[
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.verified,
+                                  size: 14,
+                                  color: Colors.green,
+                                ),
+                              ] else if (user.nikVerificationStatus ==
+                                  'pending') ...[
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.hourglass_top,
+                                  size: 14,
+                                  color: Colors.orange,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      if (user.nik != null && user.nik!.isNotEmpty)
+                        Divider(
+                          height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: isDark
+                              ? Colors.grey.withValues(alpha: 0.2)
+                              : Colors.grey.shade200,
+                        ),
                       ListTile(
                         leading: Icon(Icons.email, color: primaryTextColor),
                         title: Text(
@@ -657,48 +750,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
-                      // KYC: Verifikasi Identitas NIK
-                      ListTile(
-                        leading: Icon(Icons.verified_user_outlined,
-                            color: primaryTextColor),
-                        title: Text(
-                          'Verifikasi Identitas (KYC)'.tr(context),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: primaryTextColor,
-                          ),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (user.nikVerificationStatus == 'approved')
-                              const Icon(Icons.verified,
-                                  color: Colors.green, size: 16),
-                            if (user.nikVerificationStatus == 'pending')
-                              const Icon(Icons.hourglass_top,
-                                  color: Colors.orange, size: 16),
-                            const SizedBox(width: 4),
-                            Icon(Icons.chevron_right, color: hintColor),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  KycScreen(accessToken: widget.accessToken),
-                            ),
-                          );
-                        },
-                      ),
-                      Divider(
-                        height: 1,
-                        indent: 16,
-                        endIndent: 16,
-                        color: isDark
-                            ? Colors.grey.withValues(alpha: 0.2)
-                            : Colors.grey.shade200,
-                      ),
                       ListTile(
                         leading: Icon(Icons.settings, color: primaryTextColor),
                         title: Text(

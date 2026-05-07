@@ -15,21 +15,96 @@ class _VolunteerRegistrationScreenState
     extends State<VolunteerRegistrationScreen> {
   final _expCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  String? _selectedSpecialization;
 
-  bool _hasMockKtp = false;
-  bool _hasMockSertifikat = false;
+  final List<String> _availableSpecs = [
+    'Medis & First Aid',
+    'Evakuasi & SAR',
+    'Logistik & Dapur Umum',
+    'Komunikasi & Operator',
+  ];
+
+  final Map<String, bool> _selectedSpecs = {};
+  final Map<String, bool> _uploadedCerts = {};
+
   bool _acceptedTerms = false;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    for (var spec in _availableSpecs) {
+      _selectedSpecs[spec] = false;
+      _uploadedCerts[spec] = false;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPrerequisites();
+    });
+  }
+
+  void _checkPrerequisites() {
+    final user = UserModel.currentUser.value;
+    List<String> missing = [];
+
+    if (user.nikVerificationStatus != 'approved') {
+      missing.add('Verifikasi NIK (KYC)');
+    }
+    if (user.name.trim().isEmpty) missing.add('Nama Lengkap');
+    if (user.birthDate == null || user.birthDate!.isEmpty) {
+      missing.add('Tanggal Lahir');
+    }
+    if (user.phoneNumber == null || user.phoneNumber!.isEmpty) {
+      missing.add('Nomor Telepon');
+    }
+
+    if (missing.isNotEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: Text('Persyaratan Belum Lengkap'.tr(context)),
+          content: Text(
+            'Untuk mendaftar sebagai relawan, lengkapi data profil berikut:\n\n'
+                    .tr(context) +
+                missing.map((e) => '• $e').join('\n'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context); // Kembali ke profil
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_hasMockKtp || !_hasMockSertifikat) {
+    final hasAtLeastOneSpec = _selectedSpecs.values.any((v) => v);
+    if (!hasAtLeastOneSpec) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pilih minimal satu spesialisasi'.tr(context))),
+      );
+      return;
+    }
+
+    bool missingCert = false;
+    _selectedSpecs.forEach((spec, isSelected) {
+      if (isSelected && !_uploadedCerts[spec]!) {
+        missingCert = true;
+      }
+    });
+
+    if (missingCert) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Anda wajib mengunggah KTP dan Sertifikat Keahlian (atau simulasikan dengan menekan kotak upload)'
+            'Harap unggah sertifikat untuk setiap spesialisasi yang dipilih'
                 .tr(context),
           ),
         ),
@@ -52,10 +127,15 @@ class _VolunteerRegistrationScreenState
 
     // Simulate API Call to Laravel Backend
     Timer(const Duration(seconds: 2), () {
+      final selectedList = _selectedSpecs.entries
+          .where((e) => e.value)
+          .map((e) => e.key)
+          .toList();
+
       final user = UserModel.currentUser.value;
       UserModel.currentUser.value = user.copyWith(
         volunteerStatus: 'pending',
-        specialization: _selectedSpecialization,
+        specialization: selectedList.join(', '),
       );
 
       if (mounted) {
@@ -93,7 +173,8 @@ class _VolunteerRegistrationScreenState
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        margin: const EdgeInsets.only(top: 8, bottom: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
           color: isUploaded ? Colors.green.withValues(alpha: 0.1) : idleBg,
           border: Border.all(
@@ -101,37 +182,45 @@ class _VolunteerRegistrationScreenState
             width: 2,
             style: BorderStyle.solid,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Column(
+        child: Row(
           children: [
             Icon(
               isUploaded ? Icons.check_circle : Icons.upload_file,
               color: isUploaded
                   ? Colors.green
                   : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-              size: 32,
+              size: 28,
             ),
-            const SizedBox(height: 8),
-            Text(
-              isUploaded
-                  ? '$title ${'Tersimpan'.tr(context)}'
-                  : '${'Unggah'.tr(context)} $title',
-              style: TextStyle(
-                color: isUploaded
-                    ? Colors.green
-                    : (isDark ? Colors.white70 : Colors.grey.shade800),
-                fontWeight: FontWeight.bold,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isUploaded
+                        ? 'Sertifikat ${'Tersimpan'.tr(context)}'
+                        : '${'Unggah Sertifikat'.tr(context)} $title',
+                    style: TextStyle(
+                      color: isUploaded
+                          ? Colors.green
+                          : (isDark ? Colors.white70 : Colors.grey.shade800),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (!isUploaded)
+                    Text(
+                      '(Tekan untuk simulasi unggah file)'.tr(context),
+                      style: TextStyle(
+                        color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
               ),
             ),
-            if (!isUploaded)
-              Text(
-                '(Tekan untuk simulasi unggah file)'.tr(context),
-                style: TextStyle(
-                  color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
-                  fontSize: 10,
-                ),
-              ),
           ],
         ),
       ),
@@ -187,7 +276,7 @@ class _VolunteerRegistrationScreenState
               const SizedBox(height: 32),
 
               Text(
-                'PILIHAN SPESIALISASI'.tr(context),
+                'PILIHAN SPESIALISASI & SERTIFIKAT'.tr(context),
                 style: TextStyle(
                   color: primaryTextColor,
                   fontWeight: FontWeight.bold,
@@ -195,32 +284,31 @@ class _VolunteerRegistrationScreenState
                 ),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedSpecialization,
-                decoration: InputDecoration(
-                  labelText: 'Keahlian Relawan'.tr(context),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items:
-                    [
-                          'Medis & First Aid',
-                          'Evakuasi & SAR',
-                          'Logistik & Dapur Umum',
-                          'Komunikasi & Operator',
-                        ]
-                        .map(
-                          (val) =>
-                              DropdownMenuItem(value: val, child: Text(val)),
-                        )
-                        .toList(),
-                onChanged: (val) {
-                  setState(() => _selectedSpecialization = val);
-                },
-                validator: (v) =>
-                    v == null ? 'Wajib memilih spesialisasi'.tr(context) : null,
-              ),
+              
+              ..._availableSpecs.map((spec) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CheckboxListTile(
+                      title: Text(spec, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      value: _selectedSpecs[spec],
+                      activeColor: Colors.orange,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedSpecs[spec] = val ?? false;
+                          if (!val!) _uploadedCerts[spec] = false;
+                        });
+                      },
+                    ),
+                    if (_selectedSpecs[spec]!)
+                      _buildMockUploadBox(spec, _uploadedCerts[spec]!, () {
+                        setState(() => _uploadedCerts[spec] = true);
+                      }, context),
+                  ],
+                );
+              }),
 
               const SizedBox(height: 32),
 
@@ -255,29 +343,6 @@ class _VolunteerRegistrationScreenState
                 validator: (v) => (v == null || v.isEmpty)
                     ? 'Harap uraikan pengalaman Anda'.tr(context)
                     : null,
-              ),
-
-              const SizedBox(height: 32),
-              Text(
-                'VERIFIKASI DOKUMEN'.tr(context),
-                style: TextStyle(
-                  color: primaryTextColor,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildMockUploadBox('Foto KTP'.tr(context), _hasMockKtp, () {
-                setState(() => _hasMockKtp = true);
-              }, context),
-              const SizedBox(height: 16),
-              _buildMockUploadBox(
-                'Sertifikat Keahlian'.tr(context),
-                _hasMockSertifikat,
-                () {
-                  setState(() => _hasMockSertifikat = true);
-                },
-                context,
               ),
 
               const SizedBox(height: 32),

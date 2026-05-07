@@ -135,9 +135,9 @@ CREATE TABLE public.user_profiles (
     height_cm             int CHECK (height_cm > 0),
     weight_kg             int CHECK (weight_kg > 0),
     alamat                text,
-    -- KYC Warga (ditambahkan v9)
+    -- KYC Warga & Foto Profil (ditambahkan v9)
     kyc_ktp_url              text,          -- Path foto KTP yang diunggah
-    kyc_selfie_url           text,          -- Path selfie dengan KTP (opsional)
+    profile_photo_url        text,          -- Path selfie (berfungsi sbg verifikasi & foto profil)
     nik_verification_status  varchar(20) DEFAULT 'none'
         CHECK (nik_verification_status IN ('none', 'pending', 'approved', 'rejected')),
     updated_at            timestamptz DEFAULT now()

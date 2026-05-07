@@ -29,13 +29,13 @@ class KycService {
 
   // ─── POST /users/kyc ──────────────────────────────────────────────────────
 
-  /// Mengirim pengajuan KYC: NIK, nama, foto KTP, dan selfie opsional.
+  /// Mengirim pengajuan KYC: NIK, nama, foto KTP, dan foto profil/selfie.
   static Future<void> submitKYC({
     required String accessToken,
     required String nik,
     required String fullName,
     required File ktpPhoto,
-    File? selfiePhoto,
+    required File selfiePhoto,
   }) async {
     final uri = Uri.parse('$_baseUrl/users/kyc');
     final req = http.MultipartRequest('POST', uri)
@@ -44,13 +44,10 @@ class KycService {
       ..fields['full_name'] = fullName
       ..files.add(
         await http.MultipartFile.fromPath('ktp', ktpPhoto.path),
-      );
-
-    if (selfiePhoto != null) {
-      req.files.add(
+      )
+      ..files.add(
         await http.MultipartFile.fromPath('selfie', selfiePhoto.path),
       );
-    }
 
     final streamed = await req.send().timeout(_timeout);
     final res = await http.Response.fromStream(streamed);

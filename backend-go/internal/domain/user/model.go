@@ -41,7 +41,8 @@ type UserProfile struct {
 	Bio                   *string    `json:"bio,omitempty"`
 	// KYC Warga (NIK Verification)
 	KYCKtpURL             *string    `gorm:"column:kyc_ktp_url" json:"kyc_ktp_url,omitempty"`
-	KYCSelfieURL          *string    `gorm:"column:kyc_selfie_url" json:"kyc_selfie_url,omitempty"`
+	// Selfie dari proses KYC sekaligus digunakan sebagai foto profil warga.
+	ProfilePhotoURL       *string    `gorm:"column:profile_photo_url" json:"profile_photo_url,omitempty"`
 	NIKVerificationStatus string     `gorm:"default:'none'" json:"nik_verification_status"`
 	UpdatedAt             time.Time  `json:"updated_at"`
 }
@@ -259,7 +260,8 @@ const (
 )
 
 // SubmitKYCRequest adalah body untuk POST /users/kyc.
-// Diterima sebagai multipart/form-data karena menyertakan foto KTP dan selfie.
+// Diterima sebagai multipart/form-data karena menyertakan foto KTP dan selfie warga.
+// Selfie digunakan sekaligus sebagai foto profil di halaman profil warga.
 type SubmitKYCRequest struct {
 	NIK      string `form:"nik"` // 16 digit NIK KTP
 	FullName string `form:"full_name"`
@@ -267,8 +269,9 @@ type SubmitKYCRequest struct {
 
 // KYCStatusResponse adalah respons GET /users/kyc/status.
 type KYCStatusResponse struct {
-	Status  KYCStatus `json:"status"`
-	NIK     *string   `json:"nik,omitempty"`
-	Message string    `json:"message"`
+	Status          KYCStatus `json:"status"`
+	NIK             *string   `json:"nik,omitempty"`
+	ProfilePhotoURL *string   `json:"profile_photo_url,omitempty"`
+	Message         string    `json:"message"`
 }
 

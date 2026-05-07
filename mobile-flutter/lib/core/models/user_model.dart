@@ -23,6 +23,7 @@ class UserModel {
   final String? bio;
   final String? volunteerStatus; // 'none', 'pending', 'approved'
   final String nikVerificationStatus; // 'none', 'pending', 'approved', 'rejected'
+  final String? profilePhotoUrl;      // URL foto selfie KYC (sekaligus foto profil)
   final String? specialization;
   final int volunteerPoints;
   final String volunteerLevel;
@@ -42,6 +43,7 @@ class UserModel {
     this.bio,
     this.volunteerStatus,
     this.nikVerificationStatus = 'none',
+    this.profilePhotoUrl,
     this.specialization,
     this.volunteerPoints = 0,
     this.volunteerLevel = 'Pemula',
@@ -97,6 +99,7 @@ class UserModel {
     String? bio,
     String? volunteerStatus,
     String? nikVerificationStatus,
+    String? profilePhotoUrl,
     String? specialization,
     int? volunteerPoints,
     String? volunteerLevel,
@@ -117,6 +120,7 @@ class UserModel {
       volunteerStatus: volunteerStatus ?? this.volunteerStatus,
       nikVerificationStatus:
           nikVerificationStatus ?? this.nikVerificationStatus,
+      profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
       specialization: specialization ?? this.specialization,
       volunteerPoints: volunteerPoints ?? this.volunteerPoints,
       volunteerLevel: volunteerLevel ?? this.volunteerLevel,
@@ -214,6 +218,7 @@ class UserModel {
       volunteerStatus: json['volunteer_status'],
       nikVerificationStatus:
           json['nik_verification_status'] as String? ?? 'none',
+      profilePhotoUrl: json['profile_photo_url'] as String?,
       specialization: json['specialization'],
       volunteerPoints: json['volunteer_points'] ?? 0,
       volunteerLevel: json['volunteer_level'] ?? 'Pemula',
@@ -271,6 +276,7 @@ class UserModel {
       'bio': bio,
       'volunteer_status': volunteerStatus,
       'nik_verification_status': nikVerificationStatus,
+      'profile_photo_url': profilePhotoUrl,
       'specialization': specialization,
       'volunteer_points': volunteerPoints,
       'volunteer_level': volunteerLevel,

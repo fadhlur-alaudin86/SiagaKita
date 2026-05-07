@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/connectivity_service.dart';
 import 'home_screen.dart';
+import 'guide_screen.dart';
 import 'map_screen.dart';
 import 'profile_screen.dart';
 import 'report_history_screen.dart';
@@ -60,6 +61,7 @@ class _MainScreenState extends State<MainScreen> {
 
         final List<Widget> screens = [
           HomeScreen(accessToken: widget.accessToken, userId: widget.userId),
+          const GuideScreen(),
           // Riwayat: tab dedicated untuk laporan & riwayat SOS
           ReportHistoryScreen(accessToken: widget.accessToken),
           if (isRelawan) const RelawanMainScreen(),
@@ -73,7 +75,11 @@ class _MainScreenState extends State<MainScreen> {
             activeIcon: const Icon(Icons.shield),
             label: 'Beranda'.tr(context),
           ),
-          // Menggantikan tab Panduan — riwayat lebih sering diakses
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.menu_book_outlined),
+            activeIcon: const Icon(Icons.menu_book),
+            label: 'Panduan'.tr(context),
+          ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.history_outlined),
             activeIcon: const Icon(Icons.history),
@@ -118,6 +124,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
             ),
             child: BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
               currentIndex: _currentIndex,
               onTap: (index) {
                 setState(() {
