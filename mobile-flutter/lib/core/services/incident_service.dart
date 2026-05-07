@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../constants/api_config.dart';
 
@@ -44,7 +45,6 @@ class IncidentService {
     required String accessToken,
     required double latitude,
     required double longitude,
-    String triggerMethod = 'user',
   }) async {
     final response = await _req(
       () => http.post(
@@ -53,7 +53,6 @@ class IncidentService {
         body: jsonEncode({
           'latitude': latitude,
           'longitude': longitude,
-          'trigger_method': triggerMethod,
         }),
       ),
       timeout: _sosTimeout, // SOS harus cepat
@@ -155,7 +154,41 @@ class IncidentService {
           )
           .timeout(_defaultTimeout);
     } catch (_) {
-      // Silent fail — lokasi diupdate di timer interval berikutnya (1 menit)
+      // Silent fail — lokasi diupdate di timer interval berikutnya
+    }
+  }
+
+  // ─── Upload Evidence (foto + audio pasca broadcasting) ───────────────────
+
+  /// Mengirimkan foto kamera depan dan rekaman audio 5 detik sebagai bukti SOS.
+  /// Dipanggil secara background segera setelah insiden masuk fase 'broadcasting'.
+  /// Tidak melempar exception — error diabaikan (best-effort).
+  static Future<void> uploadEvidence({
+    required String accessToken,
+    required String incidentId,
+    File? photoFile,
+    File? audioFile,
+  }) async {
+    if (photoFile == null && audioFile == null) return;
+    try {
+      final uri = Uri.parse('$_baseUrl/incidents/$incidentId/evidence');
+      final request = http.MultipartRequest('POST', uri)
+        ..headers['Authorization'] = 'Bearer $accessToken';
+
+      if (photoFile != null && photoFile.existsSync()) {
+        request.files.add(
+          await http.MultipartFile.fromPath('photo', photoFile.path),
+        );
+      }
+      if (audioFile != null && audioFile.existsSync()) {
+        request.files.add(
+          await http.MultipartFile.fromPath('audio', audioFile.path),
+        );
+      }
+
+      await request.send().timeout(const Duration(seconds: 30));
+    } catch (_) {
+      // Best-effort — jika gagal, abaikan (tidak mempengaruhi SOS aktif)
     }
   }
 
@@ -262,6 +295,7 @@ class ActiveIncident {
   final double latitude;
   final double longitude;
   final String createdAt;
+  final String updatedAt; // timestamp terakhir update lokasi dari server
   final String reporterTrustLabel;
 
   const ActiveIncident({
@@ -271,16 +305,18 @@ class ActiveIncident {
     required this.latitude,
     required this.longitude,
     required this.createdAt,
+    String? updatedAt,
     this.reporterTrustLabel = 'standard',
-  });
+  }) : updatedAt = updatedAt ?? createdAt;
 
   factory ActiveIncident.fromJson(Map<String, dynamic> json) => ActiveIncident(
-    incidentId: json['incident_id'] as String,
+    incidentId: json['incident_id'] as String? ?? json['id'] as String,
     status: json['status'] as String,
     incidentType: json['incident_type'] as String? ?? 'unknown',
     latitude: (json['latitude'] as num).toDouble(),
     longitude: (json['longitude'] as num).toDouble(),
     createdAt: json['created_at'] as String,
+    updatedAt: json['updated_at'] as String?,
     reporterTrustLabel: json['reporter_trust_label'] as String? ?? 'standard',
   );
 }

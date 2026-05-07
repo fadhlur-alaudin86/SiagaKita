@@ -327,6 +327,9 @@ class AppLocalization {
     'Terkirim ✓': 'Sent ✓',
     'Mengirim...': 'Sending...',
     'Gagal menelpon 112:': 'Failed to call 112:',
+    'Transmitting': 'Transmitting',
+    'Signal Lost': 'Signal Lost',
+    'Next update: ': 'Next update: ',
   };
 
   static String tr(BuildContext context, String text) {

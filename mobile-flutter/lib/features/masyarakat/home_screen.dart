@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/localization/app_localization.dart';
@@ -56,6 +60,12 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _statusCheckTimer; // polling cepat (10 detik) khusus saat SOS aktif
   bool _isLoadingActiveIncident = true;
 
+  // ─── Telemetri SOS (Tahap 4) ──────────────────────────────────────────────────
+  int _nextUpdateCountdown = 10; // hitung mundur update lokasi berikutnya (detik)
+  DateTime? _lastLocationUpdate;  // timestamp lokasi terakhir berhasil diupdate
+  bool _sosTransmitting = true;   // apakah koneksi SOS dalam keadaan baik
+  Timer? _countdownTimer;         // hitung mundur 1 detik
+
   // Untuk menyimpan ID insiden lokal jika user membatalkan saat proses upload masih berlangsung
   String? _cancelledLocalId;
 
@@ -74,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen>
     _statusCheckTimer?.cancel();
     _graceTimer?.cancel();
     _sosRetryTimer?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -103,12 +114,24 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _startLocationUpdates() {
     _locationUpdateTimer?.cancel();
+    // Reset telemetri saat memulai update
+    _nextUpdateCountdown = 10;
+    _lastLocationUpdate = DateTime.now();
+    _sosTransmitting = true;
+    _startCountdownTimer();
+
     _locationUpdateTimer = Timer.periodic(const Duration(seconds: 10), (
       _,
     ) async {
       if (_activeIncident == null || !mounted) return;
 
-      // 1. Cek apakah SOS masih aktif di server (mungkin diselesaikan oleh agency)
+      // Reset countdown setiap kali timer 10 detik menyala
+      setState(() {
+        _nextUpdateCountdown = 10;
+        _sosTransmitting = true;
+      });
+
+      // 1. Cek apakah SOS masih aktif di server
       try {
         final active = await IncidentService.getActive(
           accessToken: widget.accessToken,
@@ -127,20 +150,46 @@ class _HomeScreenState extends State<HomeScreen>
           );
           return;
         }
+        // Update timestamp dari server
+        if (mounted) {
+          setState(() => _lastLocationUpdate = DateTime.now());
+        }
       } catch (_) {
-        // Jika error jaringan, biarkan saja (jangan reset UI)
+        // Jika error jaringan, tandai sebagai kehilangan sinyal sementara
+        if (mounted) setState(() => _sosTransmitting = false);
       }
 
       // 2. Jika masih aktif, update lokasi GPS ke server
       final pos = await LocationService.getCurrentPositionOrNull();
       if (pos != null && _activeIncident != null) {
-        await IncidentService.updateLocation(
-          accessToken: widget.accessToken,
-          incidentId: _activeIncident!.incidentId,
-          latitude: pos.latitude,
-          longitude: pos.longitude,
-        );
+        try {
+          await IncidentService.updateLocation(
+            accessToken: widget.accessToken,
+            incidentId: _activeIncident!.incidentId,
+            latitude: pos.latitude,
+            longitude: pos.longitude,
+          );
+          if (mounted) {
+            setState(() {
+              _lastLocationUpdate = DateTime.now();
+              _sosTransmitting = true;
+            });
+          }
+        } catch (_) {
+          if (mounted) setState(() => _sosTransmitting = false);
+        }
       }
+    });
+  }
+
+  /// Countdown timer 1 detik untuk menampilkan hitung mundur update lokasi.
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _activeIncident == null) return;
+      setState(() {
+        if (_nextUpdateCountdown > 0) _nextUpdateCountdown--;
+      });
     });
   }
 
@@ -149,6 +198,8 @@ class _HomeScreenState extends State<HomeScreen>
     _locationUpdateTimer = null;
     _statusCheckTimer?.cancel();
     _statusCheckTimer = null;
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
   }
 
   // ─── SOS Tap Logic (Send) ────────────────────────────────────────────────────
@@ -318,7 +369,6 @@ class _HomeScreenState extends State<HomeScreen>
         accessToken: widget.accessToken,
         latitude: lat,
         longitude: lng,
-        triggerMethod: triggeredBy,
       );
 
       if (!mounted) return;
@@ -428,8 +478,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _transitionToBroadcasting() {
     if (!mounted) return;
+    final incidentId = _pendingIncidentId!;
     final newIncident = ActiveIncident(
-      incidentId: _pendingIncidentId!,
+      incidentId: incidentId,
       status: 'broadcasting',
       incidentType: 'unknown',
       latitude: 0,
@@ -443,10 +494,68 @@ class _HomeScreenState extends State<HomeScreen>
       _showSOSSentBanner = true;
     });
     _startLocationUpdates();
-    _startStatusPolling(); // start fast polling setelah SOS aktif
+    _startStatusPolling();
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _showSOSSentBanner = false);
     });
+    // Tahap 3: Mulai capture bukti secara background
+    _captureAndUploadEvidence(incidentId);
+  }
+
+  // ─── Evidence Capture (Tahap 3) ────────────────────────────────────────────────
+
+  /// Mengambil 1 foto dari kamera depan dan merekam audio 5 detik secara
+  /// sepenuhnya di background (tidak ada UI kamera yang ditampilkan).
+  /// File dikirim ke server sebagai bukti situasi SOS.
+  Future<void> _captureAndUploadEvidence(String incidentId) async {
+    File? photoFile;
+    File? audioFile;
+
+    // 1. Ambil foto dari kamera depan
+    try {
+      final cameras = await availableCameras();
+      final frontCamera = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.front,
+        orElse: () => cameras.first,
+      );
+      final controller = CameraController(
+        frontCamera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      await controller.initialize();
+      final xFile = await controller.takePicture();
+      await controller.dispose();
+      photoFile = File(xFile.path);
+    } catch (_) {
+      // Kamera tidak tersedia atau ditolak — lanjutkan ke audio
+    }
+
+    // 2. Rekam audio 5 detik
+    try {
+      final dir = await getTemporaryDirectory();
+      final audioPath = '${dir.path}/sos_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final recorder = AudioRecorder();
+      if (await recorder.hasPermission()) {
+        await recorder.start(
+          const RecordConfig(encoder: AudioEncoder.aacLc),
+          path: audioPath,
+        );
+        await Future.delayed(const Duration(seconds: 5));
+        await recorder.stop();
+        audioFile = File(audioPath);
+      }
+    } catch (_) {
+      // Mikrofon tidak tersedia atau ditolak
+    }
+
+    // 3. Upload ke server (best-effort, tidak memblokir UI)
+    await IncidentService.uploadEvidence(
+      accessToken: widget.accessToken,
+      incidentId: incidentId,
+      photoFile: photoFile,
+      audioFile: audioFile,
+    );
   }
 
   // ─── Fast Status Polling (setiap 10 detik saat SOS aktif) ─────────────────
@@ -468,6 +577,8 @@ class _HomeScreenState extends State<HomeScreen>
             _sosUploadStatus = 'idle';
             _tapCount = 0;
             _cancelledLocalId = null;
+            _nextUpdateCountdown = 10;
+            _lastLocationUpdate = null;
           });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -632,6 +743,9 @@ class _HomeScreenState extends State<HomeScreen>
       _sosUploadStatus = 'idle';
       _tapCount = 0;
       _cancelledLocalId = null;
+      _nextUpdateCountdown = 10;
+      _lastLocationUpdate = null;
+      _sosTransmitting = true;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -800,27 +914,98 @@ class _HomeScreenState extends State<HomeScreen>
                           color: Colors.red.withValues(alpha: 0.4),
                         ),
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.emergency_share,
-                            color: Colors.red,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'SOS AKTIF: Lokasi diperbarui tiap 10 detik'.tr(
-                                context,
-                              ),
-                              style: const TextStyle(
+                          // Baris 1: ikon + label + indikator online
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.emergency_share,
                                 color: Colors.red,
-                                fontSize: 11,
+                                size: 18,
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'SOS AKTIF'.tr(context),
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              // Indikator Transmisi SOS (Online/Kehilangan Sinyal)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: _sosTransmitting
+                                          ? Colors.greenAccent
+                                          : Colors.grey,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _sosTransmitting
+                                        ? 'Transmitting'.tr(context)
+                                        : 'Signal Lost'.tr(context),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: _sosTransmitting
+                                          ? Colors.greenAccent
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 8),
+                              // Badge status upload
+                              _buildUploadStatusBadge(),
+                            ],
                           ),
-                          // Badge status upload
-                          _buildUploadStatusBadge(),
+                          const SizedBox(height: 6),
+                          // Baris 2: Countdown & last update
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.timer_outlined,
+                                size: 12,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Next update: ${_nextUpdateCountdown}s'
+                                    .tr(context),
+                                style: TextStyle(
+                                  color: Colors.red.withValues(alpha: 0.8),
+                                  fontSize: 10,
+                                ),
+                              ),
+                              if (_lastLocationUpdate != null) ...[
+                                const SizedBox(width: 12),
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 12,
+                                  color: Colors.red,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Last: ${_lastLocationUpdate!.hour.toString().padLeft(2, '0')}:${_lastLocationUpdate!.minute.toString().padLeft(2, '0')}:${_lastLocationUpdate!.second.toString().padLeft(2, '0')}',
+                                  style: TextStyle(
+                                    color: Colors.red.withValues(alpha: 0.8),
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ],
                       ),
                     ),
