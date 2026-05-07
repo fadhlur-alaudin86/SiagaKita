@@ -142,8 +142,7 @@ class _KycScreenState extends State<KycScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = Theme.of(context).colorScheme.primary;
     final cardColor = isDark ? const Color(0xFF162A5A) : Colors.white;
-    final bgColor =
-        isDark ? const Color(0xFF0D1B3E) : const Color(0xFFF1F5F9);
+    final bgColor = isDark ? const Color(0xFF0D1B3E) : const Color(0xFFF1F5F9);
     final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
 
     return Scaffold(
@@ -184,25 +183,25 @@ class _KycScreenState extends State<KycScreen> {
   Widget _buildStatusBanner(bool isDark) {
     final config = switch (_kycStatus) {
       'approved' => (
-          color: Colors.green,
-          icon: Icons.verified_user,
-          label: 'Terverifikasi',
-        ),
+        color: Colors.green,
+        icon: Icons.verified_user,
+        label: 'Terverifikasi',
+      ),
       'pending' => (
-          color: Colors.orange,
-          icon: Icons.hourglass_top,
-          label: 'Menunggu Verifikasi',
-        ),
+        color: Colors.orange,
+        icon: Icons.hourglass_top,
+        label: 'Menunggu Verifikasi',
+      ),
       'rejected' => (
-          color: Colors.red,
-          icon: Icons.cancel_outlined,
-          label: 'Ditolak',
-        ),
+        color: Colors.red,
+        icon: Icons.cancel_outlined,
+        label: 'Ditolak',
+      ),
       _ => (
-          color: Colors.grey,
-          icon: Icons.person_outlined,
-          label: 'Belum Diverifikasi',
-        ),
+        color: Colors.grey,
+        icon: Icons.person_outlined,
+        label: 'Belum Diverifikasi',
+      ),
     };
 
     return Container(
@@ -271,25 +270,28 @@ class _KycScreenState extends State<KycScreen> {
               const SizedBox(width: 8),
               Text(
                 'Mengapa perlu verifikasi?'.tr(context),
-                style: TextStyle(
-                  color: primary,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: primary, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Verifikasi NIK meningkatkan kepercayaan responden terhadap laporan darurat Anda '
-                'dan membantu memastikan bantuan cepat sampai ke lokasi yang tepat.',
-            style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 13),
+            'dan membantu memastikan bantuan cepat sampai ke lokasi yang tepat.',
+            style: TextStyle(
+              color: textColor.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '• Data diproses dalam 1-3 hari kerja\n'
-                '• Foto KTP tidak dibagikan ke pihak ketiga\n'
-                '• NIK terenkripsi dan aman',
-            style: TextStyle(color: textColor.withValues(alpha: 0.6), fontSize: 12),
+            '• Foto KTP tidak dibagikan ke pihak ketiga\n'
+            '• NIK terenkripsi dan aman',
+            style: TextStyle(
+              color: textColor.withValues(alpha: 0.6),
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -348,8 +350,7 @@ class _KycScreenState extends State<KycScreen> {
             controller: _nameCtrl,
             textCapitalization: TextCapitalization.words,
             style: TextStyle(color: textColor),
-            decoration:
-                _inputDecoration('Masukkan nama sesuai KTP', isDark),
+            decoration: _inputDecoration('Masukkan nama sesuai KTP', isDark),
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Nama wajib diisi';
               if (v.trim().length < 3) return 'Nama terlalu pendek';
@@ -398,7 +399,7 @@ class _KycScreenState extends State<KycScreen> {
                 : 'Selfie terpilih ✓'.tr(context),
             photo: _selfiePhoto,
             color: _selfiePhoto != null ? Colors.green : Colors.blueGrey,
-            icon: Icons.selfie,
+            icon: Icons.camera_front,
             onCamera: _takeSelfie,
             onGallery: null,
             cardColor: cardColor,
@@ -464,16 +465,16 @@ class _KycScreenState extends State<KycScreen> {
         border: Border.all(
           color: photo != null
               ? Colors.green.withValues(alpha: 0.4)
-              : (isDark
-                  ? Colors.white24
-                  : Colors.grey.shade300),
+              : (isDark ? Colors.white24 : Colors.grey.shade300),
         ),
       ),
       child: Column(
         children: [
           if (photo != null) ...[
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(11),
+              ),
               child: Image.file(
                 photo,
                 height: 160,
@@ -491,10 +492,7 @@ class _KycScreenState extends State<KycScreen> {
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(color: color, fontWeight: FontWeight.w500),
                   ),
                 ),
                 if (onGallery != null)
