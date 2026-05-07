@@ -16,7 +16,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
 // Service contains the business logic for the user domain.
 type Service struct {
 	repo   *Repository
@@ -355,7 +354,7 @@ func (s *Service) GetKYCStatus(userID string) (*KYCStatusResponse, error) {
 	msg := map[string]string{
 		"none":     "Anda belum mengajukan verifikasi NIK.",
 		"pending":  "Pengajuan sedang diproses oleh admin (1-3 hari kerja).",
-		"approved": "Identitas Anda telah terverifikasi ✅",
+		"approved": "Identitas Anda telah terverifikasi",
 		"rejected": "Pengajuan ditolak. Silakan ajukan ulang dengan foto yang lebih jelas.",
 	}[profile.NIKVerificationStatus]
 	return &KYCStatusResponse{
