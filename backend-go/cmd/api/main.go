@@ -154,6 +154,7 @@ func main() {
 	incidents.Patch("/:id/type", incidentHandler.UpdateType)
 	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)
 	incidents.Post("/:id/cancel", incidentHandler.CancelSOS)
+	incidents.Post("/:id/evidence", incidentHandler.UploadEvidence)
 	incidents.Put("/:id/location", incidentHandler.UpdateLocation)
 	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), incidentHandler.MarkFalseAlarm)
 	incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve)

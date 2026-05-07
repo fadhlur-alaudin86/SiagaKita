@@ -50,18 +50,33 @@ func (r *Repository) MarkResolved(id string) (*Incident, error) {
 	return r.FindByID(id)
 }
 
+// MarkCancelled memperbarui status insiden menjadi 'cancel' (dibatalkan user).
+// Hanya bisa dilakukan jika status masih 'grace_period' atau 'broadcasting'.
+// Status 'handled', 'resolved', 'false_alarm' terkunci — tidak bisa dibatalkan user.
 func (r *Repository) MarkCancelled(id string) error {
 	db := r.db.Model(&Incident{}).
-		Where("id = ? AND status IN (?, ?)", id, "active", "broadcasting").
-		Updates(map[string]interface{}{"status": "false_alarm", "updated_at": time.Now()})
-	
+		Where("id = ? AND status IN (?, ?)", id, "grace_period", "broadcasting").
+		Updates(map[string]interface{}{"status": "cancel", "updated_at": time.Now()})
+
 	if db.Error != nil {
 		return db.Error
 	}
 	if db.RowsAffected == 0 {
-		return errors.New("conflict: incident is not active or broadcasting")
+		return errors.New("conflict: incident cannot be cancelled at its current status")
 	}
 	return nil
+}
+
+// UploadEvidence menyimpan URL foto dan audio bukti situasi SOS pasca broadcasting.
+func (r *Repository) UploadEvidence(id string, photoPaths []string, audioPath *string) error {
+	updates := map[string]interface{}{"updated_at": time.Now()}
+	if len(photoPaths) > 0 {
+		updates["photo_paths"] = photoPaths
+	}
+	if audioPath != nil {
+		updates["audio_path"] = *audioPath
+	}
+	return r.db.Model(&Incident{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *Repository) MarkFalseAlarm(id string) error {
@@ -77,7 +92,7 @@ func (r *Repository) UpdateLocation(id string, lat, lng float64) error {
 func (r *Repository) FindActiveByReporter(reporterID string) (*Incident, error) {
 	var inc Incident
 	err := r.db.Where(
-		"reporter_id = ? AND status NOT IN ('resolved','false_alarm')", reporterID,
+		"reporter_id = ? AND status NOT IN ('resolved','false_alarm','cancel')", reporterID,
 	).Order("created_at DESC").First(&inc).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -85,11 +100,11 @@ func (r *Repository) FindActiveByReporter(reporterID string) (*Incident, error) 
 	return &inc, err
 }
 
-// FindHistoryByReporter mengembalikan daftar insiden yang sudah selesai (resolved/false_alarm) untuk reporter tertentu.
+// FindHistoryByReporter mengembalikan daftar insiden yang sudah selesai (resolved/false_alarm/cancel) untuk reporter tertentu.
 func (r *Repository) FindHistoryByReporter(reporterID string) ([]Incident, error) {
 	var incs []Incident
 	err := r.db.Where(
-		"reporter_id = ? AND status IN ('resolved','false_alarm')", reporterID,
+		"reporter_id = ? AND status IN ('resolved','false_alarm','cancel')", reporterID,
 	).Order("created_at DESC").Find(&incs).Error
 	return incs, err
 }

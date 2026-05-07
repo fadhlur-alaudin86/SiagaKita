@@ -115,6 +115,72 @@ func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, fiber.Map{"cancelled": true})
 }
 
+// POST /api/v1/incidents/:id/evidence
+// Menerima foto kamera depan (1 file) dan audio (1 file, max 5 detik) sebagai bukti situasi SOS.
+// Dipanggil secara background SETELAH insiden masuk fase broadcasting.
+func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
+	reporterID := c.Locals("userID").(string)
+	incidentID := c.Params("id")
+
+	uploadDir := h.cfg.UploadDir
+	baseURL := h.cfg.UploadBaseURL
+	now := time.Now()
+	yearMonth := fmt.Sprintf("%d/%02d", now.Year(), now.Month())
+
+	var photoPaths []string
+	var audioPath *string
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Form tidak valid")
+	}
+
+	// Foto kamera depan (max 1, max 5 MB)
+	if photos := form.File["photo"]; len(photos) > 0 {
+		fh := photos[0]
+		if fh.Size <= 5<<20 {
+			ext := filepath.Ext(fh.Filename)
+			if ext == "" {
+				ext = ".jpg"
+			}
+			dir := filepath.Join(uploadDir, "incidents", "evidence", yearMonth, incidentID)
+			_ = os.MkdirAll(dir, 0755)
+			fileName := fmt.Sprintf("evidence_photo_%d%s", now.UnixNano(), ext)
+			dst := filepath.Join(dir, fileName)
+			if saveErr := saveFile(fh, dst); saveErr == nil {
+				relPath := fmt.Sprintf("incidents/evidence/%s/%s/%s", yearMonth, incidentID, fileName)
+				photoPaths = append(photoPaths, baseURL+"/"+relPath)
+			}
+		}
+	}
+
+	// Audio bukti (max 1, max 10 MB)
+	if audios := form.File["audio"]; len(audios) > 0 {
+		fh := audios[0]
+		if fh.Size <= 10<<20 {
+			dir := filepath.Join(uploadDir, "incidents", "evidence", yearMonth, incidentID)
+			_ = os.MkdirAll(dir, 0755)
+			fileName := fmt.Sprintf("evidence_audio_%d.m4a", now.UnixNano())
+			dst := filepath.Join(dir, fileName)
+			if saveErr := saveFile(fh, dst); saveErr == nil {
+				relPath := fmt.Sprintf("incidents/evidence/%s/%s/%s", yearMonth, incidentID, fileName)
+				path := baseURL + "/" + relPath
+				audioPath = &path
+			}
+		}
+	}
+
+	if err := h.svc.UploadEvidence(incidentID, reporterID, photoPaths, audioPath); err != nil {
+		status := fiber.StatusInternalServerError
+		if err.Error() == "unauthorized" {
+			status = fiber.StatusForbidden
+		}
+		return utils.ErrorResponse(c, status, err.Error())
+	}
+
+	return utils.SuccessResponse(c, fiber.Map{"evidence_uploaded": true})
+}
+
 // PUT /api/v1/incidents/:id/location
 func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 	incidentID := c.Params("id")

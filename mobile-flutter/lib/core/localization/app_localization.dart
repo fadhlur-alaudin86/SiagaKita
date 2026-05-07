@@ -307,6 +307,26 @@ class AppLocalization {
     'Profil Instansi': 'Agency Profile',
     'Informasi dan pengaturan instansi Anda.':
         'Your agency information and settings.',
+    // ─── SOS Cancellation & UI ───────────────────────────────────────────────
+    'Batalkan SOS?': 'Cancel SOS?',
+    'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?':
+        'Are you sure the situation is safe and you want to cancel this SOS report?',
+    'TIDAK': 'NO',
+    'YA, BATALKAN': 'YES, CANCEL',
+    'SOS berhasil dibatalkan.': 'SOS successfully cancelled.',
+    'Gagal membatalkan SOS:': 'Failed to cancel SOS:',
+    'SOS sudah diselesaikan oleh instansi.':
+        'SOS has been resolved by the agency.',
+    'Tidak dapat membuka telepon.': 'Cannot open phone app.',
+    'Telepon 112': 'Call 112',
+    'Panggilan darurat': 'Emergency call',
+    'Panggilan\\ndarurat': 'Emergency\\ncall',
+    'Kirim bukti & titik\\nlokasi': 'Send proof &\\nlocation',
+    'SOS AKTIF': 'SOS ACTIVE',
+    'Lokasi diperbarui tiap 10 detik': 'Location updated every 10s',
+    'Terkirim ✓': 'Sent ✓',
+    'Mengirim...': 'Sending...',
+    'Gagal menelpon 112:': 'Failed to call 112:',
   };
 
   static String tr(BuildContext context, String text) {

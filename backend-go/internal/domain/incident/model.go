@@ -6,23 +6,27 @@ import (
 	"github.com/lib/pq"
 )
 
+// Nilai-nilai valid untuk incident_status:
+// 'grace_period' | 'broadcasting' | 'handled' | 'resolved' | 'false_alarm' | 'cancel'
+
 // ─── DB Models ────────────────────────────────────────────────────────────────
 
 // Incident merepresentasikan SOS darurat dari masyarakat (Jalur A).
 type Incident struct {
-	ID                 string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	ReporterID         string     `gorm:"type:uuid;not null" json:"reporter_id"`
-	IncidentType       string     `gorm:"default:'unknown'" json:"incident_type"` // incident_category enum
-	Latitude           float64    `gorm:"not null" json:"latitude"`
-	Longitude          float64    `gorm:"not null" json:"longitude"`
-	Status             string     `gorm:"default:'grace_period'" json:"status"`
-	TriggerMethod      string     `gorm:"default:'user'" json:"trigger_method"` // 'user' | 'timeout'
-	UrgencyLevel       string     `gorm:"default:'critical'" json:"urgency_level"`
-	ReporterTrustLabel string     `gorm:"default:'standard'" json:"reporter_trust_label"` // 'verified'|'standard'|'unverified'
-	AddressDetail      *string    `json:"address_detail,omitempty"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
-	ResolvedAt         *time.Time `json:"resolved_at,omitempty"`
+	ID                 string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	ReporterID         string         `gorm:"type:uuid;not null" json:"reporter_id"`
+	IncidentType       string         `gorm:"default:'unknown'" json:"incident_type"` // incident_category enum
+	Latitude           float64        `gorm:"not null" json:"latitude"`
+	Longitude          float64        `gorm:"not null" json:"longitude"`
+	Status             string         `gorm:"default:'grace_period'" json:"status"`
+	UrgencyLevel       string         `gorm:"default:'critical'" json:"urgency_level"`
+	ReporterTrustLabel string         `gorm:"default:'standard'" json:"reporter_trust_label"` // 'verified'|'standard'|'unverified'
+	AddressDetail      *string        `json:"address_detail,omitempty"`
+	PhotoPaths         pq.StringArray `gorm:"type:text[]" json:"photo_paths"`   // Bukti foto kamera depan (pasca broadcasting)
+	AudioPath          *string        `json:"audio_path,omitempty"`              // Bukti audio 5 detik (pasca broadcasting)
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	ResolvedAt         *time.Time     `json:"resolved_at,omitempty"`
 }
 
 // IncidentReport merepresentasikan laporan warga non-darurat (Jalur B).
@@ -81,9 +85,15 @@ type MRank struct {
 
 // TriggerSOSRequest — Jalur A: hanya GPS wajib, tipe selalu mulai 'unknown'.
 type TriggerSOSRequest struct {
-	Latitude      float64 `json:"latitude"`
-	Longitude     float64 `json:"longitude"`
-	TriggerMethod string  `json:"trigger_method"` // 'user' | 'timeout'
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+// UploadSOSEvidenceRequest — dikirim SETELAH masuk fase broadcasting.
+// Berisi foto kamera depan (1 gambar) dan audio 5 detik sebagai bukti situasi.
+// Dikirim sebagai multipart/form-data.
+type UploadSOSEvidenceRequest struct {
+	IncidentID string `form:"incident_id"` // validasi bahwa incident milik reporter
 }
 
 // UpdateTypeRequest — dikirim dari grace period UI saat user memilih tipe.

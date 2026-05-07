@@ -45,17 +45,11 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest, trustLab
 		return nil, errors.New("sos_banned: akun Anda dinonaktifkan dari fitur SOS karena pelanggaran berulang")
 	}
 
-	triggerMethod := req.TriggerMethod
-	if triggerMethod == "" {
-		triggerMethod = "user"
-	}
-
 	inc := &Incident{
 		ReporterID:         reporterID,
 		Latitude:           req.Latitude,
 		Longitude:          req.Longitude,
 		IncidentType:       "unknown",
-		TriggerMethod:      triggerMethod,
 		UrgencyLevel:       "critical",
 		ReporterTrustLabel: trustLabel,
 		Status:             "grace_period",
@@ -119,6 +113,21 @@ func (s *Service) CancelSOS(incidentID, reporterID string) error {
 		return errors.New("unauthorized")
 	}
 	return s.repo.MarkCancelled(incidentID)
+}
+
+// ─── UploadEvidence ──────────────────────────────────────────────────────────
+// Menerima foto kamera depan dan audio 5 detik sebagai bukti situasi SOS.
+// Dipanggil secara background SETELAH insiden masuk fase broadcasting.
+
+func (s *Service) UploadEvidence(incidentID, reporterID string, photoPaths []string, audioPath *string) error {
+	inc, err := s.repo.FindByID(incidentID)
+	if err != nil {
+		return err
+	}
+	if inc.ReporterID != reporterID {
+		return errors.New("unauthorized")
+	}
+	return s.repo.UploadEvidence(incidentID, photoPaths, audioPath)
 }
 
 // ─── MarkFalseAlarm (oleh Admin) ─────────────────────────────────────────────
