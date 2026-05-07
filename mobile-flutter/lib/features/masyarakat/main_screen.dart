@@ -60,7 +60,11 @@ class _MainScreenState extends State<MainScreen> {
             user.volunteerStatus == 'approved' || user.role == UserRole.relawan;
 
         final List<Widget> screens = [
-          HomeScreen(accessToken: widget.accessToken, userId: widget.userId),
+          HomeScreen(
+            accessToken: widget.accessToken,
+            userId: widget.userId,
+            isSOSBanned: user.isSOSBanned,
+          ),
           const GuideScreen(),
           // Riwayat: tab dedicated untuk laporan & riwayat SOS
           ReportHistoryScreen(accessToken: widget.accessToken),

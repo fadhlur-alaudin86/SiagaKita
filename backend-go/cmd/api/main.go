@@ -147,13 +147,17 @@ func main() {
 	// KYC: Verifikasi Identitas NIK Warga
 	users.Post("/kyc", userHandler.SubmitKYC)
 	users.Get("/kyc/status", userHandler.GetKYCStatus)
+	// Ping: Heartbeat untuk update last_active_at (dipanggil tiap 30 detik dari mobile)
+	users.Get("/ping", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{"status": "ok"})
+	})
 
 	// ── Incidents (protected — semua role yang sudah login) ───────────────────
 	incidents := v1.Group("/incidents", authMw)
 	incidents.Get("/active", incidentHandler.GetActive)
 	incidents.Get("/my-history", incidentHandler.GetHistory)
 	incidents.Get("/all-active", middleware.ConsoleOnly(), incidentHandler.GetAllActive)
-	incidents.Post("/trigger", incidentHandler.TriggerSOS)
+	incidents.Post("/trigger", middleware.BanCheck(db), incidentHandler.TriggerSOS)
 	incidents.Patch("/:id/type", incidentHandler.UpdateType)
 	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)
 	incidents.Post("/:id/cancel", incidentHandler.CancelSOS)
@@ -164,7 +168,7 @@ func main() {
 
 	// ── Laporan Warga — Jalur B ───────────────────────────────────────────────
 	reports := v1.Group("/reports", authMw)
-	reports.Post("", incidentHandler.CreateReport)
+	reports.Post("", middleware.BanCheck(db), incidentHandler.CreateReport)
 	reports.Get("/my", incidentHandler.GetMyReports)
 	reports.Get("", middleware.ConsoleOnly(), incidentHandler.GetReports)
 	reports.Patch("/:id/status", middleware.ConsoleOnly(), incidentHandler.UpdateReportStatus)

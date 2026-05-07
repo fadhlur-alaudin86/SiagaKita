@@ -151,4 +151,20 @@ class UserService {
       throw Exception('$e');
     }
   }
+
+  // ─── Heartbeat Ping ───────────────────────────────────────────────────────────
+  /// Dipanggil setiap 30 detik selama app aktif untuk memperbarui last_active_at.
+  /// Jika app di-kill, ping berhenti → admin melihat status Offline.
+  static Future<void> ping(String token) async {
+    try {
+      await http
+          .get(
+            Uri.parse('$_baseUrl/users/ping'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // Abaikan error ping — tidak perlu menampilkan error ke user
+    }
+  }
 }

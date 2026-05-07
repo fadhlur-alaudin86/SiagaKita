@@ -28,6 +28,7 @@ class UserModel {
   final int volunteerPoints;
   final String volunteerLevel;
   final bool isAvailableForMission;
+  final bool isSOSBanned;  // ← status blokir SOS dari admin
   final Map<String, dynamic>? medicalData;
   final List<Map<String, dynamic>>? emergencyContacts;
 
@@ -48,6 +49,7 @@ class UserModel {
     this.volunteerPoints = 0,
     this.volunteerLevel = 'Pemula',
     this.isAvailableForMission = false,
+    this.isSOSBanned = false,
     this.medicalData,
     this.emergencyContacts,
   });
@@ -104,6 +106,7 @@ class UserModel {
     int? volunteerPoints,
     String? volunteerLevel,
     bool? isAvailableForMission,
+    bool? isSOSBanned,
     Map<String, dynamic>? medicalData,
     List<Map<String, dynamic>>? emergencyContacts,
   }) {
@@ -126,6 +129,7 @@ class UserModel {
       volunteerLevel: volunteerLevel ?? this.volunteerLevel,
       isAvailableForMission:
           isAvailableForMission ?? this.isAvailableForMission,
+      isSOSBanned: isSOSBanned ?? this.isSOSBanned,
       medicalData: medicalData ?? this.medicalData,
       emergencyContacts: emergencyContacts ?? this.emergencyContacts,
     );
@@ -223,6 +227,7 @@ class UserModel {
       volunteerPoints: json['volunteer_points'] ?? 0,
       volunteerLevel: json['volunteer_level'] ?? 'Pemula',
       isAvailableForMission: json['is_available_for_mission'] ?? false,
+      isSOSBanned: json['is_sos_banned'] as bool? ?? false,
       medicalData: json['medical_data'] != null
           ? Map<String, dynamic>.from(json['medical_data'])
           : _buildMedicalData(json),
@@ -281,6 +286,7 @@ class UserModel {
       'volunteer_points': volunteerPoints,
       'volunteer_level': volunteerLevel,
       'is_available_for_mission': isAvailableForMission,
+      'is_sos_banned': isSOSBanned,
       'medical_data': medicalData,
       'emergency_contacts': emergencyContacts,
     };

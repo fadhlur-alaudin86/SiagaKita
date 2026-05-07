@@ -312,10 +312,9 @@ func (s *Service) ResendOTP(ctx context.Context, email, otpContext string) error
 // SubmitKYC memproses pengajuan verifikasi NIK warga.
 // Warga perlu mengirimkan foto KTP dan selfie (sebagai foto profil).
 func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
-	uploadDir := s.cfg.UploadDir + "/kyc"
-
-	// Pastikan folder upload ada — cegah error jika belum dibuat
-	if err := os.MkdirAll("."+uploadDir, os.ModePerm); err != nil {
+	// Gunakan path absolut agar file disimpan di lokasi yang benar di VPS.
+	saveDir := s.cfg.UploadDir + "/kyc"
+	if err := os.MkdirAll(saveDir, os.ModePerm); err != nil {
 		return fmt.Errorf("gagal membuat folder upload: %w", err)
 	}
 
@@ -325,10 +324,12 @@ func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
 		return errors.New("foto KTP wajib dilampirkan")
 	}
 	ktpExt := filepath.Ext(ktpFile.Filename)
-	ktpPath := uploadDir + "/" + userID + "_ktp" + ktpExt
-	if err := c.SaveFile(ktpFile, "."+ktpPath); err != nil {
+	ktpSavePath := saveDir + "/" + userID + "_ktp" + ktpExt
+	if err := c.SaveFile(ktpFile, ktpSavePath); err != nil {
 		return fmt.Errorf("gagal menyimpan foto KTP: %w", err)
 	}
+	// URL publik yang disimpan di DB — bisa diakses dari browser/Flutter.
+	ktpPublicURL := s.cfg.UploadBaseURL + "/kyc/" + userID + "_ktp" + ktpExt
 
 	// Upload selfie (wajib) — sekaligus digunakan sebagai foto profil
 	selfieFile, err := c.FormFile("selfie")
@@ -336,12 +337,13 @@ func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
 		return errors.New("foto selfie wajib dilampirkan untuk verifikasi identitas")
 	}
 	selfieExt := filepath.Ext(selfieFile.Filename)
-	photoPath := uploadDir + "/" + userID + "_selfie" + selfieExt
-	if err := c.SaveFile(selfieFile, "."+photoPath); err != nil {
+	selfieSavePath := saveDir + "/" + userID + "_selfie" + selfieExt
+	if err := c.SaveFile(selfieFile, selfieSavePath); err != nil {
 		return fmt.Errorf("gagal menyimpan foto selfie: %w", err)
 	}
+	selfiePublicURL := s.cfg.UploadBaseURL + "/kyc/" + userID + "_selfie" + selfieExt
 
-	return s.repo.SubmitKYC(userID, nik, fullName, ktpPath, photoPath)
+	return s.repo.SubmitKYC(userID, nik, fullName, ktpPublicURL, selfiePublicURL)
 }
 
 // GetKYCStatus mengembalikan status verifikasi NIK warga.

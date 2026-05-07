@@ -13,16 +13,19 @@ import '../../core/models/user_model.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
+import '../../core/services/user_service.dart';
 import 'report_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accessToken;
   final String userId;
+  final bool isSOSBanned;
 
   const HomeScreen({
     super.key,
     required this.accessToken,
     required this.userId,
+    this.isSOSBanned = false,
   });
 
   @override
@@ -69,16 +72,26 @@ class _HomeScreenState extends State<HomeScreen>
   // Untuk menyimpan ID insiden lokal jika user membatalkan saat proses upload masih berlangsung
   String? _cancelledLocalId;
 
+  // ─── Heartbeat Ping ──────────────────────────────────────────────────────────
+  Timer? _pingTimer;
+
   // ─── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
     _checkActiveIncident();
+    // Mulai heartbeat ping setiap 30 detik
+    _pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      UserService.ping(widget.accessToken);
+    });
+    // Ping pertama langsung
+    UserService.ping(widget.accessToken);
   }
 
   @override
   void dispose() {
+    _pingTimer?.cancel();
     _tapResetTimer?.cancel();
     _locationUpdateTimer?.cancel();
     _statusCheckTimer?.cancel();
@@ -205,6 +218,18 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── SOS Tap Logic (Send) ────────────────────────────────────────────────────
 
   void _onSOSTap() {
+    // Blokir jika akun di-ban
+    if (widget.isSOSBanned) {
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Akun Anda diblokir dari fitur SOS. Hubungi admin.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
     // Blokir tap jika sudah ada SOS aktif, atau sedang dalam masa grace period/loading
     if (_activeIncident != null ||
         _pendingIncidentId != null ||

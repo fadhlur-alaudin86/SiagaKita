@@ -442,12 +442,12 @@ func (r *Repository) GetAgencies() ([]AgencyItem, error) {
 func (r *Repository) GetAdmins() ([]AdminItem, error) {
 	var rows []AdminItem
 	err := r.db.Raw(`
-		SELECT u.id AS user_id, u.email,
+		SELECT u.id AS user_id, u.email, u.role,
 		       ap.full_name, ap.created_by, u.created_at
 		FROM users u
 		LEFT JOIN admin_profiles ap ON ap.user_id = u.id
-		WHERE u.role = 'admin' AND u.deleted_at IS NULL
-		ORDER BY u.created_at DESC
+		WHERE u.role IN ('admin', 'superadmin') AND u.deleted_at IS NULL
+		ORDER BY u.role DESC, u.created_at DESC
 	`).Scan(&rows).Error
 	return rows, err
 }

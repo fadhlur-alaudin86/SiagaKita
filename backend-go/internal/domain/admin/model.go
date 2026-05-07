@@ -115,6 +115,7 @@ type AgencyItem struct {
 type AdminItem struct {
 	UserID    string    `json:"user_id"`
 	Email     string    `json:"email"`
+	Role      string    `json:"role"`
 	FullName  *string   `json:"full_name,omitempty"`
 	CreatedBy *string   `json:"created_by,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
