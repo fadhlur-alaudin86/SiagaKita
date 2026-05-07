@@ -227,47 +227,231 @@ func (r *Repository) CreateAgency(req *CreateAgencyRequest) error {
 	})
 }
 
-// GetUsers returns all users with civilian/volunteer role (paginated).
+// GetUsers returns all users with civilian/volunteer role.
+// Strike dihitung secara real-time dari jumlah incidents berstatus false_alarm.
 func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search string) ([]AdminUserItem, error) {
-	query := r.db.Raw(`
-		SELECT u.id AS user_id, u.email, u.role, u.created_at,
-		       p.full_name, p.phone_number,
+	type row struct {
+		UserID                string     `gorm:"column:user_id"`
+		Email                 string     `gorm:"column:email"`
+		Role                  string     `gorm:"column:role"`
+		FullName              *string    `gorm:"column:full_name"`
+		PhoneNumber           *string    `gorm:"column:phone_number"`
+		NIK                   *string    `gorm:"column:nik"`
+		IsEmailVerified       bool       `gorm:"column:is_email_verified"`
+		IsPhoneVerified       bool       `gorm:"column:is_phone_verified"`
+		NIKVerificationStatus string     `gorm:"column:nik_verification_status"`
+		SOSStrikeCount        int        `gorm:"column:sos_strike_count"`
+		IsSOSBanned           bool       `gorm:"column:is_sos_banned"`
+		BannedUntil           *time.Time `gorm:"column:banned_until"`
+		LastActiveAt          *time.Time `gorm:"column:last_active_at"`
+		CreatedAt             time.Time  `gorm:"column:created_at"`
+	}
+	var rows []row
+	err := r.db.Raw(`
+		SELECT u.id AS user_id, u.email, u.role, u.created_at, u.last_active_at,
+		       p.full_name, p.phone_number, p.nik,
 		       p.is_email_verified, p.is_phone_verified,
-		       p.sos_strike_count, p.is_sos_banned, p.banned_until
+		       COALESCE(p.nik_verification_status, 'none') AS nik_verification_status,
+		       COALESCE((
+		           SELECT COUNT(*) FROM incidents i
+		           WHERE i.reporter_id = u.id AND i.status = 'false_alarm'
+		       ), 0) AS sos_strike_count,
+		       p.is_sos_banned, p.banned_until
 		FROM users u
 		LEFT JOIN user_profiles p ON p.user_id = u.id
 		WHERE u.deleted_at IS NULL
 		  AND u.role IN ('civilian','volunteer')
-		  AND (? = '' OR u.email ILIKE '%' || ? || '%' OR p.full_name ILIKE '%' || ? || '%')
+		  AND (? = '' OR u.email ILIKE '%' || ? || '%' OR p.full_name ILIKE '%' || ? || '%' OR p.nik ILIKE '%' || ? || '%')
 		  AND (? = false OR p.is_sos_banned = true)
-		  AND (? = false OR p.sos_strike_count >= 2)
+		  AND (? = false OR (
+		           SELECT COUNT(*) FROM incidents i2
+		           WHERE i2.reporter_id = u.id AND i2.status = 'false_alarm'
+		       ) >= 2)
 		ORDER BY u.created_at DESC
-	`, search, search, search, filterBanned, filterHighStrike)
-
-	type row struct {
-		UserID          string     `gorm:"column:user_id"`
-		Email           string     `gorm:"column:email"`
-		Role            string     `gorm:"column:role"`
-		FullName        *string    `gorm:"column:full_name"`
-		PhoneNumber     *string    `gorm:"column:phone_number"`
-		IsEmailVerified bool       `gorm:"column:is_email_verified"`
-		IsPhoneVerified bool       `gorm:"column:is_phone_verified"`
-		SOSStrikeCount  int        `gorm:"column:sos_strike_count"`
-		IsSOSBanned     bool       `gorm:"column:is_sos_banned"`
-		BannedUntil     *time.Time `gorm:"column:banned_until"`
-		CreatedAt       time.Time  `gorm:"column:created_at"`
-	}
-	var rows []row
-	if err := query.Scan(&rows).Error; err != nil {
+	`, search, search, search, search, filterBanned, filterHighStrike).Scan(&rows).Error
+	if err != nil {
 		return nil, err
 	}
 
 	items := make([]AdminUserItem, 0, len(rows))
 	for _, r2 := range rows {
-		items = append(items, AdminUserItem(r2))
+		items = append(items, AdminUserItem{
+			UserID:                r2.UserID,
+			Email:                 r2.Email,
+			Role:                  r2.Role,
+			FullName:              r2.FullName,
+			PhoneNumber:           r2.PhoneNumber,
+			NIK:                   r2.NIK,
+			IsEmailVerified:       r2.IsEmailVerified,
+			IsPhoneVerified:       r2.IsPhoneVerified,
+			NIKVerificationStatus: r2.NIKVerificationStatus,
+			SOSStrikeCount:        r2.SOSStrikeCount,
+			IsSOSBanned:           r2.IsSOSBanned,
+			BannedUntil:           r2.BannedUntil,
+			LastActiveAt:          r2.LastActiveAt,
+			CreatedAt:             r2.CreatedAt,
+		})
 	}
 	return items, nil
 }
+
+// GetUserDetail mengambil detail lengkap seorang pengguna warga termasuk riwayat SOS dan laporan.
+func (r *Repository) GetUserDetail(userID string) (*UserDetailResponse, error) {
+	type baseRow struct {
+		UserID                string     `gorm:"column:user_id"`
+		Email                 string     `gorm:"column:email"`
+		Role                  string     `gorm:"column:role"`
+		FullName              *string    `gorm:"column:full_name"`
+		PhoneNumber           *string    `gorm:"column:phone_number"`
+		NIK                   *string    `gorm:"column:nik"`
+		IsEmailVerified       bool       `gorm:"column:is_email_verified"`
+		IsPhoneVerified       bool       `gorm:"column:is_phone_verified"`
+		NIKVerificationStatus string     `gorm:"column:nik_verification_status"`
+		KYCKtpURL             *string    `gorm:"column:kyc_ktp_url"`
+		ProfilePhotoURL       *string    `gorm:"column:profile_photo_url"`
+		DateOfBirth           *string    `gorm:"column:date_of_birth"`
+		BloodType             *string    `gorm:"column:blood_type"`
+		Allergies             *string    `gorm:"column:allergies"`
+		Alamat                *string    `gorm:"column:alamat"`
+		IsSOSBanned           bool       `gorm:"column:is_sos_banned"`
+		LastActiveAt          *time.Time `gorm:"column:last_active_at"`
+		CreatedAt             time.Time  `gorm:"column:created_at"`
+		SOSStrikeCount        int        `gorm:"column:sos_strike_count"`
+	}
+	var base baseRow
+	err := r.db.Raw(`
+		SELECT u.id AS user_id, u.email, u.role, u.created_at, u.last_active_at,
+		       p.full_name, p.phone_number, p.nik,
+		       p.is_email_verified, p.is_phone_verified,
+		       COALESCE(p.nik_verification_status, 'none') AS nik_verification_status,
+		       p.kyc_ktp_url, p.profile_photo_url,
+		       TO_CHAR(p.date_of_birth, 'DD-MM-YYYY') AS date_of_birth,
+		       p.blood_type::text, p.allergies, p.alamat,
+		       p.is_sos_banned,
+		       COALESCE((
+		           SELECT COUNT(*) FROM incidents i
+		           WHERE i.reporter_id = u.id AND i.status = 'false_alarm'
+		       ), 0) AS sos_strike_count
+		FROM users u
+		LEFT JOIN user_profiles p ON p.user_id = u.id
+		WHERE u.id = ? AND u.deleted_at IS NULL
+	`, userID).Scan(&base).Error
+	if err != nil {
+		return nil, err
+	}
+	if base.UserID == "" {
+		return nil, fmt.Errorf("pengguna tidak ditemukan")
+	}
+
+	// Riwayat SOS
+	var sosHistory []SOSHistoryItem
+	r.db.Raw(`
+		SELECT id, incident_type, status, latitude, longitude, created_at, resolved_at
+		FROM incidents WHERE reporter_id = ? ORDER BY created_at DESC
+	`, userID).Scan(&sosHistory)
+
+	// Riwayat Laporan
+	var reportHistory []ReportHistoryItem
+	r.db.Raw(`
+		SELECT id, incident_type, status, description, created_at
+		FROM incident_reports WHERE reporter_id = ? ORDER BY created_at DESC
+	`, userID).Scan(&reportHistory)
+
+	return &UserDetailResponse{
+		UserID:                base.UserID,
+		Email:                 base.Email,
+		Role:                  base.Role,
+		FullName:              base.FullName,
+		PhoneNumber:           base.PhoneNumber,
+		NIK:                   base.NIK,
+		IsEmailVerified:       base.IsEmailVerified,
+		IsPhoneVerified:       base.IsPhoneVerified,
+		NIKVerificationStatus: base.NIKVerificationStatus,
+		KYCKtpURL:             base.KYCKtpURL,
+		ProfilePhotoURL:       base.ProfilePhotoURL,
+		DateOfBirth:           base.DateOfBirth,
+		BloodType:             base.BloodType,
+		Allergies:             base.Allergies,
+		Alamat:                base.Alamat,
+		SOSStrikeCount:        base.SOSStrikeCount,
+		IsSOSBanned:           base.IsSOSBanned,
+		LastActiveAt:          base.LastActiveAt,
+		CreatedAt:             base.CreatedAt,
+		SOSHistory:            sosHistory,
+		ReportHistory:         reportHistory,
+	}, nil
+}
+
+// ─── KYC Warga (NIK Verification) ─────────────────────────────────────────────
+
+// GetPendingWargaKYC mengembalikan daftar warga yang NIK-nya menunggu verifikasi.
+func (r *Repository) GetPendingWargaKYC() ([]WargaKYCItem, error) {
+	var rows []WargaKYCItem
+	err := r.db.Raw(`
+		SELECT u.id AS user_id, u.email,
+		       p.full_name, p.nik,
+		       p.kyc_ktp_url, p.profile_photo_url,
+		       p.nik_verification_status,
+		       p.updated_at AS submitted_at
+		FROM users u
+		JOIN user_profiles p ON p.user_id = u.id
+		WHERE p.nik_verification_status = 'pending'
+		  AND u.deleted_at IS NULL
+		ORDER BY p.updated_at ASC
+	`).Scan(&rows).Error
+	return rows, err
+}
+
+// ApproveWargaKYC menyetujui verifikasi NIK warga.
+func (r *Repository) ApproveWargaKYC(userID string) error {
+	return r.db.Exec(`
+		UPDATE user_profiles
+		SET nik_verification_status = 'approved', updated_at = NOW()
+		WHERE user_id = ? AND nik_verification_status = 'pending'
+	`, userID).Error
+}
+
+// RejectWargaKYC menolak verifikasi NIK warga.
+func (r *Repository) RejectWargaKYC(userID string) error {
+	return r.db.Exec(`
+		UPDATE user_profiles
+		SET nik_verification_status = 'rejected', updated_at = NOW()
+		WHERE user_id = ? AND nik_verification_status = 'pending'
+	`, userID).Error
+}
+
+// ─── Agency & Admin Listings ──────────────────────────────────────────────────
+
+// GetAgencies mengembalikan daftar seluruh instansi yang terdaftar.
+func (r *Repository) GetAgencies() ([]AgencyItem, error) {
+	var rows []AgencyItem
+	err := r.db.Raw(`
+		SELECT a.id AS agency_id, a.account_id, u.email,
+		       a.name, a.type, a.city_code,
+		       a.hotline_number, a.latitude, a.longitude,
+		       u.created_at
+		FROM agencies a
+		JOIN users u ON u.id = a.account_id
+		WHERE u.deleted_at IS NULL
+		ORDER BY u.created_at DESC
+	`).Scan(&rows).Error
+	return rows, err
+}
+
+// GetAdmins mengembalikan daftar seluruh admin yang terdaftar (untuk superadmin).
+func (r *Repository) GetAdmins() ([]AdminItem, error) {
+	var rows []AdminItem
+	err := r.db.Raw(`
+		SELECT u.id AS user_id, u.email,
+		       ap.full_name, ap.created_by, u.created_at
+		FROM users u
+		LEFT JOIN admin_profiles ap ON ap.user_id = u.id
+		WHERE u.role = 'admin' AND u.deleted_at IS NULL
+		ORDER BY u.created_at DESC
+	`).Scan(&rows).Error
+	return rows, err
+}
+
 
 // BanUser sets is_sos_banned = true in user_profiles.
 func (r *Repository) BanUser(userID, reason string) error {

@@ -139,6 +139,65 @@ func (h *Handler) ResetStrike(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, fiber.Map{"message": "Strike pengguna berhasil direset."})
 }
 
+// GET /api/v1/admin/users/:id/detail  [AdminOnly]
+func (h *Handler) GetUserDetail(c *fiber.Ctx) error {
+	targetUserID := c.Params("id")
+	detail, err := h.svc.GetUserDetail(targetUserID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusNotFound, err.Error())
+	}
+	return utils.SuccessResponse(c, detail)
+}
+
+// ─── KYC Warga (NIK Verification) ────────────────────────────────────────────
+
+// GET /api/v1/admin/users/kyc/warga  [AdminOnly]
+func (h *Handler) GetPendingWargaKYC(c *fiber.Ctx) error {
+	list, err := h.svc.GetPendingWargaKYC()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, list)
+}
+
+// POST /api/v1/admin/users/kyc/warga/:id/approve  [AdminOnly]
+func (h *Handler) ApproveWargaKYC(c *fiber.Ctx) error {
+	targetUserID := c.Params("id")
+	if err := h.svc.ApproveWargaKYC(targetUserID); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, fiber.Map{"message": "Verifikasi NIK warga disetujui."})
+}
+
+// POST /api/v1/admin/users/kyc/warga/:id/reject  [AdminOnly]
+func (h *Handler) RejectWargaKYC(c *fiber.Ctx) error {
+	targetUserID := c.Params("id")
+	if err := h.svc.RejectWargaKYC(targetUserID); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, fiber.Map{"message": "Verifikasi NIK warga ditolak."})
+}
+
+// ─── Agency & Admin Listings ──────────────────────────────────────────────────
+
+// GET /api/v1/admin/agencies  [AdminOnly]
+func (h *Handler) GetAgencies(c *fiber.Ctx) error {
+	list, err := h.svc.GetAgencies()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, list)
+}
+
+// GET /api/v1/admin/admins  [SuperAdminOnly]
+func (h *Handler) GetAdmins(c *fiber.Ctx) error {
+	list, err := h.svc.GetAdmins()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, list)
+}
+
 // ─── Master Data: Ranks ───────────────────────────────────────────────────────
 
 // GET /api/v1/admin/ranks  [ConsoleOnly]

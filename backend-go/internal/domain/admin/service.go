@@ -54,6 +54,10 @@ func (s *Service) GetUsers(filterBanned bool, filterHighStrike bool, search stri
 	return s.repo.GetUsers(filterBanned, filterHighStrike, search)
 }
 
+func (s *Service) GetUserDetail(userID string) (*UserDetailResponse, error) {
+	return s.repo.GetUserDetail(userID)
+}
+
 func (s *Service) BanUser(userID, reason string) error {
 	return s.repo.BanUser(userID, reason)
 }
@@ -64,6 +68,30 @@ func (s *Service) UnbanUser(userID string) error {
 
 func (s *Service) ResetStrike(userID string) error {
 	return s.repo.ResetStrike(userID)
+}
+
+// ─── KYC Warga ────────────────────────────────────────────────────────
+
+func (s *Service) GetPendingWargaKYC() ([]WargaKYCItem, error) {
+	return s.repo.GetPendingWargaKYC()
+}
+
+func (s *Service) ApproveWargaKYC(userID string) error {
+	return s.repo.ApproveWargaKYC(userID)
+}
+
+func (s *Service) RejectWargaKYC(userID string) error {
+	return s.repo.RejectWargaKYC(userID)
+}
+
+// ─── Agency & Admin Listings ─────────────────────────────────────────────────
+
+func (s *Service) GetAgencies() ([]AgencyItem, error) {
+	return s.repo.GetAgencies()
+}
+
+func (s *Service) GetAdmins() ([]AdminItem, error) {
+	return s.repo.GetAdmins()
 }
 
 // ─── Ranks ────────────────────────────────────────────────────────────────────

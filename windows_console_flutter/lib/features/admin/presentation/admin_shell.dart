@@ -69,7 +69,7 @@ class _AdminShellState extends State<AdminShell> {
 
   static const _titles = {
     AdminMenu.kyc: 'KYC & Verifikasi Relawan',
-    AdminMenu.users: 'Manajemen Pengguna',
+    AdminMenu.users: 'Manajemen Akun',
     AdminMenu.pendaftaran: 'Pendaftaran Akun Khusus',
     AdminMenu.gamifikasi: 'Master Data Gamifikasi',
     AdminMenu.statistik: 'Statistik & Analitik',
@@ -77,7 +77,7 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget _resolvePage() => switch (_active) {
     AdminMenu.kyc => KycRelawanPage(token: widget.token),
-    AdminMenu.users => UserManagementPage(token: widget.token),
+    AdminMenu.users => UserManagementPage(token: widget.token, role: widget.role),
     AdminMenu.pendaftaran => PendaftaranAkunPage(
       token: widget.token,
       role: widget.role,
@@ -203,7 +203,7 @@ class _AdminSideNav extends StatelessWidget {
                 onTap: () => onSelected(AdminMenu.kyc),
               ),
               _AdminNavItem(
-                label: 'Manajemen Pengguna',
+                label: 'Manajemen Akun',
                 icon: Icons.people_outlined,
                 selected: activeMenu == AdminMenu.users,
                 onTap: () => onSelected(AdminMenu.users),

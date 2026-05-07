@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Zb4QeEJDI73rnWQvNeyAau1ztxXEXJ9CWzcpOrVEDtcdLsWHf6MF2sM4MC8OkWc
+\restrict IcTRijhP8aJAjBlpHaSoluh35Gwy8e1qYzyckL4udEGaZP8b9kl20nhVJr7WOZE
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -446,7 +446,8 @@ CREATE TABLE public.users (
     password_hash character varying(255) NOT NULL,
     role public.user_role DEFAULT 'civilian'::public.user_role NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    last_active_at timestamp with time zone
 );
 
 
@@ -766,6 +767,13 @@ CREATE INDEX idx_users_email ON public.users USING btree (email);
 
 
 --
+-- Name: idx_users_last_active; Type: INDEX; Schema: public; Owner: siagakita_admin
+--
+
+CREATE INDEX idx_users_last_active ON public.users USING btree (last_active_at);
+
+
+--
 -- Name: idx_users_role; Type: INDEX; Schema: public; Owner: siagakita_admin
 --
 
@@ -957,5 +965,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Zb4QeEJDI73rnWQvNeyAau1ztxXEXJ9CWzcpOrVEDtcdLsWHf6MF2sM4MC8OkWc
+\unrestrict IcTRijhP8aJAjBlpHaSoluh35Gwy8e1qYzyckL4udEGaZP8b9kl20nhVJr7WOZE
 

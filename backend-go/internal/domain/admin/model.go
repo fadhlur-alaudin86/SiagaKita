@@ -22,19 +22,102 @@ type KYCCert struct {
 	CreatedAt       time.Time `json:"created_at"`
 }
 
+// WargaKYCItem adalah data warga yang menunggu verifikasi NIK (KYC Warga).
+type WargaKYCItem struct {
+	UserID                string    `json:"user_id"`
+	FullName              *string   `json:"full_name"`
+	Email                 string    `json:"email"`
+	NIK                   *string   `json:"nik"`
+	KYCKtpURL             *string   `json:"kyc_ktp_url"`
+	ProfilePhotoURL       *string   `json:"profile_photo_url"`
+	NIKVerificationStatus string    `json:"nik_verification_status"`
+	SubmittedAt           time.Time `json:"submitted_at"`
+}
+
 // AdminUserItem adalah baris tabel manajemen pengguna.
 type AdminUserItem struct {
-	UserID          string     `json:"user_id"`
-	Email           string     `json:"email"`
-	Role            string     `json:"role"`
-	FullName        *string    `json:"full_name,omitempty"`
-	PhoneNumber     *string    `json:"phone_number,omitempty"`
-	IsEmailVerified bool       `json:"is_email_verified"`
-	IsPhoneVerified bool       `json:"is_phone_verified"`
-	SOSStrikeCount  int        `json:"sos_strike_count"`
-	IsSOSBanned     bool       `json:"is_sos_banned"`
-	BannedUntil     *time.Time `json:"banned_until,omitempty"`
-	CreatedAt       time.Time  `json:"created_at"`
+	UserID                string     `json:"user_id"`
+	Email                 string     `json:"email"`
+	Role                  string     `json:"role"`
+	FullName              *string    `json:"full_name,omitempty"`
+	PhoneNumber           *string    `json:"phone_number,omitempty"`
+	NIK                   *string    `json:"nik,omitempty"`
+	IsEmailVerified       bool       `json:"is_email_verified"`
+	IsPhoneVerified       bool       `json:"is_phone_verified"`
+	NIKVerificationStatus string     `json:"nik_verification_status"`
+	SOSStrikeCount        int        `json:"sos_strike_count"` // Dihitung dari incidents status false_alarm
+	IsSOSBanned           bool       `json:"is_sos_banned"`
+	BannedUntil           *time.Time `json:"banned_until,omitempty"`
+	LastActiveAt          *time.Time `json:"last_active_at,omitempty"`
+	CreatedAt             time.Time  `json:"created_at"`
+}
+
+// UserDetailResponse adalah detail lengkap aktivitas satu pengguna warga.
+type UserDetailResponse struct {
+	UserID                string          `json:"user_id"`
+	Email                 string          `json:"email"`
+	Role                  string          `json:"role"`
+	FullName              *string         `json:"full_name,omitempty"`
+	PhoneNumber           *string         `json:"phone_number,omitempty"`
+	NIK                   *string         `json:"nik,omitempty"`
+	IsEmailVerified       bool            `json:"is_email_verified"`
+	IsPhoneVerified       bool            `json:"is_phone_verified"`
+	NIKVerificationStatus string          `json:"nik_verification_status"`
+	KYCKtpURL             *string         `json:"kyc_ktp_url,omitempty"`
+	ProfilePhotoURL       *string         `json:"profile_photo_url,omitempty"`
+	DateOfBirth           *string         `json:"date_of_birth,omitempty"`
+	BloodType             *string         `json:"blood_type,omitempty"`
+	Allergies             *string         `json:"allergies,omitempty"`
+	Alamat                *string         `json:"alamat,omitempty"`
+	SOSStrikeCount        int             `json:"sos_strike_count"`
+	IsSOSBanned           bool            `json:"is_sos_banned"`
+	LastActiveAt          *time.Time      `json:"last_active_at,omitempty"`
+	CreatedAt             time.Time       `json:"created_at"`
+	SOSHistory            []SOSHistoryItem  `json:"sos_history"`
+	ReportHistory         []ReportHistoryItem `json:"report_history"`
+}
+
+// SOSHistoryItem adalah satu baris riwayat SOS seorang pengguna.
+type SOSHistoryItem struct {
+	ID           string     `json:"id"`
+	IncidentType string     `json:"incident_type"`
+	Status       string     `json:"status"`
+	Latitude     float64    `json:"latitude"`
+	Longitude    float64    `json:"longitude"`
+	CreatedAt    time.Time  `json:"created_at"`
+	ResolvedAt   *time.Time `json:"resolved_at,omitempty"`
+}
+
+// ReportHistoryItem adalah satu baris riwayat laporan biasa seorang pengguna.
+type ReportHistoryItem struct {
+	ID           string    `json:"id"`
+	IncidentType string    `json:"incident_type"`
+	Status       string    `json:"status"`
+	Description  *string   `json:"description,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// AgencyItem adalah data instansi yang terdaftar.
+type AgencyItem struct {
+	AgencyID      string   `json:"agency_id"`
+	AccountID     string   `json:"account_id"`
+	Email         string   `json:"email"`
+	Name          string   `json:"name"`
+	Type          string   `json:"type"`
+	CityCode      string   `json:"city_code"`
+	HotlineNumber *string  `json:"hotline_number,omitempty"`
+	Latitude      *float64 `json:"latitude,omitempty"`
+	Longitude     *float64 `json:"longitude,omitempty"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+// AdminItem adalah data admin yang terdaftar (superadmin only).
+type AdminItem struct {
+	UserID    string    `json:"user_id"`
+	Email     string    `json:"email"`
+	FullName  *string   `json:"full_name,omitempty"`
+	CreatedBy *string   `json:"created_by,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // StatsResponse adalah respons endpoint GET /admin/stats.

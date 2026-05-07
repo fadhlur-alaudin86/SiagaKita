@@ -2,16 +2,59 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
+import 'user_detail_page.dart';
 
-class UserManagementPage extends StatefulWidget {
+class UserManagementPage extends StatelessWidget {
   final String token;
-  const UserManagementPage({super.key, required this.token});
+  final String role;
+  
+  const UserManagementPage({super.key, required this.token, required this.role});
 
   @override
-  State<UserManagementPage> createState() => _UserManagementPageState();
+  Widget build(BuildContext context) {
+    final tabs = [
+      const Tab(text: 'Masyarakat'),
+      const Tab(text: 'Instansi'),
+      if (role == 'superadmin') const Tab(text: 'Admin'),
+    ];
+
+    return DefaultTabController(
+      length: tabs.length,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TabBar(
+            isScrollable: true,
+            labelColor: const Color(0xFFFF7418),
+            unselectedLabelColor: Colors.white54,
+            indicatorColor: const Color(0xFFFF7418),
+            tabs: tabs,
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _MasyarakatTabView(token: token),
+                _InstansiTabView(token: token),
+                if (role == 'superadmin') _AdminTabView(token: token),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _UserManagementPageState extends State<UserManagementPage> {
+class _MasyarakatTabView extends StatefulWidget {
+  final String token;
+  const _MasyarakatTabView({required this.token});
+
+  @override
+  State<_MasyarakatTabView> createState() => _MasyarakatTabViewState();
+}
+
+class _MasyarakatTabViewState extends State<_MasyarakatTabView> {
   List<UserModel> _all = [];
   List<UserModel> _filtered = [];
   bool _loading = true;
@@ -281,9 +324,9 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         ),
                         child: const Row(
                           children: [
-                            Expanded(flex: 3, child: _TableHeader('NAMA')),
-                            Expanded(flex: 3, child: _TableHeader('EMAIL')),
-                            Expanded(flex: 2, child: _TableHeader('HP')),
+                            Expanded(flex: 3, child: _TableHeader('NAMA & STATUS')),
+                            Expanded(flex: 2, child: _TableHeader('NIK')),
+                            Expanded(flex: 3, child: _TableHeader('KONTAK')),
                             Expanded(child: _TableHeader('STRIKE')),
                             Expanded(flex: 2, child: _TableHeader('STATUS')),
                             Expanded(flex: 3, child: _TableHeader('AKSI')),
@@ -323,6 +366,176 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
 }
 
+// ─── INSTANSI TAB VIEW ────────────────────────────────────────────────────────
+
+class _InstansiTabView extends StatefulWidget {
+  final String token;
+  const _InstansiTabView({required this.token});
+
+  @override
+  State<_InstansiTabView> createState() => _InstansiTabViewState();
+}
+
+class _InstansiTabViewState extends State<_InstansiTabView> {
+  List<AgencyModel> _agencies = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final data = await AdminApiService.getAgencies(widget.token);
+      if (mounted) {
+        setState(() {
+          _agencies = data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat instansi: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_agencies.isEmpty) return const Center(child: Text('Belum ada data instansi.', style: TextStyle(color: Colors.white54)));
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: _agencies.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (ctx, i) {
+        final agency = _agencies[i];
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A2035),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(agency.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Text(agency.typeLabel, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(agency.email, style: const TextStyle(color: Colors.white70)),
+              ),
+              Expanded(
+                child: Text(agency.cityCode, style: const TextStyle(color: Colors.white54)),
+              ),
+              Expanded(
+                child: Text(agency.hotlineNumber ?? '-', style: const TextStyle(color: Colors.white54)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── ADMIN TAB VIEW ───────────────────────────────────────────────────────────
+
+class _AdminTabView extends StatefulWidget {
+  final String token;
+  const _AdminTabView({required this.token});
+
+  @override
+  State<_AdminTabView> createState() => _AdminTabViewState();
+}
+
+class _AdminTabViewState extends State<_AdminTabView> {
+  List<AdminModel> _admins = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final data = await AdminApiService.getAdmins(widget.token);
+      if (mounted) {
+        setState(() {
+          _admins = data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat admin: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_admins.isEmpty) return const Center(child: Text('Belum ada data admin.', style: TextStyle(color: Colors.white54)));
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: _admins.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (ctx, i) {
+        final admin = _admins[i];
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A2035),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(admin.fullName ?? '-', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(admin.email, style: const TextStyle(color: Colors.white70)),
+              ),
+              Expanded(
+                child: Text(
+                  admin.role.toUpperCase(),
+                  style: const TextStyle(color: Colors.white54),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
 class _UserRow extends StatelessWidget {
   const _UserRow({
     required this.user,
@@ -348,30 +561,105 @@ class _UserRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
+          // NAMA & STATUS ONLINE
           Expanded(
             flex: 3,
-            child: Text(
-              user.fullName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.fullName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: user.onlineStatus == 'Online' 
+                            ? Colors.green 
+                            : user.onlineStatus.contains('latar belakang') 
+                                ? Colors.orange 
+                                : Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      user.onlineStatus,
+                      style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              user.email,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
-            ),
-          ),
+          // NIK
           Expanded(
             flex: 2,
-            child: Text(
-              user.phoneNumber ?? '-',
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            child: Row(
+              children: [
+                Icon(
+                  user.nikVerificationStatus == 'approved' ? Icons.check_circle :
+                  user.nikVerificationStatus == 'pending' ? Icons.access_time_filled :
+                  user.nikVerificationStatus == 'rejected' ? Icons.cancel : Icons.error_outline,
+                  color: user.nikVerificationStatus == 'approved' ? Colors.blue :
+                         user.nikVerificationStatus == 'pending' ? Colors.orange :
+                         user.nikVerificationStatus == 'rejected' ? Colors.red : Colors.grey,
+                  size: 14,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  user.nik ?? '-',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
             ),
           ),
+          // KONTAK (EMAIL & HP)
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      user.isEmailVerified ? Icons.check_circle : Icons.error_outline,
+                      color: user.isEmailVerified ? Colors.blue : Colors.orange,
+                      size: 12,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      user.email,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      user.isPhoneVerified ? Icons.check_circle : Icons.error_outline,
+                      color: user.isPhoneVerified ? Colors.blue : Colors.orange,
+                      size: 12,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      user.phoneNumber ?? '-',
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // STRIKE
           Expanded(
             child: Row(
               children: [
@@ -388,6 +676,7 @@ class _UserRow extends StatelessWidget {
               ],
             ),
           ),
+          // STATUS BANNED
           Expanded(
             flex: 2,
             child: Align(
@@ -411,11 +700,30 @@ class _UserRow extends StatelessWidget {
               ),
             ),
           ),
+          // AKSI
           Expanded(
             flex: 3,
             child: Wrap(
               spacing: 6,
+              runSpacing: 6,
               children: [
+                // Detail Button
+                _ActionBtn(
+                  label: 'Detail',
+                  color: Colors.purpleAccent,
+                  icon: Icons.remove_red_eye,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UserDetailPage(
+                          token: context.findAncestorStateOfType<_MasyarakatTabViewState>()!.widget.token,
+                          userId: user.id,
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 if (user.isSOSBanned)
                   _ActionBtn(
                     label: 'Unban',

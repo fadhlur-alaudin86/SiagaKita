@@ -38,6 +38,10 @@ class ApiConstants {
   static String adminVolunteerReject(String id) =>
       '$baseUrl/admin/volunteers/$id/reject';
   static const String adminUsers = '$baseUrl/admin/users';
+  static String adminUserDetail(String id) => '$baseUrl/admin/users/$id/detail';
+  static const String adminWargaKycPending = '$baseUrl/admin/users/kyc/warga';
+  static String adminWargaKycApprove(String id) => '$baseUrl/admin/users/kyc/warga/$id/approve';
+  static String adminWargaKycReject(String id) => '$baseUrl/admin/users/kyc/warga/$id/reject';
   static String adminUserBan(String id) => '$baseUrl/admin/users/$id/ban';
   static String adminUserUnban(String id) => '$baseUrl/admin/users/$id/unban';
   static String adminUserResetStrike(String id) =>

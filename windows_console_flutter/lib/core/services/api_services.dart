@@ -142,6 +142,47 @@ class AdminApiService {
         .toList();
   }
 
+  static Future<UserDetailModel?> getUserDetail(String token, String id) async {
+    final resp = await http.get(
+      Uri.parse(ApiConstants.adminUserDetail(id)),
+      headers: AuthService.headers(token),
+    );
+    if (resp.statusCode != 200) return null;
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    return UserDetailModel.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  // ─── KYC Warga ────────────────────────────────────────────────────────────
+
+  static Future<List<WargaKycModel>> getPendingWargaKyc(String token) async {
+    final resp = await http.get(
+      Uri.parse(ApiConstants.adminWargaKycPending),
+      headers: AuthService.headers(token),
+    );
+    if (resp.statusCode != 200) return [];
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final data = body['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => WargaKycModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  static Future<bool> approveWargaKyc(String token, String id) async {
+    final resp = await http.post(
+      Uri.parse(ApiConstants.adminWargaKycApprove(id)),
+      headers: AuthService.headers(token),
+    );
+    return resp.statusCode == 200;
+  }
+
+  static Future<bool> rejectWargaKyc(String token, String id) async {
+    final resp = await http.post(
+      Uri.parse(ApiConstants.adminWargaKycReject(id)),
+      headers: AuthService.headers(token),
+    );
+    return resp.statusCode == 200;
+  }
+
   static Future<bool> banUser(String token, String id, String reason, int days) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.adminUserBan(id)),
@@ -165,6 +206,34 @@ class AdminApiService {
       headers: AuthService.headers(token),
     );
     return resp.statusCode == 200;
+  }
+
+  // ─── Agencies & Admins ────────────────────────────────────────────────────
+
+  static Future<List<AgencyModel>> getAgencies(String token) async {
+    final resp = await http.get(
+      Uri.parse(ApiConstants.adminAgencies),
+      headers: AuthService.headers(token),
+    );
+    if (resp.statusCode != 200) return [];
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final data = body['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => AgencyModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  static Future<List<AdminModel>> getAdmins(String token) async {
+    final resp = await http.get(
+      Uri.parse(ApiConstants.adminAdmins),
+      headers: AuthService.headers(token),
+    );
+    if (resp.statusCode != 200) return [];
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final data = body['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => AdminModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   // ─── Ranks (Gamifikasi) ───────────────────────────────────────────────────

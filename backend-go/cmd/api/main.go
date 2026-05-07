@@ -138,7 +138,7 @@ func main() {
 	auth.Post("/verify-otp", otpHandler.VerifyOTP)
 
 	// ── Users (protected — civilian/volunteer only) ────────────────────────────
-	users := v1.Group("/users", authMw, middleware.CitizenVolunteer())
+	users := v1.Group("/users", authMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db))
 	users.Post("/biodata", userHandler.SaveBiodata)
 	users.Get("/profile", userHandler.GetProfile)
 	users.Put("/profile", userHandler.UpdateProfile)
@@ -185,9 +185,17 @@ func main() {
 	admin.Post("/admins", middleware.SuperAdminOnly(), adminHandler.CreateAdmin)
 	admin.Post("/agencies", middleware.AdminOnly(), adminHandler.CreateAgency)
 	admin.Get("/users", middleware.AdminOnly(), adminHandler.GetUsers)
+	admin.Get("/users/kyc/warga", middleware.AdminOnly(), adminHandler.GetPendingWargaKYC)
+	admin.Post("/users/kyc/warga/:id/approve", middleware.AdminOnly(), adminHandler.ApproveWargaKYC)
+	admin.Post("/users/kyc/warga/:id/reject", middleware.AdminOnly(), adminHandler.RejectWargaKYC)
+	admin.Get("/users/:id/detail", middleware.AdminOnly(), adminHandler.GetUserDetail)
 	admin.Post("/users/:id/ban", middleware.AdminOnly(), adminHandler.BanUser)
 	admin.Post("/users/:id/unban", middleware.AdminOnly(), adminHandler.UnbanUser)
 	admin.Delete("/users/:id/strike", middleware.AdminOnly(), adminHandler.ResetStrike)
+
+	// Daftar Instansi & Admin
+	admin.Get("/agencies", middleware.AdminOnly(), adminHandler.GetAgencies)
+	admin.Get("/admins", middleware.SuperAdminOnly(), adminHandler.GetAdmins)
 
 	// Master Data: Ranks
 	admin.Get("/ranks", middleware.ConsoleOnly(), adminHandler.GetRanks)

@@ -4,9 +4,36 @@ import (
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/utils"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
+
+// TouchLastActive memperbarui kolom last_active_at di tabel users setiap kali
+// user civilian/volunteer melakukan request API. Digunakan untuk menampilkan
+// status "Online / Berjalan di latar belakang / Terakhir terlihat" di Console Admin.
+func TouchLastActive(db *gorm.DB) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if err := c.Next(); err != nil {
+			return err
+		}
+		role, _ := c.Locals("userRole").(string)
+		if role != "civilian" && role != "volunteer" {
+			return nil
+		}
+		userID, _ := c.Locals("userID").(string)
+		if userID == "" {
+			return nil
+		}
+		// Fire-and-forget, jangan blokir response
+		go func() {
+			db.Exec("UPDATE users SET last_active_at = ? WHERE id = ?", time.Now(), userID)
+		}()
+		return nil
+	}
+}
+
 
 // Auth validates JWT from the Authorization header.
 // On success, injects "userID" and "userRole" into c.Locals.
