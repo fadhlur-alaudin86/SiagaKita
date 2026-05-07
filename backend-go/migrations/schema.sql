@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5dsyoRNjdIs8TUJ79zkq2PiiCHm79jmiWpjMFRKLHnj6xXE2qbWG1WKHNkRvxNh
+\restrict 65u5JKiFvNq2NCcvV9RJRxJQHmMqyEtJA1phxyE6kNAm9qaOkTPXAfPbwivpa5i
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -425,6 +425,10 @@ CREATE TABLE public.user_profiles (
     alamat text,
     updated_at timestamp with time zone DEFAULT now(),
     bio text,
+    kyc_ktp_url text,
+    kyc_selfie_url text,
+    nik_verification_status character varying(20) DEFAULT 'none'::character varying,
+    CONSTRAINT chk_nik_status CHECK (((nik_verification_status)::text = ANY ((ARRAY['none'::character varying, 'pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[]))),
     CONSTRAINT user_profiles_height_cm_check CHECK ((height_cm > 0)),
     CONSTRAINT user_profiles_weight_kg_check CHECK ((weight_kg > 0))
 );
@@ -953,5 +957,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5dsyoRNjdIs8TUJ79zkq2PiiCHm79jmiWpjMFRKLHnj6xXE2qbWG1WKHNkRvxNh
+\unrestrict 65u5JKiFvNq2NCcvV9RJRxJQHmMqyEtJA1phxyE6kNAm9qaOkTPXAfPbwivpa5i
 
