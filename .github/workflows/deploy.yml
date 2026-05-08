@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'backend-go/**'
+      - 'infrastructure/**'
+      - '.github/workflows/**'
 
 jobs:
   # ─── Job 1: Build image Go dan push ke Docker Hub ─────────────────────────
