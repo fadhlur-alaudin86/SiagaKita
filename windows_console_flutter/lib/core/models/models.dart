@@ -221,6 +221,19 @@ class UserModel {
 
 // ─── Volunteer (KYC) ──────────────────────────────────────────────────────────
 
+/// Satu sertifikat relawan: URL file + tipe spesialisasi.
+class VolunteerCert {
+  final String url;
+  final String type;
+
+  const VolunteerCert({required this.url, required this.type});
+
+  factory VolunteerCert.fromJson(Map<String, dynamic> json) => VolunteerCert(
+        url: json['document_url'] as String? ?? '',
+        type: json['certificate_type'] as String? ?? 'Sertifikat',
+      );
+}
+
 class VolunteerModel {
   final String id;
   final String fullName;
@@ -228,7 +241,7 @@ class VolunteerModel {
   final String? phoneNumber;
   final String? nik;
   final String? nikPhotoUrl;
-  final List<String> certUrls;
+  final List<VolunteerCert> certs; // ganti dari certUrls: List<String>
   final String? experience;
   final String kycStatus; // 'pending' | 'approved' | 'rejected'
   final String? verifiedBy;
@@ -241,7 +254,7 @@ class VolunteerModel {
     this.phoneNumber,
     this.nik,
     this.nikPhotoUrl,
-    required this.certUrls,
+    required this.certs,
     this.experience,
     required this.kycStatus,
     this.verifiedBy,
@@ -249,30 +262,30 @@ class VolunteerModel {
   });
 
   factory VolunteerModel.fromJson(Map<String, dynamic> json) {
-    // Backend mengirim 'certifications' sebagai List<object> dengan field 'document_url'
+    // Backend mengirim 'certifications' sebagai List<object> dengan
+    // 'document_url' dan 'certificate_type'
     final certsData = json['certifications'] as List<dynamic>? ?? [];
-    final certUrls = certsData
-        .map((e) => (e as Map<String, dynamic>)['document_url'] as String? ?? '')
-        .where((url) => url.isNotEmpty)
+    final certs = certsData
+        .map((e) => VolunteerCert.fromJson(e as Map<String, dynamic>))
+        .where((c) => c.url.isNotEmpty)
         .toList();
 
     return VolunteerModel(
-      id: json['user_id'] as String? ?? '',          // Backend: 'user_id' (bukan 'id')
+      id: json['user_id'] as String? ?? '',
       fullName: (json['full_name'] as String?) ?? '',
       email: json['email'] as String? ?? '',
       phoneNumber: json['phone_number'] as String?,
       nik: json['nik'] as String?,
-      nikPhotoUrl: json['kyc_ktp_url'] as String?,   // Optional, mungkin null
-      certUrls: certUrls,                             // Diparsing dari 'certifications[]'
+      nikPhotoUrl: json['kyc_ktp_url'] as String?,
+      certs: certs,
       experience: json['volunteer_experience'] as String?,
       kycStatus: json['kyc_status'] as String? ?? 'pending',
       verifiedBy: json['verified_by'] as String?,
       createdAt:
-          DateTime.tryParse(json['submitted_at'] as String? ?? '') // Backend: 'submitted_at'
-          ?? DateTime.now(),
+          DateTime.tryParse(json['submitted_at'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
-
 }
 
 // ─── Rank (Master Gamifikasi) ─────────────────────────────────────────────────

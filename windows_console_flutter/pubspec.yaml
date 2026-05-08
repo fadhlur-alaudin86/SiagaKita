@@ -59,6 +59,12 @@ dependencies:
   # Open URLs / phone
   url_launcher: ^6.3.1
 
+  # PDF viewer (untuk sertifikat relawan — Linux/Windows/macOS/Android/iOS)
+  pdfrx: ^2.3.2
+
+  # Network image dengan cache & placeholder
+  cached_network_image: ^3.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

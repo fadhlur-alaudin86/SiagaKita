@@ -257,8 +257,16 @@ func (s *Service) SubmitVolunteerRegistration(c *fiber.Ctx, userID string, exper
 		return errors.New("sertifikat wajib dilampirkan")
 	}
 
+	// Baca tipe sertifikat per-file yang dikirim mobile (urutan sama dengan files)
+	var certTypes []string
+	if rawTypes := form.Value["cert_types"]; len(rawTypes) > 0 && rawTypes[0] != "" {
+		for _, t := range strings.Split(rawTypes[0], ",") {
+			certTypes = append(certTypes, strings.TrimSpace(t))
+		}
+	}
+
 	var certs []map[string]string
-	for _, file := range files {
+	for i, file := range files {
 		ext := filepath.Ext(file.Filename)
 		id := uuid.New().String()
 		savePath := saveDir + "/" + id + ext
@@ -266,9 +274,15 @@ func (s *Service) SubmitVolunteerRegistration(c *fiber.Ctx, userID string, exper
 			return fmt.Errorf("gagal menyimpan sertifikat: %w", err)
 		}
 		publicURL := s.cfg.UploadBaseURL + "/certificates/" + id + ext
-		
+
+		// Gunakan nama spesialisasi sebagai tipe sertifikat
+		certType := "Sertifikat"
+		if i < len(certTypes) && certTypes[i] != "" {
+			certType = certTypes[i]
+		}
+
 		certs = append(certs, map[string]string{
-			"type": "Sertifikat",
+			"type": certType,
 			"url":  publicURL,
 		})
 	}
@@ -281,6 +295,7 @@ func (s *Service) SubmitVolunteerRegistration(c *fiber.Ctx, userID string, exper
 
 	return s.repo.SubmitVolunteerRegistration(userID, experience, certs)
 }
+
 
 // ─── Token builders ───────────────────────────────────────────────────────────
 

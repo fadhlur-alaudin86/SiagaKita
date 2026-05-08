@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/models/models.dart';
@@ -26,7 +27,10 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
   void initState() {
     super.initState();
     _load();
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) => _load(silent: true));
+    _timer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => _load(silent: true),
+    );
   }
 
   @override
@@ -37,7 +41,11 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
   }
 
   Future<void> _load({bool silent = false}) async {
-    if (!silent) setState(() { _loading = true; _error = null; });
+    if (!silent)
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
     try {
       final data = await AdminApiService.getPendingVolunteers(widget.token);
       if (mounted) {
@@ -215,17 +223,27 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.cloud_off, color: Colors.red, size: 36),
+                                const Icon(
+                                  Icons.cloud_off,
+                                  color: Colors.red,
+                                  size: 36,
+                                ),
                                 const SizedBox(height: 8),
                                 Text(
                                   _error!,
-                                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 12,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 12),
                                 TextButton(
                                   onPressed: _load,
-                                  child: const Text('Coba Lagi', style: TextStyle(color: Colors.orange)),
+                                  child: const Text(
+                                    'Coba Lagi',
+                                    style: TextStyle(color: Colors.orange),
+                                  ),
                                 ),
                               ],
                             ),
@@ -439,28 +457,14 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
               ),
             ),
             const SizedBox(height: 8),
-            if (v.certUrls.isEmpty)
+            if (v.certs.isEmpty)
               const Text(
                 'Tidak ada sertifikat',
                 style: TextStyle(color: Colors.white38),
               )
             else
-              ...v.certUrls.asMap().entries.map(
-                (e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.blue,
-                      side: const BorderSide(color: Colors.blue),
-                    ),
-                    icon: const Icon(Icons.file_download_outlined, size: 16),
-                    label: Text('Sertifikat ${e.key + 1}'),
-                    onPressed: () async {
-                      final uri = Uri.parse(e.value);
-                      if (await canLaunchUrl(uri)) launchUrl(uri);
-                    },
-                  ),
-                ),
+              ...v.certs.asMap().entries.map(
+                (e) => _buildCertViewer(e.key + 1, e.value),
               ),
 
             const SizedBox(height: 20),
@@ -540,6 +544,109 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Menampilkan preview sertifikat: PDF inline (pdfrx) atau gambar (Image.network).
+  Widget _buildCertViewer(int index, VolunteerCert cert) {
+    final ext = cert.url.split('.').last.toLowerCase();
+    final isPdf = ext == 'pdf';
+    final isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(ext);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label tipe + tombol buka di browser
+          Row(
+            children: [
+              const Icon(
+                Icons.workspace_premium,
+                color: Colors.orange,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '$index. ${cert.type}',
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () async {
+                  final uri = Uri.parse(cert.url);
+                  if (await canLaunchUrl(uri)) launchUrl(uri);
+                },
+                icon: const Icon(Icons.open_in_new, size: 14),
+                label: const Text(
+                  'Buka di Browser',
+                  style: TextStyle(fontSize: 12),
+                ),
+                style: TextButton.styleFrom(foregroundColor: Colors.blue),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Area preview
+          Container(
+            height: isPdf ? 420 : null,
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white12),
+            ),
+            clipBehavior: Clip.hardEdge,
+            child: isPdf
+                ? PdfViewer.uri(
+                    Uri.parse(cert.url),
+                    params: const PdfViewerParams(
+                      backgroundColor: Color(0xFF1A2035),
+                    ),
+                  )
+                : isImage
+                ? Image.network(
+                    cert.url,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                    errorBuilder: (_, _, _) => const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'Gagal memuat gambar',
+                        style: TextStyle(color: Colors.white38),
+                      ),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.insert_drive_file,
+                          color: Colors.white38,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Format .$ext tidak dapat dipratinjau — gunakan "Buka di Browser"',
+                          style: const TextStyle(color: Colors.white38),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }

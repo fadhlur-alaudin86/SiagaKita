@@ -183,7 +183,7 @@ class _VolunteerRegistrationScreenState
   }
 
   Future<void> _pickFile(String spec) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
+    FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
     );

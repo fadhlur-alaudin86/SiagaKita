@@ -118,15 +118,25 @@ class UserService {
         request.fields['specializations'] = specializations.join(',');
       }
 
-      // Add certificates
+      // Kirim tipe sertifikat (urutan sama dengan file yang dikirim)
+      request.fields['cert_types'] =
+          certificatesPath.keys.toList().join(',');
+
+      // Add certificates — gunakan ekstensi file asli
       for (var entry in certificatesPath.entries) {
         final path = entry.value;
-        final specName = entry.key; // Currently not sent but if needed we can rename file
+        final specName = entry.key;
+        // Ambil ekstensi asli dari path (pdf, jpg, png, dll)
+        final ext = path.contains('.')
+            ? path.split('.').last.toLowerCase()
+            : 'bin';
+        final safeSpecName =
+            specName.replaceAll('&', 'dan').replaceAll(' ', '_');
         request.files.add(
           await http.MultipartFile.fromPath(
             'certificates',
             path,
-            filename: '${specName.replaceAll(' ', '_')}_cert.pdf',
+            filename: '${safeSpecName}_cert.$ext',
           ),
         );
       }

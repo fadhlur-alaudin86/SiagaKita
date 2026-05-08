@@ -92,9 +92,11 @@ func (r *Repository) getCertsForUser(userID, status string) ([]KYCCert, error) {
 	return certs, nil
 }
 
-// ApproveKYC sets all pending certs for a user to 'approved' and marks them verified.
+// ApproveKYC sets all pending certs for a user to 'approved', marks them verified,
+// and upgrades their role from 'civilian' to 'volunteer'.
 func (r *Repository) ApproveKYC(userID, verifiedBy string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Approve semua sertifikat pending
 		if err := tx.Exec(`
 			UPDATE volunteer_certifications
 			SET status = 'approved', verified_by = ?
@@ -102,8 +104,15 @@ func (r *Repository) ApproveKYC(userID, verifiedBy string) error {
 		`, verifiedBy, userID).Error; err != nil {
 			return err
 		}
-		return tx.Exec(`
+		// 2. Tandai profil sebagai relawan terverifikasi
+		if err := tx.Exec(`
 			UPDATE user_profiles SET is_verified_volunteer = TRUE WHERE user_id = ?
+		`, userID).Error; err != nil {
+			return err
+		}
+		// 3. Upgrade role: civilian → volunteer (guard agar tidak overwrite role lain)
+		return tx.Exec(`
+			UPDATE users SET role = 'volunteer' WHERE id = ? AND role = 'civilian'
 		`, userID).Error
 	})
 }
