@@ -236,33 +236,41 @@ ws://<host>:8081/ws/connect?token=<jwt>
 
 ```go
 // hub.go — registry koneksi aktif
+type Client struct {
+    Conn *websocket.Conn
+    Role string
+}
+
 type Hub struct {
-    clients map[string]*Client  // userID → connection
+    clients map[string]*Client  // userID → Client
     mu      sync.RWMutex
 }
 
 // Broadcast ke semua koneksi yang terhubung
 hub.BroadcastAll(event)
 
-// Broadcast ke role tertentu
+// Broadcast ke role tertentu (contoh: "admin" atau "agency")
 hub.BroadcastToRole("agency", event)
 ```
+
+> **Catatan Hub**: Pada versi terbaru, Hub sudah menyimpan informasi *Role* (peran) klien berbarengan dengan koneksi `Conn` saat proses Register. Ini memungkinkan pencarian (*filtering*) target *broadcast* jauh lebih efisien di lapisan *memory*, tanpa perlu melakukan *lookup* lagi ke database/Redis.
 
 ### Event dari Backend ke Client
 
 | Event | Dikirim ke | Trigger |
 |-------|-----------|---------|
-| `INCOMING_EMERGENCY` | Semua agency | SOS baru masuk (status: broadcasting) |
-| `SOS_CANCELLED` | Semua agency | User batalkan SOS |
+| `INCOMING_EMERGENCY` | Semua agency/admin | SOS baru masuk (status: broadcasting) |
+| `SOS_CANCELLED` | Semua agency/admin | User batalkan SOS |
 | `RESCUE_ACCEPTED` | Reporter | Responder en_route |
 | `LOCATION_UPDATE` | Agency | GPS reporter diperbarui |
+| `VOLUNTEER_LOCATION_UPDATE` | Agency/admin | Koordinat GPS relawan online diperbarui secara _real-time_ |
 
 ### Event dari Client ke Backend
 
 | Event | Dari | Keterangan |
 |-------|------|-----------|
 | `TRIGGER_SOS` | Mobile | (Legacy — kini via REST) |
-| `LOCATION_PING` | Mobile | Koordinat GPS real-time |
+| `LOCATION_PING` | Mobile | (Legacy — kini menggunakan HTTP REST untuk *update* GPS dan `TouchLastActive` Redis) |
 
 ---
 

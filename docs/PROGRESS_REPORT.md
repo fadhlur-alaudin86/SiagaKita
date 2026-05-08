@@ -112,6 +112,24 @@
 
 ---
 
+### 🔖 Patch 1.0.15 — 8 Mei 2026 (Fitur Background Service & Pelacakan Online/GPS Real-time)
+
+#### 📱 Mobile App (SiagaKita Warga)
+- **Background Service**: Mengimplementasikan `flutter_background_service` untuk menjaga koneksi dan mengirim heartbeat setiap 30 detik tanpa campur tangan antarmuka UI. Menjamin fitur ini berjalan pada latar belakang walaupun aplikasi sedang terminimize.
+- **Background Location**: Integrasi izin `ACCESS_BACKGROUND_LOCATION` serta permintaan pembatalan mode optimasi baterai (`ignoreBatteryOptimizations`).
+- **Telemetry Broadcasting**: Aplikasi akan mengirim HTTP `PUT /api/v1/telemetry/location` untuk mengupdate kordinat GPS secara berkala di latar belakang, khusus ketika pengguna (relawan) mengaktifkan mode _"On Duty"_.
+
+#### 🛡️ Backend — Go Fiber & Redis
+- **True Online Status via Redis**: Mengganti status "Last Active" di database relasional menggunakan infrastruktur Redis TTL key (`user:online:{userId}`). Middleware `TouchLastActive` kini diinjeksi dengan klien Redis, memungkinkan deteksi status koneksi yang sangat efisien. Status *Online* kedaluwarsa secara otomatis dalam 90 detik setelah *heartbeat* terakhir gagal diterima.
+- **Role-based Broadcast (Hub)**: Modul `Hub` WebSockets direfaktor untuk merekam `Role` setiap *client*. Memperkenalkan fungsi `BroadcastToRole` yang memungkinkan *backend* memancarkan data GPS secara *live* khusus ke administrator/agensi yang dituju.
+- **Online-Status Bulk Fetching**: Endpoint baru `POST /api/v1/telemetry/online-status` untuk mendukung pengambilan data status kolektif melalui *Redis Pipeline*.
+
+#### 🖥️ Desktop Console (Instansi)
+- **Peta Operasional Real-time**: Layar *Peta Operasional* kini berlangganan *event* `VOLUNTEER_LOCATION_UPDATE` via WebSocket. Menampilkan markah (marker 🟢) hijau di peta yang melacak pergerakan dinamis relawan di lapangan layaknya radar navigasi sungguhan.
+- **WebSocket Enum Patch**: Memperbaiki masalah kompiler terkait pencocokan eksklusif *Enum* di *Dart* karena hadirnya event *volunteer location* yang baru.
+
+---
+
 ### 🔖 Patch 1.0.14 — 8 Mei 2026 (Bugfix Inti: Semua Tipe Laporan & Urgency Nullable)
 
 #### 🛡️ Backend — Perbaikan Kritis

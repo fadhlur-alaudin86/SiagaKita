@@ -9,7 +9,7 @@ class DispatchRelawanPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO Sprint B.4 — full dispatch implementation
+    // full dispatch implementation
     return const Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
