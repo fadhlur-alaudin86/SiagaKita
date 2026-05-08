@@ -27,6 +27,7 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
     95.32,
   ); // Banda Aceh default fallback
   LatLng? _agencyLocation; // Lokasi agency sendiri
+  final Map<String, LatLng> _volunteers = {}; // Lokasi relawan online
 
   @override
   void initState() {
@@ -39,6 +40,15 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
           msg.event == WsEvent.sosCancelled ||
           msg.event == WsEvent.connected) {
         _loadIncidents();
+      } else if (msg.event == WsEvent.volunteerLocationUpdate) {
+        final userId = msg.payload['user_id'] as String?;
+        final lat = msg.payload['latitude'] as num?;
+        final lng = msg.payload['longitude'] as num?;
+        if (userId != null && lat != null && lng != null) {
+          setState(() {
+            _volunteers[userId] = LatLng(lat.toDouble(), lng.toDouble());
+          });
+        }
       }
     });
   }
@@ -214,6 +224,37 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                               ),
                             ],
                           ),
+                        ),
+                      );
+                    }),
+                    // Marker Relawan
+                    ..._volunteers.entries.map((entry) {
+                      return Marker(
+                        point: entry.value,
+                        width: 40,
+                        height: 40,
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.green.withValues(alpha: 0.5),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }),

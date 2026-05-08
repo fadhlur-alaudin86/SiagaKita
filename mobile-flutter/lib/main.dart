@@ -5,12 +5,14 @@ import 'core/models/user_model.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/location_service.dart';
 import 'core/services/session_service.dart';
+import 'core/services/background_service.dart';
 import 'features/auth/login_screen.dart';
 import 'features/masyarakat/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ConnectivityService.instance.init();
+  await AppBackgroundService.initialize();
   runApp(const SiagaKitaApp());
 }
 

@@ -52,7 +52,71 @@ func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal menyimpan lokasi")
 	}
 
+	// Broadcast lokasi terbaru ke admin & agency yang sedang online
+	h.h.BroadcastToRole("admin", hub.Message{
+		Event: "VOLUNTEER_LOCATION_UPDATE",
+		Payload: map[string]interface{}{
+			"user_id":   userID,
+			"latitude":  body.Latitude,
+			"longitude": body.Longitude,
+			"timestamp": time.Now().Unix(),
+		},
+	})
+	h.h.BroadcastToRole("agency", hub.Message{
+		Event: "VOLUNTEER_LOCATION_UPDATE",
+		Payload: map[string]interface{}{
+			"user_id":   userID,
+			"latitude":  body.Latitude,
+			"longitude": body.Longitude,
+			"timestamp": time.Now().Unix(),
+		},
+	})
+	h.h.BroadcastToRole("superadmin", hub.Message{
+		Event: "VOLUNTEER_LOCATION_UPDATE",
+		Payload: map[string]interface{}{
+			"user_id":   userID,
+			"latitude":  body.Latitude,
+			"longitude": body.Longitude,
+			"timestamp": time.Now().Unix(),
+		},
+	})
+
 	return utils.SuccessResponse(c, fiber.Map{"message": "Lokasi diperbarui"})
+}
+
+// GetOnlineStatus handles POST /api/v1/telemetry/online-status [ConsoleOnly]
+// Accepts a list of user IDs and returns a map of {userID: bool} based on Redis TTL.
+func (h *Handler) GetOnlineStatus(c *fiber.Ctx) error {
+	var body struct {
+		UserIDs []string `json:"user_ids"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	statusMap := make(map[string]bool)
+	if len(body.UserIDs) == 0 {
+		return utils.SuccessResponse(c, statusMap)
+	}
+
+	// Use Redis Pipeline for efficient bulk get
+	pipe := h.rdb.Pipeline()
+	cmds := make(map[string]*redis.StringCmd)
+	for _, id := range body.UserIDs {
+		cmds[id] = pipe.Get(ctx, "user:online:"+id)
+	}
+
+	_, _ = pipe.Exec(ctx) // Ignore error because key not found returns redis.Nil
+
+	for id, cmd := range cmds {
+		val, err := cmd.Result()
+		statusMap[id] = (err == nil && val == "1")
+	}
+
+	return utils.SuccessResponse(c, statusMap)
 }
 
 // SMSFallback handles POST /api/v1/incidents/sms-fallback  [API Key required]

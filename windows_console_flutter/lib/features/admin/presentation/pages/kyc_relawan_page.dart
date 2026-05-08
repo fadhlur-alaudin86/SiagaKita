@@ -41,11 +41,12 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
   }
 
   Future<void> _load({bool silent = false}) async {
-    if (!silent)
+    if (!silent) {
       setState(() {
         _loading = true;
         _error = null;
       });
+    }
     try {
       final data = await AdminApiService.getPendingVolunteers(widget.token);
       if (mounted) {

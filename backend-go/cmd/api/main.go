@@ -138,7 +138,7 @@ func main() {
 	auth.Post("/verify-otp", otpHandler.VerifyOTP)
 
 	// ── Users (protected — civilian/volunteer only) ────────────────────────────
-	users := v1.Group("/users", authMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db))
+	users := v1.Group("/users", authMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db, rdb))
 	users.Post("/biodata", userHandler.SaveBiodata)
 	users.Get("/profile", userHandler.GetProfile)
 	users.Put("/profile", userHandler.UpdateProfile)
@@ -178,6 +178,7 @@ func main() {
 	// ── Telemetry ─────────────────────────────────────────────────────────────
 	telGroup := v1.Group("/telemetry", authMw)
 	telGroup.Put("/location", telemetryHandler.UpdateLocation)
+	telGroup.Post("/online-status", middleware.ConsoleOnly(), telemetryHandler.GetOnlineStatus)
 
 	// ── Admin (protected — AdminOnly / ConsoleOnly) ───────────────────────────
 	admin := v1.Group("/admin", authMw)

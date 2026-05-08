@@ -87,7 +87,7 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := claims.UserID
-	h.hub.Register(userID, conn)
+	h.hub.Register(userID, claims.Role, conn)
 	defer h.hub.Unregister(userID)
 
 	// Send welcome message

@@ -1,19 +1,22 @@
 package middleware
 
 import (
-	"siagakita-backend/internal/config"
-	"siagakita-backend/internal/utils"
+	"context"
 	"strings"
 	"time"
 
+	"siagakita-backend/internal/config"
+	"siagakita-backend/internal/utils"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 // TouchLastActive memperbarui kolom last_active_at di tabel users setiap kali
 // user civilian/volunteer melakukan request API. Digunakan untuk menampilkan
 // status "Online / Berjalan di latar belakang / Terakhir terlihat" di Console Admin.
-func TouchLastActive(db *gorm.DB) fiber.Handler {
+func TouchLastActive(db *gorm.DB, rdb *redis.Client) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if err := c.Next(); err != nil {
 			return err
@@ -28,7 +31,15 @@ func TouchLastActive(db *gorm.DB) fiber.Handler {
 		}
 		// Fire-and-forget, jangan blokir response
 		go func() {
+			// Update DB timestamp
 			db.Exec("UPDATE users SET last_active_at = ? WHERE id = ?", time.Now(), userID)
+			
+			// Update Redis online status TTL (90s = 3x 30s heartbeat)
+			if rdb != nil {
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
+				rdb.Set(ctx, "user:online:"+userID, "1", 90*time.Second)
+			}
 		}()
 		return nil
 	}

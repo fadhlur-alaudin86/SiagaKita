@@ -29,6 +29,13 @@ class LocationService {
       return false; // GPS dimatikan di pengaturan device
     }
 
+    // 1. Notifikasi (untuk foreground service)
+    final notifStatus = await Permission.notification.status;
+    if (notifStatus.isDenied) {
+      await Permission.notification.request();
+    }
+
+    // 2. Location When In Use (Wajib pertama di Android)
     var permission = await Permission.locationWhenInUse.status;
 
     if (permission.isDenied) {
@@ -45,10 +52,22 @@ class LocationService {
       if (context != null && context.mounted) {
         await _showPermissionExplanationDialog(context);
       } else {
-        // Fallback jika tidak ada context
         await openAppSettings();
       }
       return false;
+    }
+
+    // 3. Location Always (Untuk background)
+    // Di Android 11+, ini akan membuka settings secara manual.
+    final alwaysStatus = await Permission.locationAlways.status;
+    if (alwaysStatus.isDenied && permission.isGranted) {
+      await Permission.locationAlways.request();
+    }
+
+    // 4. Ignore Battery Optimizations
+    final batteryStatus = await Permission.ignoreBatteryOptimizations.status;
+    if (batteryStatus.isDenied) {
+      await Permission.ignoreBatteryOptimizations.request();
     }
 
     return permission.isGranted;
