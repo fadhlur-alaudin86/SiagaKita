@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -311,6 +312,17 @@ func (r *Repository) FindPersonnelByAgencyID(agencyID string) ([]AgencyPersonnel
 
 // SubmitKYC menyimpan pengajuan verifikasi NIK & selfie (foto profil) warga.
 func (r *Repository) SubmitKYC(userID, nik, fullName, ktpURL, photoURL string) error {
+	// Cek apakah NIK sudah digunakan oleh akun lain.
+	var count int64
+	if err := r.db.Model(&UserProfile{}).
+		Where("nik = ? AND user_id != ?", nik, userID).
+		Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return errors.New("NIK_ALREADY_USED")
+	}
+
 	updates := map[string]interface{}{
 		"nik":                      nik,
 		"full_name":                fullName,

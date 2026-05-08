@@ -342,7 +342,14 @@ func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
 	}
 	selfiePublicURL := s.cfg.UploadBaseURL + "/kyc/" + userID + "_selfie" + selfieExt
 
-	return s.repo.SubmitKYC(userID, nik, fullName, ktpPublicURL, selfiePublicURL)
+	err = s.repo.SubmitKYC(userID, nik, fullName, ktpPublicURL, selfiePublicURL)
+	if err != nil {
+		if err.Error() == "NIK_ALREADY_USED" {
+			return errors.New("NIK ini sudah terdaftar pada akun lain. Pastikan NIK yang Anda masukkan benar")
+		}
+		return err
+	}
+	return nil
 }
 
 // GetKYCStatus mengembalikan status verifikasi NIK warga.

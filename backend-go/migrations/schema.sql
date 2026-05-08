@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict IcTRijhP8aJAjBlpHaSoluh35Gwy8e1qYzyckL4udEGaZP8b9kl20nhVJr7WOZE
+\restrict TzAXcMNvkvKnLKeamERyyfuJeNTjwE0bRLWnftnUdv1B4MitZa4TVmhhMsQb2SA
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -620,14 +620,6 @@ ALTER TABLE ONLY public.user_profiles
 
 
 --
--- Name: user_profiles user_profiles_phone_number_key; Type: CONSTRAINT; Schema: public; Owner: siagakita_admin
---
-
-ALTER TABLE ONLY public.user_profiles
-    ADD CONSTRAINT user_profiles_phone_number_key UNIQUE (phone_number);
-
-
---
 -- Name: user_profiles user_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: siagakita_admin
 --
 
@@ -965,5 +957,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict IcTRijhP8aJAjBlpHaSoluh35Gwy8e1qYzyckL4udEGaZP8b9kl20nhVJr7WOZE
+\unrestrict TzAXcMNvkvKnLKeamERyyfuJeNTjwE0bRLWnftnUdv1B4MitZa4TVmhhMsQb2SA
 

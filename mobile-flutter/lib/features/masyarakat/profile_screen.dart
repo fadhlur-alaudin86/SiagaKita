@@ -73,6 +73,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ─── Konfirmasi sebelum edit NIK ─────────────────────────────────────────
+  void _confirmAndEditNIK() {
+    showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 22),
+            const SizedBox(width: 8),
+            Text('Perhatian'.tr(context), style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          'Perubahan NIK membutuhkan verifikasi ulang oleh admin (1-3 hari kerja). '
+          'Status verifikasi saat ini akan direset ke "pending".\n\nApakah Anda ingin melanjutkan?',
+          style: const TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal'.tr(context), style: const TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: Text('Lanjut'.tr(context), style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true && mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => KycScreen(accessToken: widget.accessToken),
+          ),
+        );
+      }
+    });
+  }
+
+  // ─── Konfirmasi sebelum edit WhatsApp ─────────────────────────────────────
+  void _confirmAndEditWhatsApp() {
+    showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 22),
+            const SizedBox(width: 8),
+            Text('Perhatian'.tr(context), style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          'Pengubahan nomor WhatsApp memerlukan verifikasi ulang melalui OTP. '
+          'Nomor baru tidak dapat digunakan sebelum terverifikasi.\n\nApakah Anda ingin melanjutkan?',
+          style: const TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal'.tr(context), style: const TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: Text('Lanjut'.tr(context), style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true && mounted) {
+        _editWhatsApp();
+      }
+    });
+  }
+
   void _editWhatsApp() {
     final phoneCtrl = TextEditingController(text: UserModel.currentUser.value.phoneNumber ?? '');
     showDialog(
@@ -395,12 +472,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.edit, size: 18),
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => KycScreen(accessToken: widget.accessToken),
-                            ),
-                          ),
+                          onPressed: _confirmAndEditNIK,
                         ),
                       ),
                       Divider(
@@ -462,7 +534,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.edit, size: 18),
-                          onPressed: _editWhatsApp,
+                          onPressed: _confirmAndEditWhatsApp,
                         ),
                       ),
                       Divider(

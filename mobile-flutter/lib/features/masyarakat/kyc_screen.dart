@@ -131,7 +131,21 @@ class _KycScreenState extends State<KycScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showSnack(e.toString().replaceFirst('Exception: ', ''), Colors.red);
+        final msg = e.toString().replaceFirst('Exception: ', '');
+        final isNikDuplicate = msg.contains('sudah terdaftar');
+        _showSnack(
+          isNikDuplicate
+              ? msg
+              : msg,
+          isNikDuplicate ? Colors.red.shade700 : Colors.red,
+        );
+        // Jika NIK sudah digunakan, fokuskan kembali ke field NIK
+        if (isNikDuplicate) {
+          _nikCtrl.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: _nikCtrl.text.length,
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
