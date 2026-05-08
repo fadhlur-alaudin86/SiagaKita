@@ -274,7 +274,6 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 		Description:  c.FormValue("description"),
 		Latitude:     parseFloat(c.FormValue("latitude")),
 		Longitude:    parseFloat(c.FormValue("longitude")),
-		UrgencyLevel: parseInt(c.FormValue("urgency_level"), 1),
 	}
 
 	if req.IncidentType == "" || req.IncidentType == "unknown" {
@@ -340,6 +339,26 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 	}
 
 	return utils.CreatedResponse(c, rep)
+}
+
+// POST /api/v1/reports/:id/cancel — membatalkan laporan warga
+func (h *Handler) CancelReport(c *fiber.Ctx) error {
+	reporterID := c.Locals("userID").(string)
+	reportID := c.Params("id")
+
+	if err := h.svc.CancelReport(reportID, reporterID); err != nil {
+		status := fiber.StatusInternalServerError
+		if err.Error() == "unauthorized" {
+			status = fiber.StatusForbidden
+		} else if err.Error() == "laporan tidak ditemukan" {
+			status = fiber.StatusNotFound
+		} else if err.Error() == "hanya laporan dengan status 'sent' atau 'pending' yang dapat dibatalkan" {
+			status = fiber.StatusConflict
+		}
+		return utils.ErrorResponse(c, status, err.Error())
+	}
+
+	return utils.SuccessResponse(c, fiber.Map{"cancelled": true})
 }
 
 // GET /api/v1/reports/my — riwayat laporan milik user yang sedang login
@@ -470,12 +489,4 @@ func parseFloat(s string) float64 {
 	var f float64
 	_, _ = fmt.Sscanf(s, "%f", &f)
 	return f
-}
-
-func parseInt(s string, defaultVal int) int {
-	var i int
-	if _, err := fmt.Sscanf(s, "%d", &i); err != nil {
-		return defaultVal
-	}
-	return i
 }

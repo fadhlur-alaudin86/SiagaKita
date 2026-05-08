@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../constants/api_config.dart';
 
 class ReportException implements Exception {
@@ -14,7 +16,7 @@ class ReportModel {
   final String id;
   final String incidentType;
   final String? description;
-  final int urgencyLevel;
+  final int? urgencyLevel; // nullable — ditentukan agensi, bukan warga
   final double latitude;
   final double longitude;
   final String status;
@@ -26,7 +28,7 @@ class ReportModel {
     required this.id,
     required this.incidentType,
     this.description,
-    required this.urgencyLevel,
+    this.urgencyLevel,
     required this.latitude,
     required this.longitude,
     required this.status,
@@ -40,10 +42,10 @@ class ReportModel {
       id: json['id'] ?? '',
       incidentType: json['incident_type'] ?? '',
       description: json['description'],
-      urgencyLevel: json['urgency_level'] ?? 1,
+      urgencyLevel: json['urgency_level'] as int?,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
-      status: json['status'] ?? 'received',
+      status: json['status'] ?? 'sent',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
       photoPaths:
           (json['photo_paths'] as List<dynamic>?)
@@ -55,6 +57,7 @@ class ReportModel {
   }
 
   String get urgencyLabel {
+    if (urgencyLevel == null) return '-';
     switch (urgencyLevel) {
       case 0:
         return 'Ringan';
@@ -71,6 +74,8 @@ class ReportModel {
         return 'Diproses';
       case 'resolved':
         return 'Selesai';
+      case 'failed':
+        return 'Gagal (Offline)';
       default:
         return 'Diterima';
     }
@@ -85,7 +90,6 @@ class ReportService {
   static Future<void> submitReport({
     required String accessToken,
     required String incidentType,
-    required int urgencyLevel,
     required double latitude,
     required double longitude,
     String? description,
@@ -102,7 +106,6 @@ class ReportService {
 
       // Text fields
       request.fields['incident_type'] = incidentType;
-      request.fields['urgency_level'] = urgencyLevel.toString();
       request.fields['latitude'] = latitude.toString();
       request.fields['longitude'] = longitude.toString();
       if (description != null && description.isNotEmpty) {
@@ -144,8 +147,63 @@ class ReportService {
     } on ReportException {
       rethrow;
     } catch (e) {
-      throw ReportException('Gagal menghubungi server: $e');
+      // Save offline if network fails
+      await _saveFailedReportLocal(
+        incidentType: incidentType,
+        latitude: latitude,
+        longitude: longitude,
+        description: description,
+        photos: photos,
+        audio: audio,
+      );
+      throw ReportException('Gagal terhubung ke server, laporan disimpan offline.');
     }
+  }
+
+  // ─── Offline Queue ───────────────────────────────────────────────────────────
+  static const String _failedReportsKey = 'failed_reports';
+
+  static Future<void> _saveFailedReportLocal({
+    required String incidentType,
+    required double latitude,
+    required double longitude,
+    String? description,
+    List<File> photos = const [],
+    File? audio,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> currentFailed = prefs.getStringList(_failedReportsKey) ?? [];
+
+    final reportMap = {
+      'id': 'offline_${const Uuid().v4()}',
+      'incident_type': incidentType,
+      'latitude': latitude,
+      'longitude': longitude,
+      'description': description,
+      'status': 'failed',
+      'created_at': DateTime.now().toIso8601String(),
+      'photo_paths': photos.map((f) => f.path).toList(),
+      'audio_path': audio?.path,
+    };
+
+    currentFailed.add(jsonEncode(reportMap));
+    await prefs.setStringList(_failedReportsKey, currentFailed);
+  }
+
+  static Future<List<ReportModel>> getFailedReports() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> currentFailed = prefs.getStringList(_failedReportsKey) ?? [];
+    return currentFailed.map((e) => ReportModel.fromJson(jsonDecode(e))).toList();
+  }
+
+  static Future<void> removeFailedReport(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> currentFailed = prefs.getStringList(_failedReportsKey) ?? [];
+    currentFailed.removeWhere((item) {
+      final decoded = jsonDecode(item);
+      return decoded['id'] == id;
+    });
+    await prefs.setStringList(_failedReportsKey, currentFailed);
   }
 
   // ─── Get my reports ──────────────────────────────────────────────────────────
@@ -172,9 +230,67 @@ class ReportService {
       }
 
       final data = body['data'] as List<dynamic>? ?? [];
-      return data
+      final serverReports = data
           .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
           .toList();
+
+      final offlineReports = await getFailedReports();
+      return [...offlineReports, ...serverReports];
+    } on ReportException {
+      rethrow;
+    } catch (e) {
+      throw ReportException('Gagal menghubungi server: $e');
+    }
+  }
+
+  // ─── Resend Failed Report ────────────────────────────────────────────────────
+  static Future<void> resendFailedReport({
+    required String accessToken,
+    required ReportModel failedReport,
+  }) async {
+    final List<File> photos = failedReport.photoPaths.map((p) => File(p)).toList();
+    final File? audio = failedReport.audioPath != null ? File(failedReport.audioPath!) : null;
+
+    try {
+      await submitReport(
+        accessToken: accessToken,
+        incidentType: failedReport.incidentType,
+        latitude: failedReport.latitude,
+        longitude: failedReport.longitude,
+        description: failedReport.description,
+        photos: photos,
+        audio: audio,
+      );
+      // Remove from offline queue if successful
+      await removeFailedReport(failedReport.id);
+    } catch (e) {
+      rethrow; // let UI handle it
+    }
+  }
+
+  // ─── Cancel Report ───────────────────────────────────────────────────────────
+  static Future<void> cancelReport({
+    required String accessToken,
+    required String reportId,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/reports/$reportId/cancel'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+            },
+          )
+          .timeout(_timeout);
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode != 200) {
+        throw ReportException(
+          body['message'] as String? ?? 'Gagal membatalkan laporan',
+        );
+      }
     } on ReportException {
       rethrow;
     } catch (e) {

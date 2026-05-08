@@ -112,6 +112,38 @@
 
 ---
 
+### 🔖 Patch 1.0.14 — 8 Mei 2026 (Bugfix Inti: Semua Tipe Laporan & Urgency Nullable)
+
+#### 🛡️ Backend — Perbaikan Kritis
+
+- **Fix "Semi-Simulasi" Pelaporan**: Menambahkan tipe insiden `accident` (Kecelakaan) dan `disaster` (Bencana Alam) ke daftar `validIncidentTypes` dan `incidentTypeMultiplier` di `incident/service.go`. Sebelumnya hanya tipe `fire`, `medical`, `crime`, `rescue`, dan `general` yang diterima backend — sehingga laporan kebakaran dan kecelakaan dari mobile selalu ditolak dengan error *"tipe insiden tidak valid"*. Multiplier XP untuk tipe baru: `accident` = 1.3×, `disaster` = 1.4×.
+- **Hapus Dead Code**: Menghapus fungsi `parseInt()` yang tidak terpakai di `incident/handler.go` (setelah refactoring sebelumnya tidak ada pemanggil tersisa).
+- **Fix Lint S1016** (`admin/repository.go`): Menyederhanakan fungsi `GetUsers()` dengan menghapus struct lokal `row` yang identik dengan `AdminUserItem`, lalu scan GORM langsung ke `[]AdminUserItem`. Mengurangi ~20 baris boilerplate.
+
+#### 📱 Mobile App — Perbaikan Kompatibilitas
+
+- **`urgencyLevel` Nullable** (`report_service.dart`): Field `urgencyLevel` di `ReportModel` diubah dari `required int` menjadi `int?` (nullable). Ini selaras dengan migrasi `011_reports_and_volunteer.sql` yang menghapus constraint `NOT NULL` pada kolom `urgency_level` di tabel `incident_reports`. Tingkat urgensi kini hanya ditentukan oleh agensi melalui Desktop Console, bukan oleh warga saat pelaporan. Default status parsing diperbarui dari `received` menjadi `sent`.
+- **Fix Tampilan Urgency Chip** (`report_history_screen.dart`): Method `_urgencyColor()` diperbarui untuk menerima `int?` dan mengembalikan `Colors.grey` jika null. Chip urgensi di kartu riwayat laporan hanya ditampilkan jika `urgencyLevel` sudah diisi oleh agensi (tidak null) — mencegah chip kosong atau crash saat nilai masih null.
+
+---
+
+### 🔖 Patch 1.0.13 — 8 Mei 2026 (Refinement V5: Pendaftaran Relawan Asli & Offline Mode Pelaporan)
+
+#### 📱 Perbaikan Mobile App (SiagaKita Warga)
+- **File Upload Pendaftaran Relawan**: Fitur simulasi pendaftaran relawan kini telah diganti dengan fungsionalitas unggah file sungguhan menggunakan `file_picker`. Warga sekarang dapat memilih dan mengunggah dokumen PDF/JPG/PNG sebagai bukti sertifikasi keahlian medis atau evakuasi.
+- **Offline Mode Pelaporan**: Menambahkan kemampuan aplikasi untuk menyimpan laporan (`status: failed`) secara lokal menggunakan `SharedPreferences` jika proses kirim ke server gagal akibat tidak ada koneksi internet.
+- **Resend Laporan**: Pada tab Riwayat Laporan, warga kini dapat melihat laporan yang berstatus `failed` (Gagal/Offline) dan menekan tombol **"Kirim Ulang"** untuk mencoba mengirim laporan tersebut kembali setelah jaringan internet pulih.
+- **Batal Laporan**: Warga dapat membatalkan laporan yang sudah terkirim (tetapi belum diproses) melalui tombol **"Batalkan"** di tab Riwayat Laporan.
+- **Pemisahan UI Pelaporan**: Formulir "Buat Laporan" dan daftar "Riwayat Laporan" kini dipisahkan ke dalam dua buah *Tab* di layar "Pelaporan", memperbaiki navigasi serta membersihkan antarmuka utama. Menu Riwayat Laporan dari *Bottom Navigation Bar* telah digabungkan ke layar profil.
+
+#### 🖥️ Perbaikan Desktop Console (Instansi)
+- **Review Pengalaman Relawan**: UI KYC Relawan (`kyc_relawan_page.dart`) kini menampilkan riwayat **Pengalaman & Spesialisasi** yang dikirimkan calon relawan. Ini akan memudahkan Instansi dalam menilai kelayakan warga menjadi bagian dari tim First Responder.
+- **Penyesuaian Model Admin**: Field `experience` telah diintegrasikan ke dalam `VolunteerModel` agar dapat di-_parse_ dari payload respons API `/admin/volunteers/pending`.
+
+#### 🛡️ Backend & Migrasi
+- **Constraint Level Urgensi**: Menghapus kewajiban pengisian (`not null constraint`) tingkat urgensi dari sisi pengguna dalam pembuatan laporan. Level urgensi sepenuhnya menjadi wewenang agensi peninjau di Desktop Console. Default status tabel laporan menjadi `sent`.
+- **Integrasi File Relawan**: Modul `user_service` dan `handler` telah tersambung sepenuhnya dengan `file_picker`. Pengalaman relawan disimpan ke tabel profil, dan URL sertifikat dimasukkan secara terpisah ke dalam tabel relasional `volunteer_certifications`.
+
 ### 🔖 Patch 1.0.12 — 8 Mei 2026 (Refinement V4: Dispatch, Pelaporan & Manajemen Personil)
 
 #### 📱 Perbaikan Mobile App (SiagaKita Warga)

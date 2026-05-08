@@ -1236,7 +1236,7 @@ class _HomeScreenState extends State<HomeScreen>
                             isDarkMode: isDarkMode,
                             icon: Icons.description_outlined,
                             iconColor: colors.secondary,
-                            title: 'Laporkan'.tr(context),
+                            title: 'Pelaporan'.tr(context),
                             subtitle: 'Kirim bukti & titik\nlokasi'.tr(context),
                           ),
                         ),

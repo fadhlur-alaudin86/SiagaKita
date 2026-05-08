@@ -44,6 +44,7 @@ type UserProfile struct {
 	// Selfie dari proses KYC sekaligus digunakan sebagai foto profil warga.
 	ProfilePhotoURL       *string    `gorm:"column:profile_photo_url" json:"profile_photo_url,omitempty"`
 	NIKVerificationStatus string     `gorm:"default:'none'" json:"nik_verification_status"`
+	VolunteerExperience   *string    `gorm:"column:volunteer_experience" json:"volunteer_experience,omitempty"`
 	UpdatedAt             time.Time  `json:"updated_at"`
 }
 
@@ -96,6 +97,20 @@ type VolunteerReputation struct {
 }
 
 func (VolunteerReputation) TableName() string { return "volunteer_reputation" }
+
+// VolunteerCertification menyimpan dokumen sertifikat relawan.
+type VolunteerCertification struct {
+	ID              string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID          string     `gorm:"type:uuid;not null" json:"user_id"`
+	CertificateType string     `gorm:"not null" json:"certificate_type"`
+	DocumentURL     string     `gorm:"not null" json:"document_url"`
+	Status          string     `gorm:"default:'pending'" json:"status"`
+	VerifiedBy      *string    `gorm:"type:uuid" json:"verified_by,omitempty"`
+	ExpiresAt       *time.Time `json:"expires_at,omitempty"`
+	CreatedAt       time.Time  `json:"created_at"`
+}
+
+func (VolunteerCertification) TableName() string { return "volunteer_certifications" }
 
 // ─── Request DTOs ──────────────────────────────────────────────────────────────
 
@@ -197,16 +212,17 @@ type ProfileResponse struct {
 	IsVerifiedVolunteer   bool                 `json:"is_verified_volunteer"`
 	NIKVerificationStatus string               `json:"nik_verification_status"`
 	SOSStrikeCount        int                  `json:"sos_strike_count"`
-	IsSOSBanned         bool                 `json:"is_sos_banned"`
-	BloodType           *string              `json:"blood_type,omitempty"`
-	Allergies           *string              `json:"allergies,omitempty"`
-	MedicalConditions   *string              `json:"medical_conditions,omitempty"`
-	HeightCm            *int                 `json:"height_cm,omitempty"`
-	WeightKg            *int                 `json:"weight_kg,omitempty"`
-	Alamat              *string              `json:"alamat,omitempty"`
-	Bio                 *string              `json:"bio,omitempty"`
-	EmergencyContacts   []EmergencyContact   `json:"emergency_contacts"`
-	VolunteerReputation *VolunteerReputation `json:"volunteer_reputation,omitempty"`
+	IsSOSBanned           bool                 `json:"is_sos_banned"`
+	BloodType             *string              `json:"blood_type,omitempty"`
+	Allergies             *string              `json:"allergies,omitempty"`
+	MedicalConditions     *string              `json:"medical_conditions,omitempty"`
+	HeightCm              *int                 `json:"height_cm,omitempty"`
+	WeightKg              *int                 `json:"weight_kg,omitempty"`
+	Alamat                *string              `json:"alamat,omitempty"`
+	Bio                   *string              `json:"bio,omitempty"`
+	VolunteerExperience   *string              `json:"volunteer_experience,omitempty"`
+	EmergencyContacts     []EmergencyContact   `json:"emergency_contacts"`
+	VolunteerReputation   *VolunteerReputation `json:"volunteer_reputation,omitempty"`
 }
 
 // UpdateProfileRequest untuk PUT /users/profile (civilian/volunteer).
@@ -274,5 +290,11 @@ type KYCStatusResponse struct {
 	NIK             *string   `json:"nik,omitempty"`
 	ProfilePhotoURL *string   `json:"profile_photo_url,omitempty"`
 	Message         string    `json:"message"`
+}
+
+// RegisterVolunteerRequest adalah request form data untuk pendaftaran relawan.
+type RegisterVolunteerRequest struct {
+	Specializations []string `form:"specializations"` // Akan diurai sebagai array dari form-data
+	Experience      string   `form:"experience"`
 }
 

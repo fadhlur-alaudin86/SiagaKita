@@ -6,12 +6,13 @@ import "time"
 
 // VolunteerKYC adalah data relawan yang menunggu verifikasi KYC.
 type VolunteerKYC struct {
-	UserID      string    `json:"user_id"`
-	FullName    *string   `json:"full_name"`
-	Email       string    `json:"email"`
-	NIK         *string   `json:"nik,omitempty"`
-	Certs       []KYCCert `json:"certifications"`
-	SubmittedAt time.Time `json:"submitted_at"`
+	UserID              string    `json:"user_id"`
+	FullName            *string   `json:"full_name"`
+	Email               string    `json:"email"`
+	NIK                 *string   `json:"nik,omitempty"`
+	VolunteerExperience *string   `json:"volunteer_experience,omitempty"`
+	Certs               []KYCCert `json:"certifications"`
+	SubmittedAt         time.Time `json:"submitted_at"`
 }
 
 type KYCCert struct {

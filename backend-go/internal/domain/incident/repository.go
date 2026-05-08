@@ -161,6 +161,18 @@ func (r *Repository) FindReportsByUser(userID string) ([]IncidentReport, error) 
 	return reps, r.db.Where("reporter_id = ?", userID).Order("created_at DESC").Find(&reps).Error
 }
 
+func (r *Repository) CancelReport(reportID, reporterID string) error {
+	var rep IncidentReport
+	if err := r.db.Where("id = ? AND reporter_id = ?", reportID, reporterID).First(&rep).Error; err != nil {
+		return errors.New("laporan tidak ditemukan")
+	}
+	if rep.Status != "sent" && rep.Status != "pending" {
+		return errors.New("hanya laporan dengan status 'sent' atau 'pending' yang dapat dibatalkan")
+	}
+	return r.db.Model(&IncidentReport{}).Where("id = ?", reportID).
+		Updates(map[string]interface{}{"status": "canceled", "updated_at": time.Now()}).Error
+}
+
 // ─── Strike & Ban ─────────────────────────────────────────────────────────────
 
 // AddStrike inserts a sos_strikes row, increments user strike count in user_profiles,

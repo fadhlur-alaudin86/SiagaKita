@@ -5,7 +5,8 @@ import '../../core/services/incident_service.dart';
 
 class ReportHistoryScreen extends StatefulWidget {
   final String accessToken;
-  const ReportHistoryScreen({super.key, required this.accessToken});
+  final bool isNested;
+  const ReportHistoryScreen({super.key, required this.accessToken, this.isNested = false});
 
   @override
   State<ReportHistoryScreen> createState() => _ReportHistoryScreenState();
@@ -102,7 +103,8 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     }
   }
 
-  Color _urgencyColor(int level) {
+  Color _urgencyColor(int? level) {
+    if (level == null) return Colors.grey;
     switch (level) {
       case 0:
         return Colors.green;
@@ -135,6 +137,33 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryTextColor = isDark ? Colors.white : const Color(0xFF0D1B3E);
+
+    Widget body = TabBarView(
+      children: [
+        _buildReportsBody(colors, isDark),
+        _buildSOSBody(colors, isDark),
+      ],
+    );
+
+    if (widget.isNested) {
+      return DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            TabBar(
+              labelColor: colors.primary,
+              unselectedLabelColor: colors.onSurface.withValues(alpha: 0.5),
+              indicatorColor: colors.primary,
+              tabs: const [
+                Tab(text: 'Laporan'),
+                Tab(text: 'SOS Darurat'),
+              ],
+            ),
+            Expanded(child: body),
+          ],
+        ),
+      );
+    }
 
     return DefaultTabController(
       length: 2,
@@ -170,12 +199,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             ),
           ],
         ),
-        body: TabBarView(
-          children: [
-            _buildReportsBody(colors, isDark),
-            _buildSOSBody(colors, isDark),
-          ],
-        ),
+        body: body,
       ),
     );
   }
@@ -416,20 +440,115 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             const SizedBox(height: 10),
             Row(
               children: [
-                _chip(report.urgencyLabel, urgencyColor),
-                const SizedBox(width: 8),
+                // Chip urgensi — hanya tampilkan jika sudah ditentukan agensi
+                if (report.urgencyLevel != null)
+                  _chip(report.urgencyLabel, urgencyColor),
+                if (report.urgencyLevel != null) const SizedBox(width: 8),
                 if (report.photoPaths.isNotEmpty)
                   _chip('${report.photoPaths.length} foto', Colors.blue),
                 if (report.audioPath != null) ...[
                   const SizedBox(width: 8),
                   _chip('audio', Colors.purple),
                 ],
+                const Spacer(),
+                if (report.status == 'sent' || report.status == 'pending')
+                  TextButton(
+                    onPressed: () => _confirmCancelReport(report.id),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text('Batalkan'.tr(context), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                if (report.status == 'failed')
+                  TextButton(
+                    onPressed: () => _resendFailedReport(report),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text('Kirim Ulang'.tr(context), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
               ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _confirmCancelReport(String reportId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Batalkan Laporan?'.tr(context)),
+        content: Text('Apakah Anda yakin ingin membatalkan laporan ini? Laporan yang dibatalkan tidak dapat dikembalikan.'.tr(context)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Tidak'.tr(context), style: const TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _cancelReport(reportId);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            child: Text('Ya, Batalkan'.tr(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _cancelReport(String reportId) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      await ReportService.cancelReport(accessToken: widget.accessToken, reportId: reportId);
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Laporan berhasil dibatalkan.'.tr(context)), backgroundColor: Colors.green),
+      );
+      _loadReports();
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal membatalkan laporan: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _resendFailedReport(ReportModel report) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      await ReportService.resendFailedReport(accessToken: widget.accessToken, failedReport: report);
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Laporan berhasil dikirim ulang.'.tr(context)), backgroundColor: Colors.green),
+      );
+      _loadReports();
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengirim ulang: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Widget _buildSOSCard(ActiveIncident sos, ColorScheme colors, bool isDark) {

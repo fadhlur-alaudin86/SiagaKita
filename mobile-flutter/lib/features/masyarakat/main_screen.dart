@@ -5,7 +5,6 @@ import 'home_screen.dart';
 import 'guide_screen.dart';
 import 'map_screen.dart';
 import 'profile_screen.dart';
-import 'report_history_screen.dart';
 import '../relawan/relawan_main_screen.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/user_service.dart';
@@ -66,8 +65,6 @@ class _MainScreenState extends State<MainScreen> {
             isSOSBanned: user.isSOSBanned,
           ),
           const GuideScreen(),
-          // Riwayat: tab dedicated untuk laporan & riwayat SOS
-          ReportHistoryScreen(accessToken: widget.accessToken),
           if (isRelawan) const RelawanMainScreen(),
           const MapScreen(),
           ProfileScreen(accessToken: widget.accessToken),
@@ -83,11 +80,6 @@ class _MainScreenState extends State<MainScreen> {
             icon: const Icon(Icons.menu_book_outlined),
             activeIcon: const Icon(Icons.menu_book),
             label: 'Panduan'.tr(context),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.history_outlined),
-            activeIcon: const Icon(Icons.history),
-            label: 'Riwayat'.tr(context),
           ),
           if (isRelawan)
             BottomNavigationBarItem(

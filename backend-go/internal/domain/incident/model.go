@@ -34,13 +34,13 @@ type IncidentReport struct {
 	ID           string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	ReporterID   string         `gorm:"type:uuid;not null" json:"reporter_id"`
 	IncidentType string         `gorm:"not null" json:"incident_type"`
-	UrgencyLevel int            `gorm:"default:1" json:"urgency_level"` // 0=ringan, 1=sedang, 2=kritis
+	UrgencyLevel *int           `gorm:"default:1" json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
 	Latitude     float64        `gorm:"not null" json:"latitude"`
 	Longitude    float64        `gorm:"not null" json:"longitude"`
 	Description  *string        `json:"description,omitempty"`
 	PhotoPaths   pq.StringArray `gorm:"type:text[]" json:"photo_paths"`
 	AudioPath    *string        `json:"audio_path,omitempty"`
-	Status       string         `gorm:"default:'received'" json:"status"`
+	Status       string         `gorm:"default:'sent'" json:"status"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
 }
@@ -116,7 +116,6 @@ type MarkFalseAlarmRequest struct {
 // CreateReportRequest — Jalur B: laporan warga non-darurat (multipart/form-data).
 type CreateReportRequest struct {
 	IncidentType string  `form:"incident_type"` // wajib
-	UrgencyLevel int     `form:"urgency_level"` // 0=ringan, 1=sedang, 2=kritis
 	Latitude     float64 `form:"latitude"`
 	Longitude    float64 `form:"longitude"`
 	Description  string  `form:"description"`

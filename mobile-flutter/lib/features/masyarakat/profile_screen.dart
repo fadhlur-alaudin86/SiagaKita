@@ -9,6 +9,7 @@ import 'settings_screen.dart';
 import 'about_screen.dart';
 import 'kyc_screen.dart';
 import 'volunteer_registration_screen.dart';
+import 'report_history_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String accessToken;
@@ -852,7 +853,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 24),
 
-                // 5. Kategori 4: Pengaturan & Bantuan
+                // 4. Kategori 4: Riwayat
+                Text(
+                  'RIWAYAT'.tr(context),
+                  style: TextStyle(
+                    color: hintColor,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  color: cardColor,
+                  elevation: isDark ? 0 : 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: isDark
+                        ? BorderSide(color: Colors.grey.withValues(alpha: 0.2))
+                        : BorderSide.none,
+                  ),
+                  child: ListTile(
+                    leading: Icon(Icons.history_outlined, color: primaryTextColor),
+                    title: Text(
+                      'Riwayat Laporan'.tr(context),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: primaryTextColor,
+                      ),
+                    ),
+                    trailing: Icon(Icons.chevron_right, color: hintColor),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ReportHistoryScreen(accessToken: widget.accessToken),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 5. Kategori 5: Pengaturan & Bantuan
                 Text(
                   'PENGATURAN & BANTUAN'.tr(context),
                   style: TextStyle(

@@ -229,6 +229,7 @@ class VolunteerModel {
   final String? nik;
   final String? nikPhotoUrl;
   final List<String> certUrls;
+  final String? experience;
   final String kycStatus; // 'pending' | 'approved' | 'rejected'
   final String? verifiedBy;
   final DateTime createdAt;
@@ -241,6 +242,7 @@ class VolunteerModel {
     this.nik,
     this.nikPhotoUrl,
     required this.certUrls,
+    this.experience,
     required this.kycStatus,
     this.verifiedBy,
     required this.createdAt,
@@ -258,6 +260,7 @@ class VolunteerModel {
             ?.map((e) => e.toString())
             .toList() ??
         [],
+    experience: json['volunteer_experience'] as String?,
     kycStatus: json['kyc_status'] as String? ?? 'pending',
     verifiedBy: json['verified_by'] as String?,
     createdAt:

@@ -10,20 +10,24 @@ import (
 )
 
 var incidentTypeMultiplier = map[string]float64{
-	"medical": 1.5,
-	"fire":    1.3,
-	"rescue":  1.4,
-	"crime":   1.2,
-	"general": 1.0,
-	"unknown": 1.0,
+	"medical":  1.5,
+	"fire":     1.3,
+	"rescue":   1.4,
+	"crime":    1.2,
+	"accident": 1.3,
+	"disaster": 1.4,
+	"general":  1.0,
+	"unknown":  1.0,
 }
 
 var validIncidentTypes = map[string]bool{
-	"medical": true,
-	"fire":    true,
-	"crime":   true,
-	"rescue":  true,
-	"general": true,
+	"medical":  true,
+	"fire":     true,
+	"crime":    true,
+	"rescue":   true,
+	"accident": true,
+	"disaster": true,
+	"general":  true,
 }
 
 type Service struct {
@@ -232,7 +236,6 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, phot
 	rep := &IncidentReport{
 		ReporterID:   reporterID,
 		IncidentType: req.IncidentType,
-		UrgencyLevel: req.UrgencyLevel,
 		Latitude:     req.Latitude,
 		Longitude:    req.Longitude,
 		Status:       "sent",
@@ -263,6 +266,11 @@ func (s *Service) GetReportsByUser(userID string) ([]IncidentReport, error) {
 
 func (s *Service) UpdateReportStatus(id, status string) error {
 	return s.repo.UpdateReportStatus(id, status)
+}
+
+func (s *Service) CancelReport(reportID, reporterID string) error {
+	// Memastikan hanya reporter yang membuat laporan tersebut dan status belum diproses.
+	return s.repo.CancelReport(reportID, reporterID)
 }
 
 // ─── Resolve (oleh Relawan/Instansi) ──────────────────────────────────────────

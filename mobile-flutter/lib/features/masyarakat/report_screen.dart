@@ -15,6 +15,7 @@ import 'dart:convert';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/report_service.dart';
+import 'report_history_screen.dart' as import_report_history;
 
 class ReportScreen extends StatefulWidget {
   final String accessToken;
@@ -80,7 +81,6 @@ class _ReportScreenState extends State<ReportScreen> {
   String? _audioPath;
 
   // ─── Form ────────────────────────────────────────────────────────────────────
-  int _urgencyLevel = 1;
   final _descCtrl = TextEditingController();
   bool _isSubmitting = false;
 
@@ -305,8 +305,6 @@ class _ReportScreenState extends State<ReportScreen> {
       return;
     }
     final colors = Theme.of(context).colorScheme;
-    final urgencyLabels = ['Ringan', 'Sedang', 'Kritis'];
-    final urgencyColors = [Colors.green, Colors.orange, Colors.red];
     final cat = _categories[_selectedCategoryIndex];
 
     showModalBottomSheet<void>(
@@ -353,13 +351,6 @@ class _ReportScreenState extends State<ReportScreen> {
               'Lokasi',
               _addressLabel,
               colors,
-            ),
-            _confirmRow(
-              Icons.priority_high,
-              'Urgensi',
-              urgencyLabels[_urgencyLevel],
-              colors,
-              valueColor: urgencyColors[_urgencyLevel],
             ),
             if (_photos.isNotEmpty)
               _confirmRow(
@@ -461,7 +452,6 @@ class _ReportScreenState extends State<ReportScreen> {
       await ReportService.submitReport(
         accessToken: widget.accessToken,
         incidentType: _categories[_selectedCategoryIndex]['value'].toString(),
-        urgencyLevel: _urgencyLevel,
         latitude: _currentLatLng?.latitude ?? 0,
         longitude: _currentLatLng?.longitude ?? 0,
         description: _descCtrl.text,
@@ -488,146 +478,146 @@ class _ReportScreenState extends State<ReportScreen> {
 
   // ─── Build ───────────────────────────────────────────────────────────────────
 
+  // ─── Build ───────────────────────────────────────────────────────────────────
+
+  Widget _buildFormTab(ColorScheme colors, Color primaryColor, bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Map
+          _buildMapCard(colors, primaryColor, isDark),
+          const SizedBox(height: 24),
+
+          // 2. Kategori
+          Text(
+            'Kategori Darurat'.tr(context),
+            style: TextStyle(
+              color: colors.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildCategoryRow(colors, primaryColor, isDark),
+          const SizedBox(height: 24),
+
+          // 3. Foto
+          Text(
+            'Lampiran Foto & Audio'.tr(context),
+            style: TextStyle(
+              color: colors.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildPhotoSection(colors, isDark),
+          const SizedBox(height: 16),
+
+          // 4. Audio
+          _buildAudioSection(colors, isDark),
+          const SizedBox(height: 24),
+
+          // 5. Deskripsi
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: colors.onSurface.withValues(alpha: 0.1),
+              ),
+            ),
+            child: TextField(
+              controller: _descCtrl,
+              maxLines: 3,
+              style: TextStyle(color: colors.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Ketik deskripsi tambahan jika ada...'.tr(context),
+                hintStyle: TextStyle(
+                  color: colors.onSurface.withValues(alpha: 0.4),
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.all(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // 6. Submit
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isSubmitting ? null : _showConfirmSheet,
+              icon: _isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.send),
+              label: Text(
+                'Kirim Laporan'.tr(context),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final primaryColor = Theme.of(context).primaryColor;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: Text(
-          'Buat Laporan'.tr(context),
-          style: TextStyle(
-            color: colors.onSurface,
-            fontWeight: FontWeight.bold,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        appBar: AppBar(
+          title: Text(
+            'Laporan Warga'.tr(context),
+            style: TextStyle(
+              color: colors.onSurface,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: IconThemeData(color: colors.onSurface),
+          bottom: TabBar(
+            labelColor: primaryColor,
+            unselectedLabelColor: colors.onSurface.withValues(alpha: 0.5),
+            indicatorColor: primaryColor,
+            tabs: [
+              Tab(text: 'Pelaporan'.tr(context)),
+              Tab(text: 'Riwayat Laporan'.tr(context)),
+            ],
           ),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colors.onSurface),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        body: SafeArea(
+          child: TabBarView(
             children: [
-              // 1. Map
-              _buildMapCard(colors, primaryColor, isDark),
-              const SizedBox(height: 24),
-
-              // 2. Kategori
-              Text(
-                'Kategori Darurat'.tr(context),
-                style: TextStyle(
-                  color: colors.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildCategoryRow(colors, primaryColor, isDark),
-              const SizedBox(height: 24),
-
-              // 3. Foto
-              Text(
-                'Lampiran Foto & Audio'.tr(context),
-                style: TextStyle(
-                  color: colors.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildPhotoSection(colors, isDark),
-              const SizedBox(height: 16),
-
-              // 4. Audio
-              _buildAudioSection(colors, isDark),
-              const SizedBox(height: 24),
-
-              // 5. Deskripsi
-              Container(
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colors.onSurface.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: TextField(
-                  controller: _descCtrl,
-                  maxLines: 3,
-                  style: TextStyle(color: colors.onSurface),
-                  decoration: InputDecoration(
-                    hintText: 'Ketik deskripsi tambahan jika ada...'.tr(
-                      context,
-                    ),
-                    hintStyle: TextStyle(
-                      color: colors.onSurface.withValues(alpha: 0.4),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 6. Urgensi
-              Text(
-                'Tingkat Urgensi'.tr(context),
-                style: TextStyle(
-                  color: colors.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _urgencyPill(0, 'Ringan', Colors.green, colors),
-                  const SizedBox(width: 12),
-                  _urgencyPill(1, 'Sedang', Colors.orange, colors),
-                  const SizedBox(width: 12),
-                  _urgencyPill(2, 'Kritis', Colors.red, colors),
-                ],
-              ),
-              const SizedBox(height: 48),
-
-              // 7. Submit
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isSubmitting ? null : _showConfirmSheet,
-                  icon: _isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.send),
-                  label: Text(
-                    'Kirim Laporan'.tr(context),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ),
+              _buildFormTab(colors, primaryColor, isDark),
+              import_report_history.ReportHistoryScreen(accessToken: widget.accessToken, isNested: true), // Will fix import later
             ],
           ),
         ),
@@ -972,40 +962,6 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _urgencyPill(
-    int level,
-    String text,
-    Color targetColor,
-    ColorScheme colors,
-  ) {
-    final isSel = _urgencyLevel == level;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _urgencyLevel = level),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSel ? targetColor : colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSel
-                  ? targetColor
-                  : colors.onSurface.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSel ? Colors.white : colors.onSurface,
-              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
         ),
       ),
     );

@@ -147,6 +147,8 @@ func main() {
 	// KYC: Verifikasi Identitas NIK Warga
 	users.Post("/kyc", userHandler.SubmitKYC)
 	users.Get("/kyc/status", userHandler.GetKYCStatus)
+	// Pendaftaran Relawan
+	users.Post("/volunteer/register", userHandler.SubmitVolunteerRegistration)
 	// Ping: Heartbeat untuk update last_active_at (dipanggil tiap 30 detik dari mobile)
 	users.Get("/ping", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
@@ -166,11 +168,11 @@ func main() {
 	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), incidentHandler.MarkFalseAlarm)
 	incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve)
 
-	// ── Laporan Warga — Jalur B ───────────────────────────────────────────────
 	reports := v1.Group("/reports", authMw)
 	reports.Post("", middleware.BanCheck(db), incidentHandler.CreateReport)
 	reports.Get("/my", incidentHandler.GetMyReports)
 	reports.Get("", middleware.ConsoleOnly(), incidentHandler.GetReports)
+	reports.Post("/:id/cancel", incidentHandler.CancelReport)
 	reports.Patch("/:id/status", middleware.ConsoleOnly(), incidentHandler.UpdateReportStatus)
 
 	// ── Telemetry ─────────────────────────────────────────────────────────────

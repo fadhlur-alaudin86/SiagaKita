@@ -97,6 +97,52 @@ class UserService {
     }
   }
 
+  // ─── Submit Volunteer Registration ───────────────────────────────────────────
+  static Future<void> submitVolunteerRegistration({
+    required String accessToken,
+    required String experience,
+    required List<String> specializations,
+    required Map<String, String> certificatesPath, // spec -> file path
+  }) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_baseUrl/users/volunteer/register'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $accessToken';
+      request.fields['experience'] = experience;
+
+      // Add specializations
+      for (final spec in specializations) {
+        request.fields['specializations'] = spec; // This might depend on backend, usually backend can handle array with same key or key[]
+      }
+
+      // Add certificates
+      for (var entry in certificatesPath.entries) {
+        final path = entry.value;
+        final specName = entry.key; // Currently not sent but if needed we can rename file
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'certificates',
+            path,
+            filename: '${specName.replaceAll(' ', '_')}_cert.pdf',
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(body['message'] ?? 'Gagal mengirim pendaftaran relawan');
+      }
+    } catch (e) {
+      throw Exception('Kesalahan: $e');
+    }
+  }
+
   // ─── Verifikasi Nomor HP via WhatsApp OTP ────────────────────────────────────
 
   /// Kirim OTP WhatsApp ke nomor HP baru.

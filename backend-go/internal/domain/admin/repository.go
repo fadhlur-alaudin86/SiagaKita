@@ -22,24 +22,25 @@ func NewRepository(db *gorm.DB) *Repository {
 // GetPendingKYC returns volunteers with at least one pending certification.
 func (r *Repository) GetPendingKYC() ([]VolunteerKYC, error) {
 	type row struct {
-		UserID      string    `gorm:"column:user_id"`
-		Email       string    `gorm:"column:email"`
-		FullName    *string   `gorm:"column:full_name"`
-		NIK         *string   `gorm:"column:nik"`
-		SubmittedAt time.Time `gorm:"column:submitted_at"`
+		UserID              string    `gorm:"column:user_id"`
+		Email               string    `gorm:"column:email"`
+		FullName            *string   `gorm:"column:full_name"`
+		NIK                 *string   `gorm:"column:nik"`
+		VolunteerExperience *string   `gorm:"column:volunteer_experience"`
+		SubmittedAt         time.Time `gorm:"column:submitted_at"`
 	}
 
 	var rows []row
 	err := r.db.Raw(`
 		SELECT DISTINCT u.id AS user_id, u.email,
-		       p.full_name, p.nik,
+		       p.full_name, p.nik, p.volunteer_experience,
 		       MIN(vc.created_at) AS submitted_at
 		FROM users u
 		JOIN user_profiles p ON p.user_id = u.id
 		JOIN volunteer_certifications vc ON vc.user_id = u.id
 		WHERE vc.status = 'pending'
 		  AND u.deleted_at IS NULL
-		GROUP BY u.id, u.email, p.full_name, p.nik
+		GROUP BY u.id, u.email, p.full_name, p.nik, p.volunteer_experience
 		ORDER BY submitted_at ASC
 	`).Scan(&rows).Error
 	if err != nil {
@@ -53,12 +54,13 @@ func (r *Repository) GetPendingKYC() ([]VolunteerKYC, error) {
 			return nil, err
 		}
 		result = append(result, VolunteerKYC{
-			UserID:      r2.UserID,
-			FullName:    r2.FullName,
-			Email:       r2.Email,
-			NIK:         r2.NIK,
-			Certs:       certs,
-			SubmittedAt: r2.SubmittedAt,
+			UserID:              r2.UserID,
+			FullName:            r2.FullName,
+			Email:               r2.Email,
+			NIK:                 r2.NIK,
+			VolunteerExperience: r2.VolunteerExperience,
+			Certs:               certs,
+			SubmittedAt:         r2.SubmittedAt,
 		})
 	}
 	return result, nil
@@ -230,23 +232,7 @@ func (r *Repository) CreateAgency(req *CreateAgencyRequest) error {
 // GetUsers returns all users with civilian/volunteer role.
 // Strike dihitung secara real-time dari jumlah incidents berstatus false_alarm.
 func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search string) ([]AdminUserItem, error) {
-	type row struct {
-		UserID                string     `gorm:"column:user_id"`
-		Email                 string     `gorm:"column:email"`
-		Role                  string     `gorm:"column:role"`
-		FullName              *string    `gorm:"column:full_name"`
-		PhoneNumber           *string    `gorm:"column:phone_number"`
-		NIK                   *string    `gorm:"column:nik"`
-		IsEmailVerified       bool       `gorm:"column:is_email_verified"`
-		IsPhoneVerified       bool       `gorm:"column:is_phone_verified"`
-		NIKVerificationStatus string     `gorm:"column:nik_verification_status"`
-		SOSStrikeCount        int        `gorm:"column:sos_strike_count"`
-		IsSOSBanned           bool       `gorm:"column:is_sos_banned"`
-		BannedUntil           *time.Time `gorm:"column:banned_until"`
-		LastActiveAt          *time.Time `gorm:"column:last_active_at"`
-		CreatedAt             time.Time  `gorm:"column:created_at"`
-	}
-	var rows []row
+	var items []AdminUserItem
 	err := r.db.Raw(`
 		SELECT u.id AS user_id, u.email, u.role, u.created_at, u.last_active_at,
 		       p.full_name, p.phone_number, p.nik,
@@ -268,29 +254,9 @@ func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search s
 		           WHERE i2.reporter_id = u.id AND i2.status = 'false_alarm'
 		       ) >= 2)
 		ORDER BY u.created_at DESC
-	`, search, search, search, search, filterBanned, filterHighStrike).Scan(&rows).Error
+	`, search, search, search, search, filterBanned, filterHighStrike).Scan(&items).Error
 	if err != nil {
 		return nil, err
-	}
-
-	items := make([]AdminUserItem, 0, len(rows))
-	for _, r2 := range rows {
-		items = append(items, AdminUserItem{
-			UserID:                r2.UserID,
-			Email:                 r2.Email,
-			Role:                  r2.Role,
-			FullName:              r2.FullName,
-			PhoneNumber:           r2.PhoneNumber,
-			NIK:                   r2.NIK,
-			IsEmailVerified:       r2.IsEmailVerified,
-			IsPhoneVerified:       r2.IsPhoneVerified,
-			NIKVerificationStatus: r2.NIKVerificationStatus,
-			SOSStrikeCount:        r2.SOSStrikeCount,
-			IsSOSBanned:           r2.IsSOSBanned,
-			BannedUntil:           r2.BannedUntil,
-			LastActiveAt:          r2.LastActiveAt,
-			CreatedAt:             r2.CreatedAt,
-		})
 	}
 	return items, nil
 }

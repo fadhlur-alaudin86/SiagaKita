@@ -430,6 +430,31 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                 ),
               ),
 
+            const SizedBox(height: 20),
+
+            // Pengalaman & Spesialisasi
+            const Text(
+              'Pengalaman & Spesialisasi:',
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Text(
+                v.experience ?? 'Tidak ada pengalaman yang ditulis',
+                style: const TextStyle(color: Colors.white, height: 1.5),
+              ),
+            ),
+
             const SizedBox(height: 32),
             const Divider(color: Colors.white12),
             const SizedBox(height: 16),

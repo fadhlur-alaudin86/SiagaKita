@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TzAXcMNvkvKnLKeamERyyfuJeNTjwE0bRLWnftnUdv1B4MitZa4TVmhhMsQb2SA
+\restrict xakhNEdFdIXsHObiydXXFanfGIVRlqYEaCd5CtJJWbABhem8MBxyaIvOuPDeaML
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -281,13 +281,13 @@ CREATE TABLE public.incident_reports (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     reporter_id uuid NOT NULL,
     incident_type character varying(50) NOT NULL,
-    urgency_level smallint DEFAULT 1 NOT NULL,
+    urgency_level smallint DEFAULT 1,
     latitude double precision NOT NULL,
     longitude double precision NOT NULL,
     description text,
     photo_paths text[] DEFAULT '{}'::text[],
     audio_path text,
-    status character varying(20) DEFAULT 'received'::character varying NOT NULL,
+    status character varying(20) DEFAULT 'sent'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -428,6 +428,7 @@ CREATE TABLE public.user_profiles (
     kyc_ktp_url text,
     nik_verification_status character varying(20) DEFAULT 'none'::character varying,
     profile_photo_url text,
+    volunteer_experience text,
     CONSTRAINT chk_nik_status CHECK (((nik_verification_status)::text = ANY ((ARRAY['none'::character varying, 'pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[]))),
     CONSTRAINT user_profiles_height_cm_check CHECK ((height_cm > 0)),
     CONSTRAINT user_profiles_weight_kg_check CHECK ((weight_kg > 0))
@@ -957,5 +958,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TzAXcMNvkvKnLKeamERyyfuJeNTjwE0bRLWnftnUdv1B4MitZa4TVmhhMsQb2SA
+\unrestrict xakhNEdFdIXsHObiydXXFanfGIVRlqYEaCd5CtJJWbABhem8MBxyaIvOuPDeaML
 

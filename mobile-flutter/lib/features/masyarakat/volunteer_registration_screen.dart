@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../core/models/user_model.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/services/session_service.dart';
+import '../../core/services/user_service.dart';
 import 'dart:async';
 
 class VolunteerRegistrationScreen extends StatefulWidget {
@@ -24,7 +27,7 @@ class _VolunteerRegistrationScreenState
   ];
 
   final Map<String, bool> _selectedSpecs = {};
-  final Map<String, bool> _uploadedCerts = {};
+  final Map<String, String?> _uploadedCerts = {};
 
   bool _acceptedTerms = false;
   bool _isLoading = false;
@@ -34,7 +37,7 @@ class _VolunteerRegistrationScreenState
     super.initState();
     for (var spec in _availableSpecs) {
       _selectedSpecs[spec] = false;
-      _uploadedCerts[spec] = false;
+      _uploadedCerts[spec] = null;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -82,7 +85,7 @@ class _VolunteerRegistrationScreenState
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     final hasAtLeastOneSpec = _selectedSpecs.values.any((v) => v);
@@ -95,7 +98,7 @@ class _VolunteerRegistrationScreenState
 
     bool missingCert = false;
     _selectedSpecs.forEach((spec, isSelected) {
-      if (isSelected && !_uploadedCerts[spec]!) {
+      if (isSelected && _uploadedCerts[spec] == null) {
         missingCert = true;
       }
     });
@@ -125,12 +128,26 @@ class _VolunteerRegistrationScreenState
 
     setState(() => _isLoading = true);
 
-    // Simulate API Call to Laravel Backend
-    Timer(const Duration(seconds: 2), () {
-      final selectedList = _selectedSpecs.entries
-          .where((e) => e.value)
-          .map((e) => e.key)
-          .toList();
+    final selectedList = _selectedSpecs.entries
+        .where((e) => e.value)
+        .map((e) => e.key)
+        .toList();
+
+    final certPaths = <String, String>{};
+    for (var spec in selectedList) {
+      certPaths[spec] = _uploadedCerts[spec]!;
+    }
+
+    final session = await SessionService.loadSession();
+    final token = session?.token ?? '';
+
+    try {
+      await UserService.submitVolunteerRegistration(
+        accessToken: token,
+        experience: _expCtrl.text,
+        specializations: selectedList,
+        certificatesPath: certPaths,
+      );
 
       final user = UserModel.currentUser.value;
       UserModel.currentUser.value = user.copyWith(
@@ -147,11 +164,35 @@ class _VolunteerRegistrationScreenState
                 context,
               ),
             ),
+            backgroundColor: Colors.green,
           ),
         );
         Navigator.pop(context); // Go back to profile
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengirim pendaftaran: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickFile(String spec) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
+
+    if (result != null) {
+      setState(() {
+        _uploadedCerts[spec] = result.files.single.path;
+      });
+    }
   }
 
   Widget _buildMockUploadBox(
@@ -212,7 +253,7 @@ class _VolunteerRegistrationScreenState
                   ),
                   if (!isUploaded)
                     Text(
-                      '(Tekan untuk simulasi unggah file)'.tr(context),
+                      '(Mendukung PDF, JPG, PNG maks 2MB)'.tr(context),
                       style: TextStyle(
                         color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                         fontSize: 11,
@@ -298,14 +339,17 @@ class _VolunteerRegistrationScreenState
                       onChanged: (val) {
                         setState(() {
                           _selectedSpecs[spec] = val ?? false;
-                          if (!val!) _uploadedCerts[spec] = false;
+                          if (!(val ?? false)) _uploadedCerts[spec] = null;
                         });
                       },
                     ),
-                    if (_selectedSpecs[spec]!)
-                      _buildMockUploadBox(spec, _uploadedCerts[spec]!, () {
-                        setState(() => _uploadedCerts[spec] = true);
-                      }, context),
+                    if (_selectedSpecs[spec] == true)
+                      _buildMockUploadBox(
+                        spec,
+                        _uploadedCerts[spec] != null,
+                        () => _pickFile(spec),
+                        context,
+                      ),
                   ],
                 );
               }),

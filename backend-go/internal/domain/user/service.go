@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/domain/otp"
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -235,6 +237,49 @@ func (s *Service) GetProfile(userID string) (*ProfileResponse, error) {
 
 func (s *Service) UpdateProfile(userID string, req *UpdateProfileRequest) error {
 	return s.repo.UpdateProfile(userID, req)
+}
+
+// ─── Pendaftaran Relawan ──────────────────────────────────────────────────────
+
+func (s *Service) SubmitVolunteerRegistration(c *fiber.Ctx, userID string, experience string, specializations []string) error {
+	saveDir := s.cfg.UploadDir + "/certificates"
+	if err := os.MkdirAll(saveDir, os.ModePerm); err != nil {
+		return fmt.Errorf("gagal membuat folder upload: %w", err)
+	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		return errors.New("gagal membaca form data")
+	}
+
+	files := form.File["certificates"] // array of files
+	if len(files) == 0 {
+		return errors.New("sertifikat wajib dilampirkan")
+	}
+
+	var certs []map[string]string
+	for _, file := range files {
+		ext := filepath.Ext(file.Filename)
+		id := uuid.New().String()
+		savePath := saveDir + "/" + id + ext
+		if err := c.SaveFile(file, savePath); err != nil {
+			return fmt.Errorf("gagal menyimpan sertifikat: %w", err)
+		}
+		publicURL := s.cfg.UploadBaseURL + "/certificates/" + id + ext
+		
+		certs = append(certs, map[string]string{
+			"type": "Sertifikat",
+			"url":  publicURL,
+		})
+	}
+
+	// Gabungkan specializations ke dalam experience jika ada
+	if len(specializations) > 0 {
+		specsStr := strings.Join(specializations, ", ")
+		experience = "Spesialisasi: " + specsStr + "\nPengalaman: " + experience
+	}
+
+	return s.repo.SubmitVolunteerRegistration(userID, experience, certs)
 }
 
 // ─── Token builders ───────────────────────────────────────────────────────────

@@ -259,3 +259,23 @@ func (h *Handler) GetKYCStatus(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, resp)
 }
 
+// ─── Pendaftaran Relawan ──────────────────────────────────────────────────────
+
+// POST /api/v1/users/volunteer/register  [Auth required — civilian]
+func (h *Handler) SubmitVolunteerRegistration(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+
+	var req RegisterVolunteerRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	if err := h.svc.SubmitVolunteerRegistration(c, userID, req.Experience, req.Specializations); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return utils.SuccessResponse(c, fiber.Map{
+		"message": "Pengajuan pendaftaran relawan berhasil dikirim. Tunggu proses verifikasi admin.",
+		"status":  "pending",
+	})
+}

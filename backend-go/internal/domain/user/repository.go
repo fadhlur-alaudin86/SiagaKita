@@ -341,3 +341,31 @@ func (r *Repository) GetKYCStatus(userID string) (*UserProfile, error) {
 		Where("user_id = ?", userID).First(&p).Error
 	return &p, err
 }
+
+// ─── Pendaftaran Relawan ──────────────────────────────────────────────────────
+
+// SubmitVolunteerRegistration menyimpan sertifikat dan pengalaman relawan.
+func (r *Repository) SubmitVolunteerRegistration(userID string, experience string, certs []map[string]string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// Update pengalaman relawan
+		if err := tx.Exec(`
+			UPDATE user_profiles
+			SET volunteer_experience = ?, updated_at = NOW()
+			WHERE user_id = ?
+		`, experience, userID).Error; err != nil {
+			return err
+		}
+
+		// Insert setiap sertifikat
+		for _, cert := range certs {
+			if err := tx.Exec(`
+				INSERT INTO volunteer_certifications (user_id, certificate_type, document_url, status)
+				VALUES (?, ?, ?, 'pending')
+			`, userID, cert["type"], cert["url"]).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
