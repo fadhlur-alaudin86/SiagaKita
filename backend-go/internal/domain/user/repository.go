@@ -255,6 +255,7 @@ func (r *Repository) GetProfile(userID string) (*ProfileResponse, error) {
 		resp.IsEmailVerified = profile.IsEmailVerified
 		resp.IsPhoneVerified = profile.IsPhoneVerified
 		resp.IsVerifiedVolunteer = profile.IsVerifiedVolunteer
+		resp.NIKVerificationStatus = profile.NIKVerificationStatus
 		resp.SOSStrikeCount = profile.SOSStrikeCount
 		resp.IsSOSBanned = profile.IsSOSBanned
 		resp.BloodType = profile.BloodType

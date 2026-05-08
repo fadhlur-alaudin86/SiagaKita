@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import 'login_screen.dart';
+import '../../core/models/user_model.dart';
+import '../../core/services/user_service.dart';
 
 class BiodataScreen extends StatefulWidget {
   final String accessToken;
@@ -24,8 +26,21 @@ class _BiodataScreenState extends State<BiodataScreen> {
   final _medicalHistoryController = TextEditingController();
   final _allergiesController = TextEditingController();
   final _addressController = TextEditingController();
-  final _emergencyContactNameController = TextEditingController();
-  final _emergencyContactPhoneController = TextEditingController();
+
+  final _contacts = <Map<String, dynamic>>[];
+  bool _isLoading = false;
+
+  void _addContact() {
+    setState(() {
+      _contacts.add({'name': '', 'relation': '', 'phone': ''});
+    });
+  }
+
+  void _removeContact(int index) {
+    setState(() {
+      _contacts.removeAt(index);
+    });
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -62,8 +77,56 @@ class _BiodataScreenState extends State<BiodataScreen> {
     }
   }
 
-  void _submitBiodata() {
-    // Simulasi simpan biodata dan masuk ke halaman login
+  Future<void> _submitBiodata() async {
+    for (var i = 0; i < _contacts.length; i++) {
+      final c = _contacts[i];
+      if ((c['name']?.isEmpty ?? true) ||
+          (c['relation']?.isEmpty ?? true) ||
+          (c['phone']?.isEmpty ?? true)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${'Form kontak baris ke'.tr(context)}-${i + 1} ${'belum lengkap!'.tr(context)}',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final medData = {
+        'address': _addressController.text,
+        'blood_type': _bloodTypeController.text,
+        'weight': _weightController.text,
+        'height': _heightController.text,
+        'allergies': _allergiesController.text,
+        'medical_history': _medicalHistoryController.text,
+      };
+
+      final updatedUser = UserModel.currentUser.value.copyWith(
+        birthDate: _birthDateController.text.isEmpty ? null : _birthDateController.text,
+        medicalData: medData,
+        emergencyContacts: _contacts.isEmpty ? null : _contacts,
+      );
+
+      await UserService.updateProfile(widget.accessToken, updatedUser);
+
+      if (!mounted) return;
+      _skipBiodata();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan biodata: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _skipBiodata() {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
@@ -262,13 +325,29 @@ class _BiodataScreenState extends State<BiodataScreen> {
               ),
 
               // Kontak Darurat
-              Text(
-                'Kontak Darurat (Wali/Keluarga)'.tr(context),
-                style: TextStyle(
-                  color: colors.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Kontak Darurat (Wali/Keluarga)'.tr(context),
+                    style: TextStyle(
+                      color: colors.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _addContact,
+                    icon: Icon(Icons.add, color: primaryColor, size: 18),
+                    label: Text(
+                      'Tambah'.tr(context),
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -279,40 +358,149 @@ class _BiodataScreenState extends State<BiodataScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildTextField(
-                _emergencyContactNameController,
-                'Nama Kontak Darurat'.tr(context),
-                Icons.person_outline,
-                colors,
-              ),
-              _buildTextField(
-                _emergencyContactPhoneController,
-                'Nomor Telepon Darurat'.tr(context),
-                Icons.phone,
-                colors,
-                inputType: TextInputType.phone,
-              ),
+
+              if (_contacts.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Belum ada kontak darurat ditambahkan.'.tr(context),
+                    style: TextStyle(
+                      color: colors.onSurface.withValues(alpha: 0.4),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                )
+              else
+                ...List.generate(_contacts.length, (index) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: colors.onSurface.withValues(alpha: 0.1)),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${'Kontak Darurat'.tr(context)} #${index + 1}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: colors.onSurface,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _removeContact(index),
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: TextEditingController(text: _contacts[index]['name'])..selection = TextSelection.collapsed(offset: _contacts[index]['name'].length),
+                          onChanged: (val) => _contacts[index]['name'] = val,
+                          decoration: InputDecoration(
+                            labelText: 'Nama Lengkap'.tr(context),
+                            isDense: true,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: TextEditingController(text: _contacts[index]['relation'])..selection = TextSelection.collapsed(offset: _contacts[index]['relation'].length),
+                                onChanged: (val) => _contacts[index]['relation'] = val,
+                                decoration: InputDecoration(
+                                  labelText: 'Hubungan'.tr(context),
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: TextField(
+                                controller: TextEditingController(text: _contacts[index]['phone'])..selection = TextSelection.collapsed(offset: _contacts[index]['phone'].length),
+                                onChanged: (val) => _contacts[index]['phone'] = val,
+                                keyboardType: TextInputType.phone,
+                                decoration: InputDecoration(
+                                  labelText: 'No Hp'.tr(context),
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }),
 
               const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _submitBiodata,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 5,
-                  shadowColor: primaryColor.withValues(alpha: 0.3),
+              Text(
+                'Bisa dilewati, data dapat dilengkapi nanti di dalam menu Profil.'.tr(context),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.onSurface.withValues(alpha: 0.6),
+                  fontSize: 12,
                 ),
-                child: Text(
-                  'Simpan & Selesai'.tr(context),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _skipBiodata,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        side: BorderSide(color: primaryColor),
+                      ),
+                      child: Text(
+                        'Lewati'.tr(context),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submitBiodata,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 5,
+                        shadowColor: primaryColor.withValues(alpha: 0.3),
+                      ),
+                      child: _isLoading 
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text(
+                              'Simpan & Selesai'.tr(context),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
             ],

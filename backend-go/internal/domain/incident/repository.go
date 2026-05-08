@@ -130,7 +130,7 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 		FROM incidents i
 		LEFT JOIN users u ON u.id = i.reporter_id
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
-		WHERE i.status NOT IN ('resolved', 'false_alarm')
+		WHERE i.status NOT IN ('resolved', 'false_alarm', 'cancel')
 		ORDER BY i.created_at DESC
 	`).Scan(&results).Error
 	return results, err

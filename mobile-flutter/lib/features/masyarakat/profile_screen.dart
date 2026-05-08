@@ -3,6 +3,7 @@ import '../auth/login_screen.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/session_service.dart';
+import '../../core/services/user_service.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
@@ -70,6 +71,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  void _editWhatsApp() {
+    final phoneCtrl = TextEditingController(text: UserModel.currentUser.value.phoneNumber ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Edit Nomor WhatsApp'.tr(context)),
+        content: TextField(
+          controller: phoneCtrl,
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+            labelText: 'Nomor WhatsApp Baru'.tr(context),
+            prefixIcon: const Icon(Icons.phone),
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Batal'.tr(context), style: const TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newPhone = phoneCtrl.text.trim();
+              if (newPhone.length < 10) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text('Nomor minimal 10 digit'.tr(context))),
+                );
+                return;
+              }
+              Navigator.pop(ctx);
+              _requestAndVerifyPhoneOTP(newPhone);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: Text('Lanjut'.tr(context), style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _requestAndVerifyPhoneOTP(String phoneNumber) async {
+    try {
+      await UserService.requestPhoneOTP(widget.accessToken, phoneNumber);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengirim OTP: $e'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+
+    final otpCtrl = TextEditingController();
+    bool? verified = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Verifikasi WhatsApp'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Kode OTP telah dikirim ke WhatsApp:\n$phoneNumber\nBerlaku 3 menit.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpCtrl,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, letterSpacing: 8),
+              decoration: const InputDecoration(
+                hintText: '______',
+                counterText: '',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await UserService.verifyPhoneOTP(
+                  widget.accessToken,
+                  phoneNumber,
+                  otpCtrl.text.trim(),
+                );
+                if (ctx.mounted) Navigator.pop(ctx, true);
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text('$e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('Verifikasi', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    otpCtrl.dispose();
+
+    if (verified == true && mounted) {
+      try {
+        final user = UserModel.currentUser.value;
+        final updatedUser = user.copyWith(phoneNumber: phoneNumber);
+        await UserService.updateProfile(widget.accessToken, updatedUser);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nomor WhatsApp berhasil diubah dan diverifikasi'), backgroundColor: Colors.green),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan profil: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -189,89 +317,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          // NIK sebagai identifikasi (bukan UUID)
-                          if (user.nik != null && user.nik!.isNotEmpty)
-                            Row(
-                              children: [
-                                Icon(Icons.badge, size: 13, color: hintColor),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'NIK: ${user.nik}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: hintColor,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ],
-                            )
-                          else
-                            GestureDetector(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => KycScreen(
-                                    accessToken: widget.accessToken,
-                                  ),
+                          // NIK sebagai identifikasi
+                          Row(
+                            children: [
+                              Icon(Icons.badge, size: 13, color: hintColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                'NIK: ${(user.nik != null && user.nik!.isNotEmpty) ? user.nik : 'Belum diisi'.tr(context)}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: hintColor,
+                                  letterSpacing: 1,
                                 ),
                               ),
-                              child: Container(
-                                margin: const EdgeInsets.only(top: 4),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      (user.nikVerificationStatus == 'approved'
-                                              ? Colors.green
-                                              : Colors.orange)
-                                          .withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color:
-                                        (user.nikVerificationStatus ==
-                                                    'approved'
-                                                ? Colors.green
-                                                : Colors.orange)
-                                            .withValues(alpha: 0.5),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      user.nikVerificationStatus == 'approved'
-                                          ? Icons.verified_user
-                                          : Icons.verified_user_outlined,
-                                      size: 13,
-                                      color:
-                                          user.nikVerificationStatus ==
-                                              'approved'
-                                          ? Colors.green
-                                          : Colors.orange,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      user.nikVerificationStatus == 'approved'
-                                          ? 'Terverifikasi'.tr(context)
-                                          : 'Verifikasi Identitas (NIK)'.tr(
-                                              context,
-                                            ),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color:
-                                            user.nikVerificationStatus ==
-                                                'approved'
-                                            ? Colors.green
-                                            : Colors.orange,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                            ],
+                          ),
                           _buildVolunteerBadge(user),
                         ],
                       ),
@@ -303,68 +363,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
-                      // NIK (hanya tampil jika sudah ada)
-                      if (user.nik != null && user.nik!.isNotEmpty)
-                        ListTile(
-                          leading: Icon(
-                            Icons.badge_outlined,
-                            color: primaryTextColor,
-                          ),
-                          title: Text(
-                            'NIK'.tr(context),
-                            style: TextStyle(fontSize: 12, color: hintColor),
-                          ),
-                          subtitle: Row(
-                            children: [
-                              Text(
-                                user.nik!,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: secondaryTextColor,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              if (user.nikVerificationStatus == 'approved') ...[
-                                const SizedBox(width: 6),
-                                const Icon(
-                                  Icons.verified,
-                                  size: 14,
-                                  color: Colors.green,
-                                ),
-                              ] else if (user.nikVerificationStatus ==
-                                  'pending') ...[
-                                const SizedBox(width: 6),
-                                const Icon(
-                                  Icons.hourglass_top,
-                                  size: 14,
-                                  color: Colors.orange,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      if (user.nik != null && user.nik!.isNotEmpty)
-                        Divider(
-                          height: 1,
-                          indent: 16,
-                          endIndent: 16,
-                          color: isDark
-                              ? Colors.grey.withValues(alpha: 0.2)
-                              : Colors.grey.shade200,
-                        ),
+                      // NIK (selalu tampil)
                       ListTile(
-                        leading: Icon(Icons.email, color: primaryTextColor),
+                        leading: Icon(
+                          Icons.badge_outlined,
+                          color: primaryTextColor,
+                        ),
                         title: Text(
-                          'Email',
+                          'NIK'.tr(context),
                           style: TextStyle(fontSize: 12, color: hintColor),
                         ),
-                        subtitle: Text(
-                          user.email,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: secondaryTextColor,
-                            fontWeight: FontWeight.w500,
+                        subtitle: Row(
+                          children: [
+                            Text(
+                              (user.nik != null && user.nik!.isNotEmpty) ? user.nik! : 'Belum diisi'.tr(context),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: secondaryTextColor,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            if (user.nikVerificationStatus == 'approved')
+                              const Icon(Icons.verified, size: 14, color: Colors.green)
+                            else if (user.nikVerificationStatus == 'pending')
+                              const Icon(Icons.hourglass_top, size: 14, color: Colors.orange)
+                            else
+                              const Icon(Icons.error_outline, size: 14, color: Colors.red),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.edit, size: 18),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => KycScreen(accessToken: widget.accessToken),
+                            ),
                           ),
                         ),
                       ),
@@ -372,9 +407,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 1,
                         indent: 16,
                         endIndent: 16,
-                        color: isDark
-                            ? Colors.grey.withValues(alpha: 0.2)
-                            : Colors.grey.shade200,
+                        color: isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200,
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.email, color: primaryTextColor),
+                        title: Text(
+                          'Email',
+                          style: TextStyle(fontSize: 12, color: hintColor),
+                        ),
+                        subtitle: Row(
+                          children: [
+                            Text(
+                              user.email,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: secondaryTextColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 16,
+                        endIndent: 16,
+                        color: isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200,
                       ),
                       ListTile(
                         leading: const Icon(
@@ -388,29 +446,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         subtitle: Row(
                           children: [
                             Text(
-                              user.phoneNumber ?? '-',
+                              (user.phoneNumber != null && user.phoneNumber!.isNotEmpty) ? user.phoneNumber! : 'Belum diisi'.tr(context),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: secondaryTextColor,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            if (user.isPhoneVerified) ...[
-                              const SizedBox(width: 6),
-                              const Icon(
-                                Icons.verified,
-                                size: 14,
-                                color: Colors.green,
-                              ),
-                            ] else if (user.phoneNumber != null) ...[
-                              const SizedBox(width: 6),
-                              const Icon(
-                                Icons.warning_amber,
-                                size: 14,
-                                color: Colors.orange,
-                              ),
-                            ],
+                            const SizedBox(width: 6),
+                            if (user.isPhoneVerified)
+                              const Icon(Icons.verified, size: 14, color: Colors.green)
+                            else
+                              const Icon(Icons.error_outline, size: 14, color: Colors.red),
                           ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.edit, size: 18),
+                          onPressed: _editWhatsApp,
                         ),
                       ),
                       Divider(

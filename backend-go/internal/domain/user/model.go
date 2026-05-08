@@ -192,10 +192,11 @@ type ProfileResponse struct {
 	NIK                 *string              `json:"nik,omitempty"`
 	DateOfBirth         *string              `json:"date_of_birth,omitempty"`
 	PhoneNumber         *string              `json:"phone_number,omitempty"`
-	IsEmailVerified     bool                 `json:"is_email_verified"`
-	IsPhoneVerified     bool                 `json:"is_phone_verified"`
-	IsVerifiedVolunteer bool                 `json:"is_verified_volunteer"`
-	SOSStrikeCount      int                  `json:"sos_strike_count"`
+	IsEmailVerified       bool                 `json:"is_email_verified"`
+	IsPhoneVerified       bool                 `json:"is_phone_verified"`
+	IsVerifiedVolunteer   bool                 `json:"is_verified_volunteer"`
+	NIKVerificationStatus string               `json:"nik_verification_status"`
+	SOSStrikeCount        int                  `json:"sos_strike_count"`
 	IsSOSBanned         bool                 `json:"is_sos_banned"`
 	BloodType           *string              `json:"blood_type,omitempty"`
 	Allergies           *string              `json:"allergies,omitempty"`

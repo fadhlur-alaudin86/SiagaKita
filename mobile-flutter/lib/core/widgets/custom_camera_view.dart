@@ -4,11 +4,15 @@ import 'package:camera/camera.dart';
 class CustomCameraView extends StatefulWidget {
   final Function(XFile) onPictureTaken;
   final String title;
+  final CameraLensDirection lensDirection;
+  final bool isOvalOverlay;
 
   const CustomCameraView({
     super.key,
     required this.onPictureTaken,
     this.title = 'Ambil Foto',
+    this.lensDirection = CameraLensDirection.front,
+    this.isOvalOverlay = true,
   });
 
   @override
@@ -31,14 +35,14 @@ class _CustomCameraViewState extends State<CustomCameraView> {
       _cameras = await availableCameras();
       if (_cameras.isEmpty) return;
 
-      // Cari kamera depan untuk selfie
-      final frontCamera = _cameras.firstWhere(
-        (cam) => cam.lensDirection == CameraLensDirection.front,
+      // Cari kamera sesuai arah yang diminta (depan/belakang)
+      final targetCamera = _cameras.firstWhere(
+        (cam) => cam.lensDirection == widget.lensDirection,
         orElse: () => _cameras.first,
       );
 
       _controller = CameraController(
-        frontCamera,
+        targetCamera,
         ResolutionPreset.medium, // Resolusi sedang agar tidak boros storage
         enableAudio: false,
       );
@@ -98,7 +102,9 @@ class _CustomCameraViewState extends State<CustomCameraView> {
           Padding(
             padding: const EdgeInsets.only(bottom: 24, left: 24, right: 24),
             child: Text(
-              'Posisikan wajah Anda di dalam area oval\ndan pastikan pencahayaan cukup',
+              widget.isOvalOverlay
+                  ? 'Posisikan wajah Anda di dalam area oval\ndan pastikan pencahayaan cukup'
+                  : 'Posisikan KTP Anda di dalam area kotak\ndan pastikan tulisan terbaca jelas',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
@@ -147,13 +153,20 @@ class _CustomCameraViewState extends State<CustomCameraView> {
                           ),
                           Center(
                             child: Container(
-                              width: size.width * 0.7,
-                              height: size.width * 0.85, // Rasio wajah
+                              width: widget.isOvalOverlay
+                                  ? size.width * 0.55 // Oval lebih kecil
+                                  : size.width * 0.85, // KTP lebih lebar
+                              height: widget.isOvalOverlay
+                                  ? size.width * 0.70 // Rasio wajah
+                                  : size.width * 0.53, // Rasio KTP (~1.6:1)
                               decoration: BoxDecoration(
-                                color: Colors.white, // Membuat oval tembus pandang
-                                borderRadius: BorderRadius.all(
-                                  Radius.elliptical(size.width * 0.35, size.width * 0.425),
-                                ),
+                                color: Colors.white, // Membuat tembus pandang
+                                borderRadius: widget.isOvalOverlay
+                                    ? BorderRadius.all(
+                                        Radius.elliptical(
+                                            size.width * 0.275, size.width * 0.35),
+                                      )
+                                    : BorderRadius.circular(16),
                               ),
                             ),
                           ),

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:camera/camera.dart';
 
 import '../../core/localization/app_localization.dart';
 import '../../core/services/kyc_service.dart';
@@ -80,24 +80,22 @@ class _KycScreenState extends State<KycScreen> {
     );
   }
 
-  Future<void> _pickKTP() async {
-    final img = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
+  void _pickKTP() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomCameraView(
+          title: 'Ambil Foto KTP'.tr(context),
+          lensDirection: CameraLensDirection.back,
+          isOvalOverlay: false,
+          onPictureTaken: (file) {
+            if (mounted) {
+              setState(() => _ktpPhoto = File(file.path));
+            }
+          },
+        ),
+      ),
     );
-    if (img != null && mounted) {
-      setState(() => _ktpPhoto = File(img.path));
-    }
-  }
-
-  Future<void> _pickKTPGallery() async {
-    final img = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (img != null && mounted) {
-      setState(() => _ktpPhoto = File(img.path));
-    }
   }
 
   Future<void> _submit() async {
@@ -107,7 +105,10 @@ class _KycScreenState extends State<KycScreen> {
       return;
     }
     if (_selfiePhoto == null) {
-      _showSnack('Foto profil (selfie) wajib dilampirkan'.tr(context), Colors.orange);
+      _showSnack(
+        'Foto profil (selfie) wajib dilampirkan'.tr(context),
+        Colors.orange,
+      );
       return;
     }
 
@@ -387,7 +388,7 @@ class _KycScreenState extends State<KycScreen> {
             color: _ktpPhoto != null ? Colors.green : primary,
             icon: Icons.badge_outlined,
             onCamera: _pickKTP,
-            onGallery: _pickKTPGallery,
+            onGallery: null,
             cardColor: cardColor,
             isDark: isDark,
           ),
@@ -505,19 +506,7 @@ class _KycScreenState extends State<KycScreen> {
                     style: TextStyle(color: color, fontWeight: FontWeight.w500),
                   ),
                 ),
-                if (onGallery != null)
-                  TextButton.icon(
-                    onPressed: onGallery,
-                    icon: const Icon(Icons.photo_library_outlined, size: 16),
-                    label: const Text('Galeri', style: TextStyle(fontSize: 12)),
-                    style: TextButton.styleFrom(
-                      foregroundColor: color,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                    ),
-                  ),
+
                 const SizedBox(width: 4),
                 ElevatedButton.icon(
                   onPressed: onCamera,
