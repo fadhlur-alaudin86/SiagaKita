@@ -14,6 +14,8 @@ class IncidentModel {
   final double latitude;
   final double longitude;
   final String trustLabel; // 'verified' | 'standard' | 'unverified'
+  final List<String> photoPaths;
+  final String? audioPath;
   final DateTime createdAt;
   final DateTime updatedAt; // timestamp terakhir update lokasi
   final DateTime? resolvedAt;
@@ -30,6 +32,8 @@ class IncidentModel {
     required this.latitude,
     required this.longitude,
     required this.trustLabel,
+    this.photoPaths = const [],
+    this.audioPath,
     required this.createdAt,
     DateTime? updatedAt,
     this.resolvedAt,
@@ -48,6 +52,8 @@ class IncidentModel {
     latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
     longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     trustLabel: json['reporter_trust_label'] as String? ?? 'standard',
+    photoPaths: (json['photo_paths'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+    audioPath: json['audio_path'] as String?,
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
         DateTime.now(),
@@ -106,8 +112,8 @@ class ReportModel {
   final double latitude;
   final double longitude;
   final String? description;
-  final String? photoUrl;
-  final String? audioUrl;
+  final List<String> photoPaths;
+  final String? audioPath;
   final String status; // 'pending' | 'reviewed' | 'actioned'
   final DateTime createdAt;
 
@@ -120,8 +126,8 @@ class ReportModel {
     required this.latitude,
     required this.longitude,
     this.description,
-    this.photoUrl,
-    this.audioUrl,
+    this.photoPaths = const [],
+    this.audioPath,
     required this.status,
     required this.createdAt,
   });
@@ -135,8 +141,8 @@ class ReportModel {
     latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
     longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     description: json['description'] as String?,
-    photoUrl: json['photo_url'] as String?,
-    audioUrl: json['audio_url'] as String?,
+    photoPaths: (json['photo_paths'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+    audioPath: json['audio_path'] as String?,
     status: json['status'] as String? ?? 'pending',
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??

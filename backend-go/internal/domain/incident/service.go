@@ -235,7 +235,7 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, phot
 		UrgencyLevel: req.UrgencyLevel,
 		Latitude:     req.Latitude,
 		Longitude:    req.Longitude,
-		Status:       "received",
+		Status:       "sent",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}

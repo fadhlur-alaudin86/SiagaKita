@@ -295,6 +295,15 @@ class _ReportScreenState extends State<ReportScreen> {
       );
       return;
     }
+    if (_photos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto bukti wajib dilampirkan.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     final colors = Theme.of(context).colorScheme;
     final urgencyLabels = ['Ringan', 'Sedang', 'Kritis'];
     final urgencyColors = [Colors.green, Colors.orange, Colors.red];
@@ -954,7 +963,7 @@ class _ReportScreenState extends State<ReportScreen> {
             Text(
               _isRecording
                   ? 'Merekam... ${_formatDuration(_recordSeconds)}'
-                  : 'Tahan untuk rekam suara',
+                  : 'Tahan untuk rekam suara (Opsional)',
               style: TextStyle(
                 color: _isRecording
                     ? Colors.red

@@ -112,6 +112,26 @@
 
 ---
 
+### 🔖 Patch 1.0.12 — 8 Mei 2026 (Refinement V4: Dispatch, Pelaporan & Manajemen Personil)
+
+#### 📱 Perbaikan Mobile App (SiagaKita Warga)
+- **Validasi Bukti Foto Pelaporan (Jalur B)**: Pelaporan insiden kini secara ketat mewajibkan unggahan minimal 1 foto sebelum laporan dapat dikirim.
+- **Label Audio Opsional**: Form perekaman suara diberikan label eksplisit `(Opsional)` untuk menghindari kebingungan pengguna.
+
+#### 🖥️ Perbaikan Desktop Console (Instansi)
+- **Review Bukti Lapangan Terintegrasi**: Mengintegrasikan library `audioplayers` untuk menghadirkan pemutar rekaman suara (*slider*, *play/pause*) langsung di dalam dialog detail **Laporan Masuk** dan **SOS Aktif**. Bukti foto kini juga ditampilkan secara ringkas namun jelas.
+- **Filter Status Laporan Lengkap**: Halaman **Laporan Masuk** kini dilengkapi filter tab komprehensif (`Sent`, `Accepted`, `Handled`, `Resolved`, `Rejected`, `Canceled`, dan `All`) untuk memudahkan triase insiden.
+- **Simulasi Workflow Dispatch**: 
+  - Dialog detail SOS dan Laporan Masuk sekarang menuntut pengguna untuk menugaskan personil melalui *dropdown* pilihan Agency Responder / Relawan (berlaku untuk status yang telah diterima / belum tertangani).
+  - Mengubah fungsi penyelesaian laporan. Tombol *"Selesaikan Insiden"* dinonaktifkan sementara dan diganti dengan status *"MENUNGGU BUKTI"* setelah personil ditugaskan (status *Handled*), memastikan insiden hanya ditutup setelah validasi bukti lapangan (*field proof*).
+- **Split-View Manajemen Personil**: Mengombak total UI **Manajemen Personil** menjadi layar terbelah (*split-view*). Sisi kiri berisi daftar Relawan & Personil simulasi dengan tombol untuk melakukan *Ban* (pemblokiran langsung pada akun personil agensi) atau pengajuan *Ban* (rekomendasi pemblokiran ke Admin Pusat untuk relawan publik).
+
+#### 🛡️ Backend & Migrasi
+- **Alur Status Default Laporan**: Logika *CreateReport* di `incident/service.go` diperbarui sehingga laporan warga yang baru dikirim akan masuk ke sistem dengan status `sent`, bukan `received`. Hal ini sesuai dengan standar penamaan alur triase `sent` -> `accepted`/`rejected` -> `handled` -> `resolved`.
+- **Perbaikan Bug Golang**: Memperbaiki redeklarasi variabel `err` yang menyebabkan kegagalan _build_ pada fungsi `SubmitKYC`.
+
+---
+
 ### 🔖 Patch 1.0.11 — 8 Mei 2026 (Refinement V2: Profile & Registration Flow)
 
 #### 📱 Perbaikan Mobile App (SiagaKita Warga)

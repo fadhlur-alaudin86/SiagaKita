@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
@@ -25,10 +26,21 @@ class _SosAktifPageState extends State<SosAktifPage> {
   final _falseAlarmCtrl = TextEditingController();
   Timer? _refreshTimer; // refresh tiap 5 detik agar indikator online/offline akurat
 
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  String _selectedResponder = 'Agency 1'; // Mock for dispatch
+
   @override
   void initState() {
     super.initState();
     _load();
+    _audioPlayer.onDurationChanged.listen((d) => setState(() => _duration = d));
+    _audioPlayer.onPositionChanged.listen((p) => setState(() => _position = p));
+    _audioPlayer.onPlayerStateChanged.listen((s) {
+      if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
+    });
     _wsSub = widget.ws.eventStream.listen((msg) {
       if (!mounted) return;
       if (msg.event == WsEvent.incomingEmergency) {
@@ -123,17 +135,6 @@ class _SosAktifPageState extends State<SosAktifPage> {
     }
   }
 
-  Future<void> _resolve() async {
-    if (_selected == null) return;
-    final ok = await IncidentApiService.resolve(widget.token, _selected!.id);
-    if (ok && mounted) {
-      AudioService.stop();
-      _showSnack('Insiden diselesaikan ✅', Colors.green);
-      setState(() => _selected = null);
-      _load();
-    }
-  }
-
   void _callBack(String? phone) async {
     if (phone == null) return;
     final uri = Uri(scheme: 'tel', path: phone);
@@ -146,6 +147,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
 
   @override
   void dispose() {
+    _audioPlayer.dispose();
     _wsSub?.cancel();
     _falseAlarmCtrl.dispose();
     _refreshTimer?.cancel();
@@ -244,6 +246,11 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                 onTap: () {
                                   AudioService.stop();
                                   setState(() => _selected = inc);
+                                  if (inc.audioPath != null) {
+                                    _audioPlayer.setSourceUrl(inc.audioPath!);
+                                  } else {
+                                    _audioPlayer.stop();
+                                  }
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -552,6 +559,89 @@ class _SosAktifPageState extends State<SosAktifPage> {
               value: inc.allergies ?? '— Tidak ada catatan',
             ),
 
+            if (inc.photoPaths.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              const Divider(color: Colors.white12),
+              const SizedBox(height: 16),
+              const Text(
+                '📸 BUKTI FOTO',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: inc.photoPaths.map((url) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      url,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, _) => Container(
+                        width: 100,
+                        height: 100,
+                        color: Colors.white10,
+                        child: const Icon(Icons.broken_image,
+                            color: Colors.white54),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+            if (inc.audioPath != null) ...[
+              const SizedBox(height: 20),
+              const Divider(color: Colors.white12),
+              const SizedBox(height: 16),
+              const Text(
+                '🎙️ BUKTI AUDIO',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: Colors.green),
+                      onPressed: () {
+                        if (_isPlaying) {
+                          _audioPlayer.pause();
+                        } else {
+                          _audioPlayer.resume();
+                        }
+                      },
+                    ),
+                    Expanded(
+                      child: Slider(
+                        value: _position.inSeconds.toDouble(),
+                        max: _duration.inSeconds > 0
+                            ? _duration.inSeconds.toDouble()
+                            : 1.0,
+                        onChanged: (v) {
+                          _audioPlayer.seek(Duration(seconds: v.toInt()));
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 28),
             const Divider(color: Colors.white12),
             const SizedBox(height: 16),
@@ -565,51 +655,99 @@ class _SosAktifPageState extends State<SosAktifPage> {
             ),
             const SizedBox(height: 12),
 
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.orange,
-                      side: const BorderSide(color: Colors.orange),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+            if (inc.status != 'handled')
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Tugaskan Personil:', style: TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedResponder,
+                          dropdownColor: const Color(0xFF1A2035),
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          items: ['Agency 1', 'Relawan A', 'Relawan B']
+                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _selectedResponder = v!),
+                        ),
                       ),
-                    ),
-                    icon: const Icon(
-                      Icons.report_gmailerrorred_outlined,
-                      size: 18,
-                    ),
-                    label: const Text('False Alarm'),
-                    onPressed: _markFalseAlarm,
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+                        onPressed: () {
+                          _showSnack('Personil ditugaskan (Simulasi)', Colors.blue);
+                          // TODO real api update status to handled
+                        },
+                        child: const Text('Tugaskan', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2EAF60),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange,
+                        side: const BorderSide(color: Colors.orange),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
+                      icon: const Icon(Icons.report_gmailerrorred_outlined, size: 18),
+                      label: const Text('False Alarm'),
+                      onPressed: _markFalseAlarm,
                     ),
-                    icon: const Icon(Icons.check_circle_outline, size: 18),
-                    label: const Text(
-                      'SELESAIKAN INSIDEN',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    onPressed: _resolve,
                   ),
-                ),
-              ],
-            ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange,
+                        side: const BorderSide(color: Colors.orange),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.report_gmailerrorred_outlined, size: 18),
+                      label: const Text('False Alarm'),
+                      onPressed: _markFalseAlarm,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey, // Disabled per requirement
+                        foregroundColor: Colors.white54,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.info_outline, size: 18),
+                      label: const Text(
+                        'MENUNGGU BUKTI',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      onPressed: null,
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
