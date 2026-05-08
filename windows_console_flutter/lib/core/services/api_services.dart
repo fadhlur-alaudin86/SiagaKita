@@ -94,16 +94,20 @@ class AdminApiService {
   // ─── KYC Relawan ──────────────────────────────────────────────────────────
 
   static Future<List<VolunteerModel>> getPendingVolunteers(String token) async {
-    final resp = await http.get(
-      Uri.parse(ApiConstants.adminVolunteersPending),
-      headers: AuthService.headers(token),
-    );
-    if (resp.statusCode != 200) return [];
-    final body = jsonDecode(resp.body) as Map<String, dynamic>;
-    final data = body['data'] as List<dynamic>? ?? [];
-    return data
-        .map((e) => VolunteerModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+    try {
+      final resp = await http.get(
+        Uri.parse(ApiConstants.adminVolunteersPending),
+        headers: AuthService.headers(token),
+      );
+      if (resp.statusCode != 200) return [];
+      final body = jsonDecode(resp.body) as Map<String, dynamic>;
+      final data = body['data'] as List<dynamic>? ?? [];
+      return data
+          .map((e) => VolunteerModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   static Future<bool> approveVolunteer(String token, String id) async {

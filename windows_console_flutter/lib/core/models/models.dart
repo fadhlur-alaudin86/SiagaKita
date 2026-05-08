@@ -248,25 +248,31 @@ class VolunteerModel {
     required this.createdAt,
   });
 
-  factory VolunteerModel.fromJson(Map<String, dynamic> json) => VolunteerModel(
-    id: json['id'] as String,
-    fullName: json['full_name'] as String? ?? '',
-    email: json['email'] as String? ?? '',
-    phoneNumber: json['phone_number'] as String?,
-    nik: json['nik'] as String?,
-    nikPhotoUrl: json['nik_photo_url'] as String?,
-    certUrls:
-        (json['cert_urls'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [],
-    experience: json['volunteer_experience'] as String?,
-    kycStatus: json['kyc_status'] as String? ?? 'pending',
-    verifiedBy: json['verified_by'] as String?,
-    createdAt:
-        DateTime.tryParse(json['created_at'] as String? ?? '') ??
-        DateTime.now(),
-  );
+  factory VolunteerModel.fromJson(Map<String, dynamic> json) {
+    // Backend mengirim 'certifications' sebagai List<object> dengan field 'document_url'
+    final certsData = json['certifications'] as List<dynamic>? ?? [];
+    final certUrls = certsData
+        .map((e) => (e as Map<String, dynamic>)['document_url'] as String? ?? '')
+        .where((url) => url.isNotEmpty)
+        .toList();
+
+    return VolunteerModel(
+      id: json['user_id'] as String? ?? '',          // Backend: 'user_id' (bukan 'id')
+      fullName: (json['full_name'] as String?) ?? '',
+      email: json['email'] as String? ?? '',
+      phoneNumber: json['phone_number'] as String?,
+      nik: json['nik'] as String?,
+      nikPhotoUrl: json['kyc_ktp_url'] as String?,   // Optional, mungkin null
+      certUrls: certUrls,                             // Diparsing dari 'certifications[]'
+      experience: json['volunteer_experience'] as String?,
+      kycStatus: json['kyc_status'] as String? ?? 'pending',
+      verifiedBy: json['verified_by'] as String?,
+      createdAt:
+          DateTime.tryParse(json['submitted_at'] as String? ?? '') // Backend: 'submitted_at'
+          ?? DateTime.now(),
+    );
+  }
+
 }
 
 // ─── Rank (Master Gamifikasi) ─────────────────────────────────────────────────

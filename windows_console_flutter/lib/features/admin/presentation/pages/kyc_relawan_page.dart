@@ -18,6 +18,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
   List<VolunteerModel> _volunteers = [];
   VolunteerModel? _selected;
   bool _loading = true;
+  String? _error;
   Timer? _timer;
   final _rejectCtrl = TextEditingController();
 
@@ -36,13 +37,22 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
   }
 
   Future<void> _load({bool silent = false}) async {
-    if (!silent) setState(() => _loading = true);
-    final data = await AdminApiService.getPendingVolunteers(widget.token);
-    if (mounted) {
-      setState(() {
-        _volunteers = data;
-        _loading = false;
-      });
+    if (!silent) setState(() { _loading = true; _error = null; });
+    try {
+      final data = await AdminApiService.getPendingVolunteers(widget.token);
+      if (mounted) {
+        setState(() {
+          _volunteers = data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = 'Gagal memuat data: ${e.toString()}';
+        });
+      }
     }
   }
 
@@ -198,6 +208,29 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                 Expanded(
                   child: _loading
                       ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.cloud_off, color: Colors.red, size: 36),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _error!,
+                                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: _load,
+                                  child: const Text('Coba Lagi', style: TextStyle(color: Colors.orange)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                       : _volunteers.isEmpty
                       ? const Center(
                           child: Text(

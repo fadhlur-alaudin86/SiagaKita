@@ -24,7 +24,8 @@ class _SosAktifPageState extends State<SosAktifPage> {
   bool _loading = true;
   StreamSubscription<WsMessage>? _wsSub;
   final _falseAlarmCtrl = TextEditingController();
-  Timer? _refreshTimer; // refresh tiap 5 detik agar indikator online/offline akurat
+  Timer?
+  _refreshTimer; // refresh tiap 5 detik agar indikator online/offline akurat
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
@@ -586,8 +587,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         width: 100,
                         height: 100,
                         color: Colors.white10,
-                        child: const Icon(Icons.broken_image,
-                            color: Colors.white54),
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: Colors.white54,
+                        ),
                       ),
                     ),
                   );
@@ -616,8 +619,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.green),
+                      icon: Icon(
+                        _isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: Colors.green,
+                      ),
                       onPressed: () {
                         if (_isPlaying) {
                           _audioPlayer.pause();
@@ -659,7 +664,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Tugaskan Personil:', style: TextStyle(color: Colors.white70)),
+                  const Text(
+                    'Tugaskan Personil:',
+                    style: TextStyle(color: Colors.white70),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -670,22 +678,37 @@ class _SosAktifPageState extends State<SosAktifPage> {
                           style: const TextStyle(color: Colors.white),
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                            ),
                           ),
                           items: ['Agency 1', 'Relawan A', 'Relawan B']
-                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                              .map(
+                                (e) =>
+                                    DropdownMenuItem(value: e, child: Text(e)),
+                              )
                               .toList(),
-                          onChanged: (v) => setState(() => _selectedResponder = v!),
+                          onChanged: (v) =>
+                              setState(() => _selectedResponder = v!),
                         ),
                       ),
                       const SizedBox(width: 12),
                       ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
                         onPressed: () {
-                          _showSnack('Personil ditugaskan (Simulasi)', Colors.blue);
-                          // TODO real api update status to handled
+                          _showSnack(
+                            'Personil ditugaskan (Simulasi)',
+                            Colors.blue,
+                          );
+                          // real api update status to handled
                         },
-                        child: const Text('Tugaskan', style: TextStyle(color: Colors.white)),
+                        child: const Text(
+                          'Tugaskan',
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ],
                   ),
@@ -698,7 +721,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         side: const BorderSide(color: Colors.orange),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      icon: const Icon(Icons.report_gmailerrorred_outlined, size: 18),
+                      icon: const Icon(
+                        Icons.report_gmailerrorred_outlined,
+                        size: 18,
+                      ),
                       label: const Text('False Alarm'),
                       onPressed: _markFalseAlarm,
                     ),
@@ -718,7 +744,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon: const Icon(Icons.report_gmailerrorred_outlined, size: 18),
+                      icon: const Icon(
+                        Icons.report_gmailerrorred_outlined,
+                        size: 18,
+                      ),
                       label: const Text('False Alarm'),
                       onPressed: _markFalseAlarm,
                     ),
@@ -728,7 +757,8 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     flex: 2,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey, // Disabled per requirement
+                        backgroundColor:
+                            Colors.grey, // Disabled per requirement
                         foregroundColor: Colors.white54,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(

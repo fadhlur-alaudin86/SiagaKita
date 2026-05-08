@@ -113,9 +113,9 @@ class UserService {
       request.headers['Authorization'] = 'Bearer $accessToken';
       request.fields['experience'] = experience;
 
-      // Add specializations
-      for (final spec in specializations) {
-        request.fields['specializations'] = spec; // This might depend on backend, usually backend can handle array with same key or key[]
+      // Kirim semua spesialisasi sebagai satu string (Map<String,String> tidak bisa duplikat key)
+      if (specializations.isNotEmpty) {
+        request.fields['specializations'] = specializations.join(',');
       }
 
       // Add certificates
