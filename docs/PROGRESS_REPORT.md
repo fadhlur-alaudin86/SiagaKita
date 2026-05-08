@@ -1,6 +1,6 @@
 # 📋 SiagaKita — Laporan Kemajuan Pengembangan
 
-> **Terakhir diperbarui:** 6 Mei 2026
+> **Terakhir diperbarui:** 8 Mei 2026
 > **Branch aktif:** `main`
 > **Status keseluruhan:** 🟡 Dalam Pengembangan Aktif
 
@@ -109,6 +109,23 @@
 ---
 
 ## 3. Changelog Per Sprint
+
+---
+
+### 🔖 Patch 1.0.11 — 8 Mei 2026 (Refinement V2: Profile & Registration Flow)
+
+#### 📱 Perbaikan Mobile App (SiagaKita Warga)
+- **Biodata Pendaftaran Dinamis**: Layar pengisian biodata awal kini sepenuhnya terhubung ke endpoint backend. Pengguna dapat menambah banyak kontak darurat secara dinamis, serta memiliki opsi untuk "Lewati" yang diletakkan berdampingan dengan tombol Simpan. Layar ini juga telah mendukung lokalisasi `tr(context)`.
+- **UX Kamera KTP**: Pilihan *upload* KTP dari galeri ditiadakan. Layar KYC kini memaksa pengguna mengambil foto secara langsung (*in-app*) melalui kamera belakang dengan overlay persegi panjang (*aspect ratio* proporsional KTP).
+- **Profil Status Verifikasi**: Layar `ProfileScreen` menampilkan indikator visual (centang hijau atau tanda seru oranye/merah) untuk status verifikasi NIK, Email, dan WhatsApp secara instan tanpa perlu masuk ke layar edit.
+- **Pemisahan Edit NIK & WhatsApp**: Menghilangkan pengaturan nomor telepon dari form `EditProfileScreen`. Pengubahan NIK dan Nomor WhatsApp (beserta pengiriman OTP-nya) dikhususkan melalui ikon tombol *edit* pada layar profil utama.
+
+#### 🖥️ Perbaikan Desktop Console (Instansi)
+- **Filter SOS Aktif**: Laporan insiden dengan status `cancel` (baik yang dibatalkan pada masa tunggi maupun dari sistem) tidak lagi diproses dan ditarik oleh Console, menghilangkan kerancuan penanganan SOS aktif.
+
+#### 🛡️ Backend & Migrasi
+- **Update Respon Profil**: API mereturn nilai sinkronisasi `nik_verification_status` ke antarmuka aplikasi.
+- **Penyempurnaan Query Insiden**: Perubahan instruktural pada `FindAllActive` *repository* di Go untuk mengecualikan *row* insiden dengan nilai status `'cancel'`.
 
 ---
 
