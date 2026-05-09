@@ -9,6 +9,8 @@ on:
       - 'infrastructure/**'
       - '.github/workflows/**'
 
+  workflow_dispatch:
+
 jobs:
   # ─── Job 1: Build image Go dan push ke Docker Hub ─────────────────────────
   build-and-push:
