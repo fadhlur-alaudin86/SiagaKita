@@ -282,7 +282,7 @@ func (s *Service) Resolve(incidentID, responderID string) (*ResolveResponse, err
 		return nil, err
 	}
 
-	durationMinutes := inc.ResolvedAt.Sub(inc.CreatedAt).Minutes()
+	durationMinutes := inc.CompletedAt.Sub(inc.CreatedAt).Minutes()
 	baseXP := 100
 	speedBonus := math.Max(0, 50-durationMinutes)
 	multiplier := incidentTypeMultiplier[inc.IncidentType]

@@ -483,9 +483,9 @@ class _UserDetailPageState extends State<UserDetailPage>
                                             fontSize: 11,
                                           ),
                                         ),
-                                        if (h.resolvedAt != null)
+                                        if (h.completedAt != null)
                                           Text(
-                                            'Selesai: ${DateFormat('dd MMM yyyy, HH:mm').format(h.resolvedAt!.toLocal())}',
+                                            'Selesai: ${DateFormat('dd MMM yyyy, HH:mm').format(h.completedAt!.toLocal())}',
                                             style: const TextStyle(
                                               color: Colors.white38,
                                               fontSize: 10,
