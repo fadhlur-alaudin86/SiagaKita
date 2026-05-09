@@ -1,6 +1,6 @@
 # 🏗️ SiagaKita — Arsitektur Backend
 
-> **Diperbarui:** 4 Mei 2026
+> **Diperbarui:** 9 Mei 2026
 > **Versi Schema:** v3
 > **Stack:** Go 1.23 + Fiber v2 + PostgreSQL 15 + Redis
 

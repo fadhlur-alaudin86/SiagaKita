@@ -86,8 +86,8 @@
 | Home (Offline) | ✅ Baru | Auto-login dari sesi tersimpan; indikator ● Online/Offline di header |
 | Profile | ✅ v2 | Tampilkan NIK (bukan UUID); badge verifikasi HP; tombol verifikasi identitas |
 | Edit Profile | ✅ v2 | Fix save berhasil; OTP WhatsApp wajib sebelum ubah nomor HP |
-| Map | 🔴 | Mock/static |
-| Relawan Dashboard | 🟡 | UI selesai, data mock |
+| Map | ✅ v2 | Polling 10s, geocoding Nominatim, marker SOS nearby, status transmisi dinamis |
+| Relawan Dashboard | ✅ v2 | Total redesign: Duty toggle, XP bar, radar SOS real-time, detail bottomsheet, riwayat misi |
 | Session Management | ✅ Baru | `SessionService` (SharedPreferences) — login persist, logout clear |
 
 ### 🟢 Desktop Console (`windows_console_flutter/`)
@@ -109,6 +109,31 @@
 ---
 
 ## 3. Changelog Per Sprint
+
+---
+
+### 🔖 Patch 1.0.16 — 9 Mei 2026 (Fitur Operasi Relawan Real-Time & Pemetaan)
+
+#### 🛡️ Backend — Go Fiber & PostgreSQL
+- **Endpoint Nearby SOS**: Menambahkan `GET /api/v1/incidents/nearby` untuk mengambil daftar SOS aktif di sekitar relawan berdasarkan radius (Haversine formula).
+- **Endpoint Accept SOS**: Menambahkan `POST /api/v1/incidents/:id/accept` dengan transaction SQL (`FindNearby()`, `AcceptIncident()`) untuk memvalidasi dan menerima misi SOS. Menyimpan ke tabel `incident_responses`.
+- **Status Relawan**: Memperkenalkan turunan field `volunteer_status` (none, pending, approved) di `ProfileResponse` berbasiskan record `volunteer_certifications`.
+- **Middleware**: Menambahkan RBAC `VolunteerOnly()`.
+
+#### 📱 Mobile App (SiagaKita Warga/Relawan)
+- **Relawan Dashboard Redesign**: Merombak total `RelawanMainScreen`. Menambahkan _XP progress bar_, _Duty toggle_, Radar SOS _real-time_ (polling 30s), _BottomSheet_ detail misi, tombol _Terima_, dan daftar Riwayat Misi.
+- **Peta Interaktif Masyarakat & Relawan**: Memperbarui `MapScreen` secara masif:
+  - Polling GPS setiap 10 detik.
+  - _Reverse geocoding_ alamat menggunakan Nominatim API (di-_cache_).
+  - Indikator status transmisi dinamis berdasarkan koneksi internet dan akurasi GPS.
+  - Menampilkan _marker_ SOS di sekitar untuk relawan yang sedang _ON DUTY_.
+- **Reputasi Relawan**: Menambahkan kartu Reputasi Relawan di layar profil (menampilkan XP, level, dan persentase _progress_) khusus pengguna _approved_.
+- **Fix Data Type**: Menyempurnakan pembacaan tipe data `volunteer_reputation` dan perhitungan `volunteerLevel`.
+
+#### 🖥️ Desktop Console (Instansi)
+- **Auto-Refresh Data**:
+  - Halaman `sos_aktif_page.dart` kini memiliki pewaktu 15 detik untuk memuat ulang data latar agar tampilan tersinkron. Jika SOS telah selesai/dibatalkan, detail pilihan akan tertutup otomatis.
+  - Halaman `laporan_masuk_page.dart` kini menggunakan pewaktu 30 detik *auto-refresh* dan dilepas (_dispose_) dengan benar dari memori saat halaman ditutup.
 
 ---
 
@@ -661,6 +686,8 @@ Base URL: `http://<host>:8080/api/v1`
 | PUT | `/incidents/:id/location` | — | Update GPS tiap 1 menit |
 | PATCH | `/incidents/:id/type` | — | Set tipe insiden |
 | POST | `/incidents/:id/broadcast` | — | Broadcast SOS |
+| GET | `/incidents/nearby` | VolunteerOnly | Daftar SOS di radius tertentu |
+| POST | `/incidents/:id/accept` | VolunteerOnly | Relawan menerima misi SOS |
 | POST | `/incidents/:id/mark-false-alarm` | ConsoleOnly | Tandai false alarm |
 | POST | `/incidents/:id/resolve` | ConsoleOnly | Selesaikan insiden |
 

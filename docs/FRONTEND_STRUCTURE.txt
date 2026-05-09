@@ -9,7 +9,13 @@ CATATAN PENTING:
   Modul lain (Biodata, Map, Relawan) masih menggunakan data MOCK.
   Dokumentasi ini menjelaskan state terkini dan kebutuhan integrasi berikutnya.
 
-  PERUBAHAN TERBARU (4 Mei 2026 — Sprint Stabilisasi):
+  PERUBAHAN TERBARU (9 Mei 2026 — Fitur Operasi Relawan Real-Time & Pemetaan):
+  - MapScreen: polling lokasi 10s, reverse geocoding (Nominatim), marker SOS nearby, status transmisi.
+  - RelawanMainScreen: Redesign total (XP bar, Duty toggle, radar SOS real-time, bottomsheet detail).
+  - ProfileScreen: Reputasi Relawan (XP, level, progress) untuk volunteer approved.
+  - Console: Auto-refresh data pada halaman SOS Aktif (15s) dan Laporan Masuk (30s).
+  
+  PERUBAHAN SEBELUMNYA (4 Mei 2026 — Sprint Stabilisasi):
   - Offline Mode: SessionService + ConnectivityService + _AppStartup auto-login.
   - SOS Anti-Gagal: grace period instan (UUID lokal), retry background 5 detik, badge status.
   - Profile Screen: NIK (bukan UUID), badge verif HP, tombol verifikasi identitas.
@@ -62,8 +68,8 @@ lib/
 │   │   ├── main_screen.dart          — Bottom Nav; fetch profil (skip jika offline)
 │   │   ├── home_screen.dart          — SOS instan+retry, status koneksi, profil menu
 │   │   ├── guide_screen.dart         — Panduan Pertolongan Pertama (offline)
-│   │   ├── map_screen.dart           — Radar peta (MOCK)
-│   │   ├── profile_screen.dart       — NIK, badge verif HP, logout + clearSession
+│   │   ├── map_screen.dart           — Radar peta real-time (Lokasi & SOS nearby)
+│   │   ├── profile_screen.dart       — NIK, badge verif HP, Reputasi Relawan, logout + clearSession
 │   │   ├── edit_profile_screen.dart  — Edit profil (fix save) + OTP WA sebelum ubah nomor
 │   │   ├── settings_screen.dart      — Mode Gelap (Global), privasi, bahasa, notifikasi
 │   │   ├── about_screen.dart         — Informasi aplikasi (statis)
@@ -71,7 +77,7 @@ lib/
 │   │   └── volunteer_registration_screen.dart — Daftar jadi relawan (MOCK)
 │   │
 │   ├── relawan/
-│   │   └── relawan_main_screen.dart  — Tactical Dashboard; logout + clearSession
+│   │   └── relawan_main_screen.dart  — Tactical Dashboard (XP bar, Radar SOS real-time, Duty toggle)
 │   │
 │   ├── admin/
 │   │   └── admin_main_screen.dart    — Admin placeholder; logout + clearSession
