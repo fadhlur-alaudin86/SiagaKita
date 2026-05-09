@@ -55,6 +55,7 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest, trustLab
 		Longitude:          req.Longitude,
 		IncidentType:       "unknown",
 		UrgencyLevel:       "critical",
+		AddressDetail:      &req.AddressDetail,
 		ReporterTrustLabel: trustLabel,
 		Status:             "grace_period",
 		CreatedAt:          time.Now(),

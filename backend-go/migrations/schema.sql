@@ -327,7 +327,7 @@ CREATE TABLE public.incidents (
     address_detail text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now(),
-    resolved_at timestamp with time zone,
+    completed_at timestamp with time zone,
     photo_paths text[] DEFAULT '{}'::text[],
     audio_path text
 );

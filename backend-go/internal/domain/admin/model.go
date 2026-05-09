@@ -86,7 +86,7 @@ type SOSHistoryItem struct {
 	Latitude     float64    `json:"latitude"`
 	Longitude    float64    `json:"longitude"`
 	CreatedAt    time.Time  `json:"created_at"`
-	ResolvedAt   *time.Time `json:"resolved_at,omitempty"`
+	CompletedAt   *time.Time `json:"completed_at,omitempty"`
 }
 
 // ReportHistoryItem adalah satu baris riwayat laporan biasa seorang pengguna.

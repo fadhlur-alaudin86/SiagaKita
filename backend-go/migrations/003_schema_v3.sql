@@ -186,7 +186,7 @@ CREATE TABLE public.incidents (
     trigger_method       varchar(20) DEFAULT 'timeout',
     created_at           timestamptz DEFAULT now() NOT NULL,
     updated_at           timestamptz DEFAULT now(),
-    resolved_at          timestamptz
+    completed_at         timestamptz
 );
 CREATE INDEX idx_incidents_reporter ON public.incidents(reporter_id);
 CREATE INDEX idx_incidents_status   ON public.incidents(status);

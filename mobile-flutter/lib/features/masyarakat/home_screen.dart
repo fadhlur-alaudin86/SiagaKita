@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -297,10 +299,31 @@ class _HomeScreenState extends State<HomeScreen>
     // Ambil posisi GPS di background
     double lat = 0.0;
     double lng = 0.0;
+    String? address;
     try {
       final pos = await LocationService.getCurrentPosition();
       lat = pos.latitude;
       lng = pos.longitude;
+      // Reverse geocoding (best effort, maksimal 2 detik)
+      try {
+        final uri = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&zoom=18',
+        );
+        final res = await http.get(
+          uri,
+          headers: {'User-Agent': 'com.siagakita.mobile'},
+        ).timeout(const Duration(seconds: 2));
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          final display = data['display_name'] as String?;
+          if (display != null) {
+            final parts = display.split(', ');
+            address = parts.take(3).join(', ');
+          }
+        }
+      } catch (_) {
+        // Abaikan jika geocoding gagal/timeout
+      }
     } on AppLocationServiceDisabledException {
       _cancelGracePeriodLocally();
       if (mounted) {
@@ -355,6 +378,7 @@ class _HomeScreenState extends State<HomeScreen>
     _attemptSOSUpload(
       lat: lat,
       lng: lng,
+      addressDetail: address,
       triggeredBy: triggeredBy,
       localId: localId,
     );
@@ -366,6 +390,7 @@ class _HomeScreenState extends State<HomeScreen>
   void _attemptSOSUpload({
     required double lat,
     required double lng,
+    String? addressDetail,
     required String triggeredBy,
     required String localId,
   }) {
@@ -373,6 +398,7 @@ class _HomeScreenState extends State<HomeScreen>
     _performSOSUpload(
       lat: lat,
       lng: lng,
+      addressDetail: addressDetail,
       triggeredBy: triggeredBy,
       localId: localId,
     );
@@ -381,6 +407,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _performSOSUpload({
     required double lat,
     required double lng,
+    String? addressDetail,
     required String triggeredBy,
     required String localId,
   }) async {
@@ -394,6 +421,7 @@ class _HomeScreenState extends State<HomeScreen>
         accessToken: widget.accessToken,
         latitude: lat,
         longitude: lng,
+        addressDetail: addressDetail,
       );
 
       if (!mounted) return;
@@ -439,6 +467,7 @@ class _HomeScreenState extends State<HomeScreen>
         _performSOSUpload(
           lat: lat,
           lng: lng,
+          addressDetail: addressDetail,
           triggeredBy: triggeredBy,
           localId: localId,
         );

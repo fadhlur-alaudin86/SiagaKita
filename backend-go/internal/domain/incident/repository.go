@@ -32,8 +32,11 @@ func (r *Repository) FindByID(id string) (*Incident, error) {
 }
 
 func (r *Repository) UpdateStatus(id, status string) error {
-	return r.db.Model(&Incident{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"status": status, "updated_at": time.Now()}).Error
+	updates := map[string]interface{}{"status": status, "updated_at": time.Now()}
+	if status == "resolved" || status == "handled" || status == "cancel" || status == "false_alarm" {
+		updates["completed_at"] = time.Now()
+	}
+	return r.db.Model(&Incident{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *Repository) UpdateType(id, incidentType string) error {
@@ -44,7 +47,7 @@ func (r *Repository) UpdateType(id, incidentType string) error {
 func (r *Repository) MarkResolved(id string) (*Incident, error) {
 	now := time.Now()
 	if err := r.db.Model(&Incident{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"status": "resolved", "resolved_at": now, "updated_at": now}).Error; err != nil {
+		Updates(map[string]interface{}{"status": "resolved", "completed_at": now, "updated_at": now}).Error; err != nil {
 		return nil, err
 	}
 	return r.FindByID(id)
@@ -56,7 +59,7 @@ func (r *Repository) MarkResolved(id string) (*Incident, error) {
 func (r *Repository) MarkCancelled(id string) error {
 	db := r.db.Model(&Incident{}).
 		Where("id = ? AND status IN (?, ?)", id, "grace_period", "broadcasting").
-		Updates(map[string]interface{}{"status": "cancel", "updated_at": time.Now()})
+		Updates(map[string]interface{}{"status": "cancel", "completed_at": time.Now(), "updated_at": time.Now()})
 
 	if db.Error != nil {
 		return db.Error
@@ -81,7 +84,7 @@ func (r *Repository) UploadEvidence(id string, photoPaths []string, audioPath *s
 
 func (r *Repository) MarkFalseAlarm(id string) error {
 	return r.db.Model(&Incident{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"status": "false_alarm", "updated_at": time.Now()}).Error
+		Updates(map[string]interface{}{"status": "false_alarm", "completed_at": time.Now(), "updated_at": time.Now()}).Error
 }
 
 func (r *Repository) UpdateLocation(id string, lat, lng float64) error {
@@ -126,7 +129,7 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 			i.longitude,
 			i.reporter_trust_label,
 			i.created_at,
-			i.resolved_at
+			i.completed_at
 		FROM incidents i
 		LEFT JOIN users u ON u.id = i.reporter_id
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id

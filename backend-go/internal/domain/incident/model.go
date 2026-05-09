@@ -26,7 +26,7 @@ type Incident struct {
 	AudioPath          *string        `json:"audio_path,omitempty"`              // Bukti audio 5 detik (pasca broadcasting)
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
-	ResolvedAt         *time.Time     `json:"resolved_at,omitempty"`
+	CompletedAt        *time.Time     `json:"completed_at,omitempty"`
 }
 
 // IncidentReport merepresentasikan laporan warga non-darurat (Jalur B).
@@ -85,8 +85,9 @@ type MRank struct {
 
 // TriggerSOSRequest — Jalur A: hanya GPS wajib, tipe selalu mulai 'unknown'.
 type TriggerSOSRequest struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
+	AddressDetail string  `json:"address_detail"`
 }
 
 // UploadSOSEvidenceRequest — dikirim SETELAH masuk fase broadcasting.
@@ -155,7 +156,7 @@ type AllActiveIncidentResponse struct {
 	Longitude          float64 `json:"longitude"`
 	ReporterTrustLabel string  `json:"reporter_trust_label"`
 	CreatedAt          time.Time  `json:"created_at"`
-	ResolvedAt         *time.Time `json:"resolved_at,omitempty"`
+	CompletedAt        *time.Time `json:"completed_at,omitempty"`
 }
 
 type ResolveResponse struct {

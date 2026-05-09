@@ -45,6 +45,7 @@ class IncidentService {
     required String accessToken,
     required double latitude,
     required double longitude,
+    String? addressDetail,
   }) async {
     final response = await _req(
       () => http.post(
@@ -53,6 +54,7 @@ class IncidentService {
         body: jsonEncode({
           'latitude': latitude,
           'longitude': longitude,
+          'address_detail': addressDetail,
         }),
       ),
       timeout: _sosTimeout, // SOS harus cepat
@@ -223,12 +225,16 @@ class IncidentService {
     );
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw IncidentException(body['message'] as String? ?? 'Gagal memuat riwayat SOS');
+      throw IncidentException(
+        body['message'] as String? ?? 'Gagal memuat riwayat SOS',
+      );
     }
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final data = body['data'] as List?;
     if (data == null) return [];
-    return data.map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>)).toList();
+    return data
+        .map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   // ─── Create Report (Jalur B — Laporan Warga) ─────────────────────────────

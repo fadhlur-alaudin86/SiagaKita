@@ -14,6 +14,13 @@ class IncidentModel {
   final double latitude;
   final double longitude;
   final String trustLabel; // 'verified' | 'standard' | 'unverified'
+  final String? addressDetail;
+  final bool isNikVerified;
+  final bool isPhoneVerified;
+  final String? dob;
+  final String? domicile;
+  final String? bio;
+  final String? emergencyContact;
   final List<String> photoPaths;
   final String? audioPath;
   final DateTime createdAt;
@@ -32,6 +39,13 @@ class IncidentModel {
     required this.latitude,
     required this.longitude,
     required this.trustLabel,
+    this.addressDetail,
+    this.isNikVerified = false,
+    this.isPhoneVerified = false,
+    this.dob,
+    this.domicile,
+    this.bio,
+    this.emergencyContact,
     this.photoPaths = const [],
     this.audioPath,
     required this.createdAt,
@@ -52,6 +66,13 @@ class IncidentModel {
     latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
     longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     trustLabel: json['reporter_trust_label'] as String? ?? 'standard',
+    addressDetail: json['address_detail'] as String?,
+    isNikVerified: json['is_nik_verified'] as bool? ?? false,
+    isPhoneVerified: json['is_phone_verified'] as bool? ?? false,
+    dob: json['reporter_dob'] as String?,
+    domicile: json['reporter_domicile'] as String?,
+    bio: json['reporter_bio'] as String?,
+    emergencyContact: json['reporter_emergency_contact'] as String?,
     photoPaths: (json['photo_paths'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
     audioPath: json['audio_path'] as String?,
     createdAt:

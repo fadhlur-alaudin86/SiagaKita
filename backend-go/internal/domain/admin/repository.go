@@ -321,7 +321,7 @@ func (r *Repository) GetUserDetail(userID string) (*UserDetailResponse, error) {
 	// Riwayat SOS
 	var sosHistory []SOSHistoryItem
 	r.db.Raw(`
-		SELECT id, incident_type, status, latitude, longitude, created_at, resolved_at
+		SELECT id, incident_type, status, latitude, longitude, created_at, completed_at
 		FROM incidents WHERE reporter_id = ? ORDER BY created_at DESC
 	`, userID).Scan(&sosHistory)
 
@@ -505,11 +505,11 @@ func (r *Repository) GetStats() (*StatsResponse, error) {
 		stats.FalseAlarmRate = float64(stats.TotalFalseAlarm) / float64(stats.TotalSOS) * 100
 	}
 
-	// Avg response time (resolved_at - created_at in minutes)
+	// Avg response time (completed_at - created_at in minutes)
 	r.db.Raw(`
-		SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 60), 0)
+		SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 60), 0)
 		FROM incidents
-		WHERE status = 'resolved' AND resolved_at IS NOT NULL
+		WHERE status = 'resolved' AND completed_at IS NOT NULL
 	`).Scan(&stats.AvgResponseMinutes)
 
 	// By type
