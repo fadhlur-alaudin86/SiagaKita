@@ -144,19 +144,28 @@ type ActiveIncidentResponse struct {
 
 // AllActiveIncidentResponse — data SOS aktif LENGKAP untuk console desktop (JOIN ke users & profiles).
 type AllActiveIncidentResponse struct {
-	ID                 string  `json:"id"`
-	ReporterID         string  `json:"reporter_id"`
-	ReporterName       string  `json:"reporter_name"`
-	ReporterPhone      *string `json:"reporter_phone,omitempty"`
-	BloodType          *string `json:"blood_type,omitempty"`
-	Allergies          *string `json:"allergies,omitempty"`
-	IncidentType       string  `json:"incident_type"`
-	Status             string  `json:"status"`
-	Latitude           float64 `json:"latitude"`
-	Longitude          float64 `json:"longitude"`
-	ReporterTrustLabel string  `json:"reporter_trust_label"`
-	CreatedAt          time.Time  `json:"created_at"`
-	CompletedAt        *time.Time `json:"completed_at,omitempty"`
+	ID                       string         `json:"id"`
+	ReporterID               string         `json:"reporter_id"`
+	ReporterName             string         `json:"reporter_name"`
+	ReporterPhone            *string        `json:"reporter_phone,omitempty"`
+	BloodType                *string        `json:"blood_type,omitempty"`
+	Allergies                *string        `json:"allergies,omitempty"`
+	IncidentType             string         `json:"incident_type"`
+	Status                   string         `json:"status"`
+	Latitude                 float64        `json:"latitude"`
+	Longitude                float64        `json:"longitude"`
+	AddressDetail            *string        `json:"address_detail,omitempty"`
+	ReporterTrustLabel       string         `json:"reporter_trust_label"`
+	CreatedAt                time.Time      `json:"created_at"`
+	CompletedAt              *time.Time     `json:"completed_at,omitempty"`
+	IsNikVerified            bool           `json:"is_nik_verified"`
+	IsPhoneVerified          bool           `json:"is_phone_verified"`
+	ReporterDob              *string        `json:"reporter_dob,omitempty"`
+	ReporterDomicile         *string        `json:"reporter_domicile,omitempty"`
+	ReporterBio              *string        `json:"reporter_bio,omitempty"`
+	ReporterEmergencyContact *string        `json:"reporter_emergency_contact,omitempty"`
+	PhotoPaths               pq.StringArray `json:"photo_paths"`
+	AudioPath                *string        `json:"audio_path,omitempty"`
 }
 
 type ResolveResponse struct {

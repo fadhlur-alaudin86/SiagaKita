@@ -25,7 +25,7 @@ class IncidentModel {
   final String? audioPath;
   final DateTime createdAt;
   final DateTime updatedAt; // timestamp terakhir update lokasi
-  final DateTime? resolvedAt;
+  final DateTime? completedAt;
 
   const IncidentModel({
     required this.id,
@@ -50,7 +50,7 @@ class IncidentModel {
     this.audioPath,
     required this.createdAt,
     DateTime? updatedAt,
-    this.resolvedAt,
+    this.completedAt,
   }) : updatedAt = updatedAt ?? createdAt;
 
   factory IncidentModel.fromJson(Map<String, dynamic> json) => IncidentModel(
@@ -73,7 +73,11 @@ class IncidentModel {
     domicile: json['reporter_domicile'] as String?,
     bio: json['reporter_bio'] as String?,
     emergencyContact: json['reporter_emergency_contact'] as String?,
-    photoPaths: (json['photo_paths'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+    photoPaths:
+        (json['photo_paths'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [],
     audioPath: json['audio_path'] as String?,
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
@@ -81,8 +85,8 @@ class IncidentModel {
     updatedAt: json['updated_at'] != null
         ? DateTime.tryParse(json['updated_at'] as String)
         : null,
-    resolvedAt: json['resolved_at'] != null
-        ? DateTime.tryParse(json['resolved_at'] as String)
+    completedAt: json['completed_at'] != null
+        ? DateTime.tryParse(json['completed_at'] as String)
         : null,
   );
 
@@ -162,7 +166,11 @@ class ReportModel {
     latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
     longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     description: json['description'] as String?,
-    photoPaths: (json['photo_paths'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+    photoPaths:
+        (json['photo_paths'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [],
     audioPath: json['audio_path'] as String?,
     status: json['status'] as String? ?? 'pending',
     createdAt:
@@ -222,8 +230,8 @@ class UserModel {
     nikVerificationStatus: json['nik_verification_status'] as String? ?? 'none',
     isSOSBanned: json['is_sos_banned'] as bool? ?? false,
     sosStrikeCount: json['sos_strike_count'] as int? ?? 0,
-    lastActiveAt: json['last_active_at'] != null 
-        ? DateTime.tryParse(json['last_active_at'] as String) 
+    lastActiveAt: json['last_active_at'] != null
+        ? DateTime.tryParse(json['last_active_at'] as String)
         : null,
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
@@ -234,8 +242,10 @@ class UserModel {
     if (lastActiveAt == null) return 'Offline';
     final diff = DateTime.now().difference(lastActiveAt!);
     if (diff.inSeconds < 60) return 'Online';
-    if (diff.inMinutes < 60) return 'Berjalan di latar belakang (${diff.inMinutes} m lalu)';
-    if (diff.inHours < 24) return 'Terakhir terlihat pukul ${DateFormat('HH:mm').format(lastActiveAt!.toLocal())}';
+    if (diff.inMinutes < 60)
+      return 'Berjalan di latar belakang (${diff.inMinutes} m lalu)';
+    if (diff.inHours < 24)
+      return 'Terakhir terlihat pukul ${DateFormat('HH:mm').format(lastActiveAt!.toLocal())}';
     return 'Terlihat ${diff.inDays} hari yang lalu';
   }
 }
@@ -250,9 +260,9 @@ class VolunteerCert {
   const VolunteerCert({required this.url, required this.type});
 
   factory VolunteerCert.fromJson(Map<String, dynamic> json) => VolunteerCert(
-        url: json['document_url'] as String? ?? '',
-        type: json['certificate_type'] as String? ?? 'Sertifikat',
-      );
+    url: json['document_url'] as String? ?? '',
+    type: json['certificate_type'] as String? ?? 'Sertifikat',
+  );
 }
 
 class VolunteerModel {
@@ -419,7 +429,9 @@ class WargaKycModel {
     kycKtpUrl: json['kyc_ktp_url'] as String?,
     profilePhotoUrl: json['profile_photo_url'] as String?,
     nikVerificationStatus: json['nik_verification_status'] as String? ?? 'none',
-    submittedAt: DateTime.tryParse(json['submitted_at'] as String? ?? '') ?? DateTime.now(),
+    submittedAt:
+        DateTime.tryParse(json['submitted_at'] as String? ?? '') ??
+        DateTime.now(),
   );
 }
 
@@ -472,42 +484,48 @@ class UserDetailModel {
     required this.reportHistory,
   });
 
-  factory UserDetailModel.fromJson(Map<String, dynamic> json) => UserDetailModel(
-    userId: json['user_id'] as String? ?? '',
-    email: json['email'] as String? ?? '',
-    role: json['role'] as String? ?? '',
-    fullName: json['full_name'] as String?,
-    phoneNumber: json['phone_number'] as String?,
-    nik: json['nik'] as String?,
-    isEmailVerified: json['is_email_verified'] as bool? ?? false,
-    isPhoneVerified: json['is_phone_verified'] as bool? ?? false,
-    nikVerificationStatus: json['nik_verification_status'] as String? ?? 'none',
-    kycKtpUrl: json['kyc_ktp_url'] as String?,
-    profilePhotoUrl: json['profile_photo_url'] as String?,
-    dateOfBirth: json['date_of_birth'] as String?,
-    bloodType: json['blood_type'] as String?,
-    allergies: json['allergies'] as String?,
-    alamat: json['alamat'] as String?,
-    sosStrikeCount: json['sos_strike_count'] as int? ?? 0,
-    isSosBanned: json['is_sos_banned'] as bool? ?? false,
-    lastActiveAt: json['last_active_at'] != null 
-        ? DateTime.tryParse(json['last_active_at'] as String) 
-        : null,
-    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-    sosHistory: (json['sos_history'] as List<dynamic>? ?? [])
-        .map((e) => SOSHistoryItem.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    reportHistory: (json['report_history'] as List<dynamic>? ?? [])
-        .map((e) => ReportHistoryItem.fromJson(e as Map<String, dynamic>))
-        .toList(),
-  );
+  factory UserDetailModel.fromJson(Map<String, dynamic> json) =>
+      UserDetailModel(
+        userId: json['user_id'] as String? ?? '',
+        email: json['email'] as String? ?? '',
+        role: json['role'] as String? ?? '',
+        fullName: json['full_name'] as String?,
+        phoneNumber: json['phone_number'] as String?,
+        nik: json['nik'] as String?,
+        isEmailVerified: json['is_email_verified'] as bool? ?? false,
+        isPhoneVerified: json['is_phone_verified'] as bool? ?? false,
+        nikVerificationStatus:
+            json['nik_verification_status'] as String? ?? 'none',
+        kycKtpUrl: json['kyc_ktp_url'] as String?,
+        profilePhotoUrl: json['profile_photo_url'] as String?,
+        dateOfBirth: json['date_of_birth'] as String?,
+        bloodType: json['blood_type'] as String?,
+        allergies: json['allergies'] as String?,
+        alamat: json['alamat'] as String?,
+        sosStrikeCount: json['sos_strike_count'] as int? ?? 0,
+        isSosBanned: json['is_sos_banned'] as bool? ?? false,
+        lastActiveAt: json['last_active_at'] != null
+            ? DateTime.tryParse(json['last_active_at'] as String)
+            : null,
+        createdAt:
+            DateTime.tryParse(json['created_at'] as String? ?? '') ??
+            DateTime.now(),
+        sosHistory: (json['sos_history'] as List<dynamic>? ?? [])
+            .map((e) => SOSHistoryItem.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        reportHistory: (json['report_history'] as List<dynamic>? ?? [])
+            .map((e) => ReportHistoryItem.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 
   String get onlineStatus {
     if (lastActiveAt == null) return 'Offline';
     final diff = DateTime.now().difference(lastActiveAt!);
     if (diff.inSeconds < 60) return 'Online';
-    if (diff.inMinutes < 60) return 'Berjalan di latar belakang (${diff.inMinutes} m lalu)';
-    if (diff.inHours < 24) return 'Terakhir terlihat pukul ${DateFormat('HH:mm').format(lastActiveAt!.toLocal())}';
+    if (diff.inMinutes < 60)
+      return 'Berjalan di latar belakang (${diff.inMinutes} m lalu)';
+    if (diff.inHours < 24)
+      return 'Terakhir terlihat pukul ${DateFormat('HH:mm').format(lastActiveAt!.toLocal())}';
     return 'Terlihat ${diff.inDays} hari yang lalu';
   }
 }
@@ -519,7 +537,7 @@ class SOSHistoryItem {
   final double latitude;
   final double longitude;
   final DateTime createdAt;
-  final DateTime? resolvedAt;
+  final DateTime? completedAt;
 
   const SOSHistoryItem({
     required this.id,
@@ -528,7 +546,7 @@ class SOSHistoryItem {
     required this.latitude,
     required this.longitude,
     required this.createdAt,
-    this.resolvedAt,
+    this.completedAt,
   });
 
   factory SOSHistoryItem.fromJson(Map<String, dynamic> json) => SOSHistoryItem(
@@ -537,8 +555,12 @@ class SOSHistoryItem {
     status: json['status'] as String? ?? '',
     latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
     longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-    resolvedAt: json['resolved_at'] != null ? DateTime.tryParse(json['resolved_at'] as String) : null,
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.now(),
+    completedAt: json['completed_at'] != null
+        ? DateTime.tryParse(json['completed_at'] as String)
+        : null,
   );
 }
 
@@ -557,13 +579,16 @@ class ReportHistoryItem {
     required this.createdAt,
   });
 
-  factory ReportHistoryItem.fromJson(Map<String, dynamic> json) => ReportHistoryItem(
-    id: json['id'] as String? ?? '',
-    incidentType: json['incident_type'] as String? ?? '',
-    status: json['status'] as String? ?? '',
-    description: json['description'] as String?,
-    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-  );
+  factory ReportHistoryItem.fromJson(Map<String, dynamic> json) =>
+      ReportHistoryItem(
+        id: json['id'] as String? ?? '',
+        incidentType: json['incident_type'] as String? ?? '',
+        status: json['status'] as String? ?? '',
+        description: json['description'] as String?,
+        createdAt:
+            DateTime.tryParse(json['created_at'] as String? ?? '') ??
+            DateTime.now(),
+      );
 }
 
 // ─── Agency & Admin Listings ──────────────────────────────────────────────────
@@ -597,7 +622,9 @@ class AgencyModel {
     type: json['type'] as String? ?? '',
     cityCode: json['city_code'] as String? ?? '',
     hotlineNumber: json['hotline_number'] as String?,
-    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.now(),
   );
 
   String get typeLabel => switch (type) {
@@ -632,6 +659,8 @@ class AdminModel {
     role: json['role'] as String? ?? 'admin',
     fullName: json['full_name'] as String?,
     createdBy: json['created_by'] as String?,
-    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.now(),
   );
 }

@@ -127,9 +127,18 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 			i.status,
 			i.latitude,
 			i.longitude,
+			i.address_detail,
 			i.reporter_trust_label,
 			i.created_at,
-			i.completed_at
+			i.completed_at,
+			CASE WHEN up.nik_verification_status = 'approved' THEN true ELSE false END AS is_nik_verified,
+			up.is_phone_verified,
+			CAST(up.date_of_birth AS VARCHAR) AS reporter_dob,
+			up.alamat AS reporter_domicile,
+			up.bio AS reporter_bio,
+			(SELECT contact_name || ' (' || contact_phone || ')' FROM emergency_contacts ec WHERE ec.user_id = i.reporter_id AND ec.deleted_at IS NULL LIMIT 1) AS reporter_emergency_contact,
+			i.photo_paths,
+			i.audio_path
 		FROM incidents i
 		LEFT JOIN users u ON u.id = i.reporter_id
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
