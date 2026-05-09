@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/services/ws_service.dart';
 import 'pages/dashboard_operasi_page.dart';
-import 'pages/dispatch_relawan_page.dart';
+
 import 'pages/laporan_masuk_page.dart';
 import 'pages/peta_operasional_page.dart';
 import 'pages/sos_aktif_page.dart';
@@ -13,7 +13,6 @@ enum InstansiMenu {
   dashboard,
   sosAktif,
   laporanMasuk,
-  dispatchRelawan,
   petaOperasional,
 }
 
@@ -34,7 +33,6 @@ class _InstansiShellState extends State<InstansiShell> {
     InstansiMenu.dashboard: 'Dashboard Operasi',
     InstansiMenu.sosAktif: 'SOS Aktif',
     InstansiMenu.laporanMasuk: 'Laporan Masuk',
-    InstansiMenu.dispatchRelawan: 'Dispatch Relawan',
     InstansiMenu.petaOperasional: 'Peta Operasional',
   };
 
@@ -46,8 +44,6 @@ class _InstansiShellState extends State<InstansiShell> {
         return SosAktifPage(token: widget.token, ws: widget.ws);
       case InstansiMenu.laporanMasuk:
         return LaporanMasukPage(token: widget.token);
-      case InstansiMenu.dispatchRelawan:
-        return DispatchRelawanPage(token: widget.token, ws: widget.ws);
       case InstansiMenu.petaOperasional:
         return PetaOperasionalPage(token: widget.token, ws: widget.ws);
     }
@@ -142,12 +138,7 @@ class _SideNavigation extends StatelessWidget {
                 selected: activeMenu == InstansiMenu.laporanMasuk,
                 onTap: () => onSelected(InstansiMenu.laporanMasuk),
               ),
-              _NavItem(
-                label: 'Dispatch Relawan',
-                icon: Icons.local_shipping_outlined,
-                selected: activeMenu == InstansiMenu.dispatchRelawan,
-                onTap: () => onSelected(InstansiMenu.dispatchRelawan),
-              ),
+
               _NavItem(
                 icon: Icons.map_outlined,
                 label: 'Peta Operasional',

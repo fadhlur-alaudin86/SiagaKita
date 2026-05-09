@@ -136,6 +136,48 @@ class _SosAktifPageState extends State<SosAktifPage> {
     }
   }
 
+  Future<void> _markHandled() async {
+    if (_selected == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E2537),
+        title: const Text(
+          'Tandai Selesai?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Tandai keadaan darurat ini sebagai telah selesai ditangani secara langsung.',
+          style: TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Selesai'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    final ok = await IncidentApiService.updateStatus(
+      widget.token,
+      _selected!.id,
+      'handled',
+    );
+    if (ok && mounted) {
+      _showSnack('Insiden ditandai selesai.', Colors.green);
+      setState(() => _selected = null);
+      _load();
+    }
+  }
+
   void _callBack(String? phone) async {
     if (phone == null) return;
     final uri = Uri(scheme: 'tel', path: phone);
@@ -661,65 +703,17 @@ class _SosAktifPageState extends State<SosAktifPage> {
             const SizedBox(height: 12),
 
             if (inc.status != 'handled')
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  const Text(
-                    'Tugaskan Personil:',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedResponder,
-                          dropdownColor: const Color(0xFF1A2035),
-                          style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                            ),
-                          ),
-                          items: ['Agency 1', 'Relawan A', 'Relawan B']
-                              .map(
-                                (e) =>
-                                    DropdownMenuItem(value: e, child: Text(e)),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _selectedResponder = v!),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        onPressed: () {
-                          _showSnack(
-                            'Personil ditugaskan (Simulasi)',
-                            Colors.blue,
-                          );
-                          // real api update status to handled
-                        },
-                        child: const Text(
-                          'Tugaskan',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
+                  Expanded(
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.orange,
                         side: const BorderSide(color: Colors.orange),
                         padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       icon: const Icon(
                         Icons.report_gmailerrorred_outlined,
@@ -727,6 +721,29 @@ class _SosAktifPageState extends State<SosAktifPage> {
                       ),
                       label: const Text('False Alarm'),
                       onPressed: _markFalseAlarm,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.check_circle_outline, size: 18),
+                      label: const Text(
+                        'SELESAI',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      onPressed: _markHandled,
                     ),
                   ),
                 ],
