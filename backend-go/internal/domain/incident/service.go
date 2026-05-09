@@ -323,3 +323,32 @@ func (s *Service) Resolve(incidentID, responderID string) (*ResolveResponse, err
 		NewRank:      newRankName,
 	}, nil
 }
+
+// ─── GetNearby (untuk Relawan) ────────────────────────────────────────────────
+
+// GetNearby mengembalikan SOS aktif dalam radius `radiusKm` km dari posisi relawan.
+func (s *Service) GetNearby(lat, lng, radiusKm float64) ([]NearbyIncidentResponse, error) {
+	results, err := s.repo.FindNearby(lat, lng, radiusKm)
+	if err != nil {
+		return nil, err
+	}
+	if results == nil {
+		results = []NearbyIncidentResponse{}
+	}
+	return results, nil
+}
+
+// AcceptIncident — relawan menerima SOS, buat record response + update status incident.
+func (s *Service) AcceptIncident(incidentID, volunteerID string) (*AcceptSOSResponse, error) {
+	resp, err := s.repo.AcceptIncident(incidentID, volunteerID)
+	if err != nil {
+		return nil, err
+	}
+	return &AcceptSOSResponse{
+		Accepted:   true,
+		IncidentID: incidentID,
+		Status:     resp.Status,
+		Message:    "Misi diterima. Segera menuju lokasi.",
+	}, nil
+}
+

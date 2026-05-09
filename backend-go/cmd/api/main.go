@@ -159,14 +159,17 @@ func main() {
 	incidents.Get("/active", incidentHandler.GetActive)
 	incidents.Get("/my-history", incidentHandler.GetHistory)
 	incidents.Get("/all-active", middleware.ConsoleOnly(), incidentHandler.GetAllActive)
+	incidents.Get("/nearby", middleware.VolunteerOnly(), incidentHandler.GetNearby)
 	incidents.Post("/trigger", middleware.BanCheck(db), incidentHandler.TriggerSOS)
 	incidents.Patch("/:id/type", incidentHandler.UpdateType)
 	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)
 	incidents.Post("/:id/cancel", incidentHandler.CancelSOS)
 	incidents.Post("/:id/evidence", incidentHandler.UploadEvidence)
 	incidents.Put("/:id/location", incidentHandler.UpdateLocation)
+	incidents.Post("/:id/accept", middleware.VolunteerOnly(), incidentHandler.AcceptSOS)
 	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), incidentHandler.MarkFalseAlarm)
 	incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve)
+
 
 	reports := v1.Group("/reports", authMw)
 	reports.Post("", middleware.BanCheck(db), incidentHandler.CreateReport)

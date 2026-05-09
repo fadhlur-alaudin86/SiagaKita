@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -16,11 +17,22 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
   List<ReportModel> _reports = [];
   bool _loading = true;
   String _filterStatus = 'sent';
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    // Auto-refresh laporan masuk setiap 30 detik
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) _load();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {

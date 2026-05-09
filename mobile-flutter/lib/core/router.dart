@@ -21,7 +21,7 @@ class AppRouter {
       case UserRole.masyarakat:
         return MainScreen(accessToken: accessToken, userId: userId);
       case UserRole.relawan:
-        return const RelawanMainScreen();
+        return RelawanMainScreen(accessToken: accessToken);
       case UserRole.instansi:
         return const InstansiMainScreen();
       case UserRole.admin:

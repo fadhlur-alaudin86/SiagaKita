@@ -296,3 +296,84 @@ func (r *Repository) UpdateRank(userID string, rankID uint) error {
 	return r.db.Model(&VolunteerReputation{}).Where("user_id = ?", userID).
 		Updates(map[string]interface{}{"rank_id": rankID, "updated_at": time.Now()}).Error
 }
+
+// ─── Nearby (untuk Relawan) ───────────────────────────────────────────────────
+
+// FindNearby mengembalikan SOS aktif dalam radius `radiusKm` kilometer dari koordinat (lat, lng).
+// Menggunakan formula haversine dengan PostgreSQL native functions.
+func (r *Repository) FindNearby(lat, lng, radiusKm float64) ([]NearbyIncidentResponse, error) {
+	var results []NearbyIncidentResponse
+	err := r.db.Raw(`
+		SELECT
+			id,
+			incident_type,
+			status,
+			latitude,
+			longitude,
+			address_detail,
+			reporter_trust_label,
+			created_at,
+			(
+				6371 * acos(
+					LEAST(1.0, cos(radians($1)) * cos(radians(latitude)) *
+					cos(radians(longitude) - radians($2)) +
+					sin(radians($1)) * sin(radians(latitude)))
+				)
+			) AS distance_km
+		FROM incidents
+		WHERE status NOT IN ('resolved', 'false_alarm', 'cancel')
+		  AND (
+			6371 * acos(
+				LEAST(1.0, cos(radians($1)) * cos(radians(latitude)) *
+				cos(radians(longitude) - radians($2)) +
+				sin(radians($1)) * sin(radians(latitude)))
+			)
+		  ) <= $3
+		ORDER BY distance_km ASC
+	`, lat, lng, radiusKm).Scan(&results).Error
+	return results, err
+}
+
+// AcceptIncident membuat record incident_response dan update status incident ke 'handled' jika masih broadcasting.
+func (r *Repository) AcceptIncident(incidentID, volunteerID string) (*IncidentResponse, error) {
+	var resp IncidentResponse
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		// Cek apakah incident ada dan belum selesai
+		var inc Incident
+		if err := tx.Where("id = ? AND status NOT IN ('resolved','false_alarm','cancel')", incidentID).
+			First(&inc).Error; err != nil {
+			return errors.New("incident tidak ditemukan atau sudah selesai")
+		}
+
+		// Cek apakah relawan sudah pernah menerima incident ini
+		var existing int64
+		tx.Model(&IncidentResponse{}).
+			Where("incident_id = ? AND responder_id = ?", incidentID, volunteerID).
+			Count(&existing)
+		if existing > 0 {
+			return errors.New("kamu sudah menerima incident ini")
+		}
+
+		// Buat record response
+		now := time.Now()
+		resp = IncidentResponse{
+			IncidentID:  incidentID,
+			ResponderID: volunteerID,
+			Status:      "en_route",
+			AcceptedAt:  &now,
+		}
+		if err := tx.Create(&resp).Error; err != nil {
+			return err
+		}
+
+		// Update status incident ke 'handled' jika masih broadcasting
+		if inc.Status == "broadcasting" {
+			tx.Model(&Incident{}).Where("id = ?", incidentID).
+				Updates(map[string]interface{}{"status": "handled", "updated_at": time.Now()})
+		}
+
+		return nil
+	})
+	return &resp, err
+}
+

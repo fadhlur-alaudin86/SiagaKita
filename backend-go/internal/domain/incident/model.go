@@ -184,3 +184,24 @@ type FalseAlarmResponse struct {
 	UserBanned       bool   `json:"user_banned"`
 	Message          string `json:"message"`
 }
+
+// NearbyIncidentResponse — SOS aktif dalam radius tertentu dari posisi relawan.
+type NearbyIncidentResponse struct {
+	ID                 string   `json:"id"`
+	IncidentType       string   `json:"incident_type"`
+	Status             string   `json:"status"`
+	Latitude           float64  `json:"latitude"`
+	Longitude          float64  `json:"longitude"`
+	AddressDetail      *string  `json:"address_detail,omitempty"`
+	ReporterTrustLabel string   `json:"reporter_trust_label"`
+	CreatedAt          string   `json:"created_at"`
+	DistanceKm         float64  `json:"distance_km"`
+}
+
+// AcceptSOSResponse — response setelah relawan menerima SOS.
+type AcceptSOSResponse struct {
+	Accepted   bool   `json:"accepted"`
+	IncidentID string `json:"incident_id"`
+	Status     string `json:"status"`
+	Message    string `json:"message"`
+}

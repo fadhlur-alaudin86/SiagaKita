@@ -128,6 +128,11 @@ func CitizenVolunteer() fiber.Handler {
 	return RequireRoles("civilian", "volunteer")
 }
 
+// VolunteerOnly hanya mengizinkan volunteer (relawan terverifikasi).
+func VolunteerOnly() fiber.Handler {
+	return RequireRoles("volunteer")
+}
+
 // BanCheck menolak request jika user memiliki status is_sos_banned = true.
 // Harus digunakan SETELAH Auth middleware, dan hanya untuk endpoint SOS/Laporan.
 func BanCheck(db *gorm.DB) fiber.Handler {

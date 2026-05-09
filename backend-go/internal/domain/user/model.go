@@ -221,6 +221,7 @@ type ProfileResponse struct {
 	Alamat                *string              `json:"alamat,omitempty"`
 	Bio                   *string              `json:"bio,omitempty"`
 	VolunteerExperience   *string              `json:"volunteer_experience,omitempty"`
+	VolunteerStatus       string               `json:"volunteer_status"` // 'none' | 'pending' | 'approved'
 	EmergencyContacts     []EmergencyContact   `json:"emergency_contacts"`
 	VolunteerReputation   *VolunteerReputation `json:"volunteer_reputation,omitempty"`
 }

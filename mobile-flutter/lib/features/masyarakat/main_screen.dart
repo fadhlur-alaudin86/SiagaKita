@@ -65,10 +65,11 @@ class _MainScreenState extends State<MainScreen> {
             isSOSBanned: user.isSOSBanned,
           ),
           const GuideScreen(),
-          if (isRelawan) const RelawanMainScreen(),
-          const MapScreen(),
+          if (isRelawan) RelawanMainScreen(accessToken: widget.accessToken),
+          MapScreen(accessToken: widget.accessToken),
           ProfileScreen(accessToken: widget.accessToken),
         ];
+
 
         final List<BottomNavigationBarItem> navItems = [
           BottomNavigationBarItem(

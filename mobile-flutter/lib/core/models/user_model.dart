@@ -219,13 +219,20 @@ class UserModel {
       isPhoneVerified: json['is_phone_verified'] ?? false,
       birthDate: json['date_of_birth'],
       bio: json['bio'],
-      volunteerStatus: json['volunteer_status'],
+      volunteerStatus: json['volunteer_status'] as String?,
       nikVerificationStatus:
           json['nik_verification_status'] as String? ?? 'none',
       profilePhotoUrl: json['profile_photo_url'] as String?,
       specialization: json['specialization'],
-      volunteerPoints: json['volunteer_points'] ?? 0,
-      volunteerLevel: json['volunteer_level'] ?? 'Pemula',
+      volunteerPoints: () {
+        final rep = json['volunteer_reputation'] as Map<String, dynamic>?;
+        return (rep?['exp_points'] as int?) ?? (json['volunteer_points'] as int?) ?? 0;
+      }(),
+      volunteerLevel: () {
+        final rep = json['volunteer_reputation'] as Map<String, dynamic>?;
+        final xp = (rep?['exp_points'] as int?) ?? (json['volunteer_points'] as int?) ?? 0;
+        return json['volunteer_level'] as String? ?? _levelFromExp(xp);
+      }(),
       isAvailableForMission: json['is_available_for_mission'] ?? false,
       isSOSBanned: json['is_sos_banned'] as bool? ?? false,
       medicalData: json['medical_data'] != null
@@ -248,6 +255,14 @@ class UserModel {
       default:
         return UserRole.masyarakat;
     }
+  }
+
+  /// Derivasi level badge dari jumlah XP.
+  static String _levelFromExp(int xp) {
+    if (xp >= 1500) return 'Ahli';
+    if (xp >= 500) return 'Mahir';
+    if (xp >= 100) return 'Pejuang';
+    return 'Pemula';
   }
 
   /// Build medicalData map from flat backend profile response.

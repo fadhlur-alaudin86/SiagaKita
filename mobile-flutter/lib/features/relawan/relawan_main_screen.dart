@@ -1,58 +1,256 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
-import '../../core/services/session_service.dart';
-import '../auth/login_screen.dart';
+import '../../core/services/incident_service.dart';
+import '../../core/services/location_service.dart';
 
 class RelawanMainScreen extends StatefulWidget {
-  const RelawanMainScreen({super.key});
+  final String accessToken;
+  const RelawanMainScreen({super.key, required this.accessToken});
 
   @override
   State<RelawanMainScreen> createState() => _RelawanMainScreenState();
 }
 
 class _RelawanMainScreenState extends State<RelawanMainScreen> {
-  // Toggle availability
+  List<NearbyIncident> _nearbySOS = [];
+  List<ActiveIncident> _missionHistory = [];
+  bool _loadingNearby = false;
+  bool _loadingHistory = false;
+  ({double latitude, double longitude})? _currentPosition;
+  Timer? _nearbyTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+    _initLocation();
+  }
+
+  @override
+  void dispose() {
+    _nearbyTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initLocation() async {
+    final pos = await LocationService.getCurrentPositionOrNull();
+    if (pos != null && mounted) {
+      setState(() => _currentPosition = pos);
+      final user = UserModel.currentUser.value;
+      if (user.isAvailableForMission) _startNearbyPolling();
+    }
+  }
+
+  void _startNearbyPolling() {
+    _fetchNearbySOS();
+    _nearbyTimer?.cancel();
+    _nearbyTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _fetchNearbySOS();
+    });
+  }
+
+  void _stopNearbyPolling() {
+    _nearbyTimer?.cancel();
+    _nearbyTimer = null;
+    setState(() => _nearbySOS = []);
+  }
+
+  Future<void> _fetchNearbySOS() async {
+    if (_currentPosition == null) {
+      final pos = await LocationService.getCurrentPositionOrNull();
+      if (pos == null) return;
+      _currentPosition = pos;
+    }
+    if (!mounted) return;
+    setState(() => _loadingNearby = true);
+    final results = await IncidentService.getNearby(
+      accessToken: widget.accessToken,
+      lat: _currentPosition!.latitude,
+      lng: _currentPosition!.longitude,
+      radius: 5.0,
+    );
+    if (mounted) {
+      setState(() {
+        _nearbySOS = results;
+        _loadingNearby = false;
+      });
+    }
+  }
+
+  Future<void> _loadHistory() async {
+    setState(() => _loadingHistory = true);
+    try {
+      final history = await IncidentService.getMyHistory(
+        accessToken: widget.accessToken,
+      );
+      if (mounted) setState(() => _missionHistory = history);
+    } catch (_) {}
+    if (mounted) setState(() => _loadingHistory = false);
+  }
+
   void _toggleAvailability(bool value) {
     final user = UserModel.currentUser.value;
     UserModel.currentUser.value = user.copyWith(isAvailableForMission: value);
+    if (value) {
+      _startNearbyPolling();
+    } else {
+      _stopNearbyPolling();
+    }
   }
 
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Future<void> _acceptSOS(NearbyIncident inc) async {
+    try {
+      await IncidentService.acceptSOS(
+        accessToken: widget.accessToken,
+        incidentId: inc.id,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Misi diterima! Segera menuju ${inc.addressDetail ?? 'lokasi korban'}.',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _fetchNearbySOS();
+      }
+    } on IncidentException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _showDetailSheet(NearbyIncident inc) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: isDark
-              ? color.withValues(alpha: 0.15)
-              : color.withValues(alpha: 0.05),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final primaryText = isDark ? Colors.white : Colors.black87;
+    final secondaryText = isDark ? Colors.white60 : Colors.black54;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.92,
+        builder: (_, sc) => ListView(
+          controller: sc,
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 10,
-                color: isDark ? Colors.white70 : Colors.black54,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Text(inc.typeEmoji, style: const TextStyle(fontSize: 32)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        inc.typeLabel,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: primaryText,
+                        ),
+                      ),
+                      Text(
+                        '${inc.distanceLabel} • ${inc.timeAgo}',
+                        style: TextStyle(color: secondaryText, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    inc.status.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.orange,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 32),
+            _detailRow(
+              Icons.location_on_outlined,
+              'Koordinat',
+              '${inc.latitude.toStringAsFixed(5)}, ${inc.longitude.toStringAsFixed(5)}',
+              primaryText,
+              secondaryText,
+            ),
+            if (inc.addressDetail != null)
+              _detailRow(
+                Icons.home_outlined,
+                'Lokasi',
+                inc.addressDetail!,
+                primaryText,
+                secondaryText,
+              ),
+            _detailRow(
+              Icons.timer_outlined,
+              'Dilaporkan',
+              inc.timeAgo,
+              primaryText,
+              secondaryText,
+            ),
+            _detailRow(
+              Icons.shield_outlined,
+              'Kepercayaan',
+              inc.trustLabel == 'verified' ? '✓ Terverifikasi' : 'Standard',
+              primaryText,
+              secondaryText,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF22C55E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text(
+                  'TERIMA MISI',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  _acceptSOS(inc);
+                },
               ),
             ),
           ],
@@ -61,478 +259,682 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     );
   }
 
-  Widget _buildGridMenu(String title, IconData icon, Color badgeColor) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${'Menu'.tr(context)} $title ${'Segera Hadir'.tr(context)}',
-            ),
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDark
-                ? Colors.grey.withValues(alpha: 0.2)
-                : Colors.grey.shade300,
-          ),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+  Widget _detailRow(
+    IconData icon,
+    String label,
+    String value,
+    Color primary,
+    Color secondary,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: secondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(fontSize: 11, color: secondary)),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: primary,
+                    fontWeight: FontWeight.w600,
                   ),
-                ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              backgroundColor: badgeColor.withValues(alpha: 0.2),
-              radius: 28,
-              child: Icon(icon, color: badgeColor, size: 28),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: isDark ? Colors.white : const Color(0xFF0D1B3E),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Paksa UI nuansa gelap pekat jika memungkinkan (Tactical Mode)
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryTextColor = isDark ? Colors.white : const Color(0xFF0D1B3E);
+    return ValueListenableBuilder<UserModel>(
+      valueListenable: UserModel.currentUser,
+      builder: (context, user, _) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final colors = Theme.of(context).colorScheme;
+        final isOnDuty = user.isAvailableForMission;
+        final primaryText = isDark ? Colors.white : Colors.black87;
+        final secondaryText = isDark ? Colors.white60 : Colors.black54;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF0F172A)
-          : const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: Row(
-          children: [
-            const Icon(Icons.shield, color: Colors.orange),
-            const SizedBox(width: 8),
-            Text(
-              'SiagaKita Tactical',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: primaryTextColor,
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            color: Colors.red,
-            tooltip: 'Keluar'.tr(context),
-            onPressed: () async {
-              await SessionService.clearSession();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      body: ValueListenableBuilder<UserModel>(
-        valueListenable: UserModel.currentUser,
-        builder: (context, user, _) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. HEADER REPUtTASI
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        // XP progress
+        final xp = user.volunteerPoints;
+        final nextThreshold = xp < 100
+            ? 100
+            : xp < 500
+            ? 500
+            : xp < 1500
+            ? 1500
+            : 9999;
+        final prevThreshold = xp < 100
+            ? 0
+            : xp < 500
+            ? 100
+            : xp < 1500
+            ? 500
+            : 1500;
+        final progress = nextThreshold == 9999
+            ? 1.0
+            : (xp - prevThreshold) / (nextThreshold - prevThreshold);
+
+        return Scaffold(
+          backgroundColor: colors.surface,
+          body: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await _loadHistory();
+                if (isOnDuty) await _fetchNearbySOS();
+              },
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                children: [
+                  // ─── Header ────────────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
                       children: [
-                        Text(
-                          'Komando Operasi'.tr(context),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                            letterSpacing: 1,
-                          ),
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundImage: user.profilePhotoUrl != null
+                              ? NetworkImage(user.profilePhotoUrl!)
+                              : null,
+                          backgroundColor: const Color(
+                            0xFF22C55E,
+                          ).withValues(alpha: 0.2),
+                          child: user.profilePhotoUrl == null
+                              ? Text(
+                                  user.name.isNotEmpty
+                                      ? user.name[0].toUpperCase()
+                                      : 'R',
+                                  style: const TextStyle(
+                                    color: Color(0xFF22C55E),
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : null,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Halo, ${user.name.split(" ")[0]}',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: primaryTextColor,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            user.specialization ?? 'General',
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Halo, ${user.name.split(' ').first}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryText,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.military_tech,
+                                    size: 14,
+                                    color: Color(0xFFFBBF24),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    user.volunteerLevel,
+                                    style: const TextStyle(
+                                      color: Color(0xFFFBBF24),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '• $xp XP',
+                                    style: TextStyle(
+                                      color: secondaryText,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: isDark
+                  ),
+
+                  // ─── XP Bar ────────────────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark
                           ? const Color(0xFF1E293B)
-                          : Colors.white,
-                      child: const Icon(
-                        Icons.person,
-                        size: 36,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // 2. TOGGLE STATUS KETERSEDIAAN
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    color: user.isAvailableForMission
-                        ? Colors.green.withValues(alpha: 0.15)
-                        : Colors.red.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(
-                      color: user.isAvailableForMission
-                          ? Colors.green
-                          : Colors.red,
-                      width: 2,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            user.isAvailableForMission
-                                ? Icons.radar
-                                : Icons.do_not_disturb_on,
-                            color: user.isAvailableForMission
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            user.isAvailableForMission
-                                ? 'ON DUTY (Siap Tugas)'.tr(context)
-                                : 'OFF DUTY (Istirahat)'.tr(context),
-                            style: TextStyle(
-                              color: user.isAvailableForMission
-                                  ? Colors.green
-                                  : Colors.red,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 14,
+                          : colors.surfaceContainerHighest.withValues(
+                              alpha: 0.5,
                             ),
-                          ),
-                        ],
-                      ),
-                      Switch(
-                        value: user.isAvailableForMission,
-                        activeThumbColor: Colors.green,
-                        inactiveThumbColor: Colors.red,
-                        onChanged: _toggleAvailability,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // 3. STATISTIK
-                Row(
-                  children: [
-                    _buildStatCard(
-                      'Poin Misi'.tr(context),
-                      '${user.volunteerPoints}',
-                      Icons.stars,
-                      Colors.orange,
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    const SizedBox(width: 16),
-                    _buildStatCard(
-                      'Level'.tr(context),
-                      user.volunteerLevel,
-                      Icons.military_tech,
-                      Colors.blue,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 32),
-
-                // 4. RADAR MISI DARURAT
-                Text(
-                  'RADAR INSIDEN'.tr(context),
-                  style: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                user.isAvailableForMission
-                    ? Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade900,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.red.withValues(alpha: 0.4),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.warning,
-                                    color: Colors.red,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'PANGGILAN DARURAT!'.tr(context),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
                             Text(
-                              'Kecelakaan lalu lintas ganda, butuh evakuasi medis segera.'
-                                  .tr(context),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
+                              'Progress Level',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: primaryText,
+                                fontSize: 13,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  color: Colors.white70,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '1.2 KM (Simpang Lima)'.tr(context),
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const Spacer(),
-                                const Icon(
-                                  Icons.timer,
-                                  color: Colors.white70,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Barusan'.tr(context),
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.red.shade900,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Mengalihkan ke Navigasi Misi...'.tr(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Text(
-                                  'TERIMA MISI INI'.tr(context),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                  ),
-                                ),
+                            const Spacer(),
+                            Text(
+                              nextThreshold == 9999
+                                  ? 'Level Maksimal'
+                                  : '$xp / $nextThreshold XP',
+                              style: TextStyle(
+                                color: secondaryText,
+                                fontSize: 12,
                               ),
                             ),
                           ],
                         ),
-                      )
-                    : Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E293B)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.grey.withValues(alpha: 0.2)
-                                : Colors.grey.shade300,
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: progress.clamp(0.0, 1.0),
+                            minHeight: 10,
+                            backgroundColor: isDark
+                                ? Colors.white12
+                                : Colors.grey.shade200,
+                            color: const Color(0xFF22C55E),
                           ),
                         ),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.gpp_maybe,
-                                size: 48,
-                                color: Colors.grey.shade400,
+                        const SizedBox(height: 6),
+                        Text(
+                          nextThreshold == 9999
+                              ? 'Kamu sudah mencapai level tertinggi!'
+                              : 'Selesaikan ${nextThreshold - xp} XP lagi untuk naik ke level berikutnya',
+                          style: TextStyle(color: secondaryText, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ─── Toggle Duty ───────────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: isOnDuty
+                          ? const LinearGradient(
+                              colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
+                            )
+                          : null,
+                      color: isOnDuty
+                          ? null
+                          : (isDark
+                                ? const Color(0xFF1E293B)
+                                : colors.surfaceContainerHighest),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: isOnDuty
+                          ? [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF22C55E,
+                                ).withValues(alpha: 0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
                               ),
-                              const SizedBox(height: 16),
+                            ]
+                          : [],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isOnDuty ? Icons.radar : Icons.radar_outlined,
+                          color: isOnDuty ? Colors.white : secondaryText,
+                          size: 26,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                'Radar Misi Nonaktif'.tr(context),
+                                isOnDuty
+                                    ? 'ON DUTY — Siap Bertugas'
+                                    : 'OFF DUTY — Istirahat',
                                 style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.black54,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                  color: isOnDuty ? Colors.white : primaryText,
+                                  fontSize: 15,
                                 ),
                               ),
-                              const SizedBox(height: 8),
                               Text(
-                                'Hidupkan ON DUTY untuk melihat panggilan darurat di sekitar Anda.'
-                                    .tr(context),
-                                textAlign: TextAlign.center,
+                                isOnDuty
+                                    ? 'Memantau SOS dalam radius 5 km'
+                                    : 'Aktifkan untuk menerima panggilan darurat',
                                 style: TextStyle(
-                                  color: Colors.grey.shade500,
+                                  color: isOnDuty
+                                      ? Colors.white70
+                                      : secondaryText,
                                   fontSize: 12,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-
-                const SizedBox(height: 32),
-
-                // 5. FITUR PENUNJANG
-                Text(
-                  'KOORDINASI & ALAT'.tr(context),
-                  style: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
+                        Switch(
+                          value: isOnDuty,
+                          onChanged: _toggleAvailability,
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: const Color(0xFF16A34A),
+                          inactiveTrackColor: isDark
+                              ? Colors.white12
+                              : Colors.grey.shade300,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildGridMenu(
-                      'Live Chat Posko'.tr(context),
-                      Icons.headset_mic,
-                      Colors.blue,
-                    ),
-                    _buildGridMenu(
-                      'Panduan Medis'.tr(context),
-                      Icons.health_and_safety,
-                      Colors.red,
-                    ),
-                    _buildGridMenu(
-                      'Relawan Aktif'.tr(context),
-                      Icons.group,
-                      Colors.purple,
-                    ),
-                    _buildGridMenu(
-                      'Riwayat Misi'.tr(context),
+
+                  const SizedBox(height: 24),
+
+                  // ─── Radar SOS ─────────────────────────────────────────────
+                  Row(
+                    children: [
+                      Text(
+                        '📡 RADAR SOS AKTIF',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                          fontSize: 12,
+                          color: secondaryText,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (isOnDuty && !_loadingNearby)
+                        Text(
+                          '${_nearbySOS.length} insiden',
+                          style: TextStyle(
+                            color: _nearbySOS.isEmpty
+                                ? secondaryText
+                                : const Color(0xFFEF4444),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      if (isOnDuty && _loadingNearby)
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  if (!isOnDuty)
+                    _emptyPlaceholder(
+                      Icons.radar_outlined,
+                      'Aktifkan ON DUTY',
+                      'Untuk melihat panggilan darurat di sekitarmu',
+                      isDark,
+                    )
+                  else if (_loadingNearby && _nearbySOS.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_nearbySOS.isEmpty)
+                    _emptyPlaceholder(
+                      Icons.check_circle_outline,
+                      'Tidak ada SOS aktif',
+                      'Belum ada panggilan darurat dalam radius 5 km',
+                      isDark,
+                    )
+                  else
+                    ...(_nearbySOS.map(
+                      (inc) => _sosCard(
+                        inc,
+                        isDark,
+                        primaryText,
+                        secondaryText,
+                        colors,
+                      ),
+                    )),
+
+                  const SizedBox(height: 28),
+
+                  // ─── Riwayat Misi ──────────────────────────────────────────
+                  Row(
+                    children: [
+                      Text(
+                        '🏁 RIWAYAT MISI',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                          fontSize: 12,
+                          color: secondaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  if (_loadingHistory)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_missionHistory.isEmpty)
+                    _emptyPlaceholder(
                       Icons.history,
-                      Colors.orange,
+                      'Belum ada riwayat misi',
+                      'Riwayat SOS yang kamu tangani akan muncul di sini',
+                      isDark,
+                    )
+                  else
+                    ...(_missionHistory
+                        .take(5)
+                        .map(
+                          (inc) => _historyCard(
+                            inc,
+                            isDark,
+                            primaryText,
+                            secondaryText,
+                          ),
+                        )),
+
+                  if (_missionHistory.length > 5)
+                    TextButton(
+                      onPressed: () {
+                        // TODO: Navigate to full history page
+                      },
+                      child: const Text('Lihat semua riwayat →'),
+                    ),
+
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sosCard(
+    NearbyIncident inc,
+    bool isDark,
+    Color primaryText,
+    Color secondaryText,
+    ColorScheme colors,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(inc.typeEmoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      inc.typeLabel,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: primaryText,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      inc.addressDetail ??
+                          '${inc.latitude.toStringAsFixed(4)}, ${inc.longitude.toStringAsFixed(4)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: secondaryText, fontSize: 12),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 48),
-              ],
-            ),
-          );
-        },
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    inc.distanceLabel,
+                    style: const TextStyle(
+                      color: Color(0xFFEF4444),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    inc.timeAgo,
+                    style: TextStyle(color: secondaryText, fontSize: 11),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                      color: isDark ? Colors.white24 : Colors.grey.shade300,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  icon: const Icon(Icons.info_outline, size: 16),
+                  label: const Text('Detail', style: TextStyle(fontSize: 13)),
+                  onPressed: () => _showDetailSheet(inc),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF22C55E),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text(
+                    'TERIMA',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () => _acceptSOS(inc),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _historyCard(
+    ActiveIncident inc,
+    bool isDark,
+    Color primaryText,
+    Color secondaryText,
+  ) {
+    final statusColor = switch (inc.status) {
+      'resolved' => const Color(0xFF22C55E),
+      'false_alarm' => const Color(0xFFF59E0B),
+      'cancel' => Colors.grey,
+      _ => const Color(0xFF3B82F6),
+    };
+    final statusLabel = switch (inc.status) {
+      'resolved' => 'Selesai',
+      'false_alarm' => 'False Alarm',
+      'cancel' => 'Dibatalkan',
+      _ => inc.status,
+    };
+
+    const typeEmojis = {
+      'medical': '🚑',
+      'fire': '🔥',
+      'crime': '🚨',
+      'rescue': '🆘',
+      'accident': '🚗',
+      'disaster': '🌊',
+    };
+    final emoji = typeEmojis[inc.incidentType] ?? '⚠️';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  inc.incidentType,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: primaryText,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  _formatDate(inc.createdAt),
+                  style: TextStyle(color: secondaryText, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: Text(
+              statusLabel,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyPlaceholder(
+    IconData icon,
+    String title,
+    String subtitle,
+    bool isDark,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF1E293B).withValues(alpha: 0.5)
+            : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: isDark ? Colors.white24 : Colors.grey.shade400,
+            size: 40,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white38 : Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white24 : Colors.grey.shade400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String isoStr) {
+    try {
+      final dt = DateTime.parse(isoStr).toLocal();
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}.${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return isoStr;
+    }
   }
 }

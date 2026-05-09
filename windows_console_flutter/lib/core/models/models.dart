@@ -242,10 +242,12 @@ class UserModel {
     if (lastActiveAt == null) return 'Offline';
     final diff = DateTime.now().difference(lastActiveAt!);
     if (diff.inSeconds < 60) return 'Online';
-    if (diff.inMinutes < 60)
+    if (diff.inMinutes < 60) {
       return 'Berjalan di latar belakang (${diff.inMinutes} m lalu)';
-    if (diff.inHours < 24)
+    }
+    if (diff.inHours < 24) {
       return 'Terakhir terlihat pukul ${DateFormat('HH:mm').format(lastActiveAt!.toLocal())}';
+    }
     return 'Terlihat ${diff.inDays} hari yang lalu';
   }
 }
@@ -522,10 +524,12 @@ class UserDetailModel {
     if (lastActiveAt == null) return 'Offline';
     final diff = DateTime.now().difference(lastActiveAt!);
     if (diff.inSeconds < 60) return 'Online';
-    if (diff.inMinutes < 60)
+    if (diff.inMinutes < 60) {
       return 'Berjalan di latar belakang (${diff.inMinutes} m lalu)';
-    if (diff.inHours < 24)
+    }
+    if (diff.inHours < 24) {
       return 'Terakhir terlihat pukul ${DateFormat('HH:mm').format(lastActiveAt!.toLocal())}';
+    }
     return 'Terlihat ${diff.inDays} hari yang lalu';
   }
 }

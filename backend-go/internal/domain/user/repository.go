@@ -277,6 +277,21 @@ func (r *Repository) GetProfile(userID string) (*ProfileResponse, error) {
 		resp.VolunteerReputation = &reputation
 	}
 
+	// Tentukan volunteer_status dari is_verified_volunteer dan volunteer_certifications
+	if profile != nil && profile.IsVerifiedVolunteer {
+		resp.VolunteerStatus = "approved"
+	} else {
+		var pendingCount int64
+		r.db.Model(&VolunteerCertification{}).
+			Where("user_id = ? AND status = 'pending'", userID).
+			Count(&pendingCount)
+		if pendingCount > 0 {
+			resp.VolunteerStatus = "pending"
+		} else {
+			resp.VolunteerStatus = "none"
+		}
+	}
+
 	return resp, nil
 }
 

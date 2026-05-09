@@ -58,9 +58,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
         _load();
       }
     });
-    // Refresh UI setiap 5 detik agar indikator online/offline akurat
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (mounted) setState(() {});
+    // Refresh data setiap 15 detik agar update status (handled, resolved, dll) langsung terlihat
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted) _load();
     });
   }
 
@@ -70,6 +70,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
     if (mounted) {
       setState(() {
         _incidents = data;
+        // Sinkronkan _selected — jika sudah resolved/selesai, clear selection
+        if (_selected != null) {
+          _selected = data.where((i) => i.id == _selected!.id).firstOrNull;
+        }
         _loading = false;
       });
     }

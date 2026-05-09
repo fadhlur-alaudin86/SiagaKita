@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"siagakita-backend/internal/config"
@@ -469,6 +470,55 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 	log.Printf("[IncidentHandler] REST-triggered SOS broadcast: incident %s → %d console users", incidentID, sent)
 }
 
+
+// GET /api/v1/incidents/nearby?lat=&lng=&radius=5
+// Hanya untuk volunteer — mengembalikan SOS aktif dalam radius tertentu.
+func (h *Handler) GetNearby(c *fiber.Ctx) error {
+	latStr := c.Query("lat")
+	lngStr := c.Query("lng")
+	radiusStr := c.Query("radius", "5")
+
+	lat, err := strconv.ParseFloat(latStr, 64)
+	if err != nil || lat == 0 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Parameter 'lat' wajib diisi dan harus berupa angka")
+	}
+	lng, err := strconv.ParseFloat(lngStr, 64)
+	if err != nil || lng == 0 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Parameter 'lng' wajib diisi dan harus berupa angka")
+	}
+	radius, err := strconv.ParseFloat(radiusStr, 64)
+	if err != nil || radius <= 0 {
+		radius = 5.0
+	}
+	if radius > 50 {
+		radius = 50.0 // maksimal 50km
+	}
+
+	results, err := h.svc.GetNearby(lat, lng, radius)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal mengambil data SOS terdekat")
+	}
+
+	return utils.SuccessResponse(c, results)
+}
+
+// POST /api/v1/incidents/:id/accept
+// Relawan menerima SOS dan siap menuju lokasi.
+func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
+	volunteerID := c.Locals("userID").(string)
+	incidentID := c.Params("id")
+
+	if incidentID == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "ID insiden wajib diisi")
+	}
+
+	result, err := h.svc.AcceptIncident(incidentID, volunteerID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusConflict, err.Error())
+	}
+
+	return utils.SuccessResponse(c, result)
+}
 
 func saveFile(fh *multipart.FileHeader, dst string) error {
 	src, err := fh.Open()

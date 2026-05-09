@@ -237,6 +237,59 @@ class IncidentService {
         .toList();
   }
 
+  // ─── Get Nearby SOS (untuk Relawan) ──────────────────────────────────────
+
+  /// Mengembalikan SOS aktif dalam radius `radius` km dari posisi relawan.
+  /// Dipanggil tiap 30 detik saat ON DUTY.
+  static Future<List<NearbyIncident>> getNearby({
+    required String accessToken,
+    required double lat,
+    required double lng,
+    double radius = 5.0,
+  }) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(
+              '$_baseUrl/incidents/nearby?lat=$lat&lng=$lng&radius=$radius',
+            ),
+            headers: {'Authorization': 'Bearer $accessToken'},
+          )
+          .timeout(_defaultTimeout);
+      if (response.statusCode != 200) return [];
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = body['data'] as List?;
+      if (data == null) return [];
+      return data
+          .map((e) => NearbyIncident.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // ─── Accept SOS (Relawan menerima misi) ──────────────────────────────────
+
+  /// Relawan menekan tombol "Terima" pada SOS yang tampil di radar.
+  static Future<void> acceptSOS({
+    required String accessToken,
+    required String incidentId,
+  }) async {
+    final response = await _req(
+      () => http.post(
+        Uri.parse('$_baseUrl/incidents/$incidentId/accept'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      ),
+      timeout: _sosTimeout,
+    );
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw IncidentException(
+        body['message'] as String? ?? 'Gagal menerima misi',
+      );
+    }
+  }
+
   // ─── Create Report (Jalur B — Laporan Warga) ─────────────────────────────
 
   static Future<void> createReport({
@@ -325,6 +378,92 @@ class ActiveIncident {
     updatedAt: json['updated_at'] as String?,
     reporterTrustLabel: json['reporter_trust_label'] as String? ?? 'standard',
   );
+}
+
+// ─── NearbyIncident ───────────────────────────────────────────────────────────
+
+class NearbyIncident {
+  final String id;
+  final String incidentType;
+  final String status;
+  final double latitude;
+  final double longitude;
+  final String? addressDetail;
+  final String trustLabel;
+  final String createdAt;
+  final double distanceKm;
+
+  const NearbyIncident({
+    required this.id,
+    required this.incidentType,
+    required this.status,
+    required this.latitude,
+    required this.longitude,
+    this.addressDetail,
+    this.trustLabel = 'standard',
+    required this.createdAt,
+    this.distanceKm = 0.0,
+  });
+
+  factory NearbyIncident.fromJson(Map<String, dynamic> json) => NearbyIncident(
+    id: json['id'] as String,
+    incidentType: json['incident_type'] as String? ?? 'unknown',
+    status: json['status'] as String,
+    latitude: (json['latitude'] as num).toDouble(),
+    longitude: (json['longitude'] as num).toDouble(),
+    addressDetail: json['address_detail'] as String?,
+    trustLabel: json['reporter_trust_label'] as String? ?? 'standard',
+    createdAt: json['created_at'] as String,
+    distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0.0,
+  );
+
+  /// Menghitung waktu sejak insiden dilaporkan (timeAgo).
+  String get timeAgo {
+    try {
+      final dt = DateTime.parse(createdAt).toLocal();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inMinutes < 1) return 'Baru saja';
+      if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+      if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+      return '${diff.inDays} hari lalu';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// Label tipe insiden dalam Bahasa Indonesia.
+  String get typeLabel {
+    const labels = {
+      'medical': 'Medis / Kesehatan',
+      'fire': 'Kebakaran',
+      'crime': 'Kejahatan',
+      'rescue': 'SAR / Penyelamatan',
+      'accident': 'Kecelakaan',
+      'disaster': 'Bencana Alam',
+      'general': 'Umum',
+      'unknown': 'Tidak Diketahui',
+    };
+    return labels[incidentType] ?? incidentType;
+  }
+
+  /// Ikon tipe insiden
+  String get typeEmoji {
+    const emojis = {
+      'medical': '🚑',
+      'fire': '🔥',
+      'crime': '🚨',
+      'rescue': '🆘',
+      'accident': '🚗',
+      'disaster': '🌊',
+      'general': '⚠️',
+    };
+    return emojis[incidentType] ?? '⚠️';
+  }
+
+  String get distanceLabel {
+    if (distanceKm < 1) return '${(distanceKm * 1000).round()} m';
+    return '${distanceKm.toStringAsFixed(1)} km';
+  }
 }
 
 // ─── Exceptions ───────────────────────────────────────────────────────────────

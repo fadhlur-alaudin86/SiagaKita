@@ -74,6 +74,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ─── Card Reputasi Relawan ────────────────────────────────────────────────
+  Widget _buildVolunteerReputationCard(UserModel user, bool isDark, Color hintColor) {
+    final xp = user.volunteerPoints;
+    final level = user.volunteerLevel;
+    final nextThreshold = xp < 100 ? 100 : xp < 500 ? 500 : xp < 1500 ? 1500 : 9999;
+    final prevThreshold = xp < 100 ? 0 : xp < 500 ? 100 : xp < 1500 ? 500 : 1500;
+    final progress = nextThreshold == 9999
+        ? 1.0
+        : (xp - prevThreshold) / (nextThreshold - prevThreshold);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1A2F1A), const Color(0xFF142B22)]
+              : [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.military_tech, color: Color(0xFFFBBF24), size: 22),
+              const SizedBox(width: 8),
+              const Text(
+                'REPUTASI RELAWAN',
+                style: TextStyle(
+                  color: Color(0xFF22C55E),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _reputationStat('XP', '$xp', Icons.star_outline,
+                  const Color(0xFFFBBF24), isDark),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _reputationStat('Level', level, Icons.shield_outlined,
+                  const Color(0xFF22C55E), isDark),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text(
+                nextThreshold == 9999 ? 'Level Maksimal' : 'Menuju $nextThreshold XP',
+                style: TextStyle(fontSize: 11, color: hintColor),
+              ),
+              const Spacer(),
+              Text(
+                nextThreshold == 9999 ? '100%' : '${(progress * 100).round()}%',
+                style: const TextStyle(fontSize: 11, color: Color(0xFF22C55E), fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              minHeight: 8,
+              backgroundColor: isDark ? Colors.white12 : Colors.green.shade100,
+              color: const Color(0xFF22C55E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _reputationStat(String label, String value, IconData icon, Color color, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.15 : 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.8))),
+              Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   // ─── Konfirmasi sebelum edit NIK ─────────────────────────────────────────
   void _confirmAndEditNIK() {
     showDialog<bool>(
@@ -1003,6 +1111,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
+
+                // 5b. Reputasi Relawan (hanya tampil jika sudah approved)
+                if (user.volunteerStatus == 'approved') ...[
+                  const SizedBox(height: 8),
+                  _buildVolunteerReputationCard(user, isDark, hintColor),
+                ],
 
                 const SizedBox(height: 16),
 
