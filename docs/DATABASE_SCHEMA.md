@@ -1,8 +1,8 @@
 # 🗄️ SiagaKita — Database Schema Reference
 
-> **Versi Aktif:** Schema v9 (kyc_warga)
-> **Migration File:** `backend-go/migrations/009_kyc_warga.sql`
-> **Dijalankan:** 7 Mei 2026
+> **Versi Aktif:** Schema v12 (separate handling & badges)
+> **Migration File:** `backend-go/migrations/012_separate_handling.sql`
+> **Dijalankan:** 10 Mei 2026
 > **Database:** PostgreSQL 15
 
 ---
@@ -88,7 +88,7 @@ Output yang diharapkan di akhir:
 
 ### `response_status`
 ```sql
-'en_route' | 'on_scene' | 'completed' | 'canceled'
+'en_route' | 'on_scene' | 'completed' | 'canceled' | 'waiting_review' | 'rejected'
 ```
 
 ---
@@ -245,6 +245,8 @@ CREATE TABLE public.incidents (
     address_detail       text,
     photo_paths          text[] DEFAULT '{}',             -- Bukti foto (diambil otomatis)
     audio_path           text,                            -- Bukti audio 5 detik
+    handled_by_agency_id uuid REFERENCES public.users(id),
+    agency_status        varchar(20) DEFAULT 'pending',
     created_at           timestamptz DEFAULT now() NOT NULL,
     updated_at           timestamptz DEFAULT now(),
     resolved_at          timestamptz
@@ -279,12 +281,13 @@ CREATE TABLE public.incident_reports (
 
 ```sql
 CREATE TABLE public.incident_responses (
-    id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    incident_id  uuid REFERENCES incidents(id) ON DELETE CASCADE,
-    responder_id uuid REFERENCES users(id),
-    status       response_status DEFAULT 'en_route',
-    accepted_at  timestamptz DEFAULT now(),
-    arrived_at   timestamptz,
+    id              uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    incident_id     uuid REFERENCES incidents(id) ON DELETE CASCADE,
+    responder_id    uuid REFERENCES users(id),
+    status          response_status DEFAULT 'en_route',
+    proof_photo_url varchar(255),
+    accepted_at     timestamptz DEFAULT now(),
+    arrived_at      timestamptz,
     UNIQUE (incident_id, responder_id)  -- satu responder hanya bisa assign sekali per insiden
 );
 ```
@@ -452,6 +455,9 @@ Untuk audit trail — jika ada laporan penyalahgunaan, data historis bisa dipuli
 | v5 (`005_reports_v2.sql`) | 3 Mei 2026 | Upgrade `incident_reports` ke v2 (array foto, urgency level) |
 | v6 & v7 | Mei 2026 | Minor patch (blood_type, user_profiles bio, disaster category) |
 | **v8** (`008_incident_enhancements.sql`) | **7 Mei 2026** | **Menambahkan status `cancel`, menghapus `trigger_method`, menambahkan kolom `photo_paths` dan `audio_path` ke `incidents`** |
+| v9 (`009_kyc_warga.sql`) | 7 Mei 2026 | KYC Warga (NIK, Selfie) |
+| v10 & v11 | Mei 2026 | Drop phone unique constraint dan perbaikan minor |
+| **v12** (`012_separate_handling.sql`) | **10 Mei 2026** | **Separate handling (agency_status, proof_photo_url) dan gamifikasi Badges (m_badges, volunteer_badges_acquired)** |
 
 ---
 

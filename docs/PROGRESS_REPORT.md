@@ -1,6 +1,6 @@
 # 📋 SiagaKita - Laporan Kemajuan Pengembangan
 
-> **Terakhir diperbarui:** 8 Mei 2026
+> **Terakhir diperbarui:** 10 Mei 2026
 > **Branch aktif:** `main`
 > **Status keseluruhan:** 🟡 Dalam Pengembangan Aktif
 
@@ -13,7 +13,7 @@
 3. [Changelog Per Sprint](#3-changelog-per-sprint)
 4. [Struktur File Terkini](#4-struktur-file-terkini)
 5. [API Endpoint Lengkap](#5-api-endpoint-lengkap)
-6. [Schema Database (v3 - Aktif)](#6-schema-database-v3--aktif)
+6. [Schema Database (v12 - Aktif)](#6-schema-database-v12--aktif)
 7. [Yang Belum Selesai](#7-yang-belum-selesai)
 8. [Panduan Setup untuk Anggota Baru](#8-panduan-setup-untuk-anggota-baru)
 
@@ -51,7 +51,7 @@
 | Desktop Console | Flutter Desktop - `windows_console_flutter/` |
 | Mobile Responder | Flutter (belum dibuat) - `mobile-flutter-responder/` |
 | Backend | Go 1.26 + Fiber v2 |
-| Database | PostgreSQL 15 (Schema v3) |
+| Database | PostgreSQL 15 (Schema v12) |
 | Cache / Ephemeral | Redis |
 | Email OTP | SMTP (Gmail) |
 | WA OTP | Fonnte API |
@@ -67,13 +67,13 @@
 |--------|--------|-----------|
 | `domain/user/` | ✅ v3 | Slim auth, 3 login endpoints, transaksi user+profil |
 | `domain/otp/` | ✅ | Email OTP (SMTP) + WA OTP (Fonnte) |
-| `domain/incident/` | ✅ | SOS trigger, cancel, GPS update, resolve, false alarm |
-| `domain/admin/` | ✅ Baru | KYC, manajemen user, rank CRUD, statistik |
+| `domain/incident/` | ✅ v12| SOS trigger, fallback XP, volunteer completion, agency resolve, mission history |
+| `domain/admin/` | ✅ v12| KYC, manajemen user, badges CRUD, statistik |
 | `domain/telemetry/` | ✅ | Location update, SMS fallback |
 | `internal/hub/` + `ws/` | ✅ | WebSocket persistent registry |
 | `internal/middleware/` | ✅ v3 | JWT Auth + RBAC granular (AdminOnly, ConsoleOnly, dll.) |
 | `config/config.go` | ✅ | + SuperAdminEmail, SuperAdminPass |
-| `cmd/api/main.go` | ✅ | seedSuperAdmin(), 3 login routes, admin routes |
+| `cmd/api/main.go` | ✅ | seedSuperAdmin(), login routes, admin & badges routes |
 
 ### 🟢 Mobile Flutter - Citizen/Volunteer (`mobile-flutter/`)
 
