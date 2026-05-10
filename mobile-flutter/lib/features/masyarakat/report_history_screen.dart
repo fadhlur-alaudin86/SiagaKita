@@ -66,7 +66,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       _errorSOS = null;
     });
     try {
-      final history = await IncidentService.getMyHistory(
+      final history = await IncidentService.getReporterHistory(
         accessToken: widget.accessToken,
       );
       if (mounted) {

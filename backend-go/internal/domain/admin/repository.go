@@ -554,3 +554,28 @@ func (r *Repository) GetStats() (*StatsResponse, error) {
 
 	return stats, nil
 }
+
+// ─── Badges (Peringkat Relawan) ────────────────────────────────────────────────
+
+func (r *Repository) FindAllBadges() ([]MBadge, error) {
+	var badges []MBadge
+	err := r.db.Order("badge_name asc").Find(&badges).Error
+	return badges, err
+}
+
+func (r *Repository) CreateBadge(badge *MBadge) error {
+	return r.db.Create(badge).Error
+}
+
+func (r *Repository) UpdateBadge(id string, req *BadgeRequest) error {
+	return r.db.Model(&MBadge{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"badge_name":  req.BadgeName,
+		"description": req.Description,
+		"icon_url":    req.IconURL,
+	}).Error
+}
+
+func (r *Repository) DeleteBadge(id string) error {
+	return r.db.Delete(&MBadge{}, "id = ?", id).Error
+}
+

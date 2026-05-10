@@ -127,6 +127,40 @@ func (s *Service) GetStats() (*StatsResponse, error) {
 	return s.repo.GetStats()
 }
 
+// ─── Badges (Peringkat Relawan) ────────────────────────────────────────────────
+
+func (s *Service) GetBadges() ([]MBadge, error) {
+	return s.repo.FindAllBadges()
+}
+
+func (s *Service) CreateBadge(req *BadgeRequest) (*MBadge, error) {
+	if req.BadgeName == "" {
+		return nil, errorMsg("badge_name wajib diisi")
+	}
+	badge := &MBadge{
+		BadgeName:   req.BadgeName,
+		Description: req.Description,
+		IconURL:     req.IconURL,
+	}
+	err := s.repo.CreateBadge(badge)
+	return badge, err
+}
+
+func (s *Service) UpdateBadge(id string, req *BadgeRequest) (*MBadge, error) {
+	if req.BadgeName == "" {
+		return nil, errorMsg("badge_name wajib diisi")
+	}
+	err := s.repo.UpdateBadge(id, req)
+	if err != nil {
+		return nil, err
+	}
+	return &MBadge{ID: id, BadgeName: req.BadgeName, Description: req.Description, IconURL: req.IconURL}, nil
+}
+
+func (s *Service) DeleteBadge(id string) error {
+	return s.repo.DeleteBadge(id)
+}
+
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
 type serviceError struct{ msg string }
@@ -134,3 +168,4 @@ type serviceError struct{ msg string }
 func (e *serviceError) Error() string { return e.msg }
 
 func errorMsg(msg string) error { return &serviceError{msg: msg} }
+

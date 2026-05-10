@@ -1,12 +1,14 @@
 package incident
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
 	"time"
 
 	"github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 )
 
 var incidentTypeMultiplier = map[string]float64{
@@ -32,10 +34,11 @@ var validIncidentTypes = map[string]bool{
 
 type Service struct {
 	repo *Repository
+	rdb  *redis.Client
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo *Repository, rdb *redis.Client) *Service {
+	return &Service{repo: repo, rdb: rdb}
 }
 
 // ─── TriggerSOS (Jalur A) ─────────────────────────────────────────────────────
@@ -350,5 +353,144 @@ func (s *Service) AcceptIncident(incidentID, volunteerID string) (*AcceptSOSResp
 		Status:     resp.Status,
 		Message:    "Misi diterima. Segera menuju lokasi.",
 	}, nil
+}
+
+// ─── Lanjutan Gamifikasi & Review ───────────────────────────────────────────
+
+func (s *Service) AgencyHandleSOS(incidentID, agencyID string) error {
+	return s.repo.AgencyHandleSOS(incidentID, agencyID)
+}
+
+func (s *Service) VolunteerCompleteSOS(incidentID, volunteerID string, photoPaths []string) error {
+	if len(photoPaths) == 0 {
+		return errors.New("foto bukti wajib disertakan")
+	}
+	// Asumsi photoPaths[0] adalah bukti penyelesaian dari relawan
+	return s.repo.VolunteerCompleteSOS(incidentID, volunteerID, photoPaths[0])
+}
+
+func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve bool) (*ResolveResponse, error) {
+	err := s.repo.AgencyReviewVolunteer(incidentID, volunteerID, approve)
+	if err != nil {
+		return nil, err
+	}
+
+	if approve {
+		// Calculate XP
+		inc, _ := s.repo.FindByID(incidentID)
+		if inc != nil {
+			durationMinutes := 10.0 // Default 10 minutes jika error
+			if inc.CompletedAt != nil {
+				durationMinutes = inc.CompletedAt.Sub(inc.CreatedAt).Minutes()
+			}
+			baseXP := 100
+			speedBonus := math.Max(0, 50-durationMinutes)
+			multiplier := incidentTypeMultiplier[inc.IncidentType]
+			if multiplier == 0 {
+				multiplier = 1.0
+			}
+			totalXP := int((float64(baseXP) + speedBonus) * multiplier)
+			
+			// Award XP
+			rep, _ := s.repo.UpsertReputation(volunteerID, totalXP, 1)
+			
+			rankUp := false
+			newRankName := ""
+			if rep != nil {
+				newRank, _ := s.repo.GetRankForXP(rep.ExpPoints)
+				if newRank != nil {
+					oldRankID := uint(0)
+					if rep.RankID != nil {
+						oldRankID = *rep.RankID
+					}
+					if newRank.ID != oldRankID {
+						rankUp = true
+						newRankName = newRank.RankName
+						_ = s.repo.UpdateRank(volunteerID, newRank.ID)
+					}
+				}
+				
+				return &ResolveResponse{
+					Resolved:     true,
+					XPEarned:     totalXP,
+					NewTotalXP:   rep.ExpPoints,
+					TotalRescues: rep.TotalRescues,
+					RankUp:       rankUp,
+					NewRank:      newRankName,
+				}, nil
+			}
+		}
+		
+		return &ResolveResponse{Resolved: true}, nil
+	}
+
+	// Jika ditolak, kembalikan response kosong
+	return &ResolveResponse{Resolved: false}, nil
+}
+
+func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) {
+	inc, err := s.repo.MarkResolved(incidentID)
+	if err != nil {
+		return nil, err
+	}
+
+	// ─── Fallback Logic ──────────────────────────────────────────────────────────
+	// Cari relawan yang berstatus en_route atau on_scene
+	responses, err := s.repo.FindResponsesByIncident(incidentID)
+	if err == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		for _, resp := range responses {
+			if resp.Status == "en_route" || resp.Status == "on_scene" {
+				// Cek posisi terakhir di Redis
+				positions, err := s.rdb.GeoPos(ctx, "relawan:locations", resp.ResponderID).Result()
+				if err == nil && len(positions) > 0 && positions[0] != nil {
+					// Hitung jarak (Haversine)
+					volunteerLat := positions[0].Latitude
+					volunteerLng := positions[0].Longitude
+					
+					// Gunakan formula haversine sederhana (radius bumi = 6371 km)
+					dLat := (inc.Latitude - volunteerLat) * math.Pi / 180.0
+					dLon := (inc.Longitude - volunteerLng) * math.Pi / 180.0
+					lat1 := volunteerLat * math.Pi / 180.0
+					lat2 := inc.Latitude * math.Pi / 180.0
+
+					a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+						math.Sin(dLon/2)*math.Sin(dLon/2)*math.Cos(lat1)*math.Cos(lat2)
+					c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+					distanceKm := 6371 * c
+
+					// Jika jarak <= 1 KM, berikan 50% XP
+					if distanceKm <= 1.0 {
+						baseXP := 100
+						multiplier := incidentTypeMultiplier[inc.IncidentType]
+						if multiplier == 0 {
+							multiplier = 1.0
+						}
+						// 50% dari baseXP + multiplier, tanpa speed bonus
+						totalXP := int((float64(baseXP) * multiplier) * 0.5)
+						
+						// Award XP
+						_, _ = s.repo.UpsertReputation(resp.ResponderID, totalXP, 1)
+					}
+				}
+				// Ubah status relawan menjadi canceled (oleh sistem/instansi)
+				_ = s.repo.AgencyReviewVolunteer(incidentID, resp.ResponderID, false)
+			}
+		}
+	}
+
+	return &ResolveResponse{Resolved: true}, nil
+}
+
+func (s *Service) GetMissionHistory(volunteerID string) ([]MissionHistoryResponse, error) {
+	history, err := s.repo.GetMissionHistory(volunteerID)
+	if err != nil {
+		return nil, err
+	}
+	if history == nil {
+		history = []MissionHistoryResponse{}
+	}
+	return history, nil
 }
 

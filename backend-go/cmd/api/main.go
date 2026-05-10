@@ -66,7 +66,7 @@ func main() {
 
 	// Incident domain
 	incidentRepo := incidentDomain.NewRepository(db)
-	incidentSvc := incidentDomain.NewService(incidentRepo)
+	incidentSvc := incidentDomain.NewService(incidentRepo, rdb)
 	incidentHandler := incidentDomain.NewHandler(incidentSvc, cfg, wsHub, rdb)
 
 	// Admin domain
@@ -157,7 +157,8 @@ func main() {
 	// ── Incidents (protected - semua role yang sudah login) ───────────────────
 	incidents := v1.Group("/incidents", authMw)
 	incidents.Get("/active", incidentHandler.GetActive)
-	incidents.Get("/my-history", incidentHandler.GetHistory)
+	incidents.Get("/my-history", middleware.VolunteerOnly(), incidentHandler.GetMissionHistory)
+	incidents.Get("/reporter-history", incidentHandler.GetHistory)
 	incidents.Get("/all-active", middleware.ConsoleOnly(), incidentHandler.GetAllActive)
 	incidents.Get("/nearby", middleware.VolunteerOnly(), incidentHandler.GetNearby)
 	incidents.Post("/trigger", middleware.BanCheck(db), incidentHandler.TriggerSOS)
@@ -167,8 +168,12 @@ func main() {
 	incidents.Post("/:id/evidence", incidentHandler.UploadEvidence)
 	incidents.Put("/:id/location", incidentHandler.UpdateLocation)
 	incidents.Post("/:id/accept", middleware.VolunteerOnly(), incidentHandler.AcceptSOS)
+	incidents.Post("/:id/volunteer-complete", middleware.VolunteerOnly(), incidentHandler.VolunteerCompleteSOS)
+	incidents.Post("/:id/agency-handle", middleware.ConsoleOnly(), incidentHandler.AgencyHandleSOS)
+	incidents.Post("/:id/agency-review", middleware.ConsoleOnly(), incidentHandler.AgencyReviewVolunteer)
+	incidents.Post("/:id/agency-resolve", middleware.ConsoleOnly(), incidentHandler.AgencyResolveSOS)
 	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), incidentHandler.MarkFalseAlarm)
-	incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve)
+	// endpoint lama: incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve) // bisa tetap ada atau diganti, kita pakai agency-resolve sekarang
 
 
 	reports := v1.Group("/reports", authMw)
@@ -212,6 +217,12 @@ func main() {
 	admin.Post("/ranks", middleware.AdminOnly(), adminHandler.CreateRank)
 	admin.Put("/ranks/:id", middleware.AdminOnly(), adminHandler.UpdateRank)
 	admin.Delete("/ranks/:id", middleware.AdminOnly(), adminHandler.DeleteRank)
+
+	// Master Data: Badges
+	admin.Get("/badges", middleware.ConsoleOnly(), adminHandler.GetBadges)
+	admin.Post("/badges", middleware.AdminOnly(), adminHandler.CreateBadge)
+	admin.Put("/badges/:id", middleware.AdminOnly(), adminHandler.UpdateBadge)
+	admin.Delete("/badges/:id", middleware.AdminOnly(), adminHandler.DeleteBadge)
 
 	// Statistik
 	admin.Get("/stats", middleware.ConsoleOnly(), adminHandler.GetStats)

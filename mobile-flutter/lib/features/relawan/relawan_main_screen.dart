@@ -14,7 +14,7 @@ class RelawanMainScreen extends StatefulWidget {
 
 class _RelawanMainScreenState extends State<RelawanMainScreen> {
   List<NearbyIncident> _nearbySOS = [];
-  List<ActiveIncident> _missionHistory = [];
+  List<MissionHistory> _missionHistory = [];
   bool _loadingNearby = false;
   bool _loadingHistory = false;
   ({double latitude, double longitude})? _currentPosition;
@@ -802,22 +802,24 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
   }
 
   Widget _historyCard(
-    ActiveIncident inc,
+    MissionHistory inc,
     bool isDark,
     Color primaryText,
     Color secondaryText,
   ) {
-    final statusColor = switch (inc.status) {
-      'resolved' => const Color(0xFF22C55E),
-      'false_alarm' => const Color(0xFFF59E0B),
-      'cancel' => Colors.grey,
+    final statusColor = switch (inc.responseStatus) {
+      'completed' => const Color(0xFF22C55E),
+      'rejected' => const Color(0xFFEF4444),
+      'waiting_review' => const Color(0xFFF59E0B),
+      'canceled' => Colors.grey,
       _ => const Color(0xFF3B82F6),
     };
-    final statusLabel = switch (inc.status) {
-      'resolved' => 'Selesai',
-      'false_alarm' => 'False Alarm',
-      'cancel' => 'Dibatalkan',
-      _ => inc.status,
+    final statusLabel = switch (inc.responseStatus) {
+      'completed' => 'Selesai (+${inc.xpEarned} XP)',
+      'rejected' => 'Ditolak',
+      'waiting_review' => 'Menunggu Review',
+      'canceled' => 'Dibatalkan',
+      _ => inc.responseStatus,
     };
 
     const typeEmojis = {
@@ -857,7 +859,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   ),
                 ),
                 Text(
-                  _formatDate(inc.createdAt),
+                  _formatDate(inc.acceptedAt),
                   style: TextStyle(color: secondaryText, fontSize: 11),
                 ),
               ],

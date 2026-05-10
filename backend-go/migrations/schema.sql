@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict xakhNEdFdIXsHObiydXXFanfGIVRlqYEaCd5CtJJWbABhem8MBxyaIvOuPDeaML
+\restrict wvbqyDRgalb56hOhPktdireYwuJA59eKNLyzVPvahpqlJsc3MjdnQSXoslnkNKS
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -138,7 +138,9 @@ CREATE TYPE public.response_status AS ENUM (
     'en_route',
     'on_scene',
     'completed',
-    'canceled'
+    'canceled',
+    'waiting_review',
+    'rejected'
 );
 
 
@@ -305,7 +307,8 @@ CREATE TABLE public.incident_responses (
     responder_id uuid,
     status public.response_status DEFAULT 'en_route'::public.response_status,
     accepted_at timestamp with time zone DEFAULT now(),
-    arrived_at timestamp with time zone
+    arrived_at timestamp with time zone,
+    proof_photo_url character varying(255)
 );
 
 
@@ -324,12 +327,14 @@ CREATE TABLE public.incidents (
     status public.incident_status DEFAULT 'grace_period'::public.incident_status,
     urgency_level character varying(10) DEFAULT 'unknown'::character varying,
     reporter_trust_label character varying(20) DEFAULT 'standard'::character varying,
-    address_detail text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now(),
     completed_at timestamp with time zone,
     photo_paths text[] DEFAULT '{}'::text[],
-    audio_path text
+    audio_path text,
+    address_detail character varying(255),
+    handled_by_agency_id uuid,
+    agency_status character varying(20) DEFAULT 'pending'::character varying
 );
 
 
@@ -867,6 +872,14 @@ ALTER TABLE ONLY public.incident_responses
 
 
 --
+-- Name: incidents incidents_handled_by_agency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: siagakita_admin
+--
+
+ALTER TABLE ONLY public.incidents
+    ADD CONSTRAINT incidents_handled_by_agency_id_fkey FOREIGN KEY (handled_by_agency_id) REFERENCES public.users(id);
+
+
+--
 -- Name: incidents incidents_reporter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: siagakita_admin
 --
 
@@ -958,5 +971,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict xakhNEdFdIXsHObiydXXFanfGIVRlqYEaCd5CtJJWbABhem8MBxyaIvOuPDeaML
+\unrestrict wvbqyDRgalb56hOhPktdireYwuJA59eKNLyzVPvahpqlJsc3MjdnQSXoslnkNKS
 

@@ -214,12 +214,37 @@ class IncidentService {
 
   // ─── Get My History ───────────────────────────────────────────────────────
 
-  static Future<List<ActiveIncident>> getMyHistory({
+  static Future<List<MissionHistory>> getMyHistory({
     required String accessToken,
   }) async {
     final response = await _req(
       () => http.get(
         Uri.parse('$_baseUrl/incidents/my-history'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      ),
+    );
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw IncidentException(
+        body['message'] as String? ?? 'Gagal memuat riwayat SOS',
+      );
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = body['data'] as List?;
+    if (data == null) return [];
+    return data
+        .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ─── Get Reporter History ─────────────────────────────────────────────────
+
+  static Future<List<ActiveIncident>> getReporterHistory({
+    required String accessToken,
+  }) async {
+    final response = await _req(
+      () => http.get(
+        Uri.parse('$_baseUrl/incidents/reporter-history'),
         headers: {'Authorization': 'Bearer $accessToken'},
       ),
     );
@@ -287,6 +312,40 @@ class IncidentService {
       throw IncidentException(
         body['message'] as String? ?? 'Gagal menerima misi',
       );
+    }
+  }
+
+  // ─── Volunteer Complete SOS (Upload Proof) ───────────────────────────────
+
+  static Future<void> volunteerCompleteSOS({
+    required String accessToken,
+    required String incidentId,
+    required File photoFile,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/incidents/$incidentId/volunteer-complete');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $accessToken';
+
+    if (photoFile.existsSync()) {
+      request.files.add(
+        await http.MultipartFile.fromPath('photo', photoFile.path),
+      );
+    } else {
+      throw IncidentException('File foto tidak ditemukan');
+    }
+
+    try {
+      final response = await request.send().timeout(_defaultTimeout);
+      if (response.statusCode != 200) {
+        final respStr = await response.stream.bytesToString();
+        final body = jsonDecode(respStr) as Map<String, dynamic>;
+        throw IncidentException(
+          body['message'] as String? ?? 'Gagal mengunggah bukti',
+        );
+      }
+    } catch (e) {
+      if (e is IncidentException) rethrow;
+      throw IncidentException('Terjadi kesalahan saat mengunggah bukti');
     }
   }
 
@@ -464,6 +523,38 @@ class NearbyIncident {
     if (distanceKm < 1) return '${(distanceKm * 1000).round()} m';
     return '${distanceKm.toStringAsFixed(1)} km';
   }
+}
+
+// ─── MissionHistory ───────────────────────────────────────────────────────────
+
+class MissionHistory {
+  final String id;
+  final String incidentType;
+  final String status;
+  final String responseStatus;
+  final String? addressDetail;
+  final String acceptedAt;
+  final int xpEarned;
+
+  const MissionHistory({
+    required this.id,
+    required this.incidentType,
+    required this.status,
+    required this.responseStatus,
+    this.addressDetail,
+    required this.acceptedAt,
+    this.xpEarned = 0,
+  });
+
+  factory MissionHistory.fromJson(Map<String, dynamic> json) => MissionHistory(
+    id: json['id'] as String,
+    incidentType: json['incident_type'] as String,
+    status: json['status'] as String,
+    responseStatus: json['response_status'] as String,
+    addressDetail: json['address_detail'] as String?,
+    acceptedAt: json['accepted_at'] as String,
+    xpEarned: json['xp_earned'] as int? ?? 0,
+  );
 }
 
 // ─── Exceptions ───────────────────────────────────────────────────────────────

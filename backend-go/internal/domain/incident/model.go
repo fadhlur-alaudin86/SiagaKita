@@ -19,6 +19,8 @@ type Incident struct {
 	Latitude           float64        `gorm:"not null" json:"latitude"`
 	Longitude          float64        `gorm:"not null" json:"longitude"`
 	Status             string         `gorm:"default:'grace_period'" json:"status"`
+	HandledByAgencyID  *string        `gorm:"type:uuid" json:"handled_by_agency_id,omitempty"`
+	AgencyStatus       string         `gorm:"default:'pending'" json:"agency_status"`
 	UrgencyLevel       string         `gorm:"default:'critical'" json:"urgency_level"`
 	ReporterTrustLabel string         `gorm:"default:'standard'" json:"reporter_trust_label"` // 'verified'|'standard'|'unverified'
 	AddressDetail      *string        `json:"address_detail,omitempty"`
@@ -59,10 +61,11 @@ type SOSStrike struct {
 type IncidentResponse struct {
 	ID          string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	IncidentID  string     `gorm:"type:uuid;not null" json:"incident_id"`
-	ResponderID string     `gorm:"type:uuid;not null" json:"responder_id"`
-	Status      string     `gorm:"default:'en_route'" json:"status"`
-	AcceptedAt  *time.Time `json:"accepted_at,omitempty"`
-	ArrivedAt   *time.Time `json:"arrived_at,omitempty"`
+	ResponderID   string     `gorm:"type:uuid;not null" json:"responder_id"`
+	Status        string     `gorm:"default:'en_route'" json:"status"`
+	ProofPhotoURL *string    `json:"proof_photo_url,omitempty"`
+	AcceptedAt    *time.Time `json:"accepted_at,omitempty"`
+	ArrivedAt     *time.Time `json:"arrived_at,omitempty"`
 }
 
 // VolunteerReputation menyimpan poin XP dan total rescue relawan.
@@ -204,4 +207,19 @@ type AcceptSOSResponse struct {
 	IncidentID string `json:"incident_id"`
 	Status     string `json:"status"`
 	Message    string `json:"message"`
+}
+
+type AgencyReviewRequest struct {
+	Approve bool   `json:"approve"` // true = terima, false = tolak
+	Reason  string `json:"reason,omitempty"`
+}
+
+type MissionHistoryResponse struct {
+	ID            string  `json:"id"`
+	IncidentType  string  `json:"incident_type"`
+	Status        string  `json:"status"` // Status global
+	ResponseStatus string `json:"response_status"` // Status relawan
+	AddressDetail *string `json:"address_detail,omitempty"`
+	AcceptedAt    string  `json:"accepted_at"`
+	XPEarned      int     `json:"xp_earned,omitempty"` // Jika ada XP historis
 }

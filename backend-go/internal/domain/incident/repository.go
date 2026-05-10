@@ -125,6 +125,8 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 			up.allergies,
 			i.incident_type,
 			i.status,
+			i.handled_by_agency_id,
+			i.agency_status,
 			i.latitude,
 			i.longitude,
 			i.address_detail,
@@ -375,5 +377,71 @@ func (r *Repository) AcceptIncident(incidentID, volunteerID string) (*IncidentRe
 		return nil
 	})
 	return &resp, err
+}
+
+// ─── Lanjutan Handling & Gamifikasi ──────────────────────────────────────────
+
+func (r *Repository) AgencyHandleSOS(incidentID, agencyID string) error {
+	return r.db.Model(&Incident{}).Where("id = ? AND status NOT IN ('resolved','false_alarm','cancel')", incidentID).
+		Updates(map[string]interface{}{
+			"status":               "handled",
+			"handled_by_agency_id": agencyID,
+			"agency_status":        "handling",
+			"updated_at":           time.Now(),
+		}).Error
+}
+
+func (r *Repository) VolunteerCompleteSOS(incidentID, volunteerID, photoURL string) error {
+	return r.db.Model(&IncidentResponse{}).
+		Where("incident_id = ? AND responder_id = ?", incidentID, volunteerID).
+		Updates(map[string]interface{}{
+			"status":          "waiting_review",
+			"proof_photo_url": photoURL,
+		}).Error
+}
+
+func (r *Repository) AgencyReviewVolunteer(incidentID, volunteerID string, approve bool) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var resp IncidentResponse
+		if err := tx.Where("incident_id = ? AND responder_id = ? AND status = 'waiting_review'", incidentID, volunteerID).First(&resp).Error; err != nil {
+			return errors.New("response relawan tidak ditemukan atau bukan berstatus waiting_review")
+		}
+
+		if approve {
+			// Terima pekerjaan relawan
+			tx.Model(&IncidentResponse{}).Where("id = ?", resp.ID).Update("status", "completed")
+			// Selesaikan incident global
+			tx.Model(&Incident{}).Where("id = ?", incidentID).
+				Updates(map[string]interface{}{"status": "resolved", "completed_at": time.Now(), "updated_at": time.Now()})
+		} else {
+			// Tolak pekerjaan relawan
+			tx.Model(&IncidentResponse{}).Where("id = ?", resp.ID).Update("status", "rejected")
+		}
+		return nil
+	})
+}
+
+func (r *Repository) FindResponsesByIncident(incidentID string) ([]IncidentResponse, error) {
+	var responses []IncidentResponse
+	err := r.db.Where("incident_id = ?", incidentID).Find(&responses).Error
+	return responses, err
+}
+
+func (r *Repository) GetMissionHistory(volunteerID string) ([]MissionHistoryResponse, error) {
+	var results []MissionHistoryResponse
+	err := r.db.Raw(`
+		SELECT 
+			i.id,
+			i.incident_type,
+			i.status,
+			ir.status as response_status,
+			i.address_detail,
+			CAST(ir.accepted_at AS VARCHAR) AS accepted_at
+		FROM incident_responses ir
+		JOIN incidents i ON i.id = ir.incident_id
+		WHERE ir.responder_id = $1
+		ORDER BY ir.accepted_at DESC
+	`, volunteerID).Scan(&results).Error
+	return results, err
 }
 

@@ -540,3 +540,97 @@ func parseFloat(s string) float64 {
 	_, _ = fmt.Sscanf(s, "%f", &f)
 	return f
 }
+
+// ─── Lanjutan Gamifikasi & Review ───────────────────────────────────────────
+
+// POST /api/v1/incidents/:id/agency-handle [ConsoleOnly]
+func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
+	agencyID := c.Locals("userID").(string)
+	incidentID := c.Params("id")
+
+	if err := h.svc.AgencyHandleSOS(incidentID, agencyID); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal menangani SOS: "+err.Error())
+	}
+	return utils.SuccessResponse(c, fiber.Map{"message": "SOS sekarang ditangani instansi."})
+}
+
+// POST /api/v1/incidents/:id/volunteer-complete [VolunteerOnly] (Multipart)
+func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
+	volunteerID := c.Locals("userID").(string)
+	incidentID := c.Params("id")
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Form tidak valid")
+	}
+
+	var photoPaths []string
+	if photos := form.File["photo"]; len(photos) > 0 {
+		fh := photos[0]
+		if fh.Size <= 5<<20 {
+			ext := filepath.Ext(fh.Filename)
+			if ext == "" {
+				ext = ".jpg"
+			}
+			now := time.Now()
+			yearMonth := fmt.Sprintf("%d/%02d", now.Year(), now.Month())
+			dir := filepath.Join(h.cfg.UploadDir, "incidents", "volunteer_proofs", yearMonth, incidentID)
+			_ = os.MkdirAll(dir, 0755)
+			fileName := fmt.Sprintf("proof_%d%s", now.UnixNano(), ext)
+			dst := filepath.Join(dir, fileName)
+
+			if err := saveFile(fh, dst); err == nil {
+				publicURL := fmt.Sprintf("%s/incidents/volunteer_proofs/%s/%s/%s", h.cfg.UploadBaseURL, yearMonth, incidentID, fileName)
+				photoPaths = append(photoPaths, publicURL)
+			}
+		}
+	}
+
+	if err := h.svc.VolunteerCompleteSOS(incidentID, volunteerID, photoPaths); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	return utils.SuccessResponse(c, fiber.Map{"message": "Bukti berhasil diunggah. Menunggu review instansi."})
+}
+
+// POST /api/v1/incidents/:id/agency-review [ConsoleOnly]
+func (h *Handler) AgencyReviewVolunteer(c *fiber.Ctx) error {
+	incidentID := c.Params("id")
+	
+	var req struct {
+		VolunteerID string `json:"volunteer_id"`
+		Approve     bool   `json:"approve"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	resp, err := h.svc.AgencyReviewVolunteer(incidentID, req.VolunteerID, req.Approve)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return utils.SuccessResponse(c, resp)
+}
+
+// POST /api/v1/incidents/:id/agency-resolve [ConsoleOnly]
+func (h *Handler) AgencyResolveSOS(c *fiber.Ctx) error {
+	incidentID := c.Params("id")
+	resp, err := h.svc.AgencyResolveSOS(incidentID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, resp)
+}
+
+// GET /api/v1/incidents/my-history [VolunteerOnly]
+func (h *Handler) GetMissionHistory(c *fiber.Ctx) error {
+	volunteerID := c.Locals("userID").(string)
+	
+	history, err := h.svc.GetMissionHistory(volunteerID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat riwayat misi")
+	}
+
+	return utils.SuccessResponse(c, history)
+}

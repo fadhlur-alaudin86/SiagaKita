@@ -261,3 +261,51 @@ func (h *Handler) GetStats(c *fiber.Ctx) error {
 	}
 	return utils.SuccessResponse(c, stats)
 }
+
+// ─── Badges (Peringkat Relawan) ────────────────────────────────────────────────
+
+// GET /api/v1/admin/badges  [ConsoleOnly]
+func (h *Handler) GetBadges(c *fiber.Ctx) error {
+	badges, err := h.svc.GetBadges()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, badges)
+}
+
+// POST /api/v1/admin/badges  [AdminOnly]
+func (h *Handler) CreateBadge(c *fiber.Ctx) error {
+	var req BadgeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+	badge, err := h.svc.CreateBadge(&req)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return utils.CreatedResponse(c, badge)
+}
+
+// PUT /api/v1/admin/badges/:id  [AdminOnly]
+func (h *Handler) UpdateBadge(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var req BadgeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+	badge, err := h.svc.UpdateBadge(id, &req)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return utils.SuccessResponse(c, badge)
+}
+
+// DELETE /api/v1/admin/badges/:id  [AdminOnly]
+func (h *Handler) DeleteBadge(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if err := h.svc.DeleteBadge(id); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return utils.SuccessResponse(c, fiber.Map{"message": "Badge berhasil dihapus."})
+}
+
