@@ -70,7 +70,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
     if (mounted) {
       setState(() {
         _incidents = data;
-        // Sinkronkan _selected — jika sudah resolved/selesai, clear selection
+        // Sinkronkan _selected - jika sudah resolved/selesai, clear selection
         if (_selected != null) {
           _selected = data.where((i) => i.id == _selected!.id).firstOrNull;
         }
@@ -569,7 +569,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
               const _InfoRow(
                 icon: Icons.phone_outlined,
                 label: 'HP',
-                value: '— Belum disetel',
+                value: '- Belum disetel',
               ),
             if (inc.dob != null)
               _InfoRow(
@@ -595,12 +595,12 @@ class _SosAktifPageState extends State<SosAktifPage> {
             _InfoRow(
               icon: Icons.bloodtype_outlined,
               label: 'Gol. Darah',
-              value: inc.bloodType ?? '— Tidak diketahui',
+              value: inc.bloodType ?? '- Tidak diketahui',
             ),
             _InfoRow(
               icon: Icons.medication_outlined,
               label: 'Alergi',
-              value: inc.allergies ?? '— Tidak ada catatan',
+              value: inc.allergies ?? '- Tidak ada catatan',
             ),
 
             if (inc.photoPaths.isNotEmpty) ...[

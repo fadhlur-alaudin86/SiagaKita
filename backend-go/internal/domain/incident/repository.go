@@ -17,7 +17,7 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-// ─── Incident (Jalur A — SOS Darurat) ─────────────────────────────────────────
+// ─── Incident (Jalur A - SOS Darurat) ─────────────────────────────────────────
 
 func (r *Repository) CreateIncident(inc *Incident) error {
 	return r.db.Create(inc).Error
@@ -55,7 +55,7 @@ func (r *Repository) MarkResolved(id string) (*Incident, error) {
 
 // MarkCancelled memperbarui status insiden menjadi 'cancel' (dibatalkan user).
 // Hanya bisa dilakukan jika status masih 'grace_period' atau 'broadcasting'.
-// Status 'handled', 'resolved', 'false_alarm' terkunci — tidak bisa dibatalkan user.
+// Status 'handled', 'resolved', 'false_alarm' terkunci - tidak bisa dibatalkan user.
 func (r *Repository) MarkCancelled(id string) error {
 	db := r.db.Model(&Incident{}).
 		Where("id = ? AND status IN (?, ?)", id, "grace_period", "broadcasting").
@@ -148,7 +148,7 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 	return results, err
 }
 
-// ─── Incident Report (Jalur B — Laporan Warga) ────────────────────────────────
+// ─── Incident Report (Jalur B - Laporan Warga) ────────────────────────────────
 
 func (r *Repository) CreateReport(rep *IncidentReport) error {
 	return r.db.Create(rep).Error

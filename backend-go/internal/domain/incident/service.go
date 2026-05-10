@@ -338,7 +338,7 @@ func (s *Service) GetNearby(lat, lng, radiusKm float64) ([]NearbyIncidentRespons
 	return results, nil
 }
 
-// AcceptIncident — relawan menerima SOS, buat record response + update status incident.
+// AcceptIncident - relawan menerima SOS, buat record response + update status incident.
 func (s *Service) AcceptIncident(incidentID, volunteerID string) (*AcceptSOSResponse, error) {
 	resp, err := s.repo.AcceptIncident(incidentID, volunteerID)
 	if err != nil {

@@ -66,10 +66,11 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isLoadingActiveIncident = true;
 
   // ─── Telemetri SOS (Tahap 4) ──────────────────────────────────────────────────
-  int _nextUpdateCountdown = 10; // hitung mundur update lokasi berikutnya (detik)
-  DateTime? _lastLocationUpdate;  // timestamp lokasi terakhir berhasil diupdate
-  bool _sosTransmitting = true;   // apakah koneksi SOS dalam keadaan baik
-  Timer? _countdownTimer;         // hitung mundur 1 detik
+  int _nextUpdateCountdown =
+      10; // hitung mundur update lokasi berikutnya (detik)
+  DateTime? _lastLocationUpdate; // timestamp lokasi terakhir berhasil diupdate
+  bool _sosTransmitting = true; // apakah koneksi SOS dalam keadaan baik
+  Timer? _countdownTimer; // hitung mundur 1 detik
 
   // Untuk menyimpan ID insiden lokal jika user membatalkan saat proses upload masih berlangsung
   String? _cancelledLocalId;
@@ -275,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  // ─── Trigger SOS — INSTANT GRACE PERIOD + background upload & retry ──────────
+  // ─── Trigger SOS - INSTANT GRACE PERIOD + background upload & retry ──────────
 
   Future<void> _triggerSOS({required String triggeredBy}) async {
     if (_isTriggeringSOS) return;
@@ -288,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       _tapCount = 0;
       _isTriggeringSOS = true;
-      // Langsung masuk grace period — tidak menunggu server
+      // Langsung masuk grace period - tidak menunggu server
       _pendingIncidentId = localId;
       _sosPhase = 'gracePeriod';
       _graceCountdown = 10;
@@ -309,10 +310,9 @@ class _HomeScreenState extends State<HomeScreen>
         final uri = Uri.parse(
           'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lng&zoom=18',
         );
-        final res = await http.get(
-          uri,
-          headers: {'User-Agent': 'com.siagakita.mobile'},
-        ).timeout(const Duration(seconds: 2));
+        final res = await http
+            .get(uri, headers: {'User-Agent': 'com.siagakita.mobile'})
+            .timeout(const Duration(seconds: 2));
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);
           final display = data['display_name'] as String?;
@@ -374,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
 
-    // Upload SOS di background — retry tiap 5 detik jika gagal
+    // Upload SOS di background - retry tiap 5 detik jika gagal
     _attemptSOSUpload(
       lat: lat,
       lng: lng,
@@ -582,13 +582,14 @@ class _HomeScreenState extends State<HomeScreen>
       await controller.dispose();
       photoFile = File(xFile.path);
     } catch (_) {
-      // Kamera tidak tersedia atau ditolak — lanjutkan ke audio
+      // Kamera tidak tersedia atau ditolak - lanjutkan ke audio
     }
 
     // 2. Rekam audio 5 detik
     try {
       final dir = await getTemporaryDirectory();
-      final audioPath = '${dir.path}/sos_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final audioPath =
+          '${dir.path}/sos_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
       final recorder = AudioRecorder();
       if (await recorder.hasPermission()) {
         await recorder.start(
@@ -925,7 +926,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 const SizedBox(height: 4),
                                 Text(
                                   isSOSActive
-                                      ? 'SOS AKTIF — Ketuk 5× untuk batalkan'
+                                      ? 'SOS AKTIF - Ketuk 5× untuk batalkan'
                                             .tr(context)
                                       : 'Ketuk 5× untuk mengirim SOS'.tr(
                                           context,
@@ -1035,8 +1036,9 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Next update: ${_nextUpdateCountdown}s'
-                                    .tr(context),
+                                'Next update: ${_nextUpdateCountdown}s'.tr(
+                                  context,
+                                ),
                                 style: TextStyle(
                                   color: Colors.red.withValues(alpha: 0.8),
                                   fontSize: 10,
@@ -1346,7 +1348,7 @@ class _HomeScreenState extends State<HomeScreen>
                         if (_lastTriggerMethod == 'timeout') ...[
                           const SizedBox(height: 4),
                           const Text(
-                            '(Terkirim otomatis — konfirmasi habis)',
+                            '(Terkirim otomatis - konfirmasi habis)',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 10,
@@ -1459,7 +1461,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               const SizedBox(height: 4),
               const Text(
-                'Tidak memilih pun tidak apa-apa — bantuan tetap datang',
+                'Tidak memilih pun tidak apa-apa - bantuan tetap datang',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white54, fontSize: 11),
               ),

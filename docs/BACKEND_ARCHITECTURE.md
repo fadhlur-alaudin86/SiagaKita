@@ -1,4 +1,4 @@
-# 🏗️ SiagaKita — Arsitektur Backend
+# 🏗️ SiagaKita - Arsitektur Backend
 
 > **Diperbarui:** 9 Mei 2026
 > **Versi Schema:** v3
@@ -11,7 +11,7 @@
 1. [Struktur Folder](#1-struktur-folder)
 2. [Domain-Driven Design](#2-domain-driven-design)
 3. [Alur Autentikasi](#3-alur-autentikasi)
-4. [RBAC — Role-Based Access Control](#4-rbac--role-based-access-control)
+4. [RBAC - Role-Based Access Control](#4-rbac--role-based-access-control)
 5. [WebSocket Architecture](#5-websocket-architecture)
 6. [OTP System](#6-otp-system)
 7. [Superadmin Seeding](#7-superadmin-seeding)
@@ -25,46 +25,46 @@
 backend-go/
 ├── cmd/
 │   └── api/
-│       └── main.go          — Entry point, wiring semua domain, seedSuperAdmin()
+│       └── main.go          - Entry point, wiring semua domain, seedSuperAdmin()
 ├── internal/
 │   ├── config/
-│   │   └── config.go        — Struct Config, Load() dari env vars
+│   │   └── config.go        - Struct Config, Load() dari env vars
 │   ├── database/
-│   │   ├── postgres.go      — GORM connection ke PostgreSQL
-│   │   └── redis.go         — Redis client
+│   │   ├── postgres.go      - GORM connection ke PostgreSQL
+│   │   └── redis.go         - Redis client
 │   ├── domain/
-│   │   ├── user/            — Auth gateway + profile management
-│   │   │   ├── model.go     — User, UserProfile, AdminProfile, AgencyPersonnel, DTOs
-│   │   │   ├── repository.go — DB queries
-│   │   │   ├── service.go   — Business logic (3 login methods)
-│   │   │   └── handler.go   — HTTP handlers
-│   │   ├── admin/           — Admin operations (KYC, ban, stats, ranks)
+│   │   ├── user/            - Auth gateway + profile management
+│   │   │   ├── model.go     - User, UserProfile, AdminProfile, AgencyPersonnel, DTOs
+│   │   │   ├── repository.go - DB queries
+│   │   │   ├── service.go   - Business logic (3 login methods)
+│   │   │   └── handler.go   - HTTP handlers
+│   │   ├── admin/           - Admin operations (KYC, ban, stats, ranks)
 │   │   │   ├── model.go
 │   │   │   ├── repository.go
 │   │   │   ├── service.go
 │   │   │   └── handler.go
-│   │   ├── incident/        — SOS & laporan warga
+│   │   ├── incident/        - SOS & laporan warga
 │   │   │   ├── model.go
 │   │   │   ├── repository.go
 │   │   │   ├── service.go
 │   │   │   └── handler.go
-│   │   ├── otp/             — OTP via Email (SMTP) + WA (Fonnte)
+│   │   ├── otp/             - OTP via Email (SMTP) + WA (Fonnte)
 │   │   │   ├── gateway.go
 │   │   │   ├── service.go
 │   │   │   └── handler.go
-│   │   └── telemetry/       — GPS location update + SMS fallback
+│   │   └── telemetry/       - GPS location update + SMS fallback
 │   │       └── handler.go
 │   ├── hub/
-│   │   └── hub.go           — WebSocket connection registry (map[userID]conn)
+│   │   └── hub.go           - WebSocket connection registry (map[userID]conn)
 │   ├── middleware/
-│   │   └── auth.go          — JWT Auth + RBAC middleware
+│   │   └── auth.go          - JWT Auth + RBAC middleware
 │   ├── utils/
-│   │   ├── response.go      — SuccessResponse, ErrorResponse, CreatedResponse
-│   │   └── jwt.go           — GenerateAccessToken, GenerateRefreshToken, ParseToken
+│   │   ├── response.go      - SuccessResponse, ErrorResponse, CreatedResponse
+│   │   └── jwt.go           - GenerateAccessToken, GenerateRefreshToken, ParseToken
 │   └── ws/
-│       └── server.go        — WebSocket server, event broadcasting
+│       └── server.go        - WebSocket server, event broadcasting
 └── migrations/
-    ├── 001_init_schema.sql  (deprecated — jangan dijalankan)
+    ├── 001_init_schema.sql  (deprecated - jangan dijalankan)
     └── 003_schema_v3.sql    ← Schema aktif, jalankan ini
 ```
 
@@ -159,7 +159,7 @@ Alur registrasi telah diperkuat untuk memastikan **integritas data** dan **mence
    - Hal ini memastikan pengiriman email menggunakan protokol HTTPS yang aman dari pemblokiran firewall VPS, lengkap dengan implementasi *Refresh Token OAuth2* secara otomatis.
 
 
-### 3.2 Login — 3 Endpoint Terpisah
+### 3.2 Login - 3 Endpoint Terpisah
 
 | Endpoint | Role yang Diizinkan | App |
 |----------|---------------------|-----|
@@ -168,17 +168,17 @@ Alur registrasi telah diperkuat untuk memastikan **integritas data** dan **mence
 | `POST /auth/personnel/login` | agency_personnel | Mobile Responder |
 
 > **Keamanan & Konsistensi:** 
-> 1. Jika role yang salah mencoba endpoint yang salah, semua endpoint mengembalikan "email atau password salah" — mencegah kebocoran informasi (role enumeration prevention).
+> 1. Jika role yang salah mencoba endpoint yang salah, semua endpoint mengembalikan "email atau password salah" - mencegah kebocoran informasi (role enumeration prevention).
 > 2. Untuk civilian/volunteer, sistem secara ketat memblokir login jika `IsEmailVerified = false`. Pengguna akan diminta mendaftar ulang, yang akan memicu proses "cleanup ghost account".
 
 
 ### 3.3 JWT Token
 
 ```go
-// Access Token — berumur pendek (default: 15 menit)
+// Access Token - berumur pendek (default: 15 menit)
 Claims: { user_id, role, exp }
 
-// Refresh Token — berumur panjang (default: 168 jam / 7 hari)
+// Refresh Token - berumur panjang (default: 168 jam / 7 hari)
 Claims: { user_id, role, exp }
 ```
 
@@ -188,12 +188,12 @@ Authorization: Bearer <access_token>
 ```
 
 Setelah JWT divalidasi, middleware menyimpan ke `c.Locals`:
-- `c.Locals("userID")` — UUID user
-- `c.Locals("userRole")` — role string
+- `c.Locals("userID")` - UUID user
+- `c.Locals("userRole")` - role string
 
 ---
 
-## 4. RBAC — Role-Based Access Control
+## 4. RBAC - Role-Based Access Control
 
 Middleware ada di `internal/middleware/auth.go`.
 
@@ -218,7 +218,7 @@ route.Method("/path", authMw, middleware.AdminOnly(), handler)
 | `AgencyOnly()` | agency, admin, superadmin | Data instansi |
 | `CitizenVolunteer()` | civilian, volunteer | Profile, biodata |
 | `PersonnelOnly()` | agency_personnel | Mobile responder ops |
-| `APIKeyGateway(cfg)` | — (API key) | SMS fallback endpoint |
+| `APIKeyGateway(cfg)` | - (API key) | SMS fallback endpoint |
 
 ---
 
@@ -235,7 +235,7 @@ ws://<host>:8081/ws/connect?token=<jwt>
 ### Hub Pattern
 
 ```go
-// hub.go — registry koneksi aktif
+// hub.go - registry koneksi aktif
 type Client struct {
     Conn *websocket.Conn
     Role string
@@ -269,8 +269,8 @@ hub.BroadcastToRole("agency", event)
 
 | Event | Dari | Keterangan |
 |-------|------|-----------|
-| `TRIGGER_SOS` | Mobile | (Legacy — kini via REST) |
-| `LOCATION_PING` | Mobile | (Legacy — kini menggunakan HTTP REST untuk *update* GPS dan `TouchLastActive` Redis) |
+| `TRIGGER_SOS` | Mobile | (Legacy - kini via REST) |
+| `LOCATION_PING` | Mobile | (Legacy - kini menggunakan HTTP REST untuk *update* GPS dan `TouchLastActive` Redis) |
 
 ---
 
@@ -305,7 +305,7 @@ Normalisasi nomor: 08xxx → 628xxx
 ```
 1. Ambil kode dari Redis
 2. Bandingkan dengan input user (constant-time comparison)
-3. DELETE kode dari Redis (anti-replay — tidak bisa dipakai dua kali)
+3. DELETE kode dari Redis (anti-replay - tidak bisa dipakai dua kali)
 4. Return error jika key tidak ada (berarti TTL habis)
 ```
 
@@ -324,7 +324,7 @@ SUPERADMIN_EMAIL & SUPERADMIN_PASS di .env
                           + log "[SuperAdmin] Akun berhasil dibuat: <email>"
 ```
 
-> **Penting:** Setiap kali server start, password superadmin di-sync dari env. Ini berarti jika env berubah, akun superadmin otomatis terupdate — tidak perlu query manual ke DB.
+> **Penting:** Setiap kali server start, password superadmin di-sync dari env. Ini berarti jika env berubah, akun superadmin otomatis terupdate - tidak perlu query manual ke DB.
 
 ---
 
@@ -343,20 +343,20 @@ File: `infrastructure/.env` (lihat `infrastructure/.env-example` sebagai templat
 | `REDIS_PORT` | Port Redis (default: 6379) | ✅ |
 | `REDIS_PASSWORD` | Redis password | ✅ |
 | `JWT_SECRET` | Secret key JWT (buat string acak panjang) | ✅ |
-| `JWT_ACCESS_TTL` | Durasi access token (default: 15m) | — |
-| `JWT_REFRESH_TTL` | Durasi refresh token (default: 168h) | — |
+| `JWT_ACCESS_TTL` | Durasi access token (default: 15m) | - |
+| `JWT_REFRESH_TTL` | Durasi refresh token (default: 168h) | - |
 | `EMAIL_FROM` | Alamat pengirim tampil untuk OTP (ex: no-reply@) | ✅ |
 | `GMAIL_CLIENT_ID` | OAuth2 Client ID Gmail API | ✅ |
 | `GMAIL_CLIENT_SECRET`| OAuth2 Client Secret Gmail API | ✅ |
 | `GMAIL_REFRESH_TOKEN`| OAuth2 Refresh Token Gmail API | ✅ |
 | `FONNTE_TOKEN` | Token API Fonnte (WhatsApp gateway) | ✅ |
-| `HTTP_PORT` | Port REST API (default: 8080) | — |
-| `WS_PORT` | Port WebSocket (default: 8081) | — |
-| `SMS_GATEWAY_SECRET` | Secret key SMS fallback endpoint | — |
+| `HTTP_PORT` | Port REST API (default: 8080) | - |
+| `WS_PORT` | Port WebSocket (default: 8081) | - |
+| `SMS_GATEWAY_SECRET` | Secret key SMS fallback endpoint | - |
 | `SUPERADMIN_EMAIL` | Email akun superadmin pertama | ✅ |
 | `SUPERADMIN_PASS` | Password akun superadmin pertama | ✅ |
-| `PGADMIN_EMAIL` | pgAdmin login email | — |
-| `PGADMIN_PASSWORD` | pgAdmin login password | — |
+| `PGADMIN_EMAIL` | pgAdmin login email | - |
+| `PGADMIN_PASSWORD` | pgAdmin login password | - |
 
 ---
 

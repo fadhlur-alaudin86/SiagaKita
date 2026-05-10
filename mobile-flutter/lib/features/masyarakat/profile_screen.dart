@@ -75,11 +75,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ─── Card Reputasi Relawan ────────────────────────────────────────────────
-  Widget _buildVolunteerReputationCard(UserModel user, bool isDark, Color hintColor) {
+  Widget _buildVolunteerReputationCard(
+    UserModel user,
+    bool isDark,
+    Color hintColor,
+  ) {
     final xp = user.volunteerPoints;
     final level = user.volunteerLevel;
-    final nextThreshold = xp < 100 ? 100 : xp < 500 ? 500 : xp < 1500 ? 1500 : 9999;
-    final prevThreshold = xp < 100 ? 0 : xp < 500 ? 100 : xp < 1500 ? 500 : 1500;
+    final nextThreshold = xp < 100
+        ? 100
+        : xp < 500
+        ? 500
+        : xp < 1500
+        ? 1500
+        : 9999;
+    final prevThreshold = xp < 100
+        ? 0
+        : xp < 500
+        ? 100
+        : xp < 1500
+        ? 500
+        : 1500;
     final progress = nextThreshold == 9999
         ? 1.0
         : (xp - prevThreshold) / (nextThreshold - prevThreshold);
@@ -95,14 +111,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFF22C55E).withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.military_tech, color: Color(0xFFFBBF24), size: 22),
+              const Icon(
+                Icons.military_tech,
+                color: Color(0xFFFBBF24),
+                size: 22,
+              ),
               const SizedBox(width: 8),
               const Text(
                 'REPUTASI RELAWAN',
@@ -119,13 +141,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Expanded(
-                child: _reputationStat('XP', '$xp', Icons.star_outline,
-                  const Color(0xFFFBBF24), isDark),
+                child: _reputationStat(
+                  'XP',
+                  '$xp',
+                  Icons.star_outline,
+                  const Color(0xFFFBBF24),
+                  isDark,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _reputationStat('Level', level, Icons.shield_outlined,
-                  const Color(0xFF22C55E), isDark),
+                child: _reputationStat(
+                  'Level',
+                  level,
+                  Icons.shield_outlined,
+                  const Color(0xFF22C55E),
+                  isDark,
+                ),
               ),
             ],
           ),
@@ -133,13 +165,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Text(
-                nextThreshold == 9999 ? 'Level Maksimal' : 'Menuju $nextThreshold XP',
+                nextThreshold == 9999
+                    ? 'Level Maksimal'
+                    : 'Menuju $nextThreshold XP',
                 style: TextStyle(fontSize: 11, color: hintColor),
               ),
               const Spacer(),
               Text(
                 nextThreshold == 9999 ? '100%' : '${(progress * 100).round()}%',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF22C55E), fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF22C55E),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -158,7 +196,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _reputationStat(String label, String value, IconData icon, Color color, bool isDark) {
+  Widget _reputationStat(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+    bool isDark,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       decoration: BoxDecoration(
@@ -172,9 +216,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.8))),
-              Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: color.withValues(alpha: 0.8),
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
             ],
           ),
         ],
@@ -189,9 +245,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 22),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 22,
+            ),
             const SizedBox(width: 8),
-            Text('Perhatian'.tr(context), style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Perhatian'.tr(context),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Text(
@@ -202,12 +265,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal'.tr(context), style: const TextStyle(color: Colors.grey)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text('Lanjut'.tr(context), style: const TextStyle(color: Colors.white)),
+            child: Text(
+              'Lanjut'.tr(context),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -230,9 +299,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 22),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 22,
+            ),
             const SizedBox(width: 8),
-            Text('Perhatian'.tr(context), style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Perhatian'.tr(context),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Text(
@@ -243,12 +319,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal'.tr(context), style: const TextStyle(color: Colors.grey)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text('Lanjut'.tr(context), style: const TextStyle(color: Colors.white)),
+            child: Text(
+              'Lanjut'.tr(context),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -260,7 +342,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _editWhatsApp() {
-    final phoneCtrl = TextEditingController(text: UserModel.currentUser.value.phoneNumber ?? '');
+    final phoneCtrl = TextEditingController(
+      text: UserModel.currentUser.value.phoneNumber ?? '',
+    );
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -277,7 +361,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Batal'.tr(context), style: const TextStyle(color: Colors.grey)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -292,7 +379,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _requestAndVerifyPhoneOTP(newPhone);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text('Lanjut'.tr(context), style: const TextStyle(color: Colors.white)),
+            child: Text(
+              'Lanjut'.tr(context),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -305,7 +395,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengirim OTP: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Gagal mengirim OTP: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
       return;
@@ -322,7 +415,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kode OTP telah dikirim ke WhatsApp:\n$phoneNumber\nBerlaku 3 menit.'),
+            Text(
+              'Kode OTP telah dikirim ke WhatsApp:\n$phoneNumber\nBerlaku 3 menit.',
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: otpCtrl,
@@ -361,7 +456,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Verifikasi', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Verifikasi',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -375,12 +473,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await UserService.updateProfile(widget.accessToken, updatedUser);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nomor WhatsApp berhasil diubah dan diverifikasi'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Nomor WhatsApp berhasil diubah dan diverifikasi'),
+            backgroundColor: Colors.green,
+          ),
         );
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan profil: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Gagal menyimpan profil: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -442,7 +546,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar — gunakan foto profil dari KYC jika tersedia
+                    // Avatar - gunakan foto profil dari KYC jika tersedia
                     GestureDetector(
                       onTap: () => Navigator.push(
                         context,
@@ -562,7 +666,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         subtitle: Row(
                           children: [
                             Text(
-                              (user.nik != null && user.nik!.isNotEmpty) ? user.nik! : 'Belum diisi'.tr(context),
+                              (user.nik != null && user.nik!.isNotEmpty)
+                                  ? user.nik!
+                                  : 'Belum diisi'.tr(context),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: secondaryTextColor,
@@ -572,11 +678,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const SizedBox(width: 6),
                             if (user.nikVerificationStatus == 'approved')
-                              const Icon(Icons.verified, size: 14, color: Colors.green)
+                              const Icon(
+                                Icons.verified,
+                                size: 14,
+                                color: Colors.green,
+                              )
                             else if (user.nikVerificationStatus == 'pending')
-                              const Icon(Icons.hourglass_top, size: 14, color: Colors.orange)
+                              const Icon(
+                                Icons.hourglass_top,
+                                size: 14,
+                                color: Colors.orange,
+                              )
                             else
-                              const Icon(Icons.error_outline, size: 14, color: Colors.red),
+                              const Icon(
+                                Icons.error_outline,
+                                size: 14,
+                                color: Colors.red,
+                              ),
                           ],
                         ),
                         trailing: IconButton(
@@ -588,7 +706,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 1,
                         indent: 16,
                         endIndent: 16,
-                        color: isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200,
+                        color: isDark
+                            ? Colors.grey.withValues(alpha: 0.2)
+                            : Colors.grey.shade200,
                       ),
                       ListTile(
                         leading: Icon(Icons.email, color: primaryTextColor),
@@ -613,7 +733,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 1,
                         indent: 16,
                         endIndent: 16,
-                        color: isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200,
+                        color: isDark
+                            ? Colors.grey.withValues(alpha: 0.2)
+                            : Colors.grey.shade200,
                       ),
                       ListTile(
                         leading: const Icon(
@@ -627,7 +749,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         subtitle: Row(
                           children: [
                             Text(
-                              (user.phoneNumber != null && user.phoneNumber!.isNotEmpty) ? user.phoneNumber! : 'Belum diisi'.tr(context),
+                              (user.phoneNumber != null &&
+                                      user.phoneNumber!.isNotEmpty)
+                                  ? user.phoneNumber!
+                                  : 'Belum diisi'.tr(context),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: secondaryTextColor,
@@ -636,9 +761,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const SizedBox(width: 6),
                             if (user.isPhoneVerified)
-                              const Icon(Icons.verified, size: 14, color: Colors.green)
+                              const Icon(
+                                Icons.verified,
+                                size: 14,
+                                color: Colors.green,
+                              )
                             else
-                              const Icon(Icons.error_outline, size: 14, color: Colors.red),
+                              const Icon(
+                                Icons.error_outline,
+                                size: 14,
+                                color: Colors.red,
+                              ),
                           ],
                         ),
                         trailing: IconButton(
@@ -982,7 +1115,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : BorderSide.none,
                   ),
                   child: ListTile(
-                    leading: Icon(Icons.history_outlined, color: primaryTextColor),
+                    leading: Icon(
+                      Icons.history_outlined,
+                      color: primaryTextColor,
+                    ),
                     title: Text(
                       'Riwayat Laporan'.tr(context),
                       style: TextStyle(
@@ -995,7 +1131,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ReportHistoryScreen(accessToken: widget.accessToken),
+                          builder: (_) => ReportHistoryScreen(
+                            accessToken: widget.accessToken,
+                          ),
                         ),
                       );
                     },

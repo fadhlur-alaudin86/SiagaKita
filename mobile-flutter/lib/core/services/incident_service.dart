@@ -111,7 +111,7 @@ class IncidentService {
           )
           .timeout(_defaultTimeout);
     } catch (_) {
-      // Silent fail — SOS tetap aktif, status update di iterasi berikutnya
+      // Silent fail - SOS tetap aktif, status update di iterasi berikutnya
     }
   }
 
@@ -156,7 +156,7 @@ class IncidentService {
           )
           .timeout(_defaultTimeout);
     } catch (_) {
-      // Silent fail — lokasi diupdate di timer interval berikutnya
+      // Silent fail - lokasi diupdate di timer interval berikutnya
     }
   }
 
@@ -164,7 +164,7 @@ class IncidentService {
 
   /// Mengirimkan foto kamera depan dan rekaman audio 5 detik sebagai bukti SOS.
   /// Dipanggil secara background segera setelah insiden masuk fase 'broadcasting'.
-  /// Tidak melempar exception — error diabaikan (best-effort).
+  /// Tidak melempar exception - error diabaikan (best-effort).
   static Future<void> uploadEvidence({
     required String accessToken,
     required String incidentId,
@@ -190,7 +190,7 @@ class IncidentService {
 
       await request.send().timeout(const Duration(seconds: 30));
     } catch (_) {
-      // Best-effort — jika gagal, abaikan (tidak mempengaruhi SOS aktif)
+      // Best-effort - jika gagal, abaikan (tidak mempengaruhi SOS aktif)
     }
   }
 
@@ -290,7 +290,7 @@ class IncidentService {
     }
   }
 
-  // ─── Create Report (Jalur B — Laporan Warga) ─────────────────────────────
+  // ─── Create Report (Jalur B - Laporan Warga) ─────────────────────────────
 
   static Future<void> createReport({
     required String accessToken,

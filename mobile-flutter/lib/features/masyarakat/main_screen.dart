@@ -34,7 +34,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _fetchProfile() async {
-    // Jika offline, gunakan data sesi yang sudah di-cache — tidak perlu hit server
+    // Jika offline, gunakan data sesi yang sudah di-cache - tidak perlu hit server
     if (!ConnectivityService.isOnline.value) {
       if (mounted) setState(() => _isLoading = false);
       return;
@@ -69,7 +69,6 @@ class _MainScreenState extends State<MainScreen> {
           MapScreen(accessToken: widget.accessToken),
           ProfileScreen(accessToken: widget.accessToken),
         ];
-
 
         final List<BottomNavigationBarItem> navItems = [
           BottomNavigationBarItem(

@@ -1,4 +1,4 @@
-# 📋 SiagaKita — Laporan Kemajuan Pengembangan
+# 📋 SiagaKita - Laporan Kemajuan Pengembangan
 
 > **Terakhir diperbarui:** 8 Mei 2026
 > **Branch aktif:** `main`
@@ -13,7 +13,7 @@
 3. [Changelog Per Sprint](#3-changelog-per-sprint)
 4. [Struktur File Terkini](#4-struktur-file-terkini)
 5. [API Endpoint Lengkap](#5-api-endpoint-lengkap)
-6. [Schema Database (v3 — Aktif)](#6-schema-database-v3--aktif)
+6. [Schema Database (v3 - Aktif)](#6-schema-database-v3--aktif)
 7. [Yang Belum Selesai](#7-yang-belum-selesai)
 8. [Panduan Setup untuk Anggota Baru](#8-panduan-setup-untuk-anggota-baru)
 
@@ -47,9 +47,9 @@
 **Stack teknologi:**
 | Layer | Teknologi |
 |-------|-----------|
-| Mobile Citizen | Flutter (Dart) — `mobile-flutter/` |
-| Desktop Console | Flutter Desktop — `windows_console_flutter/` |
-| Mobile Responder | Flutter (belum dibuat) — `mobile-flutter-responder/` |
+| Mobile Citizen | Flutter (Dart) - `mobile-flutter/` |
+| Desktop Console | Flutter Desktop - `windows_console_flutter/` |
+| Mobile Responder | Flutter (belum dibuat) - `mobile-flutter-responder/` |
 | Backend | Go 1.26 + Fiber v2 |
 | Database | PostgreSQL 15 (Schema v3) |
 | Cache / Ephemeral | Redis |
@@ -61,7 +61,7 @@
 
 ## 2. Status Per Komponen
 
-### 🟢 Backend — Go Fiber
+### 🟢 Backend - Go Fiber
 
 | Domain | Status | Keterangan |
 |--------|--------|-----------|
@@ -75,11 +75,11 @@
 | `config/config.go` | ✅ | + SuperAdminEmail, SuperAdminPass |
 | `cmd/api/main.go` | ✅ | seedSuperAdmin(), 3 login routes, admin routes |
 
-### 🟢 Mobile Flutter — Citizen/Volunteer (`mobile-flutter/`)
+### 🟢 Mobile Flutter - Citizen/Volunteer (`mobile-flutter/`)
 
 | Layar / Modul | Status | Keterangan |
 |-------|--------|-----------|
-| Login | ✅ | `POST /auth/login` — hanya civilian/volunteer; simpan sesi lokal |
+| Login | ✅ | `POST /auth/login` - hanya civilian/volunteer; simpan sesi lokal |
 | Register | ✅ | 2-step: form → email OTP → JWT |
 | Biodata | 🟡 | UI selesai, API belum terhubung |
 | Home (SOS) | ✅ v2 | SOS instan (UUID lokal), retry background 5s, badge status upload |
@@ -88,7 +88,7 @@
 | Edit Profile | ✅ v2 | Fix save berhasil; OTP WhatsApp wajib sebelum ubah nomor HP |
 | Map | ✅ v2 | Polling 10s, geocoding Nominatim, marker SOS nearby, status transmisi dinamis |
 | Relawan Dashboard | ✅ v2 | Total redesign: Duty toggle, XP bar, radar SOS real-time, detail bottomsheet, riwayat misi |
-| Session Management | ✅ Baru | `SessionService` (SharedPreferences) — login persist, logout clear |
+| Session Management | ✅ Baru | `SessionService` (SharedPreferences) - login persist, logout clear |
 
 ### 🟢 Desktop Console (`windows_console_flutter/`)
 
@@ -101,10 +101,10 @@
 | Laporan Masuk | ✅ | Jalur B + filter status |
 | Peta Operasional | ✅ | OpenStreetMap + markers live |
 | Dispatch Relawan | 🔴 | Placeholder (Sprint B.4) |
-| Admin — KYC | ✅ | UI selesai, backend endpoint tersedia |
-| Admin — User Mgmt | ✅ | UI selesai, backend endpoint tersedia |
-| Admin — Gamifikasi | ✅ | UI selesai, backend endpoint tersedia |
-| Admin — Statistik | ✅ | UI selesai, backend endpoint tersedia |
+| Admin - KYC | ✅ | UI selesai, backend endpoint tersedia |
+| Admin - User Mgmt | ✅ | UI selesai, backend endpoint tersedia |
+| Admin - Gamifikasi | ✅ | UI selesai, backend endpoint tersedia |
+| Admin - Statistik | ✅ | UI selesai, backend endpoint tersedia |
 
 ---
 
@@ -112,9 +112,9 @@
 
 ---
 
-### 🔖 Patch 1.0.16 — 9 Mei 2026 (Fitur Operasi Relawan Real-Time & Pemetaan)
+### 🔖 Patch 1.0.16 - 9 Mei 2026 (Fitur Operasi Relawan Real-Time & Pemetaan)
 
-#### 🛡️ Backend — Go Fiber & PostgreSQL
+#### 🛡️ Backend - Go Fiber & PostgreSQL
 - **Endpoint Nearby SOS**: Menambahkan `GET /api/v1/incidents/nearby` untuk mengambil daftar SOS aktif di sekitar relawan berdasarkan radius (Haversine formula).
 - **Endpoint Accept SOS**: Menambahkan `POST /api/v1/incidents/:id/accept` dengan transaction SQL (`FindNearby()`, `AcceptIncident()`) untuk memvalidasi dan menerima misi SOS. Menyimpan ke tabel `incident_responses`.
 - **Status Relawan**: Memperkenalkan turunan field `volunteer_status` (none, pending, approved) di `ProfileResponse` berbasiskan record `volunteer_certifications`.
@@ -137,14 +137,14 @@
 
 ---
 
-### 🔖 Patch 1.0.15 — 8 Mei 2026 (Fitur Background Service & Pelacakan Online/GPS Real-time)
+### 🔖 Patch 1.0.15 - 8 Mei 2026 (Fitur Background Service & Pelacakan Online/GPS Real-time)
 
 #### 📱 Mobile App (SiagaKita Warga)
 - **Background Service**: Mengimplementasikan `flutter_background_service` untuk menjaga koneksi dan mengirim heartbeat setiap 30 detik tanpa campur tangan antarmuka UI. Menjamin fitur ini berjalan pada latar belakang walaupun aplikasi sedang terminimize.
 - **Background Location**: Integrasi izin `ACCESS_BACKGROUND_LOCATION` serta permintaan pembatalan mode optimasi baterai (`ignoreBatteryOptimizations`).
 - **Telemetry Broadcasting**: Aplikasi akan mengirim HTTP `PUT /api/v1/telemetry/location` untuk mengupdate kordinat GPS secara berkala di latar belakang, khusus ketika pengguna (relawan) mengaktifkan mode _"On Duty"_.
 
-#### 🛡️ Backend — Go Fiber & Redis
+#### 🛡️ Backend - Go Fiber & Redis
 - **True Online Status via Redis**: Mengganti status "Last Active" di database relasional menggunakan infrastruktur Redis TTL key (`user:online:{userId}`). Middleware `TouchLastActive` kini diinjeksi dengan klien Redis, memungkinkan deteksi status koneksi yang sangat efisien. Status *Online* kedaluwarsa secara otomatis dalam 90 detik setelah *heartbeat* terakhir gagal diterima.
 - **Role-based Broadcast (Hub)**: Modul `Hub` WebSockets direfaktor untuk merekam `Role` setiap *client*. Memperkenalkan fungsi `BroadcastToRole` yang memungkinkan *backend* memancarkan data GPS secara *live* khusus ke administrator/agensi yang dituju.
 - **Online-Status Bulk Fetching**: Endpoint baru `POST /api/v1/telemetry/online-status` untuk mendukung pengambilan data status kolektif melalui *Redis Pipeline*.
@@ -155,22 +155,22 @@
 
 ---
 
-### 🔖 Patch 1.0.14 — 8 Mei 2026 (Bugfix Inti: Semua Tipe Laporan & Urgency Nullable)
+### 🔖 Patch 1.0.14 - 8 Mei 2026 (Bugfix Inti: Semua Tipe Laporan & Urgency Nullable)
 
-#### 🛡️ Backend — Perbaikan Kritis
+#### 🛡️ Backend - Perbaikan Kritis
 
-- **Fix "Semi-Simulasi" Pelaporan**: Menambahkan tipe insiden `accident` (Kecelakaan) dan `disaster` (Bencana Alam) ke daftar `validIncidentTypes` dan `incidentTypeMultiplier` di `incident/service.go`. Sebelumnya hanya tipe `fire`, `medical`, `crime`, `rescue`, dan `general` yang diterima backend — sehingga laporan kebakaran dan kecelakaan dari mobile selalu ditolak dengan error *"tipe insiden tidak valid"*. Multiplier XP untuk tipe baru: `accident` = 1.3×, `disaster` = 1.4×.
+- **Fix "Semi-Simulasi" Pelaporan**: Menambahkan tipe insiden `accident` (Kecelakaan) dan `disaster` (Bencana Alam) ke daftar `validIncidentTypes` dan `incidentTypeMultiplier` di `incident/service.go`. Sebelumnya hanya tipe `fire`, `medical`, `crime`, `rescue`, dan `general` yang diterima backend - sehingga laporan kebakaran dan kecelakaan dari mobile selalu ditolak dengan error *"tipe insiden tidak valid"*. Multiplier XP untuk tipe baru: `accident` = 1.3×, `disaster` = 1.4×.
 - **Hapus Dead Code**: Menghapus fungsi `parseInt()` yang tidak terpakai di `incident/handler.go` (setelah refactoring sebelumnya tidak ada pemanggil tersisa).
 - **Fix Lint S1016** (`admin/repository.go`): Menyederhanakan fungsi `GetUsers()` dengan menghapus struct lokal `row` yang identik dengan `AdminUserItem`, lalu scan GORM langsung ke `[]AdminUserItem`. Mengurangi ~20 baris boilerplate.
 
-#### 📱 Mobile App — Perbaikan Kompatibilitas
+#### 📱 Mobile App - Perbaikan Kompatibilitas
 
 - **`urgencyLevel` Nullable** (`report_service.dart`): Field `urgencyLevel` di `ReportModel` diubah dari `required int` menjadi `int?` (nullable). Ini selaras dengan migrasi `011_reports_and_volunteer.sql` yang menghapus constraint `NOT NULL` pada kolom `urgency_level` di tabel `incident_reports`. Tingkat urgensi kini hanya ditentukan oleh agensi melalui Desktop Console, bukan oleh warga saat pelaporan. Default status parsing diperbarui dari `received` menjadi `sent`.
-- **Fix Tampilan Urgency Chip** (`report_history_screen.dart`): Method `_urgencyColor()` diperbarui untuk menerima `int?` dan mengembalikan `Colors.grey` jika null. Chip urgensi di kartu riwayat laporan hanya ditampilkan jika `urgencyLevel` sudah diisi oleh agensi (tidak null) — mencegah chip kosong atau crash saat nilai masih null.
+- **Fix Tampilan Urgency Chip** (`report_history_screen.dart`): Method `_urgencyColor()` diperbarui untuk menerima `int?` dan mengembalikan `Colors.grey` jika null. Chip urgensi di kartu riwayat laporan hanya ditampilkan jika `urgencyLevel` sudah diisi oleh agensi (tidak null) - mencegah chip kosong atau crash saat nilai masih null.
 
 ---
 
-### 🔖 Patch 1.0.13 — 8 Mei 2026 (Refinement V5: Pendaftaran Relawan Asli & Offline Mode Pelaporan)
+### 🔖 Patch 1.0.13 - 8 Mei 2026 (Refinement V5: Pendaftaran Relawan Asli & Offline Mode Pelaporan)
 
 #### 📱 Perbaikan Mobile App (SiagaKita Warga)
 - **File Upload Pendaftaran Relawan**: Fitur simulasi pendaftaran relawan kini telah diganti dengan fungsionalitas unggah file sungguhan menggunakan `file_picker`. Warga sekarang dapat memilih dan mengunggah dokumen PDF/JPG/PNG sebagai bukti sertifikasi keahlian medis atau evakuasi.
@@ -187,7 +187,7 @@
 - **Constraint Level Urgensi**: Menghapus kewajiban pengisian (`not null constraint`) tingkat urgensi dari sisi pengguna dalam pembuatan laporan. Level urgensi sepenuhnya menjadi wewenang agensi peninjau di Desktop Console. Default status tabel laporan menjadi `sent`.
 - **Integrasi File Relawan**: Modul `user_service` dan `handler` telah tersambung sepenuhnya dengan `file_picker`. Pengalaman relawan disimpan ke tabel profil, dan URL sertifikat dimasukkan secara terpisah ke dalam tabel relasional `volunteer_certifications`.
 
-### 🔖 Patch 1.0.12 — 8 Mei 2026 (Refinement V4: Dispatch, Pelaporan & Manajemen Personil)
+### 🔖 Patch 1.0.12 - 8 Mei 2026 (Refinement V4: Dispatch, Pelaporan & Manajemen Personil)
 
 #### 📱 Perbaikan Mobile App (SiagaKita Warga)
 - **Validasi Bukti Foto Pelaporan (Jalur B)**: Pelaporan insiden kini secara ketat mewajibkan unggahan minimal 1 foto sebelum laporan dapat dikirim.
@@ -207,7 +207,7 @@
 
 ---
 
-### 🔖 Patch 1.0.11 — 8 Mei 2026 (Refinement V2: Profile & Registration Flow)
+### 🔖 Patch 1.0.11 - 8 Mei 2026 (Refinement V2: Profile & Registration Flow)
 
 #### 📱 Perbaikan Mobile App (SiagaKita Warga)
 - **Biodata Pendaftaran Dinamis**: Layar pengisian biodata awal kini sepenuhnya terhubung ke endpoint backend. Pengguna dapat menambah banyak kontak darurat secara dinamis, serta memiliki opsi untuk "Lewati" yang diletakkan berdampingan dengan tombol Simpan. Layar ini juga telah mendukung lokalisasi `tr(context)`.
@@ -224,7 +224,7 @@
 
 ---
 
-### 🔖 Patch 1.0.8 — 7 Mei 2026 (SOS Anti False-Alarm & Telemetri - Tahap 1-4)
+### 🔖 Patch 1.0.8 - 7 Mei 2026 (SOS Anti False-Alarm & Telemetri - Tahap 1-4)
 
 #### 🛡️ Peningkatan Sistem Database & Backend
 - **Migrasi SQL 008**: Menambahkan nilai `cancel` ke enum `incident_status`, menghapus `trigger_method`, dan menambahkan kolom array `photo_paths` serta `audio_path` ke tabel `incidents` untuk keperluan bukti penanganan SOS.
@@ -242,7 +242,7 @@
 
 ---
 
-### 🔖 Patch 1.0.9 — 7 Mei 2026 (Refactor Navbar, Telemetri Desktop & KYC Warga - Tahap 5-6)
+### 🔖 Patch 1.0.9 - 7 Mei 2026 (Refactor Navbar, Telemetri Desktop & KYC Warga - Tahap 5-6)
 
 #### 📱 Perbaikan Mobile App (SiagaKita Warga)
 - **Navbar Riwayat**: Menggantikan tab "Panduan" di *bottom navigation bar* dengan tab "Riwayat" (`ReportHistoryScreen`) agar riwayat SOS dan laporan dapat diakses langsung tanpa harus masuk ke Profil terlebih dahulu.
@@ -254,7 +254,7 @@
 - **Lokalisasi**: Menambahkan string-string KYC dan "Riwayat" ke kamus English.
 
 #### 🖥️ Perbaikan Desktop Console (Instansi)
-- **Indikator Online/Offline Korban**: Menambahkan indikator real-time (🟢 Online / ⚫ Offline) pada panel detail dan baris daftar insiden SOS aktif. Status dihitung berdasarkan `updated_at` — korban dianggap **Online** jika lokasi diperbarui dalam 30 detik terakhir.
+- **Indikator Online/Offline Korban**: Menambahkan indikator real-time (🟢 Online / ⚫ Offline) pada panel detail dan baris daftar insiden SOS aktif. Status dihitung berdasarkan `updated_at` - korban dianggap **Online** jika lokasi diperbarui dalam 30 detik terakhir.
 - **Timestamp Lokasi Terakhir**: Menampilkan pukul terakhir lokasi berhasil dikirim pada section "📡 TELEMETRI KORBAN" di panel detail insiden.
 - **Auto-refresh**: Timer periodik 5 detik memperbarui status Online/Offline tanpa perlu memuat ulang seluruh daftar insiden.
 
@@ -263,7 +263,7 @@
 
 ---
 
-### 🔖 Patch 1.0.10 — 7 Mei 2026 (Refactor KYC, Profile & Volunteer)
+### 🔖 Patch 1.0.10 - 7 Mei 2026 (Refactor KYC, Profile & Volunteer)
 
 #### 📱 Perbaikan Mobile App (SiagaKita Warga)
 - **KYC & Foto Profil**: Memperbarui alur KYC. Foto KTP tetap wajib di-upload, namun porsi Selfie kini menggunakan widget in-app camera dan foto selfie tersebut otomatis dijadikan sebagai Foto Profil di dalam aplikasi.
@@ -282,14 +282,14 @@
 - **Update Profil Schema**: Mengubah implementasi backend (DTO, repository, service) untuk menggunakan `kyc_ktp_url` untuk dokumen KTP, dan `profile_photo_url` untuk selfie wajah.
 - **Fix Folder Upload**: Menambahkan pemanggilan `os.MkdirAll` di `SubmitKYC` agar server Go dapat membuat folder `/uploads/kyc` secara otomatis bila belum ada.
 - **API KYC Warga**: Dua endpoint baru di bawah `/api/v1/users/`:
-  - `POST /users/kyc` — Submit pengajuan verifikasi NIK (multipart: NIK, nama, foto KTP, selfie).
-  - `GET /users/kyc/status` — Cek status pengajuan KYC.
+  - `POST /users/kyc` - Submit pengajuan verifikasi NIK (multipart: NIK, nama, foto KTP, selfie).
+  - `GET /users/kyc/status` - Cek status pengajuan KYC.
 - **Model Go**: Update `UserProfile` struct dengan field `KYCKtpURL`, `KYCSelfieURL`, `NIKVerificationStatus`.
 - **IncidentModel (Desktop)**: Menambahkan field `updatedAt` ke `IncidentModel` serta computed getter `isOnline` dan `lastUpdateLabel`.
 
 ---
 
-### 🔖 Patch 1.0.6 — 6 Mei 2026 (Perbaikan UX Izin Lokasi & GPS)
+### 🔖 Patch 1.0.6 - 6 Mei 2026 (Perbaikan UX Izin Lokasi & GPS)
 
 #### 🚀 Peningkatan UX Darurat (Location & GPS Handling)
 
@@ -302,30 +302,30 @@
 
 ---
 
-### 🔖 Patch 1.0.5 — 4 Mei 2026 (Sprint Stabilisasi)
+### 🔖 Patch 1.0.5 - 4 Mei 2026 (Sprint Stabilisasi)
 
 #### 🔴 Fitur Baru: Offline Mode & Session Management
 
-- **`SessionService`** (`lib/core/services/session_service.dart`) — menyimpan `token`, `userId`, dan data user (nama, email, role) ke `SharedPreferences`. Data tetap tersedia meski app ditutup.
-- **`ConnectivityService`** (`lib/core/services/connectivity_service.dart`) — memantau status internet secara real-time via `connectivity_plus`. Exposes `ValueNotifier<bool> isOnline`.
-- **`_AppStartup`** di `main.dart` — widget startup yang memeriksa sesi tersimpan. Jika valid → langsung ke `MainScreen` tanpa login ulang (meski offline).
-- **Indikator Koneksi di Header** `HomeScreen` — dot ● berubah warna (hijau = Online, abu = Offline) plus label teks dinamis di bawah nama user.
-- **Skip Fetch Profil saat Offline** (`MainScreen._fetchProfile`) — jika tidak ada koneksi, langsung gunakan data sesi ter-cache tanpa hit server.
+- **`SessionService`** (`lib/core/services/session_service.dart`) - menyimpan `token`, `userId`, dan data user (nama, email, role) ke `SharedPreferences`. Data tetap tersedia meski app ditutup.
+- **`ConnectivityService`** (`lib/core/services/connectivity_service.dart`) - memantau status internet secara real-time via `connectivity_plus`. Exposes `ValueNotifier<bool> isOnline`.
+- **`_AppStartup`** di `main.dart` - widget startup yang memeriksa sesi tersimpan. Jika valid → langsung ke `MainScreen` tanpa login ulang (meski offline).
+- **Indikator Koneksi di Header** `HomeScreen` - dot ● berubah warna (hijau = Online, abu = Offline) plus label teks dinamis di bawah nama user.
+- **Skip Fetch Profil saat Offline** (`MainScreen._fetchProfile`) - jika tidak ada koneksi, langsung gunakan data sesi ter-cache tanpa hit server.
 
 #### 🔴 Fitur Baru: SOS Anti-Gagal (Robust SOS)
 
-- **Grace Period Instan** — tombol SOS langsung memberikan feedback visual (UUID lokal) tanpa menunggu respon server. Ini mencegah user menekan SOS berulang kali karena dikira tidak berfungsi.
-- **Background Retry Loop** — jika pengiriman SOS ke server gagal (jaringan tidak stabil), mekanisme retry otomatis setiap **5 detik** berjalan selama app terbuka dan user belum membatalkan.
-- **Badge Status Upload** — UI menampilkan status `Mengirim...` → `Terkirim ✓` pada banner SOS aktif.
-- **Local-to-Server ID Swap** — UUID lokal ditukar dengan Server ID begitu respon berhasil diterima.
+- **Grace Period Instan** - tombol SOS langsung memberikan feedback visual (UUID lokal) tanpa menunggu respon server. Ini mencegah user menekan SOS berulang kali karena dikira tidak berfungsi.
+- **Background Retry Loop** - jika pengiriman SOS ke server gagal (jaringan tidak stabil), mekanisme retry otomatis setiap **5 detik** berjalan selama app terbuka dan user belum membatalkan.
+- **Badge Status Upload** - UI menampilkan status `Mengirim...` → `Terkirim ✓` pada banner SOS aktif.
+- **Local-to-Server ID Swap** - UUID lokal ditukar dengan Server ID begitu respon berhasil diterima.
 
 #### 🔴 Fitur Baru: Profil & Verifikasi
 
-- **Backend `PUT /api/v1/users/profile`** — endpoint baru untuk update profil (biodata + data medis + kontak darurat). Proses dilakukan dalam satu transaksi GORM (soft-delete kontak lama → insert baru).
-- **NIK di Profile Screen** — menampilkan NIK pengguna (bukan UUID internal). Jika NIK belum ada, tampilkan tombol "Verifikasi Identitas (NIK)".
-- **Badge Verifikasi HP** — icon ✅ (terverifikasi) atau ⚠️ (belum) di samping nomor WhatsApp.
-- **OTP WhatsApp wajib** — jika user mengubah nomor HP di Edit Profile, maka OTP 6-digit dikirim ke nomor baru via WhatsApp sebelum data disimpan.
-- **Label WhatsApp** — field nomor HP diubah label menjadi "Nomor WhatsApp Aktif" dengan prefix icon.
+- **Backend `PUT /api/v1/users/profile`** - endpoint baru untuk update profil (biodata + data medis + kontak darurat). Proses dilakukan dalam satu transaksi GORM (soft-delete kontak lama → insert baru).
+- **NIK di Profile Screen** - menampilkan NIK pengguna (bukan UUID internal). Jika NIK belum ada, tampilkan tombol "Verifikasi Identitas (NIK)".
+- **Badge Verifikasi HP** - icon ✅ (terverifikasi) atau ⚠️ (belum) di samping nomor WhatsApp.
+- **OTP WhatsApp wajib** - jika user mengubah nomor HP di Edit Profile, maka OTP 6-digit dikirim ke nomor baru via WhatsApp sebelum data disimpan.
+- **Label WhatsApp** - field nomor HP diubah label menjadi "Nomor WhatsApp Aktif" dengan prefix icon.
 
 #### 🔑 Keamanan: Clear Session saat Logout
 
@@ -341,14 +341,14 @@
 
 ---
 
-### 🔖 Patch 1.0.4 — 1 Mei 2026 (Sesi Ini)
+### 🔖 Patch 1.0.4 - 1 Mei 2026 (Sesi Ini)
 
 #### 🐛 Bugfix & Arsitektur Auth
 
 **[KRITIS] Ghost Account & Timeout Pendaftaran**
 - **Masalah:** Jika server SMTP lambat atau gagal, aplikasi Flutter stuck (tidak ada timeout). Saat user menekan "kembali", request dibatalkan di client namun data `users` sudah terlanjur di-commit di backend, menghasilkan "Ghost Account" yang bisa login meskipun belum diverifikasi OTP.
 - **Perbaikan Backend:**
-  - `repo.CreateUserWithProfile()` — Operasi pembuatan `users` dan `user_profiles` digabung ke dalam satu transaksi atomik.
+  - `repo.CreateUserWithProfile()` - Operasi pembuatan `users` dan `user_profiles` digabung ke dalam satu transaksi atomik.
   - `Register()` diubah agar memanggil `DeleteUserByEmail` (menghapus user yang unverified) jika *email* sudah pernah gagal OTP sebelumnya, memungkinkan pendaftaran ulang dengan lancar.
   - `Login()` diubah: kini secara tegas memblokir akun yang `IsEmailVerified = false`.
 - **Perbaikan Flutter:** Menambahkan timeout konfigurasi (10s untuk SOS, 15s untuk regular, 30s untuk auth) menggunakan helper function `_post` dan `_req`.
@@ -356,7 +356,7 @@
 
 ---
 
-### 🔖 Patch 1.0.3 — 1 Mei 2026
+### 🔖 Patch 1.0.3 - 1 Mei 2026
 
 #### 🚀 Deployment Infrastruktur (VPS)
 
@@ -368,7 +368,7 @@
 
 ---
 
-### 🔖 Patch 1.0.2 — 1 Mei 2026
+### 🔖 Patch 1.0.2 - 1 Mei 2026
 
 
 #### 🐛 Bugfix
@@ -379,15 +379,15 @@
 - **File:** `windows_console_flutter/lib/core/constants/api_constants.dart`
 
 **[SECURITY] Pesan error `/auth/login` membocorkan role**
-- **Masalah:** Jika akun admin/agency mencoba login di `/auth/login`, error message-nya adalah *"akun ini bukan akun masyarakat atau relawan"* — membocorkan informasi role enumeration
+- **Masalah:** Jika akun admin/agency mencoba login di `/auth/login`, error message-nya adalah *"akun ini bukan akun masyarakat atau relawan"* - membocorkan informasi role enumeration
 - **Perbaikan:** Pesan diubah menjadi generik: *"email atau password salah"*
 - **File:** `backend-go/internal/domain/user/service.go` → `Login()`
 
 ---
 
-### 🔖 Sprint G — 3 Mei 2026
+### 🔖 Sprint G - 3 Mei 2026
 
-#### Mobile Flutter: Report Screen — Implementasi Penuh
+#### Mobile Flutter: Report Screen - Implementasi Penuh
 
 **Peta GPS Nyata (OpenStreetMap)**
 - Mengganti simulasi peta palsu (grid kotak) dengan widget `FlutterMap` (tile OSM) yang sesungguhnya.
@@ -455,7 +455,7 @@
 
 ---
 
-### 🔖 Sprint F — 2 Mei 2026
+### 🔖 Sprint F - 2 Mei 2026
 
 #### Mobile Flutter: Masyarakat Role & SOS Refactoring
 
@@ -473,7 +473,7 @@
 
 ---
 
-### 🔖 Sprint E — 2 Mei 2026
+### 🔖 Sprint E - 2 Mei 2026
 
 #### Desktop Console: UI/UX Polish & Bug Fixes
 
@@ -501,7 +501,7 @@
 
 ---
 
-### 🔖 Sprint D — 1 Mei 2026
+### 🔖 Sprint D - 1 Mei 2026
 
 #### Backend: Restructuring Database + Role Expansion
 
@@ -514,21 +514,21 @@
 - ENUM `user_role` baru: `superadmin | admin | agency | agency_personnel | volunteer | civilian`
 - `agency_responder` dihapus
 
-**Backend Go — user domain diperbarui total**
+**Backend Go - user domain diperbarui total**
 - `model.go`: Slim `User` + baru `UserProfile`, `AdminProfile`, `AgencyPersonnel`
 - `repository.go`: Semua query profil → `user_profiles`; strike/ban juga → `user_profiles`
 - `service.go`: 3 login method (`Login`, `ConsoleLogin`, `PersonnelLogin`); Register membuat `users` + `user_profiles` dalam 1 transaksi
 - `handler.go`: + handler `ConsoleLogin`, `PersonnelLogin`
 
-**Backend Go — middleware RBAC baru**
-- `RequireRoles()` — generic, composable
-- `AdminOnly()` — admin + superadmin
-- `ConsoleOnly()` — superadmin + admin + agency
-- `AgencyOnly()` — agency + admin + superadmin
-- `CitizenVolunteer()` — civilian + volunteer saja
-- `PersonnelOnly()` — agency_personnel saja
+**Backend Go - middleware RBAC baru**
+- `RequireRoles()` - generic, composable
+- `AdminOnly()` - admin + superadmin
+- `ConsoleOnly()` - superadmin + admin + agency
+- `AgencyOnly()` - agency + admin + superadmin
+- `CitizenVolunteer()` - civilian + volunteer saja
+- `PersonnelOnly()` - agency_personnel saja
 
-**Backend Go — domain admin baru** (`domain/admin/`)
+**Backend Go - domain admin baru** (`domain/admin/`)
 - KYC: `GET /admin/volunteers/pending`, `POST /admin/volunteers/:id/approve`, `POST /admin/volunteers/:id/reject`
 - User Management: `GET /admin/users`, ban, unban, reset strike
 - Ranks: CRUD `GET/POST/PUT/DELETE /admin/ranks/:id`
@@ -539,50 +539,50 @@
 - Baca `SUPERADMIN_EMAIL` + `SUPERADMIN_PASS` dari `.env`
 - Buat atau update akun superadmin otomatis
 
-**Mobile Flutter — `auth_service.dart`**
+**Mobile Flutter - `auth_service.dart`**
 - `UserInfo.fullName` diubah ke `String?` (nullable, sesuai response backend baru)
 - Field `isEmailVerified`, `isPhoneVerified`, `isVerifiedVolunteer` dihapus dari `UserInfo` (kini ada di `GET /users/profile`)
 
 ---
 
-### 🔖 Sprint C — 30 April 2026
+### 🔖 Sprint C - 30 April 2026
 
-#### Desktop Console — Modul Admin
+#### Desktop Console - Modul Admin
 
-- `kyc_relawan_page.dart` — UI verifikasi relawan
-- `user_management_page.dart` — Tabel user + strike/ban UI
-- `gamifikasi_page.dart` — CRUD master rank
-- `statistik_page.dart` — KPI + chart analitik
-- `admin_shell.dart` — Sidebar untuk role admin/superadmin
-
----
-
-### 🔖 Sprint B — 29–30 April 2026
-
-#### Desktop Console — Modul Instansi
-
-- `dashboard_operasi_page.dart` — KPI real-time + live SOS list + pie chart
-- `sos_aktif_page.dart` — Detail korban, aksi false alarm/resolve, alarm control
-- `laporan_masuk_page.dart` — Jalur B report management
-- `peta_operasional_page.dart` — OpenStreetMap + SOS markers
-- `ws_service.dart` — WebSocket singleton (auto-reconnect, event stream)
-- `instansi_shell.dart` — Sidebar + WS connection indicator
-- `app.dart` — SplashRouter: JWT session restore → route ke shell
+- `kyc_relawan_page.dart` - UI verifikasi relawan
+- `user_management_page.dart` - Tabel user + strike/ban UI
+- `gamifikasi_page.dart` - CRUD master rank
+- `statistik_page.dart` - KPI + chart analitik
+- `admin_shell.dart` - Sidebar untuk role admin/superadmin
 
 ---
 
-### 🔖 Sprint A — 26–29 April 2026
+### 🔖 Sprint B - 29–30 April 2026
 
-#### Mobile — SOS Redesign & GPS Integration
+#### Desktop Console - Modul Instansi
 
-- `home_screen.dart` — Mekanisme 5-ketukan, GPS tracking 1 menit, cancel SOS
-- `auth_service.dart` — API client auth (register, login, OTP)
-- `incident_service.dart` — SOS trigger, cancel, location update
-- `location_service.dart` — GPS permission + position
+- `dashboard_operasi_page.dart` - KPI real-time + live SOS list + pie chart
+- `sos_aktif_page.dart` - Detail korban, aksi false alarm/resolve, alarm control
+- `laporan_masuk_page.dart` - Jalur B report management
+- `peta_operasional_page.dart` - OpenStreetMap + SOS markers
+- `ws_service.dart` - WebSocket singleton (auto-reconnect, event stream)
+- `instansi_shell.dart` - Sidebar + WS connection indicator
+- `app.dart` - SplashRouter: JWT session restore → route ke shell
 
-#### Backend — OTP Domain
+---
 
-- `domain/otp/` — SMTP email OTP + Fonnte WA OTP
+### 🔖 Sprint A - 26–29 April 2026
+
+#### Mobile - SOS Redesign & GPS Integration
+
+- `home_screen.dart` - Mekanisme 5-ketukan, GPS tracking 1 menit, cancel SOS
+- `auth_service.dart` - API client auth (register, login, OTP)
+- `incident_service.dart` - SOS trigger, cancel, location update
+- `location_service.dart` - GPS permission + position
+
+#### Backend - OTP Domain
+
+- `domain/otp/` - SMTP email OTP + Fonnte WA OTP
 - Register: OTP ke email, rollback user jika SMTP gagal
 - Login: Langsung JWT (tidak perlu OTP langkah dua)
 
@@ -625,8 +625,8 @@ siagakita/
 │        │   ├── auth_service.dart      ✅
 │        │   ├── incident_service.dart  ✅
 │        │   ├── user_service.dart      ✅ GET+PUT profile, OTP phone
-│        │   ├── session_service.dart   🇨 BARU — simpan/baca/hapus sesi lokal
-│        │   └── connectivity_service.dart 🇨 BARU — monitor online/offline
+│        │   ├── session_service.dart   🇨 BARU - simpan/baca/hapus sesi lokal
+│        │   └── connectivity_service.dart 🇨 BARU - monitor online/offline
 │        └── features/
 │            ├── auth/                  ✅ + simpan sesi setelah login
 │            ├── masyarakat/            ✅ SOS instan+retry; NIK di profil; OTP WA edit HP
@@ -659,14 +659,14 @@ Base URL: `http://<host>:8080/api/v1`
 | Method | Endpoint | Untuk Role | Keterangan |
 |--------|----------|------------|-----------|
 | POST | `/auth/register` | civilian | Daftar → OTP email |
-| POST | `/auth/verify-register-otp` | — | Verifikasi OTP → JWT |
+| POST | `/auth/verify-register-otp` | - | Verifikasi OTP → JWT |
 | POST | `/auth/login` | civilian, volunteer | Login langsung → JWT |
 | POST | `/auth/console/login` | admin, superadmin, agency | Login Desktop Console → JWT |
 | POST | `/auth/personnel/login` | agency_personnel | Login Mobile Responder → JWT |
-| POST | `/auth/request-otp` | — | Kirim OTP WA (phone verification) |
-| POST | `/auth/verify-otp` | — | Verifikasi OTP WA |
+| POST | `/auth/request-otp` | - | Kirim OTP WA (phone verification) |
+| POST | `/auth/verify-otp` | - | Verifikasi OTP WA |
 
-### Users (Protected — CitizenVolunteer)
+### Users (Protected - CitizenVolunteer)
 
 | Method | Endpoint | Keterangan |
 |--------|----------|-----------|
@@ -676,30 +676,30 @@ Base URL: `http://<host>:8080/api/v1`
 | POST | `/users/phone/request-otp` | Kirim OTP 6-digit via WhatsApp ke nomor baru |
 | POST | `/users/phone/verify-otp` | Verifikasi OTP → update nomor + set is_phone_verified |
 
-### Incidents (Protected — semua role)
+### Incidents (Protected - semua role)
 
 | Method | Endpoint | RBAC | Keterangan |
 |--------|----------|------|-----------|
-| GET | `/incidents/active` | — | Cek SOS aktif |
-| POST | `/incidents/trigger` | — | Kirim SOS |
-| POST | `/incidents/:id/cancel` | — | Batalkan SOS |
-| PUT | `/incidents/:id/location` | — | Update GPS tiap 1 menit |
-| PATCH | `/incidents/:id/type` | — | Set tipe insiden |
-| POST | `/incidents/:id/broadcast` | — | Broadcast SOS |
+| GET | `/incidents/active` | - | Cek SOS aktif |
+| POST | `/incidents/trigger` | - | Kirim SOS |
+| POST | `/incidents/:id/cancel` | - | Batalkan SOS |
+| PUT | `/incidents/:id/location` | - | Update GPS tiap 1 menit |
+| PATCH | `/incidents/:id/type` | - | Set tipe insiden |
+| POST | `/incidents/:id/broadcast` | - | Broadcast SOS |
 | GET | `/incidents/nearby` | VolunteerOnly | Daftar SOS di radius tertentu |
 | POST | `/incidents/:id/accept` | VolunteerOnly | Relawan menerima misi SOS |
 | POST | `/incidents/:id/mark-false-alarm` | ConsoleOnly | Tandai false alarm |
 | POST | `/incidents/:id/resolve` | ConsoleOnly | Selesaikan insiden |
 
-### Reports — Jalur B (Protected)
+### Reports - Jalur B (Protected)
 
 | Method | Endpoint | RBAC | Keterangan |
 |--------|----------|------|-----------|
-| POST | `/reports` | — | Kirim laporan non-darurat |
+| POST | `/reports` | - | Kirim laporan non-darurat |
 | GET | `/reports` | ConsoleOnly | Daftar laporan |
 | PATCH | `/reports/:id/status` | ConsoleOnly | Update status laporan |
 
-### Admin (Protected — AdminOnly / ConsoleOnly)
+### Admin (Protected - AdminOnly / ConsoleOnly)
 
 | Method | Endpoint | RBAC | Keterangan |
 |--------|----------|------|-----------|
@@ -718,7 +718,7 @@ Base URL: `http://<host>:8080/api/v1`
 | DELETE | `/admin/ranks/:id` | AdminOnly | Hapus rank |
 | GET | `/admin/stats` | ConsoleOnly | Statistik & analitik |
 
-### Agencies (Protected — AgencyOnly)
+### Agencies (Protected - AgencyOnly)
 
 | Method | Endpoint | RBAC | Keterangan |
 |--------|----------|------|-----------|
@@ -734,7 +734,7 @@ Base URL: `http://<host>:8080/api/v1`
 
 ---
 
-## 6. Schema Database (v3 — Aktif)
+## 6. Schema Database (v3 - Aktif)
 
 > **Migration aktif:** `backend-go/migrations/003_schema_v3.sql`
 > **Dijalankan:** 1 Mei 2026
@@ -752,9 +752,9 @@ Base URL: `http://<host>:8080/api/v1`
 | `incidents` | SOS darurat (Jalur A) | semua |
 | `incident_reports` | Laporan non-darurat (Jalur B) | civilian, volunteer |
 | `incident_responses` | Dispatch respons | volunteer, agency_personnel |
-| `sos_strikes` | Audit log false alarm | — |
-| `m_ranks` | Master data rank XP | — |
-| `m_badges` | Master data badge | — |
+| `sos_strikes` | Audit log false alarm | - |
+| `m_ranks` | Master data rank XP | - |
+| `m_badges` | Master data badge | - |
 | `volunteer_reputation` | XP + rank relawan | volunteer |
 | `volunteer_certifications` | Sertifikat KYC relawan | volunteer |
 | `volunteer_badges_acquired` | Badge yang diperoleh | volunteer |
@@ -777,17 +777,17 @@ Base URL: `http://<host>:8080/api/v1`
   ```bash
   sudo docker compose -f infrastructure/docker-compose.yml up --build -d backend
   ```
-- [ ] **Isi `.env`** — `SUPERADMIN_EMAIL` dan `SUPERADMIN_PASS` harus diisi untuk seed superadmin
-- [ ] **Biodata Screen → API** — Wire `BiodataScreen` ke `POST /users/biodata`
-- [ ] **Profile Screen → API** — Wire `ProfileScreen` ke `GET /users/profile`
-- [ ] **Desktop Console → Admin endpoints** — Hubungkan halaman KYC, User Mgmt, Gamifikasi, Statistik ke endpoint `/admin/...`
+- [ ] **Isi `.env`** - `SUPERADMIN_EMAIL` dan `SUPERADMIN_PASS` harus diisi untuk seed superadmin
+- [ ] **Biodata Screen → API** - Wire `BiodataScreen` ke `POST /users/biodata`
+- [ ] **Profile Screen → API** - Wire `ProfileScreen` ke `GET /users/profile`
+- [ ] **Desktop Console → Admin endpoints** - Hubungkan halaman KYC, User Mgmt, Gamifikasi, Statistik ke endpoint `/admin/...`
 
 ### Prioritas Sedang
 
-- [ ] **Dispatch Relawan** — Halaman masih placeholder (Sprint B.4)
-- [ ] **Mobile Responder App** — Proyek baru `mobile-flutter-responder/` untuk role `agency_personnel`
-- [ ] **Audio Alarm** — `assets/audio/alarm.mp3` masih placeholder, ganti dengan file sirine sungguhan
-- [ ] **Refresh token** — Auto-refresh saat `access_token` expired
+- [ ] **Dispatch Relawan** - Halaman masih placeholder (Sprint B.4)
+- [ ] **Mobile Responder App** - Proyek baru `mobile-flutter-responder/` untuk role `agency_personnel`
+- [ ] **Audio Alarm** - `assets/audio/alarm.mp3` masih placeholder, ganti dengan file sirine sungguhan
+- [ ] **Refresh token** - Auto-refresh saat `access_token` expired
 
 ### Prioritas Rendah / Masa Depan
 

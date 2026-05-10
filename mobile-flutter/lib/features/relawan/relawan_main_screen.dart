@@ -516,8 +516,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                             children: [
                               Text(
                                 isOnDuty
-                                    ? 'ON DUTY — Siap Bertugas'
-                                    : 'OFF DUTY — Istirahat',
+                                    ? 'ON DUTY - Siap Bertugas'
+                                    : 'OFF DUTY - Istirahat',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: isOnDuty ? Colors.white : primaryText,

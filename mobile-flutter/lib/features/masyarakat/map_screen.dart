@@ -184,15 +184,15 @@ class _MapScreenState extends State<MapScreen>
         user.role == UserRole.relawan || user.volunteerStatus == 'approved';
     final isOnDuty = user.isAvailableForMission;
 
-    if (!isOnline) return '📵 Offline — Peta mungkin tidak tersedia';
+    if (!isOnline) return '📵 Offline - Peta mungkin tidak tersedia';
     if (isRelawan && isOnDuty && _nearbySOS.isNotEmpty) {
-      return '🟢 ON DUTY — Memantau ${_nearbySOS.length} SOS dalam 5KM';
+      return '🟢 ON DUTY - Memantau ${_nearbySOS.length} SOS dalam 5KM';
     }
     if (isRelawan && isOnDuty) {
-      return '🟢 ON DUTY — Tidak ada SOS aktif dalam 5KM';
+      return '🟢 ON DUTY - Tidak ada SOS aktif dalam 5KM';
     }
     if (isRelawan && !isOnDuty) {
-      return '⭕ OFF DUTY — Aktifkan di tab Operasi';
+      return '⭕ OFF DUTY - Aktifkan di tab Operasi';
     }
     if (_accuracy > 50) return '⚠️ Akurasi rendah: ±${_accuracy.round()}m';
     if (_addressLabel != null) return '📍 $_addressLabel';
@@ -530,7 +530,7 @@ class _MapScreenState extends State<MapScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${inc.typeEmoji} ${inc.typeLabel} — ${inc.distanceLabel} — Buka tab Operasi untuk terima misi',
+          '${inc.typeEmoji} ${inc.typeLabel} - ${inc.distanceLabel} - Buka tab Operasi untuk terima misi',
         ),
         action: SnackBarAction(label: 'OK', onPressed: () {}),
         duration: const Duration(seconds: 4),

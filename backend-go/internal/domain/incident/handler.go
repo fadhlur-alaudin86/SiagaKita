@@ -55,7 +55,7 @@ func (h *Handler) TriggerSOS(c *fiber.Ctx) error {
 	return utils.CreatedResponse(c, resp)
 }
 
-// PATCH /api/v1/incidents/:id/type — pilih tipe di grace period
+// PATCH /api/v1/incidents/:id/type - pilih tipe di grace period
 func (h *Handler) UpdateType(c *fiber.Ctx) error {
 	reporterID := c.Locals("userID").(string)
 	incidentID := c.Params("id")
@@ -79,7 +79,7 @@ func (h *Handler) UpdateType(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, fiber.Map{"updated": true, "message": "Tipe insiden diperbarui, SOS sedang disiarkan."})
 }
 
-// POST /api/v1/incidents/:id/broadcast — grace period timeout, tipe tetap 'unknown'
+// POST /api/v1/incidents/:id/broadcast - grace period timeout, tipe tetap 'unknown'
 func (h *Handler) Broadcast(c *fiber.Ctx) error {
 	reporterID := c.Locals("userID").(string)
 	incidentID := c.Params("id")
@@ -222,7 +222,7 @@ func (h *Handler) GetHistory(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, resp)
 }
 
-// GET /api/v1/incidents/all-active — untuk console desktop (agency/admin)
+// GET /api/v1/incidents/all-active - untuk console desktop (agency/admin)
 func (h *Handler) GetAllActive(c *fiber.Ctx) error {
 	incidents, err := h.svc.GetAllActive()
 	if err != nil {
@@ -265,7 +265,7 @@ func (h *Handler) Resolve(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, resp)
 }
 
-// POST /api/v1/reports — Jalur B laporan warga (multipart/form-data)
+// POST /api/v1/reports - Jalur B laporan warga (multipart/form-data)
 func (h *Handler) CreateReport(c *fiber.Ctx) error {
 	reporterID := c.Locals("userID").(string)
 
@@ -342,7 +342,7 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 	return utils.CreatedResponse(c, rep)
 }
 
-// POST /api/v1/reports/:id/cancel — membatalkan laporan warga
+// POST /api/v1/reports/:id/cancel - membatalkan laporan warga
 func (h *Handler) CancelReport(c *fiber.Ctx) error {
 	reporterID := c.Locals("userID").(string)
 	reportID := c.Params("id")
@@ -362,7 +362,7 @@ func (h *Handler) CancelReport(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, fiber.Map{"cancelled": true})
 }
 
-// GET /api/v1/reports/my — riwayat laporan milik user yang sedang login
+// GET /api/v1/reports/my - riwayat laporan milik user yang sedang login
 func (h *Handler) GetMyReports(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 	reports, err := h.svc.GetReportsByUser(userID)
@@ -455,7 +455,7 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 		roleKey := fmt.Sprintf("user:role:%s", userID)
 		role, _ := h.rdb.Get(ctx, roleKey).Result()
 		if role == "" {
-			// Cache belum ada — ambil dari DB dan simpan 1 jam
+			// Cache belum ada - ambil dari DB dan simpan 1 jam
 			h.svc.repo.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
 			if role != "" {
 				h.rdb.Set(ctx, roleKey, role, time.Hour)
@@ -472,7 +472,7 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 
 
 // GET /api/v1/incidents/nearby?lat=&lng=&radius=5
-// Hanya untuk volunteer — mengembalikan SOS aktif dalam radius tertentu.
+// Hanya untuk volunteer - mengembalikan SOS aktif dalam radius tertentu.
 func (h *Handler) GetNearby(c *fiber.Ctx) error {
 	latStr := c.Query("lat")
 	lngStr := c.Query("lng")

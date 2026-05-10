@@ -4,7 +4,7 @@ import "time"
 
 // ─── DB Models ────────────────────────────────────────────────────────────────
 
-// User adalah auth gateway — hanya menyimpan kredensial dan role.
+// User adalah auth gateway - hanya menyimpan kredensial dan role.
 // Profil lengkap ada di user_profiles (civilian/volunteer) atau
 // admin_profiles (admin) atau agency_personnels (agency_personnel).
 type User struct {

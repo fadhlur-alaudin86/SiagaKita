@@ -137,7 +137,7 @@ func main() {
 	auth.Post("/request-otp", otpHandler.RequestOTP)
 	auth.Post("/verify-otp", otpHandler.VerifyOTP)
 
-	// ── Users (protected — civilian/volunteer only) ────────────────────────────
+	// ── Users (protected - civilian/volunteer only) ────────────────────────────
 	users := v1.Group("/users", authMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db, rdb))
 	users.Post("/biodata", userHandler.SaveBiodata)
 	users.Get("/profile", userHandler.GetProfile)
@@ -154,7 +154,7 @@ func main() {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
-	// ── Incidents (protected — semua role yang sudah login) ───────────────────
+	// ── Incidents (protected - semua role yang sudah login) ───────────────────
 	incidents := v1.Group("/incidents", authMw)
 	incidents.Get("/active", incidentHandler.GetActive)
 	incidents.Get("/my-history", incidentHandler.GetHistory)
@@ -183,7 +183,7 @@ func main() {
 	telGroup.Put("/location", telemetryHandler.UpdateLocation)
 	telGroup.Post("/online-status", middleware.ConsoleOnly(), telemetryHandler.GetOnlineStatus)
 
-	// ── Admin (protected — AdminOnly / ConsoleOnly) ───────────────────────────
+	// ── Admin (protected - AdminOnly / ConsoleOnly) ───────────────────────────
 	admin := v1.Group("/admin", authMw)
 
 	// KYC Relawan
@@ -216,12 +216,12 @@ func main() {
 	// Statistik
 	admin.Get("/stats", middleware.ConsoleOnly(), adminHandler.GetStats)
 
-	// ── Agencies (protected — AgencyOnly) ─────────────────────────────────────
+	// ── Agencies (protected - AgencyOnly) ─────────────────────────────────────
 	agencies := v1.Group("/agencies", authMw)
 	agencies.Get("/me", middleware.AgencyOnly(), agencyHandler.GetMyProfile)
 	agencies.Post("/personnels", middleware.AgencyOnly(), agencyHandler.CreatePersonnel)
 
-	// ── SMS Fallback (API key protected — no JWT) ─────────────────────────────
+	// ── SMS Fallback (API key protected - no JWT) ─────────────────────────────
 	v1.Post("/incidents/sms-fallback",
 		middleware.APIKeyGateway(cfg),
 		telemetryHandler.SMSFallback,
@@ -274,7 +274,7 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 	pass := cfg.SuperAdminPass
 
 	if email == "" || pass == "" {
-		log.Println("[SuperAdmin] SUPERADMIN_EMAIL/PASS tidak diset di .env — skip seeding.")
+		log.Println("[SuperAdmin] SUPERADMIN_EMAIL/PASS tidak diset di .env - skip seeding.")
 		return nil
 	}
 
@@ -283,7 +283,7 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 	err := db.Where("role = 'superadmin' AND deleted_at IS NULL").First(&existing).Error
 
 	if err == nil {
-		// Superadmin sudah ada — update email/password jika berbeda
+		// Superadmin sudah ada - update email/password jika berbeda
 		hashed, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
 		if err != nil {
 			return err

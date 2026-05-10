@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-// ─── Incident (SOS Darurat — Jalur A) ─────────────────────────────────────────
+// ─── Incident (SOS Darurat - Jalur A) ─────────────────────────────────────────
 
 class IncidentModel {
   final String id;
@@ -126,7 +126,7 @@ class IncidentModel {
       status == 'active';
 }
 
-// ─── Report (Laporan Warga — Jalur B) ─────────────────────────────────────────
+// ─── Report (Laporan Warga - Jalur B) ─────────────────────────────────────────
 
 class ReportModel {
   final String id;

@@ -1,5 +1,5 @@
 -- ============================================================
--- SIAGAKITA — Drop & Recreate Schema (v3)
+-- SIAGAKITA - Drop & Recreate Schema (v3)
 -- Jalankan manual:
 --   sudo docker exec -i siagakita_postgres psql -U siagakita_admin -d siagakita < backend-go/migrations/003_schema_v3.sql
 -- PERINGATAN: Semua data akan terhapus.
@@ -77,7 +77,7 @@ CREATE TYPE public.response_status AS ENUM (
 );
 
 -- ============================================================
--- CORE: users (auth gateway — minimal)
+-- CORE: users (auth gateway - minimal)
 -- ============================================================
 CREATE TABLE public.users (
     id            uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -192,7 +192,7 @@ CREATE INDEX idx_incidents_reporter ON public.incidents(reporter_id);
 CREATE INDEX idx_incidents_status   ON public.incidents(status);
 
 -- ============================================================
--- INCIDENT REPORTS (Jalur B — non-darurat)
+-- INCIDENT REPORTS (Jalur B - non-darurat)
 -- ============================================================
 CREATE TABLE public.incident_reports (
     id            uuid DEFAULT gen_random_uuid() PRIMARY KEY,

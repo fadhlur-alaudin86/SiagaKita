@@ -1,5 +1,5 @@
 ===========================================================================
-  SIAGAKITA — DOKUMENTASI STRUKTUR FRONTEND (Flutter Mobile — Citizen/Volunteer)
+  SIAGAKITA - DOKUMENTASI STRUKTUR FRONTEND (Flutter Mobile - Citizen/Volunteer)
   Untuk referensi tim Backend & anggota baru
   Diperbarui: 4 Mei 2026
 ===========================================================================
@@ -9,13 +9,13 @@ CATATAN PENTING:
   Modul lain (Biodata, Map, Relawan) masih menggunakan data MOCK.
   Dokumentasi ini menjelaskan state terkini dan kebutuhan integrasi berikutnya.
 
-  PERUBAHAN TERBARU (9 Mei 2026 — Fitur Operasi Relawan Real-Time & Pemetaan):
+  PERUBAHAN TERBARU (9 Mei 2026 - Fitur Operasi Relawan Real-Time & Pemetaan):
   - MapScreen: polling lokasi 10s, reverse geocoding (Nominatim), marker SOS nearby, status transmisi.
   - RelawanMainScreen: Redesign total (XP bar, Duty toggle, radar SOS real-time, bottomsheet detail).
   - ProfileScreen: Reputasi Relawan (XP, level, progress) untuk volunteer approved.
   - Console: Auto-refresh data pada halaman SOS Aktif (15s) dan Laporan Masuk (30s).
   
-  PERUBAHAN SEBELUMNYA (4 Mei 2026 — Sprint Stabilisasi):
+  PERUBAHAN SEBELUMNYA (4 Mei 2026 - Sprint Stabilisasi):
   - Offline Mode: SessionService + ConnectivityService + _AppStartup auto-login.
   - SOS Anti-Gagal: grace period instan (UUID lokal), retry background 5 detik, badge status.
   - Profile Screen: NIK (bukan UUID), badge verif HP, tombol verifikasi identitas.
@@ -39,57 +39,57 @@ CATATAN PENTING:
 ===========================================================================
 
 lib/
-├── main.dart                         — Entry point + _AppStartup (auto-login via SessionService)
+├── main.dart                         - Entry point + _AppStartup (auto-login via SessionService)
 │
 ├── core/
 │   ├── models/
-│   │   └── user_model.dart           — Model UserModel + Enum UserRole; field nik, isPhoneVerified
+│   │   └── user_model.dart           - Model UserModel + Enum UserRole; field nik, isPhoneVerified
 │   ├── localization/
-│   │   └── app_localization.dart     — Kamus terjemahan ID→EN + extension .tr(context)
+│   │   └── app_localization.dart     - Kamus terjemahan ID→EN + extension .tr(context)
 │   ├── widgets/
-│   │   └── role_placeholder.dart     — Widget placeholder shared
+│   │   └── role_placeholder.dart     - Widget placeholder shared
 │   ├── services/
-│   │   ├── auth_service.dart         ★ — API client auth (register, OTP, login)
-│   │   ├── incident_service.dart     ★ — API client SOS (trigger, cancel, location)
-│   │   ├── location_service.dart     ★ — GPS wrapper (permission, get position)
-│   │   ├── user_service.dart         ★ — GET/PUT /users/profile, OTP phone request/verify
-│   │   ├── session_service.dart      ★ BARU — SharedPrefs: simpan/baca/hapus sesi lokal
-│   │   ├── connectivity_service.dart ★ BARU — Monitor online/offline (ValueNotifier<bool>)
-│   │   └── otp_service.dart          — WA OTP client (phone verification)
-│   └── router.dart                   — AppRouter: routing berdasarkan role + token
+│   │   ├── auth_service.dart         ★ - API client auth (register, OTP, login)
+│   │   ├── incident_service.dart     ★ - API client SOS (trigger, cancel, location)
+│   │   ├── location_service.dart     ★ - GPS wrapper (permission, get position)
+│   │   ├── user_service.dart         ★ - GET/PUT /users/profile, OTP phone request/verify
+│   │   ├── session_service.dart      ★ BARU - SharedPrefs: simpan/baca/hapus sesi lokal
+│   │   ├── connectivity_service.dart ★ BARU - Monitor online/offline (ValueNotifier<bool>)
+│   │   └── otp_service.dart          - WA OTP client (phone verification)
+│   └── router.dart                   - AppRouter: routing berdasarkan role + token
 │
 ├── features/
 │   ├── auth/
-│   │   ├── login_screen.dart         — Login → simpan sesi (SessionService) → MainScreen
-│   │   ├── register_screen.dart      — Register 2-step (Form → Email OTP)
-│   │   └── biodata_screen.dart       — Biodata kesehatan (POST /users/biodata) [API belum]
+│   │   ├── login_screen.dart         - Login → simpan sesi (SessionService) → MainScreen
+│   │   ├── register_screen.dart      - Register 2-step (Form → Email OTP)
+│   │   └── biodata_screen.dart       - Biodata kesehatan (POST /users/biodata) [API belum]
 │   │
-│   ├── masyarakat/                   — Fitur role Masyarakat & Relawan
-│   │   ├── main_screen.dart          — Bottom Nav; fetch profil (skip jika offline)
-│   │   ├── home_screen.dart          — SOS instan+retry, status koneksi, profil menu
-│   │   ├── guide_screen.dart         — Panduan Pertolongan Pertama (offline)
-│   │   ├── map_screen.dart           — Radar peta real-time (Lokasi & SOS nearby)
-│   │   ├── profile_screen.dart       — NIK, badge verif HP, Reputasi Relawan, logout + clearSession
-│   │   ├── edit_profile_screen.dart  — Edit profil (fix save) + OTP WA sebelum ubah nomor
-│   │   ├── settings_screen.dart      — Mode Gelap (Global), privasi, bahasa, notifikasi
-│   │   ├── about_screen.dart         — Informasi aplikasi (statis)
-│   │   ├── report_screen.dart        — Form laporan darurat (GPS + foto + audio)
-│   │   └── volunteer_registration_screen.dart — Daftar jadi relawan (MOCK)
+│   ├── masyarakat/                   - Fitur role Masyarakat & Relawan
+│   │   ├── main_screen.dart          - Bottom Nav; fetch profil (skip jika offline)
+│   │   ├── home_screen.dart          - SOS instan+retry, status koneksi, profil menu
+│   │   ├── guide_screen.dart         - Panduan Pertolongan Pertama (offline)
+│   │   ├── map_screen.dart           - Radar peta real-time (Lokasi & SOS nearby)
+│   │   ├── profile_screen.dart       - NIK, badge verif HP, Reputasi Relawan, logout + clearSession
+│   │   ├── edit_profile_screen.dart  - Edit profil (fix save) + OTP WA sebelum ubah nomor
+│   │   ├── settings_screen.dart      - Mode Gelap (Global), privasi, bahasa, notifikasi
+│   │   ├── about_screen.dart         - Informasi aplikasi (statis)
+│   │   ├── report_screen.dart        - Form laporan darurat (GPS + foto + audio)
+│   │   └── volunteer_registration_screen.dart - Daftar jadi relawan (MOCK)
 │   │
 │   ├── relawan/
-│   │   └── relawan_main_screen.dart  — Tactical Dashboard (XP bar, Radar SOS real-time, Duty toggle)
+│   │   └── relawan_main_screen.dart  - Tactical Dashboard (XP bar, Radar SOS real-time, Duty toggle)
 │   │
 │   ├── admin/
-│   │   └── admin_main_screen.dart    — Admin placeholder; logout + clearSession
+│   │   └── admin_main_screen.dart    - Admin placeholder; logout + clearSession
 │   │
 │   └── instansi/
-│       └── instansi_main_screen.dart — Instansi placeholder; logout + clearSession
+│       └── instansi_main_screen.dart - Instansi placeholder; logout + clearSession
 │
 └── components/
-    └── logo_siagakita.jpg            — Aset logo
+    └── logo_siagakita.jpg            - Aset logo
 
 CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop).
-         Role agency_personnel ada di mobile-flutter-responder/ (proyek BARU — belum dibuat).
+         Role agency_personnel ada di mobile-flutter-responder/ (proyek BARU - belum dibuat).
 
 ===========================================================================
 2. ROLE PENGGUNA (DIPERBARUI)
@@ -105,17 +105,17 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   civilian           | Masyarakat Umum           | Mobile Citizen App            | Daftar mandiri
 
   PENTING (UPDATE):
-  - "agency_responder" sudah TIDAK ADA — diganti dengan "agency" (akun instansi)
+  - "agency_responder" sudah TIDAK ADA - diganti dengan "agency" (akun instansi)
     dan "agency_personnel" (akun personel instansi).
   - Semua profil citizen/volunteer kini disimpan di tabel user_profiles (BUKAN users).
   - User dengan role admin/superadmin menyimpan nama di tabel admin_profiles.
-  - User dengan role agency tidak punya tabel profil terpisah — namanya ada di tabel agencies.
+  - User dengan role agency tidak punya tabel profil terpisah - namanya ada di tabel agencies.
   - User dengan role agency_personnel menyimpan data di tabel agency_personnels.
 
   ENDPOINT LOGIN SESUAI ROLE:
   - /auth/login           → civilian & volunteer (mobile citizen app)
   - /auth/console/login   → superadmin, admin, agency (desktop console)
-  - /auth/personnel/login → agency_personnel (mobile responder app — BARU)
+  - /auth/personnel/login → agency_personnel (mobile responder app - BARU)
 
   Response API login:
   {
@@ -136,7 +136,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   Untuk agency:             tidak dikembalikan (lihat data di tabel agencies).
 
 ===========================================================================
-3. ALUR NAVIGASI (Screen Flow — Mobile Citizen App)
+3. ALUR NAVIGASI (Screen Flow - Mobile Citizen App)
 ===========================================================================
 
   [App Launch]
@@ -149,7 +149,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
        │
        │  (Daftar di sini)
        ▼
-  RegisterScreen — 2 Langkah
+  RegisterScreen - 2 Langkah
     Step 0: Nama + Email + Password (dengan strength bar)
             → POST /auth/register → Kirim OTP ke email
     Step 1: Input OTP 6 digit (resend cooldown 60s)
@@ -168,7 +168,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
     │     └── HomeScreen (dengan GPS tracking SOS)
     └── role lain → Tampilkan error "Gunakan aplikasi yang sesuai"
 
-  [Verifikasi Nomor HP — dalam ProfileScreen, setelah login]
+  [Verifikasi Nomor HP - dalam ProfileScreen, setelah login]
     Isi nomor HP → POST /users/phone/request-otp → OTP via WhatsApp
     Input OTP → POST /users/phone/verify-otp → is_phone_verified = true di user_profiles
 
@@ -187,7 +187,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   Flow:
     1. Validasi form lokal
     2. POST /auth/login → return JWT langsung
-    3. LocationService.requestPermission() — minta izin GPS
+    3. LocationService.requestPermission() - minta izin GPS
     4. Navigate ke MainScreen dengan accessToken + userId
 
   API:
@@ -201,9 +201,9 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
 ─────────────────────────────────────────────────────────────
   Status: ✅ TERHUBUNG KE API
 
-  STEP 0 — Form Data Akun:
+  STEP 0 - Form Data Akun:
     Field: full_name, email, password (min 8 kar), repeat_password
-    Password Strength Bar — 3 segmen animasi
+    Password Strength Bar - 3 segmen animasi
     Resend OTP countdown: 60 detik
 
   PERUBAHAN BACKEND: Register kini membuat 2 baris secara transaksi:
@@ -216,7 +216,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
     Body: { "full_name": "...", "email": "...", "password": "..." }
     Response: { "message": "OTP dikirim ke email", "email": "..." }
 
-  STEP 1 — Verifikasi Email OTP:
+  STEP 1 - Verifikasi Email OTP:
     POST /api/v1/auth/verify-register-otp
     Body: { "email": "...", "otp_code": "123456" }
     Response: { "access_token": "...", "refresh_token": "...", "user": {...} }
@@ -227,7 +227,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
 ─────────────────────────────────────────────────────────────
 4.3 BIODATA SCREEN (features/auth/biodata_screen.dart)
 ─────────────────────────────────────────────────────────────
-  Status: 🟡 UI SELESAI — API BELUM TERHUBUNG
+  Status: 🟡 UI SELESAI - API BELUM TERHUBUNG
 
   PERUBAHAN: Data biodata kini disimpan di tabel user_profiles
   (bukan sebagian di users dan sebagian di user_medical_profiles).
@@ -250,7 +250,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
     }
 
 ─────────────────────────────────────────────────────────────
-4.4 HOME SCREEN — SOS BUTTON (features/masyarakat/home_screen.dart)
+4.4 HOME SCREEN - SOS BUTTON (features/masyarakat/home_screen.dart)
 ─────────────────────────────────────────────────────────────
   Status: ✅ TERHUBUNG KE API
 
@@ -282,7 +282,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
 ─────────────────────────────────────────────────────────────
 4.5 PROFILE SCREEN (features/masyarakat/profile_screen.dart)
 ─────────────────────────────────────────────────────────────
-  Status: 🟡 UI SELESAI — API BELUM TERHUBUNG
+  Status: 🟡 UI SELESAI - API BELUM TERHUBUNG
 
   PERUBAHAN: Response profile sekarang membaca dari user_profiles.
   Kolom sos_strike_count, is_sos_banned, banned_until kini ada di user_profiles.
@@ -324,12 +324,12 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
 ─────────────────────────────────────────────────────────────
 4.7 RELAWAN TACTICAL SCREEN (features/relawan/relawan_main_screen.dart)
 ─────────────────────────────────────────────────────────────
-  Status: 🟡 UI SELESAI — DATA MOCK
+  Status: 🟡 UI SELESAI - DATA MOCK
 
 ─────────────────────────────────────────────────────────────
 4.8 SETTINGS SCREEN (features/masyarakat/settings_screen.dart)
 ─────────────────────────────────────────────────────────────
-  Status: 🟡 UI SELESAI — API BELUM TERHUBUNG
+  Status: 🟡 UI SELESAI - API BELUM TERHUBUNG
   Lokal: Dark/Light mode, ganti bahasa ID/EN.
   Butuh API: Ganti password, Hapus akun.
 
@@ -346,12 +346,12 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   POST   | /api/v1/auth/register              | ★      | Buat akun civilian → kirim OTP
   POST   | /api/v1/auth/verify-register-otp   | ★      | Verifikasi OTP → JWT
   POST   | /api/v1/auth/login                 | ★      | civilian/volunteer → JWT
-  POST   | /api/v1/auth/console/login         | —      | admin/agency/superadmin → JWT
-  POST   | /api/v1/auth/personnel/login       | —      | agency_personnel → JWT (App baru)
+  POST   | /api/v1/auth/console/login         | -      | admin/agency/superadmin → JWT
+  POST   | /api/v1/auth/personnel/login       | -      | agency_personnel → JWT (App baru)
   POST   | /api/v1/auth/request-otp           | ★      | OTP WA (phone verification)
   POST   | /api/v1/auth/verify-otp            | ★      | Verifikasi OTP WA
 
-  PROFIL USER (protected — civilian/volunteer only)
+  PROFIL USER (protected - civilian/volunteer only)
   Method | Endpoint                           | Status | Keterangan
   -------|------------------------------------|---------|---------------------------------
   GET    | /api/v1/users/profile              | ○      | Profil dari user_profiles
@@ -359,25 +359,25 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   POST   | /api/v1/users/phone/request-otp    | ○      | OTP WA ke HP baru
   POST   | /api/v1/users/phone/verify-otp     | ○      | Konfirmasi OTP HP
 
-  INSIDEN (protected — semua role)
+  INSIDEN (protected - semua role)
   Method | Endpoint                           | Status | Keterangan
   -------|------------------------------------|---------|---------------------------------
   GET    | /api/v1/incidents/active           | ★      | Cek SOS aktif
   POST   | /api/v1/incidents/trigger          | ★      | Kirim SOS
   POST   | /api/v1/incidents/:id/cancel       | ★      | Batalkan SOS
   PUT    | /api/v1/incidents/:id/location     | ★      | Update GPS tiap 1 menit
-  POST   | /api/v1/incidents/:id/mark-false-alarm | —  | [ConsoleOnly] Tandai false alarm
-  POST   | /api/v1/incidents/:id/resolve      | —      | [ConsoleOnly] Selesaikan insiden
+  POST   | /api/v1/incidents/:id/mark-false-alarm | -  | [ConsoleOnly] Tandai false alarm
+  POST   | /api/v1/incidents/:id/resolve      | -      | [ConsoleOnly] Selesaikan insiden
 
-  LAPORAN WARGA — JALUR B
+  LAPORAN WARGA - JALUR B
   Method | Endpoint                           | Status | Keterangan
   -------|------------------------------------|---------|---------------------------------
   POST   | /api/v1/reports                    | ○      | Kirim laporan non-darurat
-  GET    | /api/v1/reports                    | —      | [ConsoleOnly] Daftar laporan
-  PATCH  | /api/v1/reports/:id/status         | —      | [ConsoleOnly] Update status
+  GET    | /api/v1/reports                    | -      | [ConsoleOnly] Daftar laporan
+  PATCH  | /api/v1/reports/:id/status         | -      | [ConsoleOnly] Update status
 
 ===========================================================================
-6. SKEMA DATABASE — TABEL TERKAIT MOBILE CITIZEN APP
+6. SKEMA DATABASE - TABEL TERKAIT MOBILE CITIZEN APP
 ===========================================================================
 
   users
@@ -412,7 +412,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   1. ROLE VALUES (TERBARU): superadmin | admin | agency | agency_personnel |
      volunteer | civilian. "agency_responder" sudah dihapus.
 
-  2. TABEL USERS SLIM: Jangan query nama, HP, atau data profil dari tabel users —
+  2. TABEL USERS SLIM: Jangan query nama, HP, atau data profil dari tabel users -
      tabel ini hanya berisi auth credentials. Semua data profil ada di user_profiles.
 
   3. REGISTER TRANSACTION: Register() membuat users + user_profiles dalam 1 transaksi.

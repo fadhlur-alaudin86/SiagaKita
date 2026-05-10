@@ -83,38 +83,38 @@ type MRank struct {
 
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
 
-// TriggerSOSRequest — Jalur A: hanya GPS wajib, tipe selalu mulai 'unknown'.
+// TriggerSOSRequest - Jalur A: hanya GPS wajib, tipe selalu mulai 'unknown'.
 type TriggerSOSRequest struct {
 	Latitude      float64 `json:"latitude"`
 	Longitude     float64 `json:"longitude"`
 	AddressDetail string  `json:"address_detail"`
 }
 
-// UploadSOSEvidenceRequest — dikirim SETELAH masuk fase broadcasting.
+// UploadSOSEvidenceRequest - dikirim SETELAH masuk fase broadcasting.
 // Berisi foto kamera depan (1 gambar) dan audio 5 detik sebagai bukti situasi.
 // Dikirim sebagai multipart/form-data.
 type UploadSOSEvidenceRequest struct {
 	IncidentID string `form:"incident_id"` // validasi bahwa incident milik reporter
 }
 
-// UpdateTypeRequest — dikirim dari grace period UI saat user memilih tipe.
+// UpdateTypeRequest - dikirim dari grace period UI saat user memilih tipe.
 type UpdateTypeRequest struct {
 	IncidentType string `json:"incident_type"` // 'medical'|'fire'|'crime'|'rescue'|'general'
 }
 
-// UpdateLocationRequest — dikirim tiap 1 menit selama SOS aktif.
+// UpdateLocationRequest - dikirim tiap 1 menit selama SOS aktif.
 type UpdateLocationRequest struct {
 	IncidentID string  `json:"incident_id"`
 	Latitude   float64 `json:"latitude"`
 	Longitude  float64 `json:"longitude"`
 }
 
-// MarkFalseAlarmRequest — admin menandai insiden sebagai false alarm.
+// MarkFalseAlarmRequest - admin menandai insiden sebagai false alarm.
 type MarkFalseAlarmRequest struct {
 	Reason string `json:"reason"`
 }
 
-// CreateReportRequest — Jalur B: laporan warga non-darurat (multipart/form-data).
+// CreateReportRequest - Jalur B: laporan warga non-darurat (multipart/form-data).
 type CreateReportRequest struct {
 	IncidentType string  `form:"incident_type"` // wajib
 	Latitude     float64 `form:"latitude"`
@@ -131,7 +131,7 @@ type TriggerSOSResponse struct {
 	Message    string `json:"message"`
 }
 
-// ActiveIncidentResponse — data SOS aktif milik reporter.
+// ActiveIncidentResponse - data SOS aktif milik reporter.
 type ActiveIncidentResponse struct {
 	IncidentID         string  `json:"incident_id"`
 	Status             string  `json:"status"`
@@ -142,7 +142,7 @@ type ActiveIncidentResponse struct {
 	ReporterTrustLabel string  `json:"reporter_trust_label"`
 }
 
-// AllActiveIncidentResponse — data SOS aktif LENGKAP untuk console desktop (JOIN ke users & profiles).
+// AllActiveIncidentResponse - data SOS aktif LENGKAP untuk console desktop (JOIN ke users & profiles).
 type AllActiveIncidentResponse struct {
 	ID                       string         `json:"id"`
 	ReporterID               string         `json:"reporter_id"`
@@ -185,7 +185,7 @@ type FalseAlarmResponse struct {
 	Message          string `json:"message"`
 }
 
-// NearbyIncidentResponse — SOS aktif dalam radius tertentu dari posisi relawan.
+// NearbyIncidentResponse - SOS aktif dalam radius tertentu dari posisi relawan.
 type NearbyIncidentResponse struct {
 	ID                 string   `json:"id"`
 	IncidentType       string   `json:"incident_type"`
@@ -198,7 +198,7 @@ type NearbyIncidentResponse struct {
 	DistanceKm         float64  `json:"distance_km"`
 }
 
-// AcceptSOSResponse — response setelah relawan menerima SOS.
+// AcceptSOSResponse - response setelah relawan menerima SOS.
 type AcceptSOSResponse struct {
 	Accepted   bool   `json:"accepted"`
 	IncidentID string `json:"incident_id"`

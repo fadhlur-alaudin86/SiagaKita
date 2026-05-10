@@ -125,7 +125,7 @@ func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
 			continue
 		}
 
-		// Skip PING heartbeat events — hanya untuk keep-alive, tidak perlu diproses
+		// Skip PING heartbeat events - hanya untuk keep-alive, tidak perlu diproses
 		if msg.Event == "PING" {
 			continue
 		}
@@ -308,7 +308,7 @@ func (h *Handler) broadcastSOS(incidentID string) {
 	_, _ = fmt.Sscanf(vals["lng"], "%f", &lng)
 	reporterID := vals["reporter_id"]
 
-	// 3. GEORADIUS — find volunteers within 5 km
+	// 3. GEORADIUS - find volunteers within 5 km
 	volunteers, err := h.rdb.GeoRadius(ctx, relawanGeoKey, lng, lat, &redis.GeoRadiusQuery{ //nolint:staticcheck
 		Radius:   5,
 		Unit:     "km",
