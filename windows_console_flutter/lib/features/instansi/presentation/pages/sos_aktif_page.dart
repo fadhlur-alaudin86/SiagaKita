@@ -37,7 +37,6 @@ class _SosAktifPageState extends State<SosAktifPage> {
   bool _isPlaying = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
-  String _selectedResponder = 'Agency 1'; // Mock for dispatch
 
   @override
   void initState() {
@@ -56,6 +55,26 @@ class _SosAktifPageState extends State<SosAktifPage> {
       } else if (msg.event == WsEvent.sosCancelled ||
           msg.event == WsEvent.connected) {
         _load();
+      } else if (msg.event == WsEvent.locationUpdate) {
+        final incId = msg.payload['incident_id']?.toString() ?? '';
+        final lat = (msg.payload['latitude'] as num?)?.toDouble();
+        final lng = (msg.payload['longitude'] as num?)?.toDouble();
+        final updatedStr = msg.payload['updated_at'] as String?;
+        if (incId.isNotEmpty && lat != null && lng != null) {
+          setState(() {
+            final idx = _incidents.indexWhere((i) => i.id == incId);
+            if (idx >= 0) {
+              _incidents[idx] = _incidents[idx].copyWith(
+                latitude: lat,
+                longitude: lng,
+                updatedAt: updatedStr != null ? DateTime.tryParse(updatedStr) : null,
+              );
+              if (_selected?.id == incId) {
+                _selected = _incidents[idx];
+              }
+            }
+          });
+        }
       }
     });
     // Refresh data setiap 15 detik agar update status (handled, resolved, dll) langsung terlihat
@@ -703,78 +722,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
             ),
             const SizedBox(height: 12),
 
-            if (inc.status != 'handled')
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Tugaskan Personil:',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedResponder,
-                          dropdownColor: const Color(0xFF1A2035),
-                          style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                            ),
-                          ),
-                          items: ['Agency 1', 'Relawan A', 'Relawan B']
-                              .map(
-                                (e) =>
-                                    DropdownMenuItem(value: e, child: Text(e)),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _selectedResponder = v!),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        onPressed: () {
-                          _showSnack(
-                            'Personil ditugaskan (Simulasi)',
-                            Colors.blue,
-                          );
-                          // real api update status to handled
-                        },
-                        child: const Text(
-                          'Tugaskan',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.orange,
-                        side: const BorderSide(color: Colors.orange),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      icon: const Icon(
-                        Icons.report_gmailerrorred_outlined,
-                        size: 18,
-                      ),
-                      label: const Text('False Alarm'),
-                      onPressed: _markFalseAlarm,
-                    ),
-                  ),
-                ],
-              )
-            else
+            if (inc.status == 'broadcasting' || inc.status == 'grace_period')
               Row(
                 children: [
                   Expanded(
@@ -800,26 +748,97 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     flex: 2,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Colors.grey, // Disabled per requirement
-                        foregroundColor: Colors.white54,
+                        backgroundColor: Colors.blue,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon: const Icon(Icons.info_outline, size: 18),
+                      icon: const Icon(Icons.handshake, size: 18),
                       label: const Text(
-                        'MENUNGGU BUKTI',
+                        'TANGANI',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                           letterSpacing: 0.5,
                         ),
                       ),
-                      onPressed: null,
+                      onPressed: () async {
+                        final ok = await IncidentApiService.agencyHandle(widget.token, inc.id);
+                        if (ok && mounted) {
+                          _showSnack('Status ditangani', Colors.blue);
+                          _load();
+                        }
+                      },
                     ),
                   ),
                 ],
+              )
+            else if (inc.agencyStatus == 'handling')
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.check_circle, size: 18),
+                  label: const Text(
+                    'SELESAIKAN',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  onPressed: () async {
+                     final ok = await IncidentApiService.resolve(widget.token, inc.id);
+                     if (ok && mounted) {
+                         _showSnack('Insiden diselesaikan', Colors.green);
+                         _load();
+                     }
+                  },
+                ),
+              )
+            else if (inc.handledByAgencyId != null && inc.handledByAgencyId!.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.business, color: Colors.white54, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Sedang ditangani instansi lain',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              )
+            else if (inc.status == 'handled' && (inc.agencyStatus == null || inc.agencyStatus == 'pending'))
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.directions_run, color: Colors.blue, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Sedang ditangani relawan',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ],
+                ),
               ),
           ],
         ),

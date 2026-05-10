@@ -17,7 +17,8 @@ class ApiConstants {
   static String incidentDetail(String id) => '$baseUrl/incidents/$id';
   static String incidentMarkFalseAlarm(String id) =>
       '$baseUrl/incidents/$id/mark-false-alarm';
-  static String incidentResolve(String id) => '$baseUrl/incidents/$id/resolve';
+  static String incidentResolve(String id) => '$baseUrl/incidents/$id/agency-resolve';
+  static String incidentAgencyHandle(String id) => '$baseUrl/incidents/$id/agency-handle';
   static String incidentType(String id) => '$baseUrl/incidents/$id/type';
 
   // Reports (Jalur B)

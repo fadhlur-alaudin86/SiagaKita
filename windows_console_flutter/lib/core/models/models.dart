@@ -11,6 +11,8 @@ class IncidentModel {
   final String? allergies;
   final String incidentType;
   final String status;
+  final String? agencyStatus;
+  final String? handledByAgencyId;
   final double latitude;
   final double longitude;
   final String trustLabel; // 'verified' | 'standard' | 'unverified'
@@ -36,6 +38,8 @@ class IncidentModel {
     this.allergies,
     required this.incidentType,
     required this.status,
+    this.agencyStatus,
+    this.handledByAgencyId,
     required this.latitude,
     required this.longitude,
     required this.trustLabel,
@@ -63,9 +67,13 @@ class IncidentModel {
     allergies: json['allergies'] as String?,
     incidentType: json['incident_type'] as String? ?? 'unknown',
     status: json['status'] as String? ?? 'broadcasting',
+    agencyStatus: json['agency_status'] as String?,
+    handledByAgencyId: json['handled_by_agency_id'] as String?,
     latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
     longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-    trustLabel: json['reporter_trust_label'] as String? ?? 'standard',
+    trustLabel: ((json['is_nik_verified'] as bool? ?? false) && (json['is_phone_verified'] as bool? ?? false)) 
+        ? 'verified' 
+        : (json['reporter_trust_label'] as String? ?? 'standard'),
     addressDetail: json['address_detail'] as String?,
     isNikVerified: json['is_nik_verified'] as bool? ?? false,
     isPhoneVerified: json['is_phone_verified'] as bool? ?? false,
@@ -124,6 +132,40 @@ class IncidentModel {
       status == 'broadcasting' ||
       status == 'grace_period' ||
       status == 'active';
+
+  IncidentModel copyWith({
+    double? latitude,
+    double? longitude,
+    DateTime? updatedAt,
+  }) {
+    return IncidentModel(
+      id: id,
+      reporterId: reporterId,
+      reporterName: reporterName,
+      reporterPhone: reporterPhone,
+      bloodType: bloodType,
+      allergies: allergies,
+      incidentType: incidentType,
+      status: status,
+      agencyStatus: agencyStatus,
+      handledByAgencyId: handledByAgencyId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      trustLabel: trustLabel,
+      addressDetail: addressDetail,
+      isNikVerified: isNikVerified,
+      isPhoneVerified: isPhoneVerified,
+      dob: dob,
+      domicile: domicile,
+      bio: bio,
+      emergencyContact: emergencyContact,
+      photoPaths: photoPaths,
+      audioPath: audioPath,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      completedAt: completedAt,
+    );
+  }
 }
 
 // ─── Report (Laporan Warga - Jalur B) ─────────────────────────────────────────
@@ -666,5 +708,29 @@ class AdminModel {
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
         DateTime.now(),
+  );
+}
+
+class BadgeModel {
+  final String id;
+  final String badgeName;
+  final String description;
+  final String iconUrl;
+  final DateTime createdAt;
+
+  const BadgeModel({
+    required this.id,
+    required this.badgeName,
+    required this.description,
+    required this.iconUrl,
+    required this.createdAt,
+  });
+
+  factory BadgeModel.fromJson(Map<String, dynamic> json) => BadgeModel(
+    id: json['id'] as String? ?? '',
+    badgeName: json['badge_name'] as String? ?? '',
+    description: json['description'] as String? ?? '',
+    iconUrl: json['icon_url'] as String? ?? '',
+    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
   );
 }

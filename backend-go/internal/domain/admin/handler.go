@@ -1,8 +1,13 @@
 package admin
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 
+	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,10 +16,11 @@ import (
 // Handler holds HTTP handlers for the admin domain.
 type Handler struct {
 	svc *Service
+	cfg *config.Config
 }
 
-func NewHandler(svc *Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc *Service, cfg *config.Config) *Handler {
+	return &Handler{svc: svc, cfg: cfg}
 }
 
 // ─── KYC Relawan ──────────────────────────────────────────────────────────────
@@ -275,10 +281,38 @@ func (h *Handler) GetBadges(c *fiber.Ctx) error {
 
 // POST /api/v1/admin/badges  [AdminOnly]
 func (h *Handler) CreateBadge(c *fiber.Ctx) error {
-	var req BadgeRequest
-	if err := c.BodyParser(&req); err != nil {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	form, err := c.MultipartForm()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Form tidak valid")
 	}
+
+	req := BadgeRequest{}
+	if names := form.Value["badge_name"]; len(names) > 0 {
+		req.BadgeName = names[0]
+	}
+	if descs := form.Value["description"]; len(descs) > 0 {
+		req.Description = descs[0]
+	}
+
+	if icons := form.File["icon"]; len(icons) > 0 {
+		fh := icons[0]
+		if fh.Size <= 5<<20 {
+			ext := filepath.Ext(fh.Filename)
+			now := time.Now()
+			dir := filepath.Join(h.cfg.UploadDir, "gamification", "badges")
+			_ = os.MkdirAll(dir, 0755)
+			fileName := fmt.Sprintf("badge_%d%s", now.UnixNano(), ext)
+			dst := filepath.Join(dir, fileName)
+			if err := c.SaveFile(fh, dst); err == nil {
+				req.IconURL = fmt.Sprintf("%s/gamification/badges/%s", h.cfg.UploadBaseURL, fileName)
+			}
+		}
+	}
+
+	if req.BadgeName == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Nama badge wajib diisi")
+	}
+
 	badge, err := h.svc.CreateBadge(&req)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
@@ -289,10 +323,37 @@ func (h *Handler) CreateBadge(c *fiber.Ctx) error {
 // PUT /api/v1/admin/badges/:id  [AdminOnly]
 func (h *Handler) UpdateBadge(c *fiber.Ctx) error {
 	id := c.Params("id")
-	var req BadgeRequest
-	if err := c.BodyParser(&req); err != nil {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	form, err := c.MultipartForm()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Form tidak valid")
 	}
+
+	req := BadgeRequest{}
+	if names := form.Value["badge_name"]; len(names) > 0 {
+		req.BadgeName = names[0]
+	}
+	if descs := form.Value["description"]; len(descs) > 0 {
+		req.Description = descs[0]
+	}
+	if iconUrls := form.Value["icon_url"]; len(iconUrls) > 0 {
+		req.IconURL = iconUrls[0] // fallback if no file is uploaded
+	}
+
+	if icons := form.File["icon"]; len(icons) > 0 {
+		fh := icons[0]
+		if fh.Size <= 5<<20 {
+			ext := filepath.Ext(fh.Filename)
+			now := time.Now()
+			dir := filepath.Join(h.cfg.UploadDir, "gamification", "badges")
+			_ = os.MkdirAll(dir, 0755)
+			fileName := fmt.Sprintf("badge_%d%s", now.UnixNano(), ext)
+			dst := filepath.Join(dir, fileName)
+			if err := c.SaveFile(fh, dst); err == nil {
+				req.IconURL = fmt.Sprintf("%s/gamification/badges/%s", h.cfg.UploadBaseURL, fileName)
+			}
+		}
+	}
+
 	badge, err := h.svc.UpdateBadge(id, &req)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())

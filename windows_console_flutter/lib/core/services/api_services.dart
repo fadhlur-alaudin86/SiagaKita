@@ -48,7 +48,15 @@ class IncidentApiService {
     return resp.statusCode == 200;
   }
 
-  // ─── Resolve ──────────────────────────────────────────────────────────────
+  // ─── Resolve / Handle ───────────────────────────────────────────────────────
+
+  static Future<bool> agencyHandle(String token, String id) async {
+    final resp = await http.post(
+      Uri.parse(ApiConstants.incidentAgencyHandle(id)),
+      headers: AuthService.headers(token),
+    );
+    return resp.statusCode == 200;
+  }
 
   static Future<bool> resolve(String token, String id) async {
     final resp = await http.post(
@@ -276,6 +284,80 @@ class AdminApiService {
   static Future<bool> deleteRank(String token, String id) async {
     final resp = await http.delete(
       Uri.parse(ApiConstants.adminRankDetail(id)),
+      headers: AuthService.headers(token),
+    );
+    return resp.statusCode == 200;
+  }
+
+  // ─── Badges (Gamifikasi) ──────────────────────────────────────────────────
+
+  static Future<List<BadgeModel>> getBadges(String token) async {
+    final resp = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/admin/badges'),
+      headers: AuthService.headers(token),
+    );
+    if (resp.statusCode != 200) return [];
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final data = body['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => BadgeModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  static Future<bool> createBadge(
+    String token,
+    String name,
+    String desc,
+    List<int>? fileBytes,
+    String? fileName,
+  ) async {
+    final req = http.MultipartRequest(
+      'POST',
+      Uri.parse('${ApiConstants.baseUrl}/admin/badges'),
+    );
+    req.headers.addAll(AuthService.headers(token));
+    req.fields['badge_name'] = name;
+    req.fields['description'] = desc;
+
+    if (fileBytes != null && fileName != null) {
+      req.files.add(
+        http.MultipartFile.fromBytes('icon', fileBytes, filename: fileName),
+      );
+    }
+    final resp = await req.send();
+    return resp.statusCode == 200 || resp.statusCode == 201;
+  }
+
+  static Future<bool> updateBadge(
+    String token,
+    String id,
+    String name,
+    String desc,
+    String existingIconUrl,
+    List<int>? fileBytes,
+    String? fileName,
+  ) async {
+    final req = http.MultipartRequest(
+      'PUT',
+      Uri.parse('${ApiConstants.baseUrl}/admin/badges/$id'),
+    );
+    req.headers.addAll(AuthService.headers(token));
+    req.fields['badge_name'] = name;
+    req.fields['description'] = desc;
+    req.fields['icon_url'] = existingIconUrl;
+
+    if (fileBytes != null && fileName != null) {
+      req.files.add(
+        http.MultipartFile.fromBytes('icon', fileBytes, filename: fileName),
+      );
+    }
+    final resp = await req.send();
+    return resp.statusCode == 200;
+  }
+
+  static Future<bool> deleteBadge(String token, String id) async {
+    final resp = await http.delete(
+      Uri.parse('${ApiConstants.baseUrl}/admin/badges/$id'),
       headers: AuthService.headers(token),
     );
     return resp.statusCode == 200;

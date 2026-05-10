@@ -71,7 +71,7 @@ func main() {
 
 	// Admin domain
 	adminSvc := adminDomain.NewService(db)
-	adminHandler := adminDomain.NewHandler(adminSvc)
+	adminHandler := adminDomain.NewHandler(adminSvc, cfg)
 
 	// Agency domain
 	agencyRepo := agencyDomain.NewRepository(db)
