@@ -54,20 +54,38 @@ func (r *Repository) MarkResolved(id string) (*Incident, error) {
 }
 
 // MarkCancelled memperbarui status insiden menjadi 'cancel' (dibatalkan user).
-// Hanya bisa dilakukan jika status masih 'grace_period' atau 'broadcasting'.
-// Status 'handled', 'resolved', 'false_alarm' terkunci - tidak bisa dibatalkan user.
+// Bisa dilakukan jika status masih 'grace_period', 'broadcasting', atau 'handled'.
 func (r *Repository) MarkCancelled(id string) error {
-	db := r.db.Model(&Incident{}).
-		Where("id = ? AND status IN (?, ?)", id, "grace_period", "broadcasting").
-		Updates(map[string]interface{}{"status": "cancel", "completed_at": time.Now(), "updated_at": time.Now()})
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		now := time.Now()
+		// 1. Update incident
+		db := tx.Model(&Incident{}).
+			Where("id = ? AND status IN (?, ?, ?)", id, "grace_period", "broadcasting", "handled").
+			Updates(map[string]interface{}{
+				"status":        "cancel",
+				"agency_status": "cancelled", // Supaya instansi tahu ini dibatalkan
+				"completed_at":  now,
+				"updated_at":    now,
+			})
 
-	if db.Error != nil {
-		return db.Error
-	}
-	if db.RowsAffected == 0 {
-		return errors.New("conflict: incident cannot be cancelled at its current status")
-	}
-	return nil
+		if db.Error != nil {
+			return db.Error
+		}
+		if db.RowsAffected == 0 {
+			return errors.New("conflict: incident cannot be cancelled at its current status")
+		}
+
+		// 2. Cancel all active incident responses
+		if err := tx.Model(&IncidentResponse{}).
+			Where("incident_id = ? AND status IN (?, ?)", id, "en_route", "waiting_review").
+			Updates(map[string]interface{}{
+				"status": "canceled",
+			}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 // UploadEvidence menyimpan URL foto dan audio bukti situasi SOS pasca broadcasting.
