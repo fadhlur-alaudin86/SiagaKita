@@ -113,6 +113,13 @@ func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, status, err.Error())
 	}
 
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "SOS_CANCELLED",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+		},
+	})
+
 	return utils.SuccessResponse(c, fiber.Map{"cancelled": true})
 }
 
@@ -195,6 +202,16 @@ func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "LOCATION_UPDATE",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+			"latitude":    req.Latitude,
+			"longitude":   req.Longitude,
+			"updated_at":  time.Now().Format(time.RFC3339),
+		},
+	})
+
 	return utils.SuccessResponse(c, fiber.Map{"updated": true})
 }
 
@@ -248,6 +265,13 @@ func (h *Handler) MarkFalseAlarm(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
+
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "SOS_STATUS_UPDATE",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+		},
+	})
 
 	return utils.SuccessResponse(c, resp)
 }
@@ -470,6 +494,25 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 	log.Printf("[IncidentHandler] REST-triggered SOS broadcast: incident %s → %d console users", incidentID, sent)
 }
 
+func (h *Handler) broadcastEventToAgencies(msg hub.Message) {
+	if h.hub == nil {
+		return
+	}
+	ctx := context.Background()
+	for _, userID := range h.hub.OnlineUsers() {
+		roleKey := fmt.Sprintf("user:role:%s", userID)
+		role, _ := h.rdb.Get(ctx, roleKey).Result()
+		if role == "" {
+			h.svc.repo.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
+			if role != "" {
+				h.rdb.Set(ctx, roleKey, role, time.Hour)
+			}
+		}
+		if role == "agency" || role == "admin" || role == "superadmin" {
+			_ = h.hub.SendToUser(userID, msg)
+		}
+	}
+}
 
 // GET /api/v1/incidents/nearby?lat=&lng=&radius=5
 // Hanya untuk volunteer - mengembalikan SOS aktif dalam radius tertentu.
@@ -517,6 +560,13 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusConflict, err.Error())
 	}
 
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "SOS_STATUS_UPDATE",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+		},
+	})
+
 	return utils.SuccessResponse(c, result)
 }
 
@@ -551,6 +601,14 @@ func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
 	if err := h.svc.AgencyHandleSOS(incidentID, agencyID); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal menangani SOS: "+err.Error())
 	}
+
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "SOS_STATUS_UPDATE",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+		},
+	})
+
 	return utils.SuccessResponse(c, fiber.Map{"message": "SOS sekarang ditangani instansi."})
 }
 
@@ -590,6 +648,13 @@ func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "SOS_STATUS_UPDATE",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+		},
+	})
+
 	return utils.SuccessResponse(c, fiber.Map{"message": "Bukti berhasil diunggah. Menunggu review instansi."})
 }
 
@@ -610,6 +675,13 @@ func (h *Handler) AgencyReviewVolunteer(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "SOS_STATUS_UPDATE",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+		},
+	})
+
 	return utils.SuccessResponse(c, resp)
 }
 
@@ -620,6 +692,14 @@ func (h *Handler) AgencyResolveSOS(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
+
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "SOS_STATUS_UPDATE",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+		},
+	})
+
 	return utils.SuccessResponse(c, resp)
 }
 

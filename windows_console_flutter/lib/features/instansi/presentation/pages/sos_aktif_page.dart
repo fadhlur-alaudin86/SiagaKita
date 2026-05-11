@@ -53,6 +53,8 @@ class _SosAktifPageState extends State<SosAktifPage> {
         AudioService.playAlarm();
         _load();
       } else if (msg.event == WsEvent.sosCancelled ||
+          msg.event == WsEvent.rescueAccepted ||
+          msg.event == WsEvent.sosStatusUpdate ||
           msg.event == WsEvent.connected) {
         _load();
       } else if (msg.event == WsEvent.locationUpdate) {

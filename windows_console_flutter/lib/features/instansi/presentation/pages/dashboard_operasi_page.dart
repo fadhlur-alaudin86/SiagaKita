@@ -32,21 +32,15 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
     super.initState();
     _load();
     _wsSub = widget.ws.eventStream.listen((msg) {
-      if (msg.event == WsEvent.incomingEmergency && mounted) {
+      if (!mounted) return;
+      if (msg.event == WsEvent.incomingEmergency) {
         AudioService.playAlarm();
-        setState(() {
-          _recentSOS = widget.ws.liveIncidents;
-          _stats = StatsModel(
-            totalSOS: _stats.totalSOS + 1,
-            totalResolved: _stats.totalResolved,
-            avgResponseMinutes: _stats.avgResponseMinutes,
-            falseAlarmRate: _stats.falseAlarmRate,
-            activeVolunteers: _stats.activeVolunteers,
-            byType: _stats.byType,
-            byStatus: _stats.byStatus,
-            monthly: _stats.monthly,
-          );
-        });
+        _load();
+      } else if (msg.event == WsEvent.sosCancelled ||
+          msg.event == WsEvent.rescueAccepted ||
+          msg.event == WsEvent.sosStatusUpdate ||
+          msg.event == WsEvent.connected) {
+        _load();
       }
     });
   }

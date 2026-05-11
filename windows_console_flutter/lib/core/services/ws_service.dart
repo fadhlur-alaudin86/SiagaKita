@@ -15,6 +15,7 @@ enum WsEvent {
   rescueAccepted,
   locationUpdate,
   volunteerLocationUpdate,
+  sosStatusUpdate,
   connected, // New event for reconnection
   unknown,
 }
@@ -33,6 +34,7 @@ class WsMessage {
       'RESCUE_ACCEPTED' => WsEvent.rescueAccepted,
       'LOCATION_UPDATE' => WsEvent.locationUpdate,
       'VOLUNTEER_LOCATION_UPDATE' => WsEvent.volunteerLocationUpdate,
+      'SOS_STATUS_UPDATE' => WsEvent.sosStatusUpdate,
       _ => WsEvent.unknown,
     };
     return WsMessage(
@@ -112,6 +114,7 @@ class WsService extends ChangeNotifier {
         case WsEvent.rescueAccepted:
         case WsEvent.locationUpdate:
         case WsEvent.volunteerLocationUpdate:
+        case WsEvent.sosStatusUpdate:
         case WsEvent.connected:
         case WsEvent.unknown:
           break;
