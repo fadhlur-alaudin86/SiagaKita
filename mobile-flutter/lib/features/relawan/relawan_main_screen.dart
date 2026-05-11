@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
+import 'relawan_history_screen.dart';
 
 class RelawanMainScreen extends StatefulWidget {
   final String accessToken;
@@ -666,7 +667,14 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   if (_missionHistory.length > 5)
                     TextButton(
                       onPressed: () {
-                        // TODO: Navigate to full history page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RelawanHistoryScreen(
+                              accessToken: widget.accessToken,
+                            ),
+                          ),
+                        );
                       },
                       child: const Text('Lihat semua riwayat →'),
                     ),
