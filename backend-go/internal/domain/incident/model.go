@@ -160,6 +160,7 @@ type AllActiveIncidentResponse struct {
 	AddressDetail            *string        `json:"address_detail,omitempty"`
 	ReporterTrustLabel       string         `json:"reporter_trust_label"`
 	CreatedAt                time.Time      `json:"created_at"`
+	UpdatedAt                time.Time      `json:"updated_at"`
 	CompletedAt              *time.Time     `json:"completed_at,omitempty"`
 	IsNikVerified            bool           `json:"is_nik_verified"`
 	IsPhoneVerified          bool           `json:"is_phone_verified"`

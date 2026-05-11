@@ -148,13 +148,13 @@ class _UserDetailPageState extends State<UserDetailPage>
     final isBanned = d.isSosBanned;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF111625),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF1A2035),
         elevation: 0,
         title: Text(
           'Detail: ${d.fullName ?? d.email}',
-          style: const TextStyle(fontSize: 15),
+          style: const TextStyle(fontSize: 15, color: Colors.white),
         ),
         actions: [
           Container(

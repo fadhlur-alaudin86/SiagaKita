@@ -150,6 +150,7 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 			i.address_detail,
 			i.reporter_trust_label,
 			i.created_at,
+			i.updated_at,
 			i.completed_at,
 			CASE WHEN up.nik_verification_status = 'approved' THEN true ELSE false END AS is_nik_verified,
 			up.is_phone_verified,
