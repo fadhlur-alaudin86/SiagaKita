@@ -13,6 +13,7 @@ class IncidentModel {
   final String status;
   final String? agencyStatus;
   final String? handledByAgencyId;
+  final String? volunteerResponseStatus;
   final double latitude;
   final double longitude;
   final String trustLabel; // 'verified' | 'standard' | 'unverified'
@@ -40,6 +41,7 @@ class IncidentModel {
     required this.status,
     this.agencyStatus,
     this.handledByAgencyId,
+    this.volunteerResponseStatus,
     required this.latitude,
     required this.longitude,
     required this.trustLabel,
@@ -69,6 +71,7 @@ class IncidentModel {
     status: json['status'] as String? ?? 'broadcasting',
     agencyStatus: json['agency_status'] as String?,
     handledByAgencyId: json['handled_by_agency_id'] as String?,
+    volunteerResponseStatus: json['volunteer_response_status'] as String?,
     latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
     longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     trustLabel: ((json['is_nik_verified'] as bool? ?? false) && (json['is_phone_verified'] as bool? ?? false)) 

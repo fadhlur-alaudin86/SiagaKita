@@ -159,7 +159,8 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 			up.bio AS reporter_bio,
 			(SELECT contact_name || ' (' || contact_phone || ')' FROM emergency_contacts ec WHERE ec.user_id = i.reporter_id AND ec.deleted_at IS NULL LIMIT 1) AS reporter_emergency_contact,
 			i.photo_paths,
-			i.audio_path
+			i.audio_path,
+			(SELECT status FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS volunteer_response_status
 		FROM incidents i
 		LEFT JOIN users u ON u.id = i.reporter_id
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
@@ -275,7 +276,7 @@ func (r *Repository) GetStrikeCount(userID string) (int, error) {
 
 func (r *Repository) CreateResponse(resp *IncidentResponse) error {
 	now := time.Now()
-	resp.AcceptedAt = &now
+	resp.AcceptedAt = now
 	return r.db.Create(resp).Error
 }
 
@@ -340,7 +341,9 @@ func (r *Repository) FindNearby(lat, lng, radiusKm float64) ([]NearbyIncidentRes
 					cos(radians(longitude) - radians($2)) +
 					sin(radians($1)) * sin(radians(latitude)))
 				)
-			) AS distance_km
+			) AS distance_km,
+			photo_paths,
+			audio_path
 		FROM incidents
 		WHERE status NOT IN ('resolved', 'false_alarm', 'cancel')
 		  AND (
@@ -380,8 +383,8 @@ func (r *Repository) AcceptIncident(incidentID, volunteerID string) (*IncidentRe
 		resp = IncidentResponse{
 			IncidentID:  incidentID,
 			ResponderID: volunteerID,
-			Status:      "en_route",
-			AcceptedAt:  &now,
+			Status:      "on_scene",
+			AcceptedAt:  now,
 		}
 		if err := tx.Create(&resp).Error; err != nil {
 			return err
@@ -416,6 +419,7 @@ func (r *Repository) VolunteerCompleteSOS(incidentID, volunteerID, photoURL stri
 		Updates(map[string]interface{}{
 			"status":          "waiting_review",
 			"proof_photo_url": photoURL,
+			"completed_at":    time.Now(),
 		}).Error
 }
 

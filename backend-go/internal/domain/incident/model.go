@@ -62,10 +62,10 @@ type IncidentResponse struct {
 	ID          string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	IncidentID  string     `gorm:"type:uuid;not null" json:"incident_id"`
 	ResponderID   string     `gorm:"type:uuid;not null" json:"responder_id"`
-	Status        string     `gorm:"default:'en_route'" json:"status"`
-	ProofPhotoURL *string    `json:"proof_photo_url,omitempty"`
-	AcceptedAt    *time.Time `json:"accepted_at,omitempty"`
-	ArrivedAt     *time.Time `json:"arrived_at,omitempty"`
+	Status       string    `gorm:"type:public.response_status;default:on_scene" json:"status"`
+	AcceptedAt   time.Time `json:"accepted_at"`
+	CompletedAt  *time.Time `json:"completed_at,omitempty"`
+	ProofPhotoURL *string  `json:"proof_photo_url,omitempty"`
 }
 
 // VolunteerReputation menyimpan poin XP dan total rescue relawan.
@@ -162,6 +162,9 @@ type AllActiveIncidentResponse struct {
 	Longitude                float64        `json:"longitude"`
 	AddressDetail            *string        `json:"address_detail,omitempty"`
 	ReporterTrustLabel       string         `json:"reporter_trust_label"`
+	AgencyStatus             *string        `json:"agency_status,omitempty"`
+	HandledByAgencyID        *string        `json:"handled_by_agency_id,omitempty"`
+	VolunteerResponseStatus  *string        `json:"volunteer_response_status,omitempty"`
 	CreatedAt                time.Time      `json:"created_at"`
 	UpdatedAt                time.Time      `json:"updated_at"`
 	CompletedAt              *time.Time     `json:"completed_at,omitempty"`
@@ -199,10 +202,12 @@ type NearbyIncidentResponse struct {
 	Status             string   `json:"status"`
 	Latitude           float64  `json:"latitude"`
 	Longitude          float64  `json:"longitude"`
-	AddressDetail      *string  `json:"address_detail,omitempty"`
-	ReporterTrustLabel string   `json:"reporter_trust_label"`
-	CreatedAt          string   `json:"created_at"`
-	DistanceKm         float64  `json:"distance_km"`
+	AddressDetail      *string        `json:"address_detail,omitempty"`
+	ReporterTrustLabel string         `json:"reporter_trust_label"`
+	CreatedAt          string         `json:"created_at"`
+	DistanceKm         float64        `json:"distance_km"`
+	PhotoPaths         pq.StringArray `json:"photo_paths"`
+	AudioPath          *string        `json:"audio_path,omitempty"`
 }
 
 // AcceptSOSResponse - response setelah relawan menerima SOS.

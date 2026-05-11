@@ -471,6 +471,8 @@ class NearbyIncident {
   final String trustLabel;
   final String createdAt;
   final double distanceKm;
+  final List<String> photoPaths;
+  final String? audioPath;
 
   const NearbyIncident({
     required this.id,
@@ -482,6 +484,8 @@ class NearbyIncident {
     this.trustLabel = 'standard',
     required this.createdAt,
     this.distanceKm = 0.0,
+    this.photoPaths = const [],
+    this.audioPath,
   });
 
   factory NearbyIncident.fromJson(Map<String, dynamic> json) => NearbyIncident(
@@ -494,6 +498,11 @@ class NearbyIncident {
     trustLabel: json['reporter_trust_label'] as String? ?? 'standard',
     createdAt: json['created_at'] as String,
     distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0.0,
+    photoPaths: (json['photo_paths'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [],
+    audioPath: json['audio_path'] as String?,
   );
 
   /// Menghitung waktu sejak insiden dilaporkan (timeAgo).

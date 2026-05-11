@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
+import '../../core/constants/api_config.dart';
 import 'relawan_history_screen.dart';
 
 class RelawanMainScreen extends StatefulWidget {
@@ -231,6 +232,67 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
               primaryText,
               secondaryText,
             ),
+            
+            if (inc.photoPaths.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text('Foto Bukti', style: TextStyle(fontWeight: FontWeight.bold, color: primaryText)),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: inc.photoPaths.length,
+                  itemBuilder: (context, index) {
+                    final path = inc.photoPaths[index];
+                    final url = path.startsWith('http') ? path : '${ApiConfig.baseUrl}/$path';
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          url,
+                          height: 100,
+                          width: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 100,
+                            width: 100,
+                            color: Colors.grey.withValues(alpha: 0.3),
+                            child: const Icon(Icons.broken_image),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+
+            if (inc.audioPath != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.audiotrack, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Rekaman Audio Darurat Tersedia',
+                        style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Icon(Icons.play_circle_fill, color: Colors.orange.shade700),
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,

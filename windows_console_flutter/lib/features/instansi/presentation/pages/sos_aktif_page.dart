@@ -817,13 +817,15 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     Icon(Icons.business, color: Colors.white54, size: 18),
                     SizedBox(width: 8),
                     Text(
-                      'Sedang ditangani instansi lain',
+                      'Sedang ditangani instansi',
                       style: TextStyle(color: Colors.white70),
                     ),
                   ],
                 ),
-              )
-            else if (inc.status == 'handled' && (inc.agencyStatus == null || inc.agencyStatus == 'pending'))
+              ),
+            
+            if (inc.volunteerResponseStatus == 'on_scene' || inc.volunteerResponseStatus == 'waiting_review') ...[
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -842,6 +844,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
                   ],
                 ),
               ),
+            ],
           ],
         ),
       ),
