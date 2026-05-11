@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vibration/vibration.dart';
 
 import '../constants/api_config.dart';
 
@@ -87,6 +88,24 @@ void onStart(ServiceInstance service) async {
 
   service.on('stopService').listen((event) {
     service.stopSelf();
+  });
+
+  Timer? vibrationTimer;
+
+  service.on('startVibration').listen((event) {
+    vibrationTimer?.cancel();
+    vibrationTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      final hasVibrator = await Vibration.hasVibrator();
+      if (hasVibrator == true) {
+        Vibration.vibrate(pattern: [0, 150, 100, 150]);
+      }
+    });
+  });
+
+  service.on('stopVibration').listen((event) {
+    vibrationTimer?.cancel();
+    vibrationTimer = null;
+    Vibration.cancel();
   });
 
   // Loop setiap 30 detik

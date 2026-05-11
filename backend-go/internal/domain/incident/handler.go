@@ -514,6 +514,23 @@ func (h *Handler) broadcastEventToAgencies(msg hub.Message) {
 	}
 }
 
+// notifyReporter mengirimkan WS event ke user yang membuat SOS (reporter).
+// Digunakan untuk memberi tahu real-time saat agency atau relawan mulai menangani.
+func (h *Handler) notifyReporter(incidentID, event string, payload map[string]interface{}) {
+	if h.hub == nil {
+		return
+	}
+	inc, err := h.svc.repo.FindByID(incidentID)
+	if err != nil || inc == nil {
+		log.Printf("[Handler] notifyReporter: incident %s not found: %v", incidentID, err)
+		return
+	}
+	_ = h.hub.SendToUser(inc.ReporterID, hub.Message{
+		Event:   event,
+		Payload: payload,
+	})
+}
+
 // GET /api/v1/incidents/nearby?lat=&lng=&radius=5
 // Hanya untuk volunteer - mengembalikan SOS aktif dalam radius tertentu.
 func (h *Handler) GetNearby(c *fiber.Ctx) error {
@@ -560,12 +577,17 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusConflict, err.Error())
 	}
 
-	go h.broadcastEventToAgencies(hub.Message{
-		Event: "SOS_STATUS_UPDATE",
-		Payload: map[string]interface{}{
+	go func() {
+		h.broadcastEventToAgencies(hub.Message{
+			Event:   "SOS_STATUS_UPDATE",
+			Payload: map[string]interface{}{"incident_id": incidentID},
+		})
+		// Notify reporter bahwa relawan sudah on the way
+		h.notifyReporter(incidentID, "VOLUNTEER_HANDLING", map[string]interface{}{
 			"incident_id": incidentID,
-		},
-	})
+			"volunteer_status": "en_route",
+		})
+	}()
 
 	return utils.SuccessResponse(c, result)
 }
@@ -602,12 +624,17 @@ func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal menangani SOS: "+err.Error())
 	}
 
-	go h.broadcastEventToAgencies(hub.Message{
-		Event: "SOS_STATUS_UPDATE",
-		Payload: map[string]interface{}{
-			"incident_id": incidentID,
-		},
-	})
+	go func() {
+		h.broadcastEventToAgencies(hub.Message{
+			Event:   "SOS_STATUS_UPDATE",
+			Payload: map[string]interface{}{"incident_id": incidentID},
+		})
+		// Notify reporter bahwa instansi sudah handle
+		h.notifyReporter(incidentID, "AGENCY_HANDLING", map[string]interface{}{
+			"incident_id":      incidentID,
+			"agency_status":    "handling",
+		})
+	}()
 
 	return utils.SuccessResponse(c, fiber.Map{"message": "SOS sekarang ditangani instansi."})
 }

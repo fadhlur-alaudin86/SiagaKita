@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
-import '../../core/services/location_service.dart';
+import '../../core/services/location_controller.dart';
 import '../../core/services/connectivity_service.dart';
 
 class MapScreen extends StatefulWidget {
@@ -32,7 +32,6 @@ class _MapScreenState extends State<MapScreen>
 
   // SOS nearby (untuk relawan ON DUTY)
   List<NearbyIncident> _nearbySOS = [];
-  Timer? _locationTimer;
   Timer? _nearbyTimer;
 
   late AnimationController _pulseController;
@@ -48,61 +47,57 @@ class _MapScreenState extends State<MapScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+    LocationController.instance.start();
     _initLocation();
+    LocationController.instance.position.addListener(_onLocationChanged);
+  }
+
+  void _onLocationChanged() {
+    final pos = LocationController.instance.position.value;
+    if (pos == null || !mounted) return;
+    final newLoc = LatLng(pos.lat, pos.lng);
+
+    final oldLoc = _userLocation;
+    setState(() => _userLocation = newLoc);
+
+    // Geser peta secara smooth ke posisi baru jika beda signifikan (>20m)
+    if (oldLoc != null) {
+      final distance = const Distance().as(LengthUnit.Meter, oldLoc, newLoc);
+      if (distance > 20) {
+        _mapController.move(newLoc, _mapController.camera.zoom);
+      }
+    }
+
+    // Geocoding jika belum pernah
+    if (!_geocodingDone) {
+      _reverseGeocode(pos.lat, pos.lng);
+    }
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
-    _locationTimer?.cancel();
+    LocationController.instance.position.removeListener(_onLocationChanged);
+    LocationController.instance.stop();
     _nearbyTimer?.cancel();
     _mapController.dispose();
     super.dispose();
   }
 
   Future<void> _initLocation() async {
-    try {
-      final pos = await LocationService.getCurrentPosition();
-      if (!mounted) return;
+    setState(() => _isLoading = true);
+    final pos = await LocationController.instance.fetchNow();
+    if (!mounted) return;
+    if (pos != null) {
       setState(() {
-        _userLocation = LatLng(pos.latitude, pos.longitude);
+        _userLocation = LatLng(pos.lat, pos.lng);
         _isLoading = false;
       });
-      // Mulai polling lokasi tiap 10 detik
-      _locationTimer = Timer.periodic(
-        const Duration(seconds: 10),
-        (_) => _updateLocation(),
-      );
-      // Reverse geocoding hanya sekali di awal
-      _reverseGeocode(pos.latitude, pos.longitude);
-      // Jika relawan ON DUTY: mulai polling SOS nearby
-      _maybeStartNearbyPolling();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Gagal memuat lokasi: $e';
-        });
-      }
+      _reverseGeocode(pos.lat, pos.lng);
+    } else {
+      setState(() => _isLoading = false);
     }
-  }
-
-  Future<void> _updateLocation() async {
-    final pos = await LocationService.getCurrentPositionOrNull();
-    if (pos == null || !mounted) return;
-    final newLoc = LatLng(pos.latitude, pos.longitude);
-    setState(() => _userLocation = newLoc);
-    // Geser peta secara smooth ke posisi baru jika beda signifikan
-    if (_userLocation != null) {
-      final distance = const Distance().as(
-        LengthUnit.Meter,
-        _userLocation!,
-        newLoc,
-      );
-      if (distance > 20) {
-        _mapController.move(newLoc, _mapController.camera.zoom);
-      }
-    }
+    _maybeStartNearbyPolling();
   }
 
   Future<void> _reverseGeocode(double lat, double lng) async {

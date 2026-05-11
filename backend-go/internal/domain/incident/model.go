@@ -136,13 +136,16 @@ type TriggerSOSResponse struct {
 
 // ActiveIncidentResponse - data SOS aktif milik reporter.
 type ActiveIncidentResponse struct {
-	IncidentID         string  `json:"incident_id"`
-	Status             string  `json:"status"`
-	IncidentType       string  `json:"incident_type"`
-	Latitude           float64 `json:"latitude"`
-	Longitude          float64 `json:"longitude"`
-	CreatedAt          string  `json:"created_at"`
-	ReporterTrustLabel string  `json:"reporter_trust_label"`
+	IncidentID              string  `json:"incident_id"`
+	Status                  string  `json:"status"`
+	IncidentType            string  `json:"incident_type"`
+	Latitude                float64 `json:"latitude"`
+	Longitude               float64 `json:"longitude"`
+	CreatedAt               string  `json:"created_at"`
+	ReporterTrustLabel      string  `json:"reporter_trust_label"`
+	AgencyStatus            *string `json:"agency_status,omitempty"`
+	HandledByAgencyID       *string `json:"handled_by_agency_id,omitempty"`
+	VolunteerResponseStatus *string `json:"volunteer_response_status,omitempty"`
 }
 
 // AllActiveIncidentResponse - data SOS aktif LENGKAP untuk console desktop (JOIN ke users & profiles).

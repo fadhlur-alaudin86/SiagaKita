@@ -413,8 +413,11 @@ class ActiveIncident {
   final double latitude;
   final double longitude;
   final String createdAt;
-  final String updatedAt; // timestamp terakhir update lokasi dari server
+  final String updatedAt;
   final String reporterTrustLabel;
+  final String? agencyStatus;
+  final String? handledByAgencyId;
+  final String? volunteerResponseStatus;
 
   const ActiveIncident({
     required this.incidentId,
@@ -425,6 +428,9 @@ class ActiveIncident {
     required this.createdAt,
     String? updatedAt,
     this.reporterTrustLabel = 'standard',
+    this.agencyStatus,
+    this.handledByAgencyId,
+    this.volunteerResponseStatus,
   }) : updatedAt = updatedAt ?? createdAt;
 
   factory ActiveIncident.fromJson(Map<String, dynamic> json) => ActiveIncident(
@@ -436,7 +442,21 @@ class ActiveIncident {
     createdAt: json['created_at'] as String,
     updatedAt: json['updated_at'] as String?,
     reporterTrustLabel: json['reporter_trust_label'] as String? ?? 'standard',
+    agencyStatus: json['agency_status'] as String?,
+    handledByAgencyId: json['handled_by_agency_id'] as String?,
+    volunteerResponseStatus: json['volunteer_response_status'] as String?,
   );
+
+  /// Apakah instansi sedang aktif menangani SOS ini.
+  bool get isHandledByAgency => agencyStatus == 'handling';
+
+  /// Apakah relawan sedang aktif menangani SOS ini.
+  bool get isHandledByVolunteer =>
+      volunteerResponseStatus == 'en_route' ||
+      volunteerResponseStatus == 'waiting_review';
+
+  /// True jika ada siapapun yang sudah merespons (instansi atau relawan).
+  bool get isBeingHandled => isHandledByAgency || isHandledByVolunteer;
 }
 
 // ─── NearbyIncident ───────────────────────────────────────────────────────────

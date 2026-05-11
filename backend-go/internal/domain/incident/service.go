@@ -184,14 +184,32 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 	if inc == nil {
 		return nil, nil
 	}
+
+	// Ambil status relawan aktif (en_route atau waiting_review)
+	var volunteerStatus *string
+	s.repo.db.Raw(`
+		SELECT status FROM incident_responses
+		WHERE incident_id = ? AND status IN ('en_route', 'waiting_review')
+		ORDER BY created_at ASC LIMIT 1
+	`, inc.ID).Scan(&volunteerStatus)
+
+	agencyStatus := inc.AgencyStatus
+	var agencyStatusPtr *string
+	if agencyStatus != "" && agencyStatus != "pending" {
+		agencyStatusPtr = &agencyStatus
+	}
+
 	return &ActiveIncidentResponse{
-		IncidentID:         inc.ID,
-		Status:             inc.Status,
-		IncidentType:       inc.IncidentType,
-		Latitude:           inc.Latitude,
-		Longitude:          inc.Longitude,
-		ReporterTrustLabel: inc.ReporterTrustLabel,
-		CreatedAt:          inc.CreatedAt.Format(time.RFC3339),
+		IncidentID:              inc.ID,
+		Status:                  inc.Status,
+		IncidentType:            inc.IncidentType,
+		Latitude:                inc.Latitude,
+		Longitude:               inc.Longitude,
+		ReporterTrustLabel:      inc.ReporterTrustLabel,
+		CreatedAt:               inc.CreatedAt.Format(time.RFC3339),
+		AgencyStatus:            agencyStatusPtr,
+		HandledByAgencyID:       inc.HandledByAgencyID,
+		VolunteerResponseStatus: volunteerStatus,
 	}, nil
 }
 

@@ -10,11 +10,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
+import 'package:vibration/vibration.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/services/incident_service.dart';
+import '../../core/services/location_controller.dart';
 import '../../core/services/location_service.dart';
+import '../../core/services/mobile_ws_service.dart';
 import '../../core/services/user_service.dart';
 import 'report_screen.dart';
 
@@ -37,7 +41,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   // ─── SOS Tap State ──────────────────────────────────────────────────────────
-  static const int _requiredTaps = 5;
+  static const int _requiredTaps = 3;
   static const Duration _tapResetDuration = Duration(milliseconds: 1500);
 
   int _tapCount = 0;
@@ -78,18 +82,139 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── Heartbeat Ping ──────────────────────────────────────────────────────────
   Timer? _pingTimer;
 
+  // ─── WebSocket & Vibration ───────────────────────────────────────────────────
+  MobileWsService? _ws;
+  StreamSubscription<MobileWsMessage>? _wsSub;
+  Timer? _vibrationTimer;
+  bool _vibrating = false;
+
   // ─── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
     _checkActiveIncident();
-    // Mulai heartbeat ping setiap 30 detik
+    // Shared location controller
+    LocationController.instance.start();
+    // Heartbeat ping setiap 30 detik
     _pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       UserService.ping(widget.accessToken);
     });
-    // Ping pertama langsung
     UserService.ping(widget.accessToken);
+    // WebSocket real-time
+    _ws = MobileWsService(token: widget.accessToken);
+    _ws!.connect();
+    _wsSub = _ws!.eventStream.listen(_onWsEvent);
+  }
+
+  void _onWsEvent(MobileWsMessage msg) {
+    if (!mounted) return;
+    switch (msg.event) {
+      case MobileWsEvent.agencyHandling:
+        _onHandlerArrived(byAgency: true);
+        break;
+      case MobileWsEvent.volunteerHandling:
+        _onHandlerArrived(byAgency: false);
+        break;
+      case MobileWsEvent.sosResolved:
+        _stopVibration();
+        _stopLocationUpdates();
+        setState(() {
+          _activeIncident = null;
+          _sosPhase = 'idle';
+          _sosUploadStatus = 'idle';
+          _tapCount = 0;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('SOS Anda telah diselesaikan. Terima kasih!'.tr(context)),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        break;
+      case MobileWsEvent.sosCancelled:
+      case MobileWsEvent.connected:
+      case MobileWsEvent.unknown:
+        break;
+    }
+    // Refresh status dari server setelah event WS
+    if (_activeIncident != null) {
+      _checkHandlerStatus();
+    }
+  }
+
+  /// Dipanggil saat ada instansi atau relawan yang mulai handle.
+  void _onHandlerArrived({required bool byAgency}) {
+    _stopVibration();
+    Vibration.vibrate(duration: 800); // konfirmasi 1x getaran panjang
+    _checkHandlerStatus(); // refresh status
+    if (!mounted) return;
+    final msg = byAgency
+        ? '🏛️ Instansi sedang dalam perjalanan ke lokasi Anda!'
+        : '🦺 Relawan sedang menuju lokasi Anda!';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg.tr(context)),
+        backgroundColor: Colors.green.shade700,
+        duration: const Duration(seconds: 5),
+      ),
+    );
+  }
+
+  /// Polling status penangan dari server (dipanggil setelah event WS).
+  Future<void> _checkHandlerStatus() async {
+    try {
+      final active = await IncidentService.getActive(accessToken: widget.accessToken);
+      if (!mounted) return;
+      if (active == null) {
+        _stopVibration();
+        _stopLocationUpdates();
+        setState(() {
+          _activeIncident = null;
+          _sosPhase = 'idle';
+          _sosUploadStatus = 'idle';
+          _tapCount = 0;
+        });
+      } else {
+        setState(() => _activeIncident = active);
+        if (active.isBeingHandled) {
+          _stopVibration();
+        }
+      }
+    } catch (_) {}
+  }
+
+  // ─── Vibration ───────────────────────────────────────────────────────────────
+
+  void _startVibration() {
+    if (_vibrating) return;
+    _vibrating = true;
+    // Foreground vibration
+    _doVibrate();
+    _vibrationTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (_vibrating && mounted) _doVibrate();
+    });
+    // Background vibration (via Service)
+    FlutterBackgroundService().invoke('startVibration');
+  }
+
+  void _doVibrate() async {
+    final hasVibrator = await Vibration.hasVibrator();
+    if (hasVibrator == true) {
+      Vibration.vibrate(pattern: [0, 150, 100, 150]);
+    }
+  }
+
+  void _stopVibration() {
+    _vibrating = false;
+    _vibrationTimer?.cancel();
+    _vibrationTimer = null;
+    Vibration.cancel();
+    // Stop background vibration
+    FlutterBackgroundService().invoke('stopVibration');
   }
 
   @override
@@ -101,6 +226,12 @@ class _HomeScreenState extends State<HomeScreen>
     _graceTimer?.cancel();
     _sosRetryTimer?.cancel();
     _countdownTimer?.cancel();
+    _vibrationTimer?.cancel();
+    _wsSub?.cancel();
+    if (_ws != null) {
+      _ws!.dispose();
+    }
+    LocationController.instance.stop();
     super.dispose();
   }
 
@@ -119,6 +250,8 @@ class _HomeScreenState extends State<HomeScreen>
         });
         if (active != null) {
           _startLocationUpdates();
+          _startStatusPolling();
+          if (!active.isBeingHandled) _startVibration();
         }
       }
     } catch (_) {
@@ -130,60 +263,63 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _startLocationUpdates() {
     _locationUpdateTimer?.cancel();
-    // Reset telemetri saat memulai update
     _nextUpdateCountdown = 10;
     _lastLocationUpdate = DateTime.now();
     _sosTransmitting = true;
     _startCountdownTimer();
 
-    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 10), (
-      _,
-    ) async {
+    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
       if (_activeIncident == null || !mounted) return;
 
-      // Reset countdown setiap kali timer 10 detik menyala
       setState(() {
         _nextUpdateCountdown = 10;
         _sosTransmitting = true;
       });
 
-      // 1. Cek apakah SOS masih aktif di server
+      // 1. Cek apakah SOS masih aktif di server (sekaligus ambil status penangan terbaru)
       try {
         final active = await IncidentService.getActive(
           accessToken: widget.accessToken,
         );
         if (!mounted) return;
         if (active == null) {
+          _stopVibration();
           _stopLocationUpdates();
           setState(() => _activeIncident = null);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Status SOS telah diselesaikan oleh instansi.'.tr(context),
-              ),
+              content: Text('Status SOS telah diselesaikan oleh instansi.'.tr(context)),
               backgroundColor: Colors.green,
             ),
           );
           return;
         }
-        // Update timestamp dari server
+        // Update activeIncident (termasuk status penangan terbaru)
         if (mounted) {
-          setState(() => _lastLocationUpdate = DateTime.now());
+          setState(() {
+            _activeIncident = active;
+            _lastLocationUpdate = DateTime.now();
+          });
+          // Hentikan vibration jika ada yang handle
+          if (active.isBeingHandled) {
+            _stopVibration();
+          } else {
+            _startVibration();
+          }
         }
       } catch (_) {
-        // Jika error jaringan, tandai sebagai kehilangan sinyal sementara
         if (mounted) setState(() => _sosTransmitting = false);
       }
 
-      // 2. Jika masih aktif, update lokasi GPS ke server
-      final pos = await LocationService.getCurrentPositionOrNull();
+      // 2. Kirim posisi GPS dari LocationController (tidak ada panggilan GPS duplikat)
+      final pos = LocationController.instance.position.value;
       if (pos != null && _activeIncident != null) {
         try {
           await IncidentService.updateLocation(
             accessToken: widget.accessToken,
             incidentId: _activeIncident!.incidentId,
-            latitude: pos.latitude,
-            longitude: pos.longitude,
+            latitude: pos.lat,
+            longitude: pos.lng,
           );
           if (mounted) {
             setState(() {
@@ -192,7 +328,9 @@ class _HomeScreenState extends State<HomeScreen>
             });
           }
         } catch (_) {
-          if (mounted) setState(() => _sosTransmitting = false);
+          if (mounted) {
+            setState(() => _sosTransmitting = false);
+          }
         }
       }
     });
@@ -204,7 +342,9 @@ class _HomeScreenState extends State<HomeScreen>
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted || _activeIncident == null) return;
       setState(() {
-        if (_nextUpdateCountdown > 0) _nextUpdateCountdown--;
+        if (_nextUpdateCountdown > 0) {
+          _nextUpdateCountdown--;
+        }
       });
     });
   }
@@ -549,10 +689,10 @@ class _HomeScreenState extends State<HomeScreen>
     });
     _startLocationUpdates();
     _startStatusPolling();
+    _startVibration(); // Mulai getaran saat SOS aktif
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _showSOSSentBanner = false);
     });
-    // Tahap 3: Mulai capture bukti secara background
     _captureAndUploadEvidence(incidentId);
   }
 
@@ -710,36 +850,85 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── Cancel Active SOS ───────────────────────────────────────────────────────
 
   void _showCancelConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Batalkan SOS?'.tr(context)),
-        content: Text(
-          'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?'
-              .tr(context),
+    final isBeingHandled = _activeIncident?.isBeingHandled ?? false;
+
+    if (isBeingHandled) {
+      // Dialog peringatan keras — ada yang sudah merespons
+      final handlerDesc = StringBuffer();
+      if (_activeIncident!.isHandledByAgency) handlerDesc.write('🏛️ Instansi');
+      if (_activeIncident!.isHandledByVolunteer) {
+        if (handlerDesc.isNotEmpty) handlerDesc.write(' dan ');
+        handlerDesc.write('🦺 Relawan');
+      }
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.red.shade900,
+          title: Row(children: [
+            const Icon(Icons.warning_rounded, color: Colors.yellow),
+            const SizedBox(width: 8),
+            Text('SOS Sedang Ditangani!'.tr(context),
+                style: const TextStyle(color: Colors.white)),
+          ]),
+          content: Text(
+            '$handlerDesc sedang merespons dan menuju lokasi Anda. '
+            'Membatalkan SOS sekarang dapat membingungkan tim penyelamat dan '
+            'berakibat Anda tidak mendapat bantuan.\n\n'
+            'Yakin ingin batalkan?',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('TIDAK, JAGA SOS'.tr(context),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _executeCancelSOS();
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.white54),
+              ),
+              child: Text('BATALKAN TETAP'.tr(context),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'TIDAK'.tr(context),
-              style: const TextStyle(color: Colors.grey),
-            ),
+      );
+    } else {
+      // Dialog konfirmasi normal
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Batalkan SOS?'.tr(context)),
+          content: Text(
+            'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?'
+                .tr(context),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _executeCancelSOS();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('TIDAK'.tr(context),
+                  style: const TextStyle(color: Colors.grey)),
             ),
-            child: Text('YA, BATALKAN'.tr(context)),
-          ),
-        ],
-      ),
-    );
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _executeCancelSOS();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('YA, BATALKAN'.tr(context)),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Future<void> _executeCancelSOS() async {
@@ -790,6 +979,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     if (!mounted) return;
+    _stopVibration();
     _stopLocationUpdates();
     setState(() {
       _activeIncident = null;
@@ -926,9 +1116,9 @@ class _HomeScreenState extends State<HomeScreen>
                                 const SizedBox(height: 4),
                                 Text(
                                   isSOSActive
-                                      ? 'SOS AKTIF - Ketuk 5× untuk batalkan'
+                                      ? 'SOS AKTIF - Ketuk 3× untuk batalkan'
                                             .tr(context)
-                                      : 'Ketuk 5× untuk mengirim SOS'.tr(
+                                      : 'Ketuk 3× untuk mengirim SOS'.tr(
                                           context,
                                         ),
                                   style: TextStyle(
@@ -1062,6 +1252,41 @@ class _HomeScreenState extends State<HomeScreen>
                               ],
                             ],
                           ),
+                          // Baris 3: Handler Status (NEW)
+                          if (_activeIncident!.isBeingHandled) ...[
+                            const SizedBox(height: 10),
+                            const Divider(color: Colors.red, thickness: 0.5, height: 1),
+                            const SizedBox(height: 10),
+                            Text(
+                              'BANTUAN SEDANG MENUJU LOKASI'.tr(context),
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                if (_activeIncident!.isHandledByAgency) ...[
+                                  _buildHandlerBadge(
+                                    icon: Icons.account_balance,
+                                    label: 'INSTANSI'.tr(context),
+                                    color: Colors.blue.shade700,
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                if (_activeIncident!.isHandledByVolunteer) ...[
+                                  _buildHandlerBadge(
+                                    icon: Icons.person,
+                                    label: 'RELAWAN'.tr(context),
+                                    color: Colors.orange.shade800,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -1178,8 +1403,8 @@ class _HomeScreenState extends State<HomeScreen>
                                       ),
                                       Text(
                                         isSOSActive
-                                            ? 'KETUK 5× BATALKAN'.tr(context)
-                                            : 'KETUK 5×'.tr(context),
+                                            ? 'KETUK 3× BATALKAN'.tr(context)
+                                            : 'KETUK 3×'.tr(context),
                                         style: TextStyle(
                                           color: Colors.white.withValues(
                                             alpha: 0.9,
@@ -1604,6 +1829,36 @@ class _HomeScreenState extends State<HomeScreen>
             child: const Text(
               'YA, LANJUTKAN',
               style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHandlerBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
