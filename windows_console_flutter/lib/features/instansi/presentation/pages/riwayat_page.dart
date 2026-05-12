@@ -94,21 +94,32 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
       if (_filterStatus != 'Semua') {
         if (_filterStatus == 'Selesai (Kami)') {
           filtered = filtered
-              .where((inc) => inc.status == 'resolved' && inc.handledByAgencyId == _currentAgencyId)
+              .where(
+                (inc) =>
+                    inc.status == 'resolved' &&
+                    inc.handledByAgencyId == _currentAgencyId,
+              )
               .toList();
         } else if (_filterStatus == 'Selesai (Instansi Lain)') {
           filtered = filtered
-              .where((inc) =>
-                  inc.status == 'resolved' &&
-                  inc.handledByAgencyId != null &&
-                  inc.handledByAgencyId != _currentAgencyId)
+              .where(
+                (inc) =>
+                    inc.status == 'resolved' &&
+                    inc.handledByAgencyId != null &&
+                    inc.handledByAgencyId != _currentAgencyId,
+              )
               .toList();
         } else if (_filterStatus == 'Selesai (Relawan)') {
           filtered = filtered
-              .where((inc) => inc.status == 'resolved' && inc.handledByAgencyId == null)
+              .where(
+                (inc) =>
+                    inc.status == 'resolved' && inc.handledByAgencyId == null,
+              )
               .toList();
         } else if (_filterStatus == 'False Alarm') {
-          filtered = filtered.where((inc) => inc.status == 'false_alarm').toList();
+          filtered = filtered
+              .where((inc) => inc.status == 'false_alarm')
+              .toList();
         } else if (_filterStatus == 'Dibatalkan') {
           filtered = filtered.where((inc) => inc.status == 'cancel').toList();
         }
@@ -116,18 +127,44 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
 
       // Filter Tipe Insiden
       if (_filterType != 'Semua') {
-        filtered = filtered.where((inc) => inc.incidentType.toLowerCase() == _filterType.toLowerCase()).toList();
+        filtered = filtered
+            .where(
+              (inc) =>
+                  inc.incidentType.toLowerCase() == _filterType.toLowerCase(),
+            )
+            .toList();
       }
 
       // Filter Rentang Waktu
       final now = DateTime.now();
       if (_filterTime == 'Hari Ini') {
-        filtered = filtered.where((inc) => inc.createdAt.year == now.year && inc.createdAt.month == now.month && inc.createdAt.day == now.day).toList();
+        filtered = filtered
+            .where(
+              (inc) =>
+                  inc.createdAt.year == now.year &&
+                  inc.createdAt.month == now.month &&
+                  inc.createdAt.day == now.day,
+            )
+            .toList();
       } else if (_filterTime == 'Minggu Ini') {
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        filtered = filtered.where((inc) => inc.createdAt.isAfter(startOfWeek) || (inc.createdAt.year == startOfWeek.year && inc.createdAt.month == startOfWeek.month && inc.createdAt.day == startOfWeek.day)).toList();
+        filtered = filtered
+            .where(
+              (inc) =>
+                  inc.createdAt.isAfter(startOfWeek) ||
+                  (inc.createdAt.year == startOfWeek.year &&
+                      inc.createdAt.month == startOfWeek.month &&
+                      inc.createdAt.day == startOfWeek.day),
+            )
+            .toList();
       } else if (_filterTime == 'Bulan Ini') {
-        filtered = filtered.where((inc) => inc.createdAt.year == now.year && inc.createdAt.month == now.month).toList();
+        filtered = filtered
+            .where(
+              (inc) =>
+                  inc.createdAt.year == now.year &&
+                  inc.createdAt.month == now.month,
+            )
+            .toList();
       }
 
       // Sorting
@@ -153,13 +190,19 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white54, fontSize: 11),
+          ),
           const SizedBox(height: 4),
           DropdownButtonFormField<T>(
-            value: value,
+            initialValue: value,
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Colors.white24),
@@ -177,7 +220,11 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
             ),
             dropdownColor: const Color(0xFF1A2035),
             style: const TextStyle(color: Colors.white, fontSize: 13),
-            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.toString()))).toList(),
+            items: items
+                .map(
+                  (e) => DropdownMenuItem(value: e, child: Text(e.toString())),
+                )
+                .toList(),
             onChanged: onChanged,
           ),
         ],
@@ -200,7 +247,14 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
             _buildDropdown<String>(
               label: 'Status Laporan',
               value: _filterStatus,
-              items: ['Semua', 'Selesai (Kami)', 'Selesai (Instansi Lain)', 'Selesai (Relawan)', 'False Alarm', 'Dibatalkan'],
+              items: [
+                'Semua',
+                'Selesai (Kami)',
+                'Selesai (Instansi Lain)',
+                'Selesai (Relawan)',
+                'False Alarm',
+                'Dibatalkan',
+              ],
               onChanged: (v) {
                 if (v != null) {
                   _filterStatus = v;
@@ -211,7 +265,16 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
             _buildDropdown<String>(
               label: 'Kategori',
               value: _filterType,
-              items: ['Semua', 'Kebakaran', 'Medis', 'Kejahatan', 'Bencana', 'Lakalantas', 'Infrastruktur', 'Lainnya'],
+              items: [
+                'Semua',
+                'Kebakaran',
+                'Medis',
+                'Kejahatan',
+                'Bencana',
+                'Lakalantas',
+                'Infrastruktur',
+                'Lainnya',
+              ],
               onChanged: (v) {
                 if (v != null) {
                   _filterType = v;
@@ -342,7 +405,11 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
 
     if (mounted) {
       setState(() {
-        _allReports = data.where((r) => ['resolved', 'rejected', 'canceled'].contains(r.status)).toList();
+        _allReports = data
+            .where(
+              (r) => ['resolved', 'rejected', 'canceled'].contains(r.status),
+            )
+            .toList();
         _loading = false;
         _applyFilters();
       });
@@ -366,23 +433,53 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
 
       // Filter Tipe Insiden
       if (_filterType != 'Semua') {
-        filtered = filtered.where((r) => r.incidentType.toLowerCase() == _filterType.toLowerCase()).toList();
+        filtered = filtered
+            .where(
+              (r) => r.incidentType.toLowerCase() == _filterType.toLowerCase(),
+            )
+            .toList();
       }
 
       // Filter Urgensi
       if (_filterUrgency != 'Semua') {
-        filtered = filtered.where((r) => r.urgencyLabel.toLowerCase() == _filterUrgency.toLowerCase()).toList();
+        filtered = filtered
+            .where(
+              (r) =>
+                  r.urgencyLabel.toLowerCase() == _filterUrgency.toLowerCase(),
+            )
+            .toList();
       }
 
       // Filter Rentang Waktu
       final now = DateTime.now();
       if (_filterTime == 'Hari Ini') {
-        filtered = filtered.where((inc) => inc.createdAt.year == now.year && inc.createdAt.month == now.month && inc.createdAt.day == now.day).toList();
+        filtered = filtered
+            .where(
+              (inc) =>
+                  inc.createdAt.year == now.year &&
+                  inc.createdAt.month == now.month &&
+                  inc.createdAt.day == now.day,
+            )
+            .toList();
       } else if (_filterTime == 'Minggu Ini') {
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        filtered = filtered.where((inc) => inc.createdAt.isAfter(startOfWeek) || (inc.createdAt.year == startOfWeek.year && inc.createdAt.month == startOfWeek.month && inc.createdAt.day == startOfWeek.day)).toList();
+        filtered = filtered
+            .where(
+              (inc) =>
+                  inc.createdAt.isAfter(startOfWeek) ||
+                  (inc.createdAt.year == startOfWeek.year &&
+                      inc.createdAt.month == startOfWeek.month &&
+                      inc.createdAt.day == startOfWeek.day),
+            )
+            .toList();
       } else if (_filterTime == 'Bulan Ini') {
-        filtered = filtered.where((inc) => inc.createdAt.year == now.year && inc.createdAt.month == now.month).toList();
+        filtered = filtered
+            .where(
+              (inc) =>
+                  inc.createdAt.year == now.year &&
+                  inc.createdAt.month == now.month,
+            )
+            .toList();
       }
 
       // Sorting
@@ -408,13 +505,19 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white54, fontSize: 11),
+          ),
           const SizedBox(height: 4),
           DropdownButtonFormField<T>(
-            value: value,
+            initialValue: value,
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Colors.white24),
@@ -432,7 +535,11 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
             ),
             dropdownColor: const Color(0xFF1A2035),
             style: const TextStyle(color: Colors.white, fontSize: 13),
-            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.toString()))).toList(),
+            items: items
+                .map(
+                  (e) => DropdownMenuItem(value: e, child: Text(e.toString())),
+                )
+                .toList(),
             onChanged: onChanged,
           ),
         ],
@@ -473,7 +580,16 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
             _buildDropdown<String>(
               label: 'Kategori',
               value: _filterType,
-              items: ['Semua', 'Kebakaran', 'Medis', 'Kejahatan', 'Bencana', 'Lakalantas', 'Infrastruktur', 'Lainnya'],
+              items: [
+                'Semua',
+                'Kebakaran',
+                'Medis',
+                'Kejahatan',
+                'Bencana',
+                'Lakalantas',
+                'Infrastruktur',
+                'Lainnya',
+              ],
               onChanged: (v) {
                 if (v != null) {
                   _filterType = v;
@@ -588,7 +704,10 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
                               ),
                           ],
                         ),
-                        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white54,
+                        ),
                       ),
                     );
                   },
@@ -654,10 +773,12 @@ class _ReportHistoryDetailDialog extends StatefulWidget {
   const _ReportHistoryDetailDialog({required this.report});
 
   @override
-  State<_ReportHistoryDetailDialog> createState() => _ReportHistoryDetailDialogState();
+  State<_ReportHistoryDetailDialog> createState() =>
+      _ReportHistoryDetailDialogState();
 }
 
-class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> {
+class _ReportHistoryDetailDialogState
+    extends State<_ReportHistoryDetailDialog> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
   Duration _duration = Duration.zero;
@@ -667,12 +788,17 @@ class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> 
   void initState() {
     super.initState();
     if (widget.report.audioPath != null) {
-      final url = widget.report.audioPath!.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + widget.report.audioPath! : widget.report.audioPath!;
+      final url = widget.report.audioPath!.startsWith('/uploads')
+          ? ApiConstants.baseUrl.replaceAll('/api/v1', '') +
+                widget.report.audioPath!
+          : widget.report.audioPath!;
       _audioPlayer.setSourceUrl(url);
-      _audioPlayer.onDurationChanged
-          .listen((d) => setState(() => _duration = d));
-      _audioPlayer.onPositionChanged
-          .listen((p) => setState(() => _position = p));
+      _audioPlayer.onDurationChanged.listen(
+        (d) => setState(() => _duration = d),
+      );
+      _audioPlayer.onPositionChanged.listen(
+        (p) => setState(() => _position = p),
+      );
       _audioPlayer.onPlayerStateChanged.listen((s) {
         if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
       });
@@ -711,8 +837,10 @@ class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> 
           Row(
             children: [
               IconButton(
-                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.green),
+                icon: Icon(
+                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.green,
+                ),
                 onPressed: () {
                   if (_isPlaying) {
                     _audioPlayer.pause();
@@ -723,7 +851,12 @@ class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> 
               ),
               Expanded(
                 child: Slider(
-                  value: _position.inMilliseconds.toDouble().clamp(0.0, _duration.inMilliseconds > 0 ? _duration.inMilliseconds.toDouble() : 1.0),
+                  value: _position.inMilliseconds.toDouble().clamp(
+                    0.0,
+                    _duration.inMilliseconds > 0
+                        ? _duration.inMilliseconds.toDouble()
+                        : 1.0,
+                  ),
                   max: _duration.inMilliseconds > 0
                       ? _duration.inMilliseconds.toDouble()
                       : 1.0,
@@ -765,9 +898,10 @@ class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> 
                   const Text(
                     'Detail Laporan',
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white54),
@@ -777,30 +911,46 @@ class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> 
               ),
               const Divider(color: Colors.white24),
               const SizedBox(height: 8),
-              Text('Kategori: ${r.incidentType.toUpperCase()}',
-                  style: const TextStyle(color: Colors.white)),
-              Text('Urgensi: ${r.urgencyLabel}',
-                  style: const TextStyle(color: Colors.white)),
-              Text('Pelapor: ${r.reporterName}',
-                  style: const TextStyle(color: Colors.white)),
-              Text('Status: ${r.status.toUpperCase()}',
-                  style: const TextStyle(color: Colors.white)),
+              Text(
+                'Kategori: ${r.incidentType.toUpperCase()}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              Text(
+                'Urgensi: ${r.urgencyLabel}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              Text(
+                'Pelapor: ${r.reporterName}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              Text(
+                'Status: ${r.status.toUpperCase()}',
+                style: const TextStyle(color: Colors.white),
+              ),
               if (r.description != null) ...[
                 const SizedBox(height: 12),
-                const Text('Deskripsi:',
-                    style: TextStyle(color: Colors.white70)),
-                Text(r.description!,
-                    style: const TextStyle(color: Colors.white)),
+                const Text(
+                  'Deskripsi:',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                Text(
+                  r.description!,
+                  style: const TextStyle(color: Colors.white),
+                ),
               ],
               if (r.photoPaths.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text('Lampiran Foto:',
-                    style: TextStyle(color: Colors.white70)),
+                const Text(
+                  'Lampiran Foto:',
+                  style: TextStyle(color: Colors.white70),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: r.photoPaths.map((url) {
-                    final fullUrl = url.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + url : url;
+                    final fullUrl = url.startsWith('/uploads')
+                        ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + url
+                        : url;
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
@@ -812,8 +962,10 @@ class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> 
                           width: 100,
                           height: 100,
                           color: Colors.white10,
-                          child: const Icon(Icons.broken_image,
-                              color: Colors.white54),
+                          child: const Icon(
+                            Icons.broken_image,
+                            color: Colors.white54,
+                          ),
                         ),
                       ),
                     );

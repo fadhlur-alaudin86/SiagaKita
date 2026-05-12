@@ -435,7 +435,7 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _selectedUrgency,
+                  initialValue: _selectedUrgency,
                   hint: const Text(
                     'Pilih Urgensi',
                     style: TextStyle(color: Colors.white38),
