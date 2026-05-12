@@ -17,7 +17,7 @@
 # Kredensial infrastruktur spesifik
 infrastructure/.env
 infrastructure/.env.*
-!infrastructure/.env-example
+!infrastructure/.env.example
 
 # ==============================================================================
 # 2. INFRASTRUKTUR (DOCKER & DATABASE)
