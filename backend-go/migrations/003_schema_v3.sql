@@ -111,7 +111,7 @@ CREATE TABLE public.user_profiles (
     full_name             varchar(100),
     nik                   varchar(16) UNIQUE,
     date_of_birth         date,
-    phone_number          varchar(20) UNIQUE,
+    phone_number          varchar(20),
     is_email_verified     boolean DEFAULT false,
     is_phone_verified     boolean DEFAULT false,
     is_verified_volunteer boolean DEFAULT false,
