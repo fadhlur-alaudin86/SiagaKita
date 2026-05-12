@@ -1713,24 +1713,18 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── Grace Period Overlay ─────────────────────────────────────────────────────
 
   Widget _buildGracePeriodOverlay(ColorScheme colors) {
-    final types = [
-      {'label': 'KEBAKARAN', 'icon': '🔥', 'value': 'fire'},
-      {'label': 'MEDIS', 'icon': '🚑', 'value': 'medical'},
-      {'label': 'KRIMINAL', 'icon': '🔪', 'value': 'crime'},
-      {'label': 'KECELAKAAN', 'icon': '💥', 'value': 'rescue'},
-      {'label': 'BENCANA ALAM', 'icon': '🌪️', 'value': 'disaster'},
-    ];
-
     return Container(
       color: const Color(0xFFCC0000),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Top Text
               const Text(
                 '🆘 SOS DIKIRIM',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -1741,6 +1735,7 @@ class _HomeScreenState extends State<HomeScreen>
               const SizedBox(height: 8),
               const Text(
                 'Pilih jenis darurat (opsional)',
+                textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
               const SizedBox(height: 4),
@@ -1749,67 +1744,66 @@ class _HomeScreenState extends State<HomeScreen>
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white54, fontSize: 11),
               ),
-              const Spacer(),
-              GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.4,
-                physics: const NeverScrollableScrollPhysics(),
-                children: types.map((t) {
-                  return GestureDetector(
-                    onTap: () =>
-                        _showTypeConfirmDialog(t['label']!, t['value']!),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          width: 1.5,
+              
+              // Safe Zone (Middle)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedOpacity(
+                        opacity: _graceCountdown % 2 == 0 ? 1.0 : 0.6,
+                        duration: const Duration(milliseconds: 500),
+                        child: Text(
+                          'MENGIRIM SINYAL... (${_graceCountdown}s)',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
                         ),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            t['icon']!,
-                            style: const TextStyle(fontSize: 32),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            t['label']!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: _graceCountdown / 10,
+                          minHeight: 8,
+                          backgroundColor: Colors.white24,
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: _graceCountdown / 10,
-                  minHeight: 10,
-                  backgroundColor: Colors.white24,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '$_graceCountdown detik',
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+
+              // Thumb Zone (Bottom Third)
+              // Row 1: Medis, Kriminal
+              Row(
+                children: [
+                  Expanded(child: _buildThumbButton('MEDIS', '🚑', 'medical')),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildThumbButton('KRIMINAL', '🔪', 'crime')),
+                ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
+              // Row 2: Kebakaran, Kecelakaan
+              Row(
+                children: [
+                  Expanded(child: _buildThumbButton('KEBAKARAN', '🔥', 'fire')),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildThumbButton('KECELAKAAN', '💥', 'rescue')),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Row 3: Bencana Alam (Full Width)
+              _buildThumbButton('BENCANA ALAM', '🌪️', 'disaster'),
+              
+              const SizedBox(height: 32),
+              
+              // Cancel Button
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -1852,6 +1846,40 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThumbButton(String label, String icon, String value) {
+    return GestureDetector(
+      onTap: () => _showTypeConfirmDialog(label, value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 32)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
         ),
       ),
     );
