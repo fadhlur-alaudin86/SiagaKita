@@ -67,6 +67,7 @@ dependencies:
 
   # File picker
   file_picker: ^11.0.2
+  google_fonts: ^8.1.0
 
 dev_dependencies:
   flutter_test:

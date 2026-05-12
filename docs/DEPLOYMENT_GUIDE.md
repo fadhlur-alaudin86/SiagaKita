@@ -240,7 +240,36 @@ ufw status
 
 ---
 
-## 7. Menjalankan Migrasi Database
+## 7. Setup Aplikasi Mobile & Console (Client Side)
+
+Aplikasi mobile (`mobile-flutter`) dan console (`windows_console_flutter`) tidak menggunakan hardcode IP server. Sebagai gantinya, IP server diambil dari file `.env` di direktori `infrastructure/` menggunakan fitur native Flutter `--dart-define-from-file`.
+
+### Cara Menjalankan (Development)
+```bash
+# Untuk Mobile (Masyarakat & Relawan)
+cd mobile-flutter
+flutter run --dart-define-from-file=../infrastructure/.env
+
+# Untuk Console (Instansi & Admin)
+cd windows_console_flutter
+flutter run --dart-define-from-file=../infrastructure/.env
+```
+
+### Cara Membangun (Build)
+```bash
+# Build Android APK
+flutter build apk --dart-define-from-file=../infrastructure/.env
+
+# Build Windows EXE
+flutter build windows --dart-define-from-file=../infrastructure/.env
+```
+
+> [!CAUTION]
+> Pastikan variabel `API_HOST` sudah ada di `infrastructure/.env` sebelum menjalankan build/run. Jangan menggunakan default value di kode untuk menyembunyikan IP publik.
+
+---
+
+## 8. Menjalankan Migrasi Database
 
 > ⚠️ **PERINGATAN:** Migrasi `003_schema_v3.sql` menghapus SEMUA data. Migrasi `005_reports_v2.sql` bersifat *additive* dan aman dijalankan di production.
 

@@ -4,7 +4,7 @@ class ApiConfig {
   // ──────────────────────────────────────────────────────────────────
   // GANTI DI SINI jika server berganti
   // ──────────────────────────────────────────────────────────────────
-  static const String _host = '139.59.99.230';
+  static const String _host = String.fromEnvironment('API_HOST');
   static const String _httpPort = '8080';
   static const String _wsPort = '8081';
 

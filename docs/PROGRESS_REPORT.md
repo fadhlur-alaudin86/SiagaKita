@@ -1,6 +1,6 @@
 # 📋 SiagaKita - Laporan Kemajuan Pengembangan
 
-> **Terakhir diperbarui:** 10 Mei 2026
+> **Terakhir diperbarui:** 12 Mei 2026
 > **Branch aktif:** `main`
 > **Status keseluruhan:** 🟡 Dalam Pengembangan Aktif
 
@@ -110,6 +110,21 @@
 ---
 
 ## 3. Changelog Per Sprint
+
+---
+
+### 🔖 Patch 1.0.18 - 12 Mei 2026 (Environment Security & UI Consistency)
+
+#### 🛡️ Keamanan & Konfigurasi
+- **Environment Variable Abstraction**: IP server (`API_HOST`) kini dipisahkan dari kode sumber ke file `.env` di direktori `infrastructure/`.
+- **Flutter Native Define**: Menggunakan fitur `--dart-define-from-file` untuk membaca variabel environment secara native saat *build/run*, menghilangkan ketergantungan pada package pihak ketiga (`flutter_dotenv`).
+- **IP Protection**: Menghapus nilai *default* IP publik di dalam kode untuk meningkatkan keamanan server.
+
+#### 🎨 Konsistensi UI Lintas Platform
+- **Global Typography**: Mengintegrasikan `google_fonts` (Inter) sebagai standar tipografi di seluruh aplikasi (`mobile-flutter` dan `windows_console_flutter`) untuk memastikan tampilan teks identik di Android, iOS, Windows, dan Linux.
+- **Explicit Platform Targeting**: 
+  - Memaksa `TargetPlatform.android` pada aplikasi mobile agar perilaku interaksi konsisten.
+  - Memaksa `TargetPlatform.linux` pada aplikasi konsol agar UI desktop mengikuti referensi desain utama (Linux).
 
 ---
 
@@ -793,8 +808,9 @@ Base URL: `http://<host>:8080/api/v1`
   sudo docker compose -f infrastructure/docker-compose.yml up --build -d backend
   ```
 - [ ] **Isi `.env`** - `SUPERADMIN_EMAIL` dan `SUPERADMIN_PASS` harus diisi untuk seed superadmin
-- [ ] **Biodata Screen → API** - Wire `BiodataScreen` ke `POST /users/biodata`
-- [ ] **Profile Screen → API** - Wire `ProfileScreen` ke `GET /users/profile`
+- [x] **Biodata Screen → API** - Wire `BiodataScreen` ke `POST /users/biodata`
+- [x] **Profile Screen → API** - Wire `ProfileScreen` ke `GET /users/profile`
+- [x] **Environment Security** - Pindah IP hardcode ke `.env`
 - [ ] **Desktop Console → Admin endpoints** - Hubungkan halaman KYC, User Mgmt, Gamifikasi, Statistik ke endpoint `/admin/...`
 
 ### Prioritas Sedang

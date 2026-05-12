@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
@@ -9,6 +10,7 @@ class AppTheme {
 
   static ThemeData light() {
     return ThemeData(
+      platform: TargetPlatform.linux,
       useMaterial3: true,
       scaffoldBackgroundColor: surface,
       colorScheme: ColorScheme.fromSeed(
@@ -18,10 +20,12 @@ class AppTheme {
         secondary: const Color(0xFF18A3FF),
         surface: Colors.white,
       ),
-      textTheme: const TextTheme(
-        titleLarge: TextStyle(fontWeight: FontWeight.w800, color: navy),
-        titleMedium: TextStyle(fontWeight: FontWeight.w700, color: navy),
-        bodyMedium: TextStyle(color: Color(0xFF24324A)),
+      textTheme: GoogleFonts.interTextTheme(
+        const TextTheme(
+          titleLarge: TextStyle(fontWeight: FontWeight.w800, color: navy),
+          titleMedium: TextStyle(fontWeight: FontWeight.w700, color: navy),
+          bodyMedium: TextStyle(color: Color(0xFF24324A)),
+        ),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,

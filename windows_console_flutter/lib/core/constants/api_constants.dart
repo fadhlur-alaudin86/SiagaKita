@@ -2,7 +2,7 @@
 // Ganti _host untuk pindah antara local dan production.
 class ApiConstants {
   // ── GANTI DI SINI jika server berganti ──────────────────────────────
-  static const String _host = '139.59.99.230';
+  static const String _host = String.fromEnvironment('API_HOST');
   // ────────────────────────────────────────────────────────────────────
 
   static const String baseUrl = 'http://$_host:8080/api/v1';

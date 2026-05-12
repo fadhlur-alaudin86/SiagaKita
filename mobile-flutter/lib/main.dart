@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'core/localization/app_localization.dart';
 import 'core/models/user_model.dart';
 import 'core/services/connectivity_service.dart';
@@ -64,6 +65,7 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                 GlobalCupertinoLocalizations.delegate,
               ],
               theme: ThemeData(
+                platform: TargetPlatform.android,
                 brightness: Brightness.light,
                 primaryColor: primaryColor,
                 scaffoldBackgroundColor: lightBgColor,
@@ -73,15 +75,15 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                   surface: lightCardColor,
                   onSurface: Color(0xFF1E293B),
                 ),
-                fontFamily: 'Inter',
-                appBarTheme: const AppBarTheme(
+                textTheme: GoogleFonts.interTextTheme(),
+                appBarTheme: AppBarTheme(
                   backgroundColor: lightBgColor,
                   elevation: 0,
-                  iconTheme: IconThemeData(color: Color(0xFF1E293B)),
-                  titleTextStyle: TextStyle(
-                    color: Color(0xFF1E293B),
-                    fontFamily: 'Inter',
+                  iconTheme: const IconThemeData(color: Color(0xFF1E293B)),
+                  titleTextStyle: GoogleFonts.inter(
+                    color: const Color(0xFF1E293B),
                     fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
                 ),
                 bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -92,6 +94,7 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                 ),
               ),
               darkTheme: ThemeData(
+                platform: TargetPlatform.android,
                 brightness: Brightness.dark,
                 primaryColor: primaryColor,
                 scaffoldBackgroundColor: darkBgColor,
@@ -101,7 +104,7 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                   surface: darkCardColor,
                   onSurface: Colors.white,
                 ),
-                fontFamily: 'Inter',
+                textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
                 appBarTheme: const AppBarTheme(
                   backgroundColor: darkBgColor,
                   elevation: 0,
