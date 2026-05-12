@@ -43,7 +43,7 @@ func NewService(repo *Repository, rdb *redis.Client) *Service {
 
 // ─── TriggerSOS (Jalur A) ─────────────────────────────────────────────────────
 
-func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest, trustLabel string) (*TriggerSOSResponse, error) {
+func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest) (*TriggerSOSResponse, error) {
 	banned, err := s.repo.IsSOSBanned(reporterID)
 	if err != nil {
 		return nil, err
@@ -51,6 +51,8 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest, trustLab
 	if banned {
 		return nil, errors.New("sos_banned: akun Anda dinonaktifkan dari fitur SOS karena pelanggaran berulang")
 	}
+
+	trustLabel, _ := s.repo.GetTrustLabel(reporterID)
 
 	inc := &Incident{
 		ReporterID:         reporterID,
@@ -243,6 +245,10 @@ func (s *Service) GetHistory(reporterID string) ([]ActiveIncidentResponse, error
 // GetAllActive mengembalikan semua incident aktif (untuk console desktop).
 func (s *Service) GetAllActive() ([]AllActiveIncidentResponse, error) {
 	return s.repo.FindAllActive()
+}
+
+func (s *Service) GetAgencyHistory() ([]AllActiveIncidentResponse, error) {
+	return s.repo.FindAgencyHistory()
 }
 
 // ─── Laporan Warga (Jalur B) ──────────────────────────────────────────────────

@@ -74,9 +74,7 @@ class IncidentModel {
     volunteerResponseStatus: json['volunteer_response_status'] as String?,
     latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
     longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-    trustLabel: ((json['is_nik_verified'] as bool? ?? false) && (json['is_phone_verified'] as bool? ?? false)) 
-        ? 'verified' 
-        : (json['reporter_trust_label'] as String? ?? 'standard'),
+    trustLabel: json['reporter_trust_label'] as String? ?? 'standard',
     addressDetail: json['address_detail'] as String?,
     isNikVerified: json['is_nik_verified'] as bool? ?? false,
     isPhoneVerified: json['is_phone_verified'] as bool? ?? false,

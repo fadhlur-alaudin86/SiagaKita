@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -92,7 +93,7 @@ func (r *Repository) MarkCancelled(id string) error {
 func (r *Repository) UploadEvidence(id string, photoPaths []string, audioPath *string) error {
 	updates := map[string]interface{}{"updated_at": time.Now()}
 	if len(photoPaths) > 0 {
-		updates["photo_paths"] = photoPaths
+		updates["photo_paths"] = pq.StringArray(photoPaths)
 	}
 	if audioPath != nil {
 		updates["audio_path"] = *audioPath
@@ -166,6 +167,46 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
 		WHERE i.status NOT IN ('resolved', 'false_alarm', 'cancel')
 		ORDER BY i.created_at DESC
+	`).Scan(&results).Error
+	return results, err
+}
+
+// FindAgencyHistory mengembalikan riwayat SOS dengan status resolved, false_alarm, atau cancel.
+func (r *Repository) FindAgencyHistory() ([]AllActiveIncidentResponse, error) {
+	var results []AllActiveIncidentResponse
+	err := r.db.Raw(`
+		SELECT
+			i.id,
+			i.reporter_id,
+			COALESCE(up.full_name, u.email, 'Tidak diketahui') AS reporter_name,
+			up.phone_number AS reporter_phone,
+			up.blood_type,
+			up.allergies,
+			i.incident_type,
+			i.status,
+			i.handled_by_agency_id,
+			i.agency_status,
+			i.latitude,
+			i.longitude,
+			i.address_detail,
+			i.reporter_trust_label,
+			i.created_at,
+			i.updated_at,
+			i.completed_at,
+			CASE WHEN up.nik_verification_status = 'approved' THEN true ELSE false END AS is_nik_verified,
+			up.is_phone_verified,
+			CAST(up.date_of_birth AS VARCHAR) AS reporter_dob,
+			up.alamat AS reporter_domicile,
+			up.bio AS reporter_bio,
+			(SELECT contact_name || ' (' || contact_phone || ')' FROM emergency_contacts ec WHERE ec.user_id = i.reporter_id AND ec.deleted_at IS NULL LIMIT 1) AS reporter_emergency_contact,
+			i.photo_paths,
+			i.audio_path,
+			(SELECT status FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS volunteer_response_status
+		FROM incidents i
+		LEFT JOIN users u ON u.id = i.reporter_id
+		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
+		WHERE i.status IN ('resolved', 'false_alarm', 'cancel')
+		ORDER BY i.updated_at DESC
 	`).Scan(&results).Error
 	return results, err
 }
@@ -255,6 +296,28 @@ func (r *Repository) AddStrike(userID, incidentID, reason, givenBy string) (int,
 	})
 
 	return strikeCount, banned, err
+}
+
+func (r *Repository) GetTrustLabel(userID string) (string, error) {
+	var profile struct {
+		NikVerificationStatus string
+		IsPhoneVerified       bool
+	}
+	err := r.db.Table("user_profiles").
+		Select("nik_verification_status, is_phone_verified").
+		Where("user_id = ?", userID).Scan(&profile).Error
+
+	if err != nil {
+		return "unverified", err
+	}
+
+	if profile.NikVerificationStatus == "approved" && profile.IsPhoneVerified {
+		return "verified", nil
+	}
+	if profile.IsPhoneVerified {
+		return "standard", nil
+	}
+	return "unverified", nil
 }
 
 func (r *Repository) IsSOSBanned(userID string) (bool, error) {

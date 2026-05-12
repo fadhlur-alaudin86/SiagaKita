@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict wvbqyDRgalb56hOhPktdireYwuJA59eKNLyzVPvahpqlJsc3MjdnQSXoslnkNKS
+\restrict V5wl1kSlg0KSccuoTMbUZoE5djB2N1zZ5gBcxAgyDjJRZfaO7p6fdmgNlhbgvcg
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -305,9 +305,9 @@ CREATE TABLE public.incident_responses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     incident_id uuid,
     responder_id uuid,
-    status public.response_status DEFAULT 'en_route'::public.response_status,
+    status public.response_status DEFAULT 'on_scene'::public.response_status,
     accepted_at timestamp with time zone DEFAULT now(),
-    arrived_at timestamp with time zone,
+    completed_at timestamp with time zone,
     proof_photo_url character varying(255)
 );
 
@@ -971,5 +971,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict wvbqyDRgalb56hOhPktdireYwuJA59eKNLyzVPvahpqlJsc3MjdnQSXoslnkNKS
+\unrestrict V5wl1kSlg0KSccuoTMbUZoE5djB2N1zZ5gBcxAgyDjJRZfaO7p6fdmgNlhbgvcg
 

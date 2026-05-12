@@ -161,6 +161,8 @@ func main() {
 	incidents.Get("/reporter-history", incidentHandler.GetHistory)
 	incidents.Get("/all-active", middleware.ConsoleOnly(), incidentHandler.GetAllActive)
 	incidents.Get("/nearby", middleware.VolunteerOnly(), incidentHandler.GetNearby)
+	incidents.Get("/agency/history", middleware.ConsoleOnly(), incidentHandler.GetAgencyHistory)
+	incidents.Post("/:id/handle", middleware.AgencyOnly(), incidentHandler.AgencyHandleSOS)
 	incidents.Post("/trigger", middleware.BanCheck(db), incidentHandler.TriggerSOS)
 	incidents.Patch("/:id/type", incidentHandler.UpdateType)
 	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)

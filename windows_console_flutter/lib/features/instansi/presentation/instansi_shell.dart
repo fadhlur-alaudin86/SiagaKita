@@ -7,6 +7,7 @@ import 'pages/dashboard_operasi_page.dart';
 import 'pages/laporan_masuk_page.dart';
 import 'pages/peta_operasional_page.dart';
 import 'pages/sos_aktif_page.dart';
+import 'pages/riwayat_sos_page.dart';
 import '../../auth/login_screen.dart';
 
 enum InstansiMenu {
@@ -14,6 +15,7 @@ enum InstansiMenu {
   sosAktif,
   laporanMasuk,
   petaOperasional,
+  riwayatSos,
 }
 
 class InstansiShell extends StatefulWidget {
@@ -34,6 +36,7 @@ class _InstansiShellState extends State<InstansiShell> {
     InstansiMenu.sosAktif: 'SOS Aktif',
     InstansiMenu.laporanMasuk: 'Laporan Masuk',
     InstansiMenu.petaOperasional: 'Peta Operasional',
+    InstansiMenu.riwayatSos: 'Riwayat SOS',
   };
 
   Widget _resolvePage() {
@@ -46,6 +49,8 @@ class _InstansiShellState extends State<InstansiShell> {
         return LaporanMasukPage(token: widget.token);
       case InstansiMenu.petaOperasional:
         return PetaOperasionalPage(token: widget.token, ws: widget.ws);
+      case InstansiMenu.riwayatSos:
+        return RiwayatSosPage(token: widget.token);
     }
   }
 
@@ -144,6 +149,12 @@ class _SideNavigation extends StatelessWidget {
                 label: 'Peta Operasional',
                 selected: activeMenu == InstansiMenu.petaOperasional,
                 onTap: () => onSelected(InstansiMenu.petaOperasional),
+              ),
+              _NavItem(
+                icon: Icons.history_outlined,
+                label: 'Riwayat SOS',
+                selected: activeMenu == InstansiMenu.riwayatSos,
+                onTap: () => onSelected(InstansiMenu.riwayatSos),
               ),
               const Spacer(),
               Container(

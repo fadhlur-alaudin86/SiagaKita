@@ -42,9 +42,7 @@ func (h *Handler) TriggerSOS(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Koordinat GPS wajib diisi")
 	}
 
-	trustLabel := determineTrustLabel(c)
-
-	resp, err := h.svc.TriggerSOS(reporterID, &req, trustLabel)
+	resp, err := h.svc.TriggerSOS(reporterID, &req)
 	if err != nil {
 		if isBanError(err) {
 			return utils.ErrorResponse(c, fiber.StatusForbidden, err.Error())
@@ -421,21 +419,17 @@ func (h *Handler) UpdateReportStatus(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, fiber.Map{"updated": true})
 }
 
+// GET /api/v1/incidents/agency/history
+func (h *Handler) GetAgencyHistory(c *fiber.Ctx) error {
+	incidents, err := h.svc.GetAgencyHistory()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, fiber.Map{"incidents": incidents})
+}
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-func determineTrustLabel(c *fiber.Ctx) string {
-	isEmailVerified, _ := c.Locals("isEmailVerified").(bool)
-	isPhoneVerified, _ := c.Locals("isPhoneVerified").(bool)
-	hasNIK, _ := c.Locals("hasNIK").(bool)
-
-	if hasNIK && isPhoneVerified {
-		return "verified"
-	}
-	if isEmailVerified || isPhoneVerified {
-		return "standard"
-	}
-	return "unverified"
-}
 
 func isBanError(err error) bool {
 	return err != nil && len(err.Error()) >= 10 && err.Error()[:10] == "sos_banned"

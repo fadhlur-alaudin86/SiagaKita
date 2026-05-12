@@ -21,6 +21,19 @@ class IncidentApiService {
         .toList();
   }
 
+  static Future<List<IncidentModel>> getHistory(String token) async {
+    final resp = await http.get(
+      Uri.parse(ApiConstants.incidentsAgencyHistory),
+      headers: AuthService.headers(token),
+    );
+    if (resp.statusCode != 200) return [];
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final data = body['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => IncidentModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   // ─── Detail incident ───────────────────────────────────────────────────────
 
   static Future<IncidentModel?> getDetail(String token, String id) async {
