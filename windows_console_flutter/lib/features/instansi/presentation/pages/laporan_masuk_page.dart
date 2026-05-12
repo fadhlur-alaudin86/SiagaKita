@@ -43,7 +43,12 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
     );
     if (mounted) {
       setState(() {
-        _reports = data;
+        _reports = data
+            .where((r) =>
+                r.status == 'sent' ||
+                r.status == 'accepted' ||
+                r.status == 'handled')
+            .toList();
         _loading = false;
       });
     }
@@ -73,9 +78,6 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
       'sent',
       'accepted',
       'handled',
-      'resolved',
-      'rejected',
-      'canceled',
       'all'
     ];
     return Column(

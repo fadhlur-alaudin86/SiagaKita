@@ -34,7 +34,6 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
     _wsSub = widget.ws.eventStream.listen((msg) {
       if (!mounted) return;
       if (msg.event == WsEvent.incomingEmergency) {
-        AudioService.playAlarm();
         _load();
       } else if (msg.event == WsEvent.sosCancelled ||
           msg.event == WsEvent.rescueAccepted ||

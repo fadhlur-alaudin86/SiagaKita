@@ -1,0 +1,636 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:audioplayers/audioplayers.dart';
+
+import '../../../../core/models/models.dart';
+import '../../../../core/services/api_services.dart';
+import '../../../../core/constants/api_constants.dart';
+
+class RiwayatPage extends StatelessWidget {
+  final String token;
+  const RiwayatPage({super.key, required this.token});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const TabBar(
+            labelColor: Color(0xFFFF7418),
+            unselectedLabelColor: Colors.white54,
+            indicatorColor: Color(0xFFFF7418),
+            tabs: [
+              Tab(text: 'Riwayat SOS'),
+              Tab(text: 'Riwayat Laporan'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _SosHistoryTab(token: token),
+                _ReportHistoryTab(token: token),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SosHistoryTab extends StatefulWidget {
+  final String token;
+  const _SosHistoryTab({required this.token});
+
+  @override
+  State<_SosHistoryTab> createState() => _SosHistoryTabState();
+}
+
+class _SosHistoryTabState extends State<_SosHistoryTab> {
+  List<IncidentModel> _allIncidents = [];
+  List<IncidentModel> _filteredIncidents = [];
+  bool _loading = true;
+  String? _currentAgencyId;
+  String _selectedFilter = 'Semua';
+
+  final List<String> _filters = [
+    'Semua',
+    'Selesai (Kami)',
+    'Selesai (Instansi Lain)',
+    'Selesai (Relawan)',
+    'False Alarm',
+    'Dibatalkan',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _loading = true);
+
+    final profile = await AgencyApiService.getProfile(widget.token);
+    _currentAgencyId = profile?['id'];
+
+    final incidents = await IncidentApiService.getHistory(widget.token);
+
+    if (mounted) {
+      setState(() {
+        _allIncidents = incidents;
+        _loading = false;
+        _applyFilter(_selectedFilter);
+      });
+    }
+  }
+
+  void _applyFilter(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+      if (filter == 'Semua') {
+        _filteredIncidents = List.from(_allIncidents);
+      } else if (filter == 'Selesai (Kami)') {
+        _filteredIncidents = _allIncidents
+            .where(
+              (inc) =>
+                  inc.status == 'resolved' &&
+                  inc.handledByAgencyId == _currentAgencyId,
+            )
+            .toList();
+      } else if (filter == 'Selesai (Instansi Lain)') {
+        _filteredIncidents = _allIncidents
+            .where(
+              (inc) =>
+                  inc.status == 'resolved' &&
+                  inc.handledByAgencyId != null &&
+                  inc.handledByAgencyId != _currentAgencyId,
+            )
+            .toList();
+      } else if (filter == 'Selesai (Relawan)') {
+        _filteredIncidents = _allIncidents
+            .where(
+              (inc) =>
+                  inc.status == 'resolved' && inc.handledByAgencyId == null,
+            )
+            .toList();
+      } else if (filter == 'False Alarm') {
+        _filteredIncidents = _allIncidents
+            .where((inc) => inc.status == 'false_alarm')
+            .toList();
+      } else if (filter == 'Dibatalkan') {
+        _filteredIncidents = _allIncidents
+            .where((inc) => inc.status == 'cancel')
+            .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Filter Chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _filters.map((filter) {
+              final isSelected = filter == _selectedFilter;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: FilterChip(
+                  label: Text(
+                    filter,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                  selected: isSelected,
+                  onSelected: (_) => _applyFilter(filter),
+                  backgroundColor: const Color(0xFF1A2035),
+                  selectedColor: const Color(0xFFFF7418),
+                  checkmarkColor: Colors.white,
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: _filteredIncidents.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Tidak ada riwayat SOS.',
+                    style: TextStyle(color: Colors.white54, fontSize: 16),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: _filteredIncidents.length,
+                  itemBuilder: (context, index) {
+                    final inc = _filteredIncidents[index];
+                    return Card(
+                      color: const Color(0xFF1E293B),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              inc.typeLabel,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            _StatusBadge(status: inc.status),
+                          ],
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pelapor: ${inc.reporterName} (${inc.reporterPhone})',
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Diperbarui: ${DateFormat('dd MMM yyyy, HH:mm').format(inc.updatedAt)}',
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String status;
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    String text;
+    switch (status) {
+      case 'resolved':
+        color = Colors.green;
+        text = 'SELESAI';
+        break;
+      case 'false_alarm':
+        color = Colors.orange;
+        text = 'FALSE ALARM';
+        break;
+      case 'cancel':
+        color = Colors.red;
+        text = 'DIBATALKAN';
+        break;
+      default:
+        color = Colors.grey;
+        text = status.toUpperCase();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+
+class _ReportHistoryTab extends StatefulWidget {
+  final String token;
+  const _ReportHistoryTab({required this.token});
+
+  @override
+  State<_ReportHistoryTab> createState() => _ReportHistoryTabState();
+}
+
+class _ReportHistoryTabState extends State<_ReportHistoryTab> {
+  List<ReportModel> _allReports = [];
+  List<ReportModel> _filteredReports = [];
+  bool _loading = true;
+  String _selectedFilter = 'Semua';
+
+  final List<String> _filters = [
+    'Semua',
+    'Disetujui',
+    'Ditolak',
+    'Dibatalkan',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _loading = true);
+    final data = await IncidentApiService.getReports(widget.token);
+
+    if (mounted) {
+      setState(() {
+        _allReports = data.where((r) => ['resolved', 'rejected', 'canceled'].contains(r.status)).toList();
+        _loading = false;
+        _applyFilter(_selectedFilter);
+      });
+    }
+  }
+
+  void _applyFilter(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+      if (filter == 'Semua') {
+        _filteredReports = List.from(_allReports);
+      } else if (filter == 'Disetujui') {
+        _filteredReports = _allReports.where((r) => r.status == 'resolved').toList();
+      } else if (filter == 'Ditolak') {
+        _filteredReports = _allReports.where((r) => r.status == 'rejected').toList();
+      } else if (filter == 'Dibatalkan') {
+        _filteredReports = _allReports.where((r) => r.status == 'canceled').toList();
+      }
+    });
+  }
+
+  void _showDetailDialog(ReportModel report) {
+    showDialog(
+      context: context,
+      builder: (_) => _ReportHistoryDetailDialog(report: report),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Filter Chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _filters.map((filter) {
+              final isSelected = filter == _selectedFilter;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: FilterChip(
+                  label: Text(
+                    filter,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                  selected: isSelected,
+                  onSelected: (_) => _applyFilter(filter),
+                  backgroundColor: const Color(0xFF1A2035),
+                  selectedColor: const Color(0xFFFF7418),
+                  checkmarkColor: Colors.white,
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: _filteredReports.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Tidak ada riwayat laporan.',
+                    style: TextStyle(color: Colors.white54, fontSize: 16),
+                  ),
+                )
+              : ListView.separated(
+                  itemCount: _filteredReports.length,
+                  separatorBuilder: (context, index) =>
+                      const Divider(color: Colors.white10, height: 1),
+                  itemBuilder: (context, i) {
+                    final r = _filteredReports[i];
+                    return Card(
+                      color: const Color(0xFF1E293B),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        onTap: () => _showDetailDialog(r),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.orange.withValues(alpha: 0.2),
+                          child: const Icon(
+                            Icons.description_outlined,
+                            color: Colors.orange,
+                            size: 20,
+                          ),
+                        ),
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              r.incidentType.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            _StatusBadge(status: r.status),
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              'Pelapor: ${r.reporterName} • Urgensi: ${r.urgencyLabel}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                            if (r.description != null &&
+                                r.description!.isNotEmpty)
+                              Text(
+                                r.description!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReportHistoryDetailDialog extends StatefulWidget {
+  final ReportModel report;
+
+  const _ReportHistoryDetailDialog({required this.report});
+
+  @override
+  State<_ReportHistoryDetailDialog> createState() => _ReportHistoryDetailDialogState();
+}
+
+class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.report.audioPath != null) {
+      final url = widget.report.audioPath!.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + widget.report.audioPath! : widget.report.audioPath!;
+      _audioPlayer.setSourceUrl(url);
+      _audioPlayer.onDurationChanged
+          .listen((d) => setState(() => _duration = d));
+      _audioPlayer.onPositionChanged
+          .listen((p) => setState(() => _position = p));
+      _audioPlayer.onPlayerStateChanged.listen((s) {
+        if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
+      });
+      _audioPlayer.onPlayerComplete.listen((_) {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _position = Duration.zero;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Widget _buildAudioPlayer() {
+    if (widget.report.audioPath == null) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Rekaman Audio', style: TextStyle(color: Colors.white70)),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.green),
+                onPressed: () {
+                  if (_isPlaying) {
+                    _audioPlayer.pause();
+                  } else {
+                    _audioPlayer.resume();
+                  }
+                },
+              ),
+              Expanded(
+                child: Slider(
+                  value: _position.inMilliseconds.toDouble(),
+                  max: _duration.inMilliseconds > 0
+                      ? _duration.inMilliseconds.toDouble()
+                      : 1.0,
+                  onChanged: (v) {
+                    _audioPlayer.seek(Duration(milliseconds: v.toInt()));
+                  },
+                ),
+              ),
+              Text(
+                '${_position.inMinutes.toString().padLeft(2, '0')}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes.toString().padLeft(2, '0')}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = widget.report;
+    return Dialog(
+      backgroundColor: const Color(0xFF1A2035),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: 500,
+        padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Detail Laporan',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white54),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(color: Colors.white24),
+              const SizedBox(height: 8),
+              Text('Kategori: ${r.incidentType.toUpperCase()}',
+                  style: const TextStyle(color: Colors.white)),
+              Text('Urgensi: ${r.urgencyLabel}',
+                  style: const TextStyle(color: Colors.white)),
+              Text('Pelapor: ${r.reporterName}',
+                  style: const TextStyle(color: Colors.white)),
+              Text('Status: ${r.status.toUpperCase()}',
+                  style: const TextStyle(color: Colors.white)),
+              if (r.description != null) ...[
+                const SizedBox(height: 12),
+                const Text('Deskripsi:',
+                    style: TextStyle(color: Colors.white70)),
+                Text(r.description!,
+                    style: const TextStyle(color: Colors.white)),
+              ],
+              if (r.photoPaths.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text('Lampiran Foto:',
+                    style: TextStyle(color: Colors.white70)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: r.photoPaths.map((url) {
+                    final fullUrl = url.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + url : url;
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        fullUrl,
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, _) => Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.white10,
+                          child: const Icon(Icons.broken_image,
+                              color: Colors.white54),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+              _buildAudioPlayer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

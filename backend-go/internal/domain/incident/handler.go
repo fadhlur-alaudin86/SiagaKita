@@ -425,7 +425,7 @@ func (h *Handler) GetAgencyHistory(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"incidents": incidents})
+	return utils.SuccessResponse(c, incidents)
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────────

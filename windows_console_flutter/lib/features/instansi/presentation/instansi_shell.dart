@@ -7,15 +7,18 @@ import 'pages/dashboard_operasi_page.dart';
 import 'pages/laporan_masuk_page.dart';
 import 'pages/peta_operasional_page.dart';
 import 'pages/sos_aktif_page.dart';
-import 'pages/riwayat_sos_page.dart';
+import 'pages/riwayat_page.dart';
 import '../../auth/login_screen.dart';
+import '../../../core/services/audio_service.dart';
+import '../../../core/services/api_services.dart';
+import 'dart:async';
 
 enum InstansiMenu {
   dashboard,
   sosAktif,
   laporanMasuk,
   petaOperasional,
-  riwayatSos,
+  riwayat,
 }
 
 class InstansiShell extends StatefulWidget {
@@ -36,8 +39,55 @@ class _InstansiShellState extends State<InstansiShell> {
     InstansiMenu.sosAktif: 'SOS Aktif',
     InstansiMenu.laporanMasuk: 'Laporan Masuk',
     InstansiMenu.petaOperasional: 'Peta Operasional',
-    InstansiMenu.riwayatSos: 'Riwayat SOS',
+    InstansiMenu.riwayat: 'Riwayat',
   };
+
+  StreamSubscription<WsMessage>? _wsSub;
+  int _unreadCount = 0;
+  final Set<String> _readSosIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUnread();
+    _wsSub = widget.ws.eventStream.listen((msg) {
+      if (!mounted) return;
+      if (msg.event == WsEvent.incomingEmergency) {
+        AudioService.playAlarm();
+        _fetchUnread();
+      } else if (msg.event == WsEvent.sosCancelled ||
+          msg.event == WsEvent.rescueAccepted ||
+          msg.event == WsEvent.sosStatusUpdate ||
+          msg.event == WsEvent.connected) {
+        _fetchUnread();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchUnread() async {
+    final incidents = await IncidentApiService.getActiveIncidents(widget.token);
+    if (!mounted) return;
+    setState(() {
+      _unreadCount = incidents.where((inc) => !_readSosIds.contains(inc.id)).length;
+    });
+  }
+
+  void _markAllAsRead() async {
+    final incidents = await IncidentApiService.getActiveIncidents(widget.token);
+    if (!mounted) return;
+    setState(() {
+      for (var inc in incidents) {
+        _readSosIds.add(inc.id);
+      }
+      _unreadCount = 0;
+    });
+  }
 
   Widget _resolvePage() {
     switch (_activeMenu) {
@@ -49,8 +99,8 @@ class _InstansiShellState extends State<InstansiShell> {
         return LaporanMasukPage(token: widget.token);
       case InstansiMenu.petaOperasional:
         return PetaOperasionalPage(token: widget.token, ws: widget.ws);
-      case InstansiMenu.riwayatSos:
-        return RiwayatSosPage(token: widget.token);
+      case InstansiMenu.riwayat:
+        return RiwayatPage(token: widget.token);
     }
   }
 
@@ -64,7 +114,13 @@ class _InstansiShellState extends State<InstansiShell> {
           children: [
             _SideNavigation(
               activeMenu: _activeMenu,
-              onSelected: (menu) => setState(() => _activeMenu = menu),
+              unreadSosCount: _unreadCount,
+              onSelected: (menu) {
+                setState(() => _activeMenu = menu);
+                if (menu == InstansiMenu.sosAktif) {
+                  _markAllAsRead();
+                }
+              },
               ws: widget.ws,
             ),
             Expanded(
@@ -95,11 +151,13 @@ class _SideNavigation extends StatelessWidget {
     required this.activeMenu,
     required this.onSelected,
     required this.ws,
+    required this.unreadSosCount,
   });
 
   final InstansiMenu activeMenu;
   final ValueChanged<InstansiMenu> onSelected;
   final WsService ws;
+  final int unreadSosCount;
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +193,7 @@ class _SideNavigation extends StatelessWidget {
                 label: 'SOS Aktif',
                 icon: Icons.sensors_outlined,
                 selected: activeMenu == InstansiMenu.sosAktif,
+                badgeCount: unreadSosCount,
                 onTap: () => onSelected(InstansiMenu.sosAktif),
               ),
               _NavItem(
@@ -152,9 +211,9 @@ class _SideNavigation extends StatelessWidget {
               ),
               _NavItem(
                 icon: Icons.history_outlined,
-                label: 'Riwayat SOS',
-                selected: activeMenu == InstansiMenu.riwayatSos,
-                onTap: () => onSelected(InstansiMenu.riwayatSos),
+                label: 'Riwayat',
+                selected: activeMenu == InstansiMenu.riwayat,
+                onTap: () => onSelected(InstansiMenu.riwayat),
               ),
               const Spacer(),
               Container(
@@ -198,12 +257,14 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.selected,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final String label;
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -221,13 +282,27 @@ class _NavItem extends StatelessWidget {
               children: [
                 Icon(icon, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+                if (badgeCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      badgeCount.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
               ],
             ),
           ),

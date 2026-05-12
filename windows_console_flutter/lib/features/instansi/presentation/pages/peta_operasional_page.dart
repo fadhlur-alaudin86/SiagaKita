@@ -129,15 +129,6 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: _loadIncidents,
-                child: const Icon(
-                  Icons.refresh,
-                  color: Colors.white38,
-                  size: 18,
-                ),
-              ),
             ],
           ),
         ),

@@ -6,8 +6,8 @@ import 'package:audioplayers/audioplayers.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
-import '../../../../core/services/audio_service.dart';
 import '../../../../core/services/ws_service.dart';
+import '../../../../core/constants/api_constants.dart';
 
 class SosAktifPage extends StatefulWidget {
   final String token;
@@ -47,10 +47,17 @@ class _SosAktifPageState extends State<SosAktifPage> {
     _audioPlayer.onPlayerStateChanged.listen((s) {
       if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
     });
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _position = Duration.zero;
+        });
+      }
+    });
     _wsSub = widget.ws.eventStream.listen((msg) {
       if (!mounted) return;
       if (msg.event == WsEvent.incomingEmergency) {
-        AudioService.playAlarm();
         _load();
       } else if (msg.event == WsEvent.sosCancelled ||
           msg.event == WsEvent.rescueAccepted ||
@@ -93,7 +100,16 @@ class _SosAktifPageState extends State<SosAktifPage> {
         _incidents = data;
         // Sinkronkan _selected - jika sudah resolved/selesai, clear selection
         if (_selected != null) {
-          _selected = data.where((i) => i.id == _selected!.id).firstOrNull;
+          final updated = data.where((i) => i.id == _selected!.id).firstOrNull;
+          if (updated != null) {
+             if (updated.audioPath != null && _selected!.audioPath != updated.audioPath) {
+                 final url = updated.audioPath!.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + updated.audioPath! : updated.audioPath!;
+                 _audioPlayer.setSourceUrl(url);
+             }
+             _selected = updated;
+          } else {
+             _selected = null;
+          }
         }
         _loading = false;
       });
@@ -276,10 +292,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                   : Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  AudioService.stop();
                                   setState(() => _selected = inc);
                                   if (inc.audioPath != null) {
-                                    _audioPlayer.setSourceUrl(inc.audioPath!);
+                                    final url = inc.audioPath!.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + inc.audioPath! : inc.audioPath!;
+                                    _audioPlayer.setSourceUrl(url);
                                   } else {
                                     _audioPlayer.stop();
                                   }
@@ -640,10 +656,11 @@ class _SosAktifPageState extends State<SosAktifPage> {
               Wrap(
                 spacing: 8,
                 children: inc.photoPaths.map((url) {
+                  final fullUrl = url.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + url : url;
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
-                      url,
+                      fullUrl,
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
@@ -697,14 +714,18 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     ),
                     Expanded(
                       child: Slider(
-                        value: _position.inSeconds.toDouble(),
-                        max: _duration.inSeconds > 0
-                            ? _duration.inSeconds.toDouble()
+                        value: _position.inMilliseconds.toDouble(),
+                        max: _duration.inMilliseconds > 0
+                            ? _duration.inMilliseconds.toDouble()
                             : 1.0,
                         onChanged: (v) {
-                          _audioPlayer.seek(Duration(seconds: v.toInt()));
+                          _audioPlayer.seek(Duration(milliseconds: v.toInt()));
                         },
                       ),
+                    ),
+                    Text(
+                      '${_position.inMinutes.toString().padLeft(2, '0')}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes.toString().padLeft(2, '0')}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -724,7 +745,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
             ),
             const SizedBox(height: 12),
 
-            if (inc.status == 'broadcasting' || inc.status == 'grace_period')
+            if (inc.agencyStatus == 'pending' && inc.status != 'resolved' && inc.status != 'false_alarm' && inc.status != 'cancel')
               Row(
                 children: [
                   Expanded(
