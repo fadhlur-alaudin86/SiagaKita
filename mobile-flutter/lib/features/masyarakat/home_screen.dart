@@ -880,10 +880,16 @@ class _HomeScreenState extends State<HomeScreen>
     if (isBeingHandled) {
       // Dialog peringatan keras — ada yang sudah merespons
       final handlerDesc = StringBuffer();
-      if (_activeIncident!.isHandledByAgency) handlerDesc.write('🏛️ Instansi');
+      if (_activeIncident!.isHandledByAgency) {
+        handlerDesc.write(_activeIncident!.agencyName ?? 'Instansi');
+      }
       if (_activeIncident!.isHandledByVolunteer) {
         if (handlerDesc.isNotEmpty) handlerDesc.write(' dan ');
-        handlerDesc.write('🦺 Relawan');
+        if (_activeIncident!.volunteerNames.isNotEmpty) {
+           handlerDesc.write(_activeIncident!.volunteerNames.map((n) => '$n (relawan)').join(', '));
+        } else {
+           handlerDesc.write('Relawan');
+        }
       }
 
       showDialog(
@@ -893,8 +899,10 @@ class _HomeScreenState extends State<HomeScreen>
           title: Row(children: [
             const Icon(Icons.warning_rounded, color: Colors.yellow),
             const SizedBox(width: 8),
-            Text('SOS Sedang Ditangani!'.tr(context),
-                style: const TextStyle(color: Colors.white)),
+            Expanded(
+              child: Text('SOS Sedang Ditangani!'.tr(context),
+                  style: const TextStyle(color: Colors.white)),
+            ),
           ]),
           content: Text(
             '$handlerDesc sedang merespons dan menuju lokasi Anda. '

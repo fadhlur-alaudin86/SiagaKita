@@ -190,9 +190,9 @@ class _MapScreenState extends State<MapScreen>
       return '⭕ OFF DUTY - Aktifkan di tab Operasi';
     }
     if (_accuracy > 50) return '⚠️ Akurasi rendah: ±${_accuracy.round()}m';
-    if (_addressLabel != null) return '📍 $_addressLabel';
+    if (_addressLabel != null) return _addressLabel!;
     if (_userLocation != null) {
-      return '📍 ${_userLocation!.latitude.toStringAsFixed(5)}, ${_userLocation!.longitude.toStringAsFixed(5)}';
+      return '${_userLocation!.latitude.toStringAsFixed(5)}, ${_userLocation!.longitude.toStringAsFixed(5)}';
     }
     return '📡 Mendeteksi lokasi...';
   }
@@ -260,13 +260,6 @@ class _MapScreenState extends State<MapScreen>
           },
         ),
       ),
-      floatingActionButton: _userLocation != null
-          ? FloatingActionButton(
-              backgroundColor: colors.primary,
-              onPressed: _recenterMap,
-              child: const Icon(Icons.my_location, color: Colors.white),
-            )
-          : null,
     );
   }
 
@@ -391,105 +384,127 @@ class _MapScreenState extends State<MapScreen>
                         ],
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: _userLocation!,
-                    initialZoom: 15.0,
-                    minZoom: 12.0,
-                    maxZoom: 18.0,
-                    cameraConstraint: CameraConstraint.contain(
-                      bounds: _getMapBounds()!,
-                    ),
-                  ),
+                child: Stack(
                   children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.superbypass.siagakita',
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        // SOS Nearby markers (hanya relawan ON DUTY)
-                        ..._nearbySOS.map(
-                          (inc) => Marker(
-                            point: LatLng(inc.latitude, inc.longitude),
-                            width: 48,
-                            height: 48,
-                            child: GestureDetector(
-                              onTap: () => _showSOSSnackbar(inc),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEF4444),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Colors.black38,
-                                      blurRadius: 6,
+                    FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        initialCenter: _userLocation!,
+                        initialZoom: 15.0,
+                        minZoom: 12.0,
+                        maxZoom: 18.0,
+                        cameraConstraint: CameraConstraint.contain(
+                          bounds: _getMapBounds()!,
+                        ),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.superbypass.siagakita',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            // SOS Nearby markers (hanya relawan ON DUTY)
+                            ..._nearbySOS.map(
+                              (inc) => Marker(
+                                point: LatLng(inc.latitude, inc.longitude),
+                                width: 48,
+                                height: 48,
+                                rotate: true,
+                                child: GestureDetector(
+                                  onTap: () => _showSOSSnackbar(inc),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEF4444),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.black38,
+                                          blurRadius: 6,
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    inc.typeEmoji,
-                                    style: const TextStyle(fontSize: 18),
+                                    child: Center(
+                                      child: Text(
+                                        inc.typeEmoji,
+                                        style: const TextStyle(fontSize: 18),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        // User Position
-                        Marker(
-                          point: _userLocation!,
-                          width: 60,
-                          height: 60,
-                          child: AnimatedBuilder(
-                            animation: _pulseAnimation,
-                            builder: (context, child) {
-                              final isSOSActive =
-                                  user.isAvailableForMission ==
-                                  false; // simplification
-                              final markerColor = isSOSActive
-                                  ? const Color(0xFFEF4444)
-                                  : colors.primary;
-                              return Transform.scale(
-                                scale: _pulseAnimation.value,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: markerColor.withValues(alpha: 0.3),
-                                  ),
-                                  child: Center(
+                            // User Position
+                            Marker(
+                              point: _userLocation!,
+                              width: 60,
+                              height: 60,
+                              rotate: true,
+                              child: AnimatedBuilder(
+                                animation: _pulseAnimation,
+                                builder: (context, child) {
+                                  final isSOSActive =
+                                      user.isAvailableForMission ==
+                                      false; // simplification
+                                  final markerColor = isSOSActive
+                                      ? const Color(0xFFEF4444)
+                                      : colors.primary;
+                                  return Transform.scale(
+                                    scale: _pulseAnimation.value,
                                     child: Container(
-                                      width: 24,
-                                      height: 24,
                                       decoration: BoxDecoration(
-                                        color: markerColor,
                                         shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 2,
+                                        color: markerColor.withValues(
+                                          alpha: 0.3,
                                         ),
                                       ),
-                                      child: const Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                        size: 14,
+                                      child: Center(
+                                        child: Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: markerColor,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: 14,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                    if (_userLocation != null)
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: FloatingActionButton(
+                          backgroundColor: colors.primary,
+                          onPressed: _recenterMap,
+                          mini: true,
+                          child: const Icon(
+                            Icons.my_location,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

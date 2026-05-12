@@ -195,10 +195,23 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 		ORDER BY created_at ASC LIMIT 1
 	`, inc.ID).Scan(&volunteerStatus)
 
+	var volunteerNames []string
+	s.repo.db.Raw(`
+		SELECT u.full_name 
+		FROM incident_responses ir
+		JOIN users u ON u.id = ir.volunteer_id
+		WHERE ir.incident_id = ? AND ir.status IN ('en_route', 'waiting_review')
+	`, inc.ID).Scan(&volunteerNames)
+
 	agencyStatus := inc.AgencyStatus
 	var agencyStatusPtr *string
 	if agencyStatus != "" && agencyStatus != "pending" {
 		agencyStatusPtr = &agencyStatus
+	}
+
+	var agencyName *string
+	if inc.HandledByAgencyID != nil {
+		s.repo.db.Raw(`SELECT name FROM agencies WHERE id = ?`, inc.HandledByAgencyID).Scan(&agencyName)
 	}
 
 	return &ActiveIncidentResponse{
@@ -211,7 +224,9 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 		CreatedAt:               inc.CreatedAt.Format(time.RFC3339),
 		AgencyStatus:            agencyStatusPtr,
 		HandledByAgencyID:       inc.HandledByAgencyID,
+		AgencyName:              agencyName,
 		VolunteerResponseStatus: volunteerStatus,
+		VolunteerNames:          volunteerNames,
 	}, nil
 }
 

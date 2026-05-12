@@ -164,10 +164,12 @@ type ActiveIncidentResponse struct {
 	Latitude                float64 `json:"latitude"`
 	Longitude               float64 `json:"longitude"`
 	CreatedAt               string  `json:"created_at"`
-	ReporterTrustLabel      string  `json:"reporter_trust_label"`
-	AgencyStatus            *string `json:"agency_status,omitempty"`
-	HandledByAgencyID       *string `json:"handled_by_agency_id,omitempty"`
-	VolunteerResponseStatus *string `json:"volunteer_response_status,omitempty"`
+	ReporterTrustLabel      string   `json:"reporter_trust_label"`
+	AgencyStatus            *string  `json:"agency_status,omitempty"`
+	HandledByAgencyID       *string  `json:"handled_by_agency_id,omitempty"`
+	AgencyName              *string  `json:"agency_name,omitempty"`
+	VolunteerResponseStatus *string  `json:"volunteer_response_status,omitempty"`
+	VolunteerNames          []string `json:"volunteer_names,omitempty"`
 }
 
 // AllActiveIncidentResponse - data SOS aktif LENGKAP untuk console desktop (JOIN ke users & profiles).

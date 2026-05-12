@@ -465,7 +465,9 @@ class ActiveIncident {
   final String reporterTrustLabel;
   final String? agencyStatus;
   final String? handledByAgencyId;
+  final String? agencyName;
   final String? volunteerResponseStatus;
+  final List<String> volunteerNames;
 
   const ActiveIncident({
     required this.incidentId,
@@ -478,7 +480,9 @@ class ActiveIncident {
     this.reporterTrustLabel = 'standard',
     this.agencyStatus,
     this.handledByAgencyId,
+    this.agencyName,
     this.volunteerResponseStatus,
+    this.volunteerNames = const [],
   }) : updatedAt = updatedAt ?? createdAt;
 
   factory ActiveIncident.fromJson(Map<String, dynamic> json) => ActiveIncident(
@@ -492,7 +496,9 @@ class ActiveIncident {
     reporterTrustLabel: json['reporter_trust_label'] as String? ?? 'standard',
     agencyStatus: json['agency_status'] as String?,
     handledByAgencyId: json['handled_by_agency_id'] as String?,
+    agencyName: json['agency_name'] as String?,
     volunteerResponseStatus: json['volunteer_response_status'] as String?,
+    volunteerNames: (json['volunteer_names'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
   );
 
   /// Apakah instansi sedang aktif menangani SOS ini.
