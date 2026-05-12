@@ -269,11 +269,9 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                 'Semua',
                 'Kebakaran',
                 'Medis',
-                'Kejahatan',
+                'Kriminalitas',
                 'Bencana',
-                'Lakalantas',
-                'Infrastruktur',
-                'Lainnya',
+                'Kecelakaan',
               ],
               onChanged: (v) {
                 if (v != null) {
@@ -584,11 +582,9 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
                 'Semua',
                 'Kebakaran',
                 'Medis',
-                'Kejahatan',
+                'Kriminalitas',
                 'Bencana',
-                'Lakalantas',
-                'Infrastruktur',
-                'Lainnya',
+                'Kecelakaan',
               ],
               onChanged: (v) {
                 if (v != null) {
