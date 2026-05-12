@@ -175,6 +175,8 @@ func main() {
 	incidents.Post("/:id/agency-review", middleware.ConsoleOnly(), incidentHandler.AgencyReviewVolunteer)
 	incidents.Post("/:id/agency-resolve", middleware.ConsoleOnly(), incidentHandler.AgencyResolveSOS)
 	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), incidentHandler.MarkFalseAlarm)
+	incidents.Get("/my-active-response", middleware.VolunteerOnly(), incidentHandler.GetMyActiveResponse)
+	incidents.Put("/:id/response-location", middleware.VolunteerOnly(), incidentHandler.UpdateResponseLocation)
 	// endpoint lama: incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve) // bisa tetap ada atau diganti, kita pakai agency-resolve sekarang
 
 

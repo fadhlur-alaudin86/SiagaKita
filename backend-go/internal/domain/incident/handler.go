@@ -529,6 +529,7 @@ func (h *Handler) notifyReporter(incidentID, event string, payload map[string]in
 // GET /api/v1/incidents/nearby?lat=&lng=&radius=5
 // Hanya untuk volunteer - mengembalikan SOS aktif dalam radius tertentu.
 func (h *Handler) GetNearby(c *fiber.Ctx) error {
+	volunteerID := c.Locals("userID").(string)
 	latStr := c.Query("lat")
 	lngStr := c.Query("lng")
 	radiusStr := c.Query("radius", "5")
@@ -549,7 +550,7 @@ func (h *Handler) GetNearby(c *fiber.Ctx) error {
 		radius = 50.0 // maksimal 50km
 	}
 
-	results, err := h.svc.GetNearby(lat, lng, radius)
+	results, err := h.svc.GetNearby(lat, lng, radius, volunteerID)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal mengambil data SOS terdekat")
 	}
@@ -735,4 +736,50 @@ func (h *Handler) GetMissionHistory(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, history)
+}
+
+// GET /api/v1/incidents/my-active-response [VolunteerOnly]
+func (h *Handler) GetMyActiveResponse(c *fiber.Ctx) error {
+	volunteerID := c.Locals("userID").(string)
+	resp, err := h.svc.GetActiveResponse(volunteerID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat misi aktif")
+	}
+	return utils.SuccessResponse(c, resp)
+}
+
+// PUT /api/v1/incidents/:id/response-location [VolunteerOnly]
+func (h *Handler) UpdateResponseLocation(c *fiber.Ctx) error {
+	volunteerID := c.Locals("userID").(string)
+	incidentID := c.Params("id")
+
+	var req UpdateResponseLocationRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	if err := h.svc.UpdateResponseLocation(incidentID, volunteerID, req.Latitude, req.Longitude, req.AddressDetail); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	// Broadcast lokasi relawan ke agency dan reporter via WebSocket
+	go func() {
+		payload := map[string]interface{}{
+			"incident_id": incidentID,
+			"volunteer_id": volunteerID,
+			"latitude":    req.Latitude,
+			"longitude":   req.Longitude,
+			"updated_at":  time.Now().Format(time.RFC3339),
+		}
+		if req.AddressDetail != nil {
+			payload["address_detail"] = *req.AddressDetail
+		}
+		h.broadcastEventToAgencies(hub.Message{
+			Event:   "VOLUNTEER_LOCATION_UPDATE",
+			Payload: payload,
+		})
+		h.notifyReporter(incidentID, "VOLUNTEER_LOCATION_UPDATE", payload)
+	}()
+
+	return utils.SuccessResponse(c, fiber.Map{"updated": true})
 }

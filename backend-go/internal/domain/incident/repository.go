@@ -76,9 +76,9 @@ func (r *Repository) MarkCancelled(id string) error {
 			return errors.New("conflict: incident cannot be cancelled at its current status")
 		}
 
-		// 2. Cancel all active incident responses
+		// 2. Cancel all active incident responses (termasuk on_scene)
 		if err := tx.Model(&IncidentResponse{}).
-			Where("incident_id = ? AND status IN (?, ?)", id, "en_route", "waiting_review").
+			Where("incident_id = ? AND status IN (?, ?, ?)", id, "en_route", "waiting_review", "on_scene").
 			Updates(map[string]interface{}{
 				"status": "canceled",
 			}).Error; err != nil {
@@ -391,7 +391,8 @@ func (r *Repository) UpdateRank(userID string, rankID uint) error {
 
 // FindNearby mengembalikan SOS aktif dalam radius `radiusKm` kilometer dari koordinat (lat, lng).
 // Menggunakan formula haversine dengan PostgreSQL native functions.
-func (r *Repository) FindNearby(lat, lng, radiusKm float64) ([]NearbyIncidentResponse, error) {
+// volunteerID digunakan untuk mengecualikan SOS milik relawan sendiri.
+func (r *Repository) FindNearby(lat, lng, radiusKm float64, volunteerID string) ([]NearbyIncidentResponse, error) {
 	var results []NearbyIncidentResponse
 	err := r.db.Raw(`
 		SELECT
@@ -414,6 +415,7 @@ func (r *Repository) FindNearby(lat, lng, radiusKm float64) ([]NearbyIncidentRes
 			audio_path
 		FROM incidents
 		WHERE status NOT IN ('resolved', 'false_alarm', 'cancel')
+		  AND reporter_id != $4
 		  AND (
 			6371 * acos(
 				LEAST(1.0, cos(radians($1)) * cos(radians(latitude)) *
@@ -422,7 +424,7 @@ func (r *Repository) FindNearby(lat, lng, radiusKm float64) ([]NearbyIncidentRes
 			)
 		  ) <= $3
 		ORDER BY distance_km ASC
-	`, lat, lng, radiusKm).Scan(&results).Error
+	`, lat, lng, radiusKm, volunteerID).Scan(&results).Error
 	return results, err
 }
 
@@ -536,3 +538,45 @@ func (r *Repository) GetMissionHistory(volunteerID string) ([]MissionHistoryResp
 	return results, err
 }
 
+// GetActiveResponse mengembalikan misi aktif relawan (status on_scene).
+func (r *Repository) GetActiveResponse(volunteerID string) (*ActiveResponseDTO, error) {
+	var result ActiveResponseDTO
+	err := r.db.Raw(`
+		SELECT
+			ir.id       AS response_id,
+			i.id        AS incident_id,
+			i.incident_type,
+			ir.status,
+			i.latitude  AS reporter_latitude,
+			i.longitude AS reporter_longitude,
+			i.address_detail,
+			CAST(ir.accepted_at AS VARCHAR) AS accepted_at
+		FROM incident_responses ir
+		JOIN incidents i ON i.id = ir.incident_id
+		WHERE ir.responder_id = $1
+		  AND ir.status = 'on_scene'
+		ORDER BY ir.accepted_at DESC
+		LIMIT 1
+	`, volunteerID).Scan(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	if result.IncidentID == "" {
+		return nil, nil // tidak ada misi aktif
+	}
+	return &result, nil
+}
+
+// UpdateResponseLocation memperbarui koordinat relawan pada incident_response aktif.
+func (r *Repository) UpdateResponseLocation(incidentID, volunteerID string, lat, lng float64, address *string) error {
+	updates := map[string]interface{}{
+		"latitude":  lat,
+		"longitude": lng,
+	}
+	if address != nil {
+		updates["address_detail"] = *address
+	}
+	return r.db.Model(&IncidentResponse{}).
+		Where("incident_id = ? AND responder_id = ? AND status = 'on_scene'", incidentID, volunteerID).
+		Updates(updates).Error
+}

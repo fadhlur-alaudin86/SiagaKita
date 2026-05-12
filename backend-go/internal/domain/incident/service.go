@@ -354,8 +354,9 @@ func (s *Service) Resolve(incidentID, responderID string) (*ResolveResponse, err
 // ─── GetNearby (untuk Relawan) ────────────────────────────────────────────────
 
 // GetNearby mengembalikan SOS aktif dalam radius `radiusKm` km dari posisi relawan.
-func (s *Service) GetNearby(lat, lng, radiusKm float64) ([]NearbyIncidentResponse, error) {
-	results, err := s.repo.FindNearby(lat, lng, radiusKm)
+// volunteerID digunakan untuk mengecualikan SOS milik relawan sendiri.
+func (s *Service) GetNearby(lat, lng, radiusKm float64, volunteerID string) ([]NearbyIncidentResponse, error) {
+	results, err := s.repo.FindNearby(lat, lng, radiusKm, volunteerID)
 	if err != nil {
 		return nil, err
 	}
@@ -518,3 +519,12 @@ func (s *Service) GetMissionHistory(volunteerID string) ([]MissionHistoryRespons
 	return history, nil
 }
 
+// GetActiveResponse mengembalikan misi aktif relawan (status on_scene).
+func (s *Service) GetActiveResponse(volunteerID string) (*ActiveResponseDTO, error) {
+	return s.repo.GetActiveResponse(volunteerID)
+}
+
+// UpdateResponseLocation memperbarui lokasi relawan pada misi aktif.
+func (s *Service) UpdateResponseLocation(incidentID, volunteerID string, lat, lng float64, address *string) error {
+	return s.repo.UpdateResponseLocation(incidentID, volunteerID, lat, lng, address)
+}

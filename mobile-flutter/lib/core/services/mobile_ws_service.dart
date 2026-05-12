@@ -6,10 +6,11 @@ import '../constants/api_config.dart';
 
 /// Event type dari WebSocket untuk user masyarakat (reporter SOS).
 enum MobileWsEvent {
-  agencyHandling,    // AGENCY_HANDLING  - instansi mulai menangani
-  volunteerHandling, // VOLUNTEER_HANDLING - relawan on the way
-  sosCancelled,      // SOS_CANCELLED   - SOS dibatalkan oleh sistem
-  sosResolved,       // SOS_RESOLVED    - SOS diselesaikan
+  agencyHandling,         // AGENCY_HANDLING         - instansi mulai menangani
+  volunteerHandling,      // VOLUNTEER_HANDLING       - relawan on the way
+  volunteerLocationUpdate,// VOLUNTEER_LOCATION_UPDATE - update posisi relawan
+  sosCancelled,           // SOS_CANCELLED            - SOS dibatalkan
+  sosResolved,            // SOS_RESOLVED             - SOS diselesaikan
   connected,
   unknown,
 }
@@ -23,11 +24,12 @@ class MobileWsMessage {
   factory MobileWsMessage.fromRaw(Map<String, dynamic> json) {
     final eventStr = json['event'] as String? ?? '';
     final event = switch (eventStr) {
-      'AGENCY_HANDLING'    => MobileWsEvent.agencyHandling,
-      'VOLUNTEER_HANDLING' => MobileWsEvent.volunteerHandling,
-      'SOS_CANCELLED'      => MobileWsEvent.sosCancelled,
-      'SOS_RESOLVED'       => MobileWsEvent.sosResolved,
-      _                    => MobileWsEvent.unknown,
+      'AGENCY_HANDLING'          => MobileWsEvent.agencyHandling,
+      'VOLUNTEER_HANDLING'       => MobileWsEvent.volunteerHandling,
+      'VOLUNTEER_LOCATION_UPDATE'=> MobileWsEvent.volunteerLocationUpdate,
+      'SOS_CANCELLED'            => MobileWsEvent.sosCancelled,
+      'SOS_RESOLVED'             => MobileWsEvent.sosResolved,
+      _                          => MobileWsEvent.unknown,
     };
     return MobileWsMessage(
       event: event,

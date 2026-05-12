@@ -59,13 +59,16 @@ type SOSStrike struct {
 
 // IncidentResponse adalah respons relawan/instansi terhadap incident.
 type IncidentResponse struct {
-	ID          string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	IncidentID  string     `gorm:"type:uuid;not null" json:"incident_id"`
+	ID            string     `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	IncidentID    string     `gorm:"type:uuid;not null" json:"incident_id"`
 	ResponderID   string     `gorm:"type:uuid;not null" json:"responder_id"`
-	Status       string    `gorm:"type:public.response_status;default:on_scene" json:"status"`
-	AcceptedAt   time.Time `json:"accepted_at"`
-	CompletedAt  *time.Time `json:"completed_at,omitempty"`
-	ProofPhotoURL *string  `json:"proof_photo_url,omitempty"`
+	Status        string     `gorm:"type:public.response_status;default:on_scene" json:"status"`
+	AcceptedAt    time.Time  `json:"accepted_at"`
+	CompletedAt   *time.Time `json:"completed_at,omitempty"`
+	ProofPhotoURL *string    `json:"proof_photo_url,omitempty"`
+	Latitude      *float64   `gorm:"column:latitude" json:"latitude,omitempty"`
+	Longitude     *float64   `gorm:"column:longitude" json:"longitude,omitempty"`
+	AddressDetail *string    `gorm:"column:address_detail" json:"address_detail,omitempty"`
 }
 
 // VolunteerReputation menyimpan poin XP dan total rescue relawan.
@@ -98,6 +101,25 @@ type TriggerSOSRequest struct {
 // Dikirim sebagai multipart/form-data.
 type UploadSOSEvidenceRequest struct {
 	IncidentID string `form:"incident_id"` // validasi bahwa incident milik reporter
+}
+
+// UpdateResponseLocationRequest - dikirim relawan saat menangani SOS.
+type UpdateResponseLocationRequest struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	AddressDetail *string `json:"address_detail,omitempty"`
+}
+
+// ActiveResponseDTO - misi aktif relawan (incident_response berstatus on_scene).
+type ActiveResponseDTO struct {
+	ResponseID    string   `json:"response_id"`
+	IncidentID    string   `json:"incident_id"`
+	IncidentType  string   `json:"incident_type"`
+	Status        string   `json:"status"`
+	Latitude      float64  `json:"reporter_latitude"`
+	Longitude     float64  `json:"reporter_longitude"`
+	AddressDetail *string  `json:"address_detail,omitempty"`
+	AcceptedAt    string   `json:"accepted_at"`
 }
 
 // UpdateTypeRequest - dikirim dari grace period UI saat user memilih tipe.

@@ -315,6 +315,54 @@ class IncidentService {
     }
   }
 
+  // ─── Get My Active Response (misi on_scene relawan) ────────────────────────
+
+  static Future<ActiveResponseModel?> getMyActiveResponse({
+    required String accessToken,
+  }) async {
+    try {
+      final response = await _req(
+        () => http.get(
+          Uri.parse('$_baseUrl/incidents/my-active-response'),
+          headers: {'Authorization': 'Bearer $accessToken'},
+        ),
+      );
+      if (response.statusCode != 200) return null;
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = body['data'];
+      if (data == null) return null;
+      return ActiveResponseModel.fromJson(data as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ─── Update Response Location (relawan saat on_scene) ─────────────────────
+
+  static Future<void> updateResponseLocation({
+    required String accessToken,
+    required String incidentId,
+    required double latitude,
+    required double longitude,
+    String? addressDetail,
+  }) async {
+    try {
+      await http
+          .put(
+            Uri.parse('$_baseUrl/incidents/$incidentId/response-location'),
+            headers: _authHeader(accessToken),
+            body: jsonEncode({
+              'latitude': latitude,
+              'longitude': longitude,
+              if (addressDetail != null) 'address_detail': addressDetail,
+            }),
+          )
+          .timeout(_defaultTimeout);
+    } catch (_) {
+      // Silent fail — lokasi diupdate di iterasi berikutnya
+    }
+  }
+
   // ─── Volunteer Complete SOS (Upload Proof) ───────────────────────────────
 
   static Future<void> volunteerCompleteSOS({
@@ -609,4 +657,54 @@ class SOSConflictException implements Exception {
   const SOSConflictException(this.message);
   @override
   String toString() => message;
+}
+
+// ─── ActiveResponseModel ──────────────────────────────────────────────────────
+
+class ActiveResponseModel {
+  final String responseId;
+  final String incidentId;
+  final String incidentType;
+  final String status;
+  final double reporterLatitude;
+  final double reporterLongitude;
+  final String? addressDetail;
+  final String acceptedAt;
+
+  const ActiveResponseModel({
+    required this.responseId,
+    required this.incidentId,
+    required this.incidentType,
+    required this.status,
+    required this.reporterLatitude,
+    required this.reporterLongitude,
+    this.addressDetail,
+    required this.acceptedAt,
+  });
+
+  factory ActiveResponseModel.fromJson(Map<String, dynamic> json) =>
+      ActiveResponseModel(
+        responseId: json['response_id'] as String,
+        incidentId: json['incident_id'] as String,
+        incidentType: json['incident_type'] as String? ?? 'unknown',
+        status: json['status'] as String,
+        reporterLatitude: (json['reporter_latitude'] as num).toDouble(),
+        reporterLongitude: (json['reporter_longitude'] as num).toDouble(),
+        addressDetail: json['address_detail'] as String?,
+        acceptedAt: json['accepted_at'] as String,
+      );
+
+  String get typeLabel {
+    const labels = {
+      'medical': 'Medis / Kesehatan',
+      'fire': 'Kebakaran',
+      'crime': 'Kejahatan',
+      'rescue': 'SAR / Penyelamatan',
+      'accident': 'Kecelakaan',
+      'disaster': 'Bencana Alam',
+      'general': 'Umum',
+      'unknown': 'Tidak Diketahui',
+    };
+    return labels[incidentType] ?? incidentType;
+  }
 }

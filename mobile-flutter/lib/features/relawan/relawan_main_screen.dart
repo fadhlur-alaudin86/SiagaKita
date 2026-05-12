@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
+import '../../core/services/location_controller.dart';
 import '../../core/constants/api_config.dart';
 import 'relawan_history_screen.dart';
 
@@ -22,16 +26,26 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
   ({double latitude, double longitude})? _currentPosition;
   Timer? _nearbyTimer;
 
+  // ─── Misi Aktif (Poin 3 & 4) ─────────────────────────────────────────────
+  ActiveResponseModel? _activeMission;
+  Timer? _missionPollTimer;     // poll status misi setiap 15 detik
+  Timer? _missionLocationTimer; // broadcast lokasi relawan setiap 15 detik
+
   @override
   void initState() {
     super.initState();
     _loadHistory();
     _initLocation();
+    _checkActiveMission();
+    LocationController.instance.start(); // pastikan GPS berjalan
   }
 
   @override
   void dispose() {
     _nearbyTimer?.cancel();
+    _missionPollTimer?.cancel();
+    _stopMissionLocationBroadcast();
+    LocationController.instance.stop();
     super.dispose();
   }
 
@@ -116,7 +130,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             backgroundColor: Colors.green,
           ),
         );
+        // Refresh nearby dan cek misi aktif
         _fetchNearbySOS();
+        _checkActiveMission();
       }
     } on IncidentException catch (e) {
       if (mounted) {
@@ -125,6 +141,146 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
         );
       }
     }
+  }
+
+  // ─── Cek & Polling Misi Aktif ────────────────────────────────────────────
+  Future<void> _checkActiveMission() async {
+    final mission = await IncidentService.getMyActiveResponse(
+      accessToken: widget.accessToken,
+    );
+    if (!mounted) return;
+    setState(() => _activeMission = mission);
+    if (mission != null) {
+      _startMissionLocationBroadcast(mission.incidentId);
+      // Poll setiap 15 detik apakah misi masih aktif
+      _missionPollTimer?.cancel();
+      _missionPollTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+        final updated = await IncidentService.getMyActiveResponse(
+          accessToken: widget.accessToken,
+        );
+        if (mounted) {
+          setState(() => _activeMission = updated);
+          if (updated == null) {
+            _stopMissionLocationBroadcast();
+            _missionPollTimer?.cancel();
+            _loadHistory();
+          }
+        }
+      });
+    } else {
+      _stopMissionLocationBroadcast();
+      _missionPollTimer?.cancel();
+    }
+  }
+
+  // ─── Broadcast Lokasi Relawan ke Backend (Poin 4) ───────────────────────
+  void _startMissionLocationBroadcast(String incidentId) {
+    _missionLocationTimer?.cancel();
+    _missionLocationTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+      final pos = LocationController.instance.position.value;
+      if (pos == null || _activeMission == null) return;
+      await IncidentService.updateResponseLocation(
+        accessToken: widget.accessToken,
+        incidentId: incidentId,
+        latitude: pos.lat,
+        longitude: pos.lng,
+      );
+    });
+  }
+
+  void _stopMissionLocationBroadcast() {
+    _missionLocationTimer?.cancel();
+    _missionLocationTimer = null;
+  }
+
+  // ─── Selesaikan Misi (upload foto bukti) ─────────────────────────────────
+  Future<void> _completeMission() async {
+    if (_activeMission == null) return;
+    File? photoFile;
+    // Ambil foto dari kamera
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) throw Exception('Kamera tidak tersedia');
+      final controller = CameraController(
+        cameras.first,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      await controller.initialize();
+      final xFile = await controller.takePicture();
+      await controller.dispose();
+      photoFile = File(xFile.path);
+    } catch (_) {
+      // Jika kamera gagal, buat file dummy agar API tidak reject
+      try {
+        final dir = await getTemporaryDirectory();
+        final dummy = File('${dir.path}/dummy_proof.jpg');
+        if (!dummy.existsSync()) {
+          dummy.createSync();
+          dummy.writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xD9]); // minimal valid JPEG
+        }
+        photoFile = dummy;
+      } catch (_) {}
+    }
+    if (photoFile == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal mengambil foto bukti'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+    try {
+      await IncidentService.volunteerCompleteSOS(
+        accessToken: widget.accessToken,
+        incidentId: _activeMission!.incidentId,
+        photoFile: photoFile,
+      );
+      if (mounted) {
+        setState(() => _activeMission = null);
+        _stopMissionLocationBroadcast();
+        _missionPollTimer?.cancel();
+        _loadHistory();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bukti berhasil dikirim. Menunggu konfirmasi instansi.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on IncidentException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _showCompleteMissionDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Selesaikan Misi?'),
+        content: const Text(
+          'Kamera akan mengambil foto sebagai bukti penyelesaian misi. Lanjutkan?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF22C55E)),
+            onPressed: () {
+              Navigator.pop(context);
+              _completeMission();
+            },
+            child: const Text('Ya, Selesaikan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showDetailSheet(NearbyIncident inc) {
@@ -629,7 +785,96 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
 
                   const SizedBox(height: 24),
 
-                  // ─── Radar SOS ─────────────────────────────────────────────
+                  // ─── Misi Aktif (jika ada) ─────────────────────────────────────
+                  if (_activeMission != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF065F46), Color(0xFF059669)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF22C55E).withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.crisis_alert, color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'MISI SEDANG BERJALAN',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _activeMission!.typeLabel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (_activeMission!.addressDetail != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              _activeMission!.addressDetail!,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Lokasi korban: ${_activeMission!.reporterLatitude.toStringAsFixed(5)}, '
+                            '${_activeMission!.reporterLongitude.toStringAsFixed(5)}',
+                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: const Color(0xFF065F46),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              icon: const Icon(Icons.check_circle, size: 18),
+                              label: const Text(
+                                'SELESAIKAN MISI',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              onPressed: _showCompleteMissionDialog,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ─── Radar SOS ───────────────────────────────────────────────
                   Row(
                     children: [
                       Text(

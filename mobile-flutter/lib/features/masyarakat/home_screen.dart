@@ -79,6 +79,10 @@ class _HomeScreenState extends State<HomeScreen>
   // Untuk menyimpan ID insiden lokal jika user membatalkan saat proses upload masih berlangsung
   String? _cancelledLocalId;
 
+  // ─── Lokasi Relawan (Poin 4) ─────────────────────────────────────────────────
+  // Posisi terkini relawan yang sedang menangani SOS ini (dari WS)
+  ({double lat, double lng, String? address, String? updatedAt})? _volunteerPosition;
+
   // ─── Heartbeat Ping ──────────────────────────────────────────────────────────
   Timer? _pingTimer;
 
@@ -116,6 +120,22 @@ class _HomeScreenState extends State<HomeScreen>
       case MobileWsEvent.volunteerHandling:
         _onHandlerArrived(byAgency: false);
         break;
+      case MobileWsEvent.volunteerLocationUpdate:
+        // Simpan posisi relawan dari payload WS
+        final p = msg.payload;
+        final lat = (p['latitude'] as num?)?.toDouble();
+        final lng = (p['longitude'] as num?)?.toDouble();
+        if (lat != null && lng != null && mounted) {
+          setState(() {
+            _volunteerPosition = (
+              lat: lat,
+              lng: lng,
+              address: p['address_detail'] as String?,
+              updatedAt: p['updated_at'] as String?,
+            );
+          });
+        }
+        break;
       case MobileWsEvent.sosResolved:
         _stopVibration();
         _stopLocationUpdates();
@@ -124,6 +144,7 @@ class _HomeScreenState extends State<HomeScreen>
           _sosPhase = 'idle';
           _sosUploadStatus = 'idle';
           _tapCount = 0;
+          _volunteerPosition = null;
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -325,7 +346,11 @@ class _HomeScreenState extends State<HomeScreen>
             setState(() {
               _lastLocationUpdate = DateTime.now();
               _sosTransmitting = true;
+              // Reset countdown tepat saat update lokasi berhasil
+              _nextUpdateCountdown = 10;
             });
+            // Restart countdown timer dari 10 agar sinkron
+            _startCountdownTimer();
           }
         } catch (_) {
           if (mounted) {
@@ -1286,6 +1311,32 @@ class _HomeScreenState extends State<HomeScreen>
                                 ],
                               ],
                             ),
+                            // Posisi relawan (update dari WS VOLUNTEER_LOCATION_UPDATE)
+                            if (_volunteerPosition != null) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.directions_walk,
+                                    size: 12,
+                                    color: Colors.orangeAccent,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      _volunteerPosition!.address != null
+                                          ? 'Relawan di: ${_volunteerPosition!.address}'
+                                          : 'Relawan: ${_volunteerPosition!.lat.toStringAsFixed(5)}, ${_volunteerPosition!.lng.toStringAsFixed(5)}',
+                                      style: const TextStyle(
+                                        color: Colors.orangeAccent,
+                                        fontSize: 10,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ],
                       ),

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict V5wl1kSlg0KSccuoTMbUZoE5djB2N1zZ5gBcxAgyDjJRZfaO7p6fdmgNlhbgvcg
+\restrict O5ce5cszAAVzkhrH86p3rdRIwGyeubbtivGSL9blUZ7QD6jgzzy0OYh9dMGc83Z
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -289,7 +289,7 @@ CREATE TABLE public.incident_reports (
     description text,
     photo_paths text[] DEFAULT '{}'::text[],
     audio_path text,
-    status character varying(20) DEFAULT 'seqnt'::character varying NOT NULL,
+    status character varying(20) DEFAULT 'sent'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -308,7 +308,10 @@ CREATE TABLE public.incident_responses (
     status public.response_status DEFAULT 'on_scene'::public.response_status,
     accepted_at timestamp with time zone DEFAULT now(),
     completed_at timestamp with time zone,
-    proof_photo_url character varying(255)
+    proof_photo_url character varying(255),
+    latitude double precision,
+    longitude double precision,
+    address_detail text
 );
 
 
@@ -971,5 +974,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict V5wl1kSlg0KSccuoTMbUZoE5djB2N1zZ5gBcxAgyDjJRZfaO7p6fdmgNlhbgvcg
+\unrestrict O5ce5cszAAVzkhrH86p3rdRIwGyeubbtivGSL9blUZ7QD6jgzzy0OYh9dMGc83Z
 
