@@ -341,6 +341,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    // Refresh data terbaru dari server saat membuka profil
+    UserService.refreshCurrentUser(widget.accessToken);
+  }
+
   void _editWhatsApp() {
     final phoneCtrl = TextEditingController(
       text: UserModel.currentUser.value.phoneNumber ?? '',
@@ -471,6 +478,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final user = UserModel.currentUser.value;
         final updatedUser = user.copyWith(phoneNumber: phoneNumber);
         await UserService.updateProfile(widget.accessToken, updatedUser);
+        
+        // Refresh global state untuk mendapatkan status isPhoneVerified terbaru
+        await UserService.refreshCurrentUser(widget.accessToken);
+        
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -596,7 +607,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user.name +
+                            (user.name.isNotEmpty ? user.name : 'Pengguna'.tr(context)) +
                                 (user.age != null
                                     ? ' (${user.age} ${'Tahun'.tr(context)})'
                                     : ''),
@@ -629,7 +640,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                // Bio Singkat
+                if (user.bio != null && user.bio!.isNotEmpty) ...[
+                  Text(
+                    user.bio!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: secondaryTextColor,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  Text(
+                    'Belum ada bio.'.tr(context),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: hintColor,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // 2. Kategori 1: Informasi Pribadi
                 Text(

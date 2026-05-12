@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_config.dart';
 import '../models/user_model.dart';
@@ -30,6 +31,17 @@ class UserService {
       return UserModel.fromJson(body['data']);
     } catch (e) {
       throw Exception('Kesalahan memuat profil: $e');
+    }
+  }
+
+  /// Memperbarui UserModel.currentUser dari data terbaru di server.
+  static Future<void> refreshCurrentUser(String token) async {
+    try {
+      final user = await getProfile(token);
+      UserModel.currentUser.value = user;
+    } catch (e) {
+      debugPrint('[UserService] Gagal refresh user: $e');
+      // Jangan lempar error agar tidak mengganggu UI jika hanya background refresh
     }
   }
 

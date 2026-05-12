@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 
 import '../../core/localization/app_localization.dart';
 import '../../core/services/kyc_service.dart';
+import '../../core/services/user_service.dart';
 import '../../core/widgets/custom_camera_view.dart';
 
 /// KycScreen memungkinkan warga mengajukan verifikasi identitas NIK.
@@ -121,6 +122,10 @@ class _KycScreenState extends State<KycScreen> {
         ktpPhoto: _ktpPhoto!,
         selfiePhoto: _selfiePhoto!,
       );
+
+      // Refresh global state agar status NIK berubah jadi 'pending'
+      await UserService.refreshCurrentUser(widget.accessToken);
+
       if (mounted) {
         setState(() {
           _submitted = true;

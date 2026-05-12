@@ -54,38 +54,13 @@ class UserModel {
     this.emergencyContacts,
   });
 
-  // Global Mock User State (while backend is not ready)
+  // Global User State
   static final ValueNotifier<UserModel> currentUser = ValueNotifier(
     const UserModel(
-      id: 'SK-2983-4412',
-      name: 'Budi Santoso',
-      email: 'budi@email.com',
+      id: '',
+      name: '',
+      email: '',
       role: UserRole.masyarakat,
-      phoneNumber: '081234567890',
-      birthDate: '20-05-1998',
-      bio:
-          'Pemerhati keamanan bencana dan warga aktif dalam sosialisasi tanggap darurat lingkungan.',
-      volunteerStatus: 'approved',
-      specialization: 'Medis Pertama',
-      volunteerPoints: 120,
-      volunteerLevel: 'Relawan Madya',
-      isAvailableForMission: true,
-      medicalData: {
-        'blood_type': 'O+',
-        'weight': '70',
-        'height': '175',
-        'allergies': 'Penisilin, Kacang',
-        'medical_history': 'Asma Ringan',
-        'address':
-            'Jl. Cut Nyak Dhien No. 44, Peukan Bada, Kabupaten Aceh Besar, Aceh 23351',
-      },
-      emergencyContacts: [
-        {
-          'name': 'Siti Aminah',
-          'relation': 'Ibu / Wali',
-          'phone': '081234567891',
-        },
-      ],
     ),
   );
 

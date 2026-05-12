@@ -6,6 +6,7 @@ import 'core/models/user_model.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/location_service.dart';
 import 'core/services/session_service.dart';
+import 'core/services/user_service.dart';
 import 'core/services/background_service.dart';
 import 'features/auth/login_screen.dart';
 import 'features/masyarakat/main_screen.dart';
@@ -156,6 +157,9 @@ class _AppStartupState extends State<_AppStartup> {
                 ? UserRole.admin
                 : UserRole.masyarakat,
       );
+
+      // Ambil data profil lengkap dari server (background refresh)
+      UserService.refreshCurrentUser(session.token);
 
       // Minta izin GPS jika online, abaikan jika offline
       if (ConnectivityService.isOnline.value) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/models/user_model.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/location_service.dart';
 import 'biodata_screen.dart';
@@ -161,6 +162,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       await LocationService.requestPermission(context);
       if (!mounted) return;
+
+      // Set global user state agar BiodataScreen bisa menggunakannya
+      UserModel.currentUser.value = UserModel(
+        id: result.user.id,
+        name: result.user.fullName ?? 'Pengguna',
+        email: result.user.email,
+        role: result.user.role == 'volunteer'
+            ? UserRole.relawan
+            : result.user.role == 'admin'
+                ? UserRole.admin
+                : UserRole.masyarakat,
+      );
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
