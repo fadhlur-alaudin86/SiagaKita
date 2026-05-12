@@ -283,13 +283,13 @@ CREATE TABLE public.incident_reports (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     reporter_id uuid NOT NULL,
     incident_type character varying(50) NOT NULL,
-    urgency_level smallint DEFAULT 1,
+    urgency_level smallint,
     latitude double precision NOT NULL,
     longitude double precision NOT NULL,
     description text,
     photo_paths text[] DEFAULT '{}'::text[],
     audio_path text,
-    status character varying(20) DEFAULT 'sent'::character varying NOT NULL,
+    status character varying(20) DEFAULT 'seqnt'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );

@@ -100,12 +100,17 @@ class IncidentApiService {
   static Future<bool> updateReportStatus(
     String token,
     String id,
-    String status,
-  ) async {
+    String status, {
+    int? urgencyLevel,
+  }) async {
+    final bodyData = <String, dynamic>{'status': status};
+    if (urgencyLevel != null) {
+      bodyData['urgency_level'] = urgencyLevel;
+    }
     final resp = await http.patch(
       Uri.parse(ApiConstants.reportStatus(id)),
       headers: AuthService.headers(token),
-      body: jsonEncode({'status': status}),
+      body: jsonEncode(bodyData),
     );
     return resp.statusCode == 200;
   }

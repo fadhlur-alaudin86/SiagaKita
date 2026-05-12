@@ -44,18 +44,24 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
     if (mounted) {
       setState(() {
         _reports = data
-            .where((r) =>
-                r.status == 'sent' ||
-                r.status == 'accepted' ||
-                r.status == 'handled')
+            .where((r) => r.status == 'sent' || r.status == 'handled')
             .toList();
         _loading = false;
       });
     }
   }
 
-  Future<void> _updateStatus(String id, String status) async {
-    await IncidentApiService.updateReportStatus(widget.token, id, status);
+  Future<void> _updateStatus(
+    String id,
+    String status, [
+    int? urgencyLevel,
+  ]) async {
+    await IncidentApiService.updateReportStatus(
+      widget.token,
+      id,
+      status,
+      urgencyLevel: urgencyLevel,
+    );
     _load();
   }
 
@@ -64,9 +70,9 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
       context: context,
       builder: (_) => _ReportDetailDialog(
         report: report,
-        onUpdateStatus: (s) {
+        onUpdateStatus: (s, [u]) {
           Navigator.pop(context);
-          _updateStatus(report.id, s);
+          _updateStatus(report.id, s, u);
         },
       ),
     );
@@ -74,12 +80,7 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filters = [
-      'sent',
-      'accepted',
-      'handled',
-      'all'
-    ];
+    final filters = ['sent', 'handled', 'all'];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -120,88 +121,91 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _reports.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Tidak ada laporan ditemukan',
-                        style: TextStyle(color: Colors.white38),
+              ? const Center(
+                  child: Text(
+                    'Tidak ada laporan ditemukan',
+                    style: TextStyle(color: Colors.white38),
+                  ),
+                )
+              : ListView.separated(
+                  itemCount: _reports.length,
+                  separatorBuilder: (context, index) =>
+                      const Divider(color: Colors.white10, height: 1),
+                  itemBuilder: (context, i) {
+                    final r = _reports[i];
+                    return Card(
+                      color: const Color(0xFF1A2035),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    )
-                  : ListView.separated(
-                      itemCount: _reports.length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(color: Colors.white10, height: 1),
-                      itemBuilder: (context, i) {
-                        final r = _reports[i];
-                        return Card(
-                          color: const Color(0xFF1A2035),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: ListTile(
+                        onTap: () => _showDetailDialog(r),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.orange.withValues(alpha: 0.2),
+                          child: const Icon(
+                            Icons.description_outlined,
+                            color: Colors.orange,
+                            size: 20,
                           ),
-                          child: ListTile(
-                            onTap: () => _showDetailDialog(r),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 8,
-                            ),
-                            leading: CircleAvatar(
-                              backgroundColor:
-                                  Colors.orange.withValues(alpha: 0.2),
-                              child: const Icon(
-                                Icons.description_outlined,
-                                color: Colors.orange,
-                                size: 20,
+                        ),
+                        title: Row(
+                          children: [
+                            Text(
+                              r.incidentType.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
                               ),
                             ),
-                            title: Row(
-                              children: [
-                                Text(
-                                  r.incidentType.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  r.urgencyLabel,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ],
+                            const SizedBox(width: 8),
+                            Text(
+                              r.urgencyLabel,
+                              style: const TextStyle(fontSize: 12),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Pelapor: ${r.reporterName} • Status: ${r.status.toUpperCase()}',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                if (r.description != null &&
-                                    r.description!.isNotEmpty)
-                                  Text(
-                                    r.description!,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white38,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                              ],
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              'Pelapor: ${r.reporterName} • Status: ${r.status.toUpperCase()}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
                             ),
-                            trailing: r.status == 'sent'
-                                ? const Icon(Icons.new_releases,
-                                    color: Colors.orange)
-                                : const Icon(Icons.chevron_right,
-                                    color: Colors.white54),
-                          ),
-                        );
-                      },
-                    ),
+                            if (r.description != null &&
+                                r.description!.isNotEmpty)
+                              Text(
+                                r.description!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                        trailing: r.status == 'sent'
+                            ? const Icon(
+                                Icons.new_releases,
+                                color: Colors.orange,
+                              )
+                            : const Icon(
+                                Icons.chevron_right,
+                                color: Colors.white54,
+                              ),
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -210,7 +214,7 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
 
 class _ReportDetailDialog extends StatefulWidget {
   final ReportModel report;
-  final Function(String) onUpdateStatus;
+  final Function(String, [int?]) onUpdateStatus;
 
   const _ReportDetailDialog({
     required this.report,
@@ -226,19 +230,31 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
   bool _isPlaying = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
-  String _selectedResponder = 'Agency 1'; // Mock for dispatch
+  int? _selectedUrgency;
 
   @override
   void initState() {
     super.initState();
     if (widget.report.audioPath != null) {
       _audioPlayer.setSourceUrl(widget.report.audioPath!);
-      _audioPlayer.onDurationChanged
-          .listen((d) => setState(() => _duration = d));
-      _audioPlayer.onPositionChanged
-          .listen((p) => setState(() => _position = p));
+      _audioPlayer.onDurationChanged.listen(
+        (d) => setState(() => _duration = d),
+      );
+      _audioPlayer.onPositionChanged.listen(
+        (p) => setState(() => _position = p),
+      );
       _audioPlayer.onPlayerStateChanged.listen((s) {
         if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
+      });
+      _audioPlayer.onPlayerComplete.listen((_) {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _position = Duration.zero;
+          });
+          _audioPlayer.seek(Duration.zero);
+          _audioPlayer.pause();
+        }
       });
     }
   }
@@ -265,8 +281,10 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
           Row(
             children: [
               IconButton(
-                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.green),
+                icon: Icon(
+                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.green,
+                ),
                 onPressed: () {
                   if (_isPlaying) {
                     _audioPlayer.pause();
@@ -277,13 +295,20 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
               ),
               Expanded(
                 child: Slider(
-                  value: _position.inSeconds.toDouble(),
-                  max: _duration.inSeconds > 0
-                      ? _duration.inSeconds.toDouble()
+                  value: _position.inMilliseconds.toDouble().clamp(
+                    0.0,
+                    _duration.inMilliseconds > 0
+                        ? _duration.inMilliseconds.toDouble()
+                        : 1.0,
+                  ),
+                  max: _duration.inMilliseconds > 0
+                      ? _duration.inMilliseconds.toDouble()
                       : 1.0,
-                  onChanged: (v) {
-                    _audioPlayer.seek(Duration(seconds: v.toInt()));
-                  },
+                  onChanged: _duration.inMilliseconds > 0
+                      ? (v) {
+                          _audioPlayer.seek(Duration(milliseconds: v.toInt()));
+                        }
+                      : null,
                 ),
               ),
             ],
@@ -313,9 +338,10 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
                   const Text(
                     'Detail Laporan',
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white54),
@@ -325,25 +351,39 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
               ),
               const Divider(color: Colors.white24),
               const SizedBox(height: 8),
-              Text('Kategori: ${r.incidentType.toUpperCase()}',
-                  style: const TextStyle(color: Colors.white)),
-              Text('Urgensi: ${r.urgencyLabel}',
-                  style: const TextStyle(color: Colors.white)),
-              Text('Pelapor: ${r.reporterName}',
-                  style: const TextStyle(color: Colors.white)),
-              Text('Status: ${r.status.toUpperCase()}',
-                  style: const TextStyle(color: Colors.white)),
+              Text(
+                'Kategori: ${r.incidentType.toUpperCase()}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              Text(
+                'Urgensi: ${r.urgencyLabel}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              Text(
+                'Pelapor: ${r.reporterName}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              Text(
+                'Status: ${r.status.toUpperCase()}',
+                style: const TextStyle(color: Colors.white),
+              ),
               if (r.description != null) ...[
                 const SizedBox(height: 12),
-                const Text('Deskripsi:',
-                    style: TextStyle(color: Colors.white70)),
-                Text(r.description!,
-                    style: const TextStyle(color: Colors.white)),
+                const Text(
+                  'Deskripsi:',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                Text(
+                  r.description!,
+                  style: const TextStyle(color: Colors.white),
+                ),
               ],
               if (r.photoPaths.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text('Lampiran Foto:',
-                    style: TextStyle(color: Colors.white70)),
+                const Text(
+                  'Lampiran Foto:',
+                  style: TextStyle(color: Colors.white70),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -359,8 +399,10 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
                           width: 100,
                           height: 100,
                           color: Colors.white10,
-                          child: const Icon(Icons.broken_image,
-                              color: Colors.white54),
+                          child: const Icon(
+                            Icons.broken_image,
+                            color: Colors.white54,
+                          ),
                         ),
                       ),
                     );
@@ -381,53 +423,60 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
   Widget _buildActionButtons() {
     final r = widget.report;
     if (r.status == 'sent') {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextButton(
-            onPressed: () => widget.onUpdateStatus('rejected'),
-            child: const Text('Tolak Laporan',
-                style: TextStyle(color: Colors.red)),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            onPressed: () => widget.onUpdateStatus('accepted'),
-            child: const Text('Terima Laporan',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      );
-    } else if (r.status == 'accepted') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Tugaskan Personil:',
-              style: TextStyle(color: Colors.white70)),
+          const Text(
+            'Tingkat Urgensi:',
+            style: TextStyle(color: Colors.white70),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _selectedResponder,
+                child: DropdownButtonFormField<int>(
+                  value: _selectedUrgency,
+                  hint: const Text(
+                    'Pilih Urgensi',
+                    style: TextStyle(color: Colors.white38),
+                  ),
                   dropdownColor: const Color(0xFF1A2035),
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12),
                   ),
-                  items: ['Agency 1', 'Relawan A', 'Relawan B']
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedResponder = v!),
+                  items: const [
+                    DropdownMenuItem(value: 0, child: Text('Rendah')),
+                    DropdownMenuItem(value: 1, child: Text('Sedang')),
+                    DropdownMenuItem(value: 2, child: Text('Tinggi')),
+                  ],
+                  onChanged: (v) => setState(() => _selectedUrgency = v),
                 ),
               ),
-              const SizedBox(width: 12),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => widget.onUpdateStatus('rejected'),
+                child: const Text(
+                  'Tolak Laporan',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+              const SizedBox(width: 8),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                onPressed: () => widget.onUpdateStatus('handled'),
-                child: const Text('Tugaskan',
-                    style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                onPressed: _selectedUrgency == null
+                    ? null
+                    : () => widget.onUpdateStatus('handled', _selectedUrgency),
+                child: const Text(
+                  'Terima Laporan',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -435,21 +484,15 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
       );
     } else if (r.status == 'handled') {
       return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          const Icon(Icons.info_outline, color: Colors.orange, size: 20),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text(
-              'Menunggu personil yang ditugaskan mengirim bukti selesai sebelum insiden dapat ditutup.',
-              style: TextStyle(color: Colors.orange, fontSize: 12),
-            ),
-          ),
-          const SizedBox(width: 8),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
-            onPressed: null, // Disabled per requirement
-            child: const Text('Selesaikan',
-                style: TextStyle(color: Colors.white54)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            onPressed: () => widget.onUpdateStatus('resolved'),
+            child: const Text(
+              'Selesaikan Laporan',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       );

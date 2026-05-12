@@ -8,6 +8,7 @@ on:
       - 'backend-go/**'
       - 'infrastructure/**'
       - '.github/workflows/**'
+      - '!migrations/**'
 
   workflow_dispatch:
 

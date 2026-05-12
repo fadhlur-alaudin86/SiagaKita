@@ -41,6 +41,9 @@ class RiwayatPage extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SOS HISTORY TAB
+// ─────────────────────────────────────────────────────────────────────────────
 class _SosHistoryTab extends StatefulWidget {
   final String token;
   const _SosHistoryTab({required this.token});
@@ -54,16 +57,11 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
   List<IncidentModel> _filteredIncidents = [];
   bool _loading = true;
   String? _currentAgencyId;
-  String _selectedFilter = 'Semua';
 
-  final List<String> _filters = [
-    'Semua',
-    'Selesai (Kami)',
-    'Selesai (Instansi Lain)',
-    'Selesai (Relawan)',
-    'False Alarm',
-    'Dibatalkan',
-  ];
+  String _filterStatus = 'Semua';
+  String _filterType = 'Semua';
+  String _filterTime = 'Semua Waktu';
+  String _sortOrder = 'Terbaru';
 
   @override
   void initState() {
@@ -83,50 +81,108 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
       setState(() {
         _allIncidents = incidents;
         _loading = false;
-        _applyFilter(_selectedFilter);
+        _applyFilters();
       });
     }
   }
 
-  void _applyFilter(String filter) {
+  void _applyFilters() {
     setState(() {
-      _selectedFilter = filter;
-      if (filter == 'Semua') {
-        _filteredIncidents = List.from(_allIncidents);
-      } else if (filter == 'Selesai (Kami)') {
-        _filteredIncidents = _allIncidents
-            .where(
-              (inc) =>
-                  inc.status == 'resolved' &&
-                  inc.handledByAgencyId == _currentAgencyId,
-            )
-            .toList();
-      } else if (filter == 'Selesai (Instansi Lain)') {
-        _filteredIncidents = _allIncidents
-            .where(
-              (inc) =>
+      var filtered = List<IncidentModel>.from(_allIncidents);
+
+      // Filter Status
+      if (_filterStatus != 'Semua') {
+        if (_filterStatus == 'Selesai (Kami)') {
+          filtered = filtered
+              .where((inc) => inc.status == 'resolved' && inc.handledByAgencyId == _currentAgencyId)
+              .toList();
+        } else if (_filterStatus == 'Selesai (Instansi Lain)') {
+          filtered = filtered
+              .where((inc) =>
                   inc.status == 'resolved' &&
                   inc.handledByAgencyId != null &&
-                  inc.handledByAgencyId != _currentAgencyId,
-            )
-            .toList();
-      } else if (filter == 'Selesai (Relawan)') {
-        _filteredIncidents = _allIncidents
-            .where(
-              (inc) =>
-                  inc.status == 'resolved' && inc.handledByAgencyId == null,
-            )
-            .toList();
-      } else if (filter == 'False Alarm') {
-        _filteredIncidents = _allIncidents
-            .where((inc) => inc.status == 'false_alarm')
-            .toList();
-      } else if (filter == 'Dibatalkan') {
-        _filteredIncidents = _allIncidents
-            .where((inc) => inc.status == 'cancel')
-            .toList();
+                  inc.handledByAgencyId != _currentAgencyId)
+              .toList();
+        } else if (_filterStatus == 'Selesai (Relawan)') {
+          filtered = filtered
+              .where((inc) => inc.status == 'resolved' && inc.handledByAgencyId == null)
+              .toList();
+        } else if (_filterStatus == 'False Alarm') {
+          filtered = filtered.where((inc) => inc.status == 'false_alarm').toList();
+        } else if (_filterStatus == 'Dibatalkan') {
+          filtered = filtered.where((inc) => inc.status == 'cancel').toList();
+        }
       }
+
+      // Filter Tipe Insiden
+      if (_filterType != 'Semua') {
+        filtered = filtered.where((inc) => inc.incidentType.toLowerCase() == _filterType.toLowerCase()).toList();
+      }
+
+      // Filter Rentang Waktu
+      final now = DateTime.now();
+      if (_filterTime == 'Hari Ini') {
+        filtered = filtered.where((inc) => inc.createdAt.year == now.year && inc.createdAt.month == now.month && inc.createdAt.day == now.day).toList();
+      } else if (_filterTime == 'Minggu Ini') {
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        filtered = filtered.where((inc) => inc.createdAt.isAfter(startOfWeek) || (inc.createdAt.year == startOfWeek.year && inc.createdAt.month == startOfWeek.month && inc.createdAt.day == startOfWeek.day)).toList();
+      } else if (_filterTime == 'Bulan Ini') {
+        filtered = filtered.where((inc) => inc.createdAt.year == now.year && inc.createdAt.month == now.month).toList();
+      }
+
+      // Sorting
+      if (_sortOrder == 'Terbaru') {
+        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      } else {
+        filtered.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      }
+
+      _filteredIncidents = filtered;
     });
+  }
+
+  Widget _buildDropdown<T>({
+    required String label,
+    required T value,
+    required List<T> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Container(
+      width: 180,
+      margin: const EdgeInsets.only(right: 12, bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<T>(
+            value: value,
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFFF7418)),
+              ),
+              fillColor: const Color(0xFF1A2035),
+              filled: true,
+            ),
+            dropdownColor: const Color(0xFF1A2035),
+            style: const TextStyle(color: Colors.white, fontSize: 13),
+            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.toString()))).toList(),
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -138,33 +194,54 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Filter Chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _filters.map((filter) {
-              final isSelected = filter == _selectedFilter;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: FilterChip(
-                  label: Text(
-                    filter,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white70,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  selected: isSelected,
-                  onSelected: (_) => _applyFilter(filter),
-                  backgroundColor: const Color(0xFF1A2035),
-                  selectedColor: const Color(0xFFFF7418),
-                  checkmarkColor: Colors.white,
-                ),
-              );
-            }).toList(),
-          ),
+        // Filter Dropdowns
+        Wrap(
+          children: [
+            _buildDropdown<String>(
+              label: 'Status Laporan',
+              value: _filterStatus,
+              items: ['Semua', 'Selesai (Kami)', 'Selesai (Instansi Lain)', 'Selesai (Relawan)', 'False Alarm', 'Dibatalkan'],
+              onChanged: (v) {
+                if (v != null) {
+                  _filterStatus = v;
+                  _applyFilters();
+                }
+              },
+            ),
+            _buildDropdown<String>(
+              label: 'Kategori',
+              value: _filterType,
+              items: ['Semua', 'Kebakaran', 'Medis', 'Kejahatan', 'Bencana', 'Lakalantas', 'Infrastruktur', 'Lainnya'],
+              onChanged: (v) {
+                if (v != null) {
+                  _filterType = v;
+                  _applyFilters();
+                }
+              },
+            ),
+            _buildDropdown<String>(
+              label: 'Waktu Dibuat',
+              value: _filterTime,
+              items: ['Semua Waktu', 'Hari Ini', 'Minggu Ini', 'Bulan Ini'],
+              onChanged: (v) {
+                if (v != null) {
+                  _filterTime = v;
+                  _applyFilters();
+                }
+              },
+            ),
+            _buildDropdown<String>(
+              label: 'Urutkan Waktu',
+              value: _sortOrder,
+              items: ['Terbaru', 'Terlama'],
+              onChanged: (v) {
+                if (v != null) {
+                  _sortOrder = v;
+                  _applyFilters();
+                }
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Expanded(
@@ -212,7 +289,7 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Diperbarui: ${DateFormat('dd MMM yyyy, HH:mm').format(inc.updatedAt)}',
+                                'Waktu Laporan: ${DateFormat('dd MMM yyyy, HH:mm').format(inc.createdAt)}',
                                 style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 12,
@@ -231,51 +308,9 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final String status;
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-    String text;
-    switch (status) {
-      case 'resolved':
-        color = Colors.green;
-        text = 'SELESAI';
-        break;
-      case 'false_alarm':
-        color = Colors.orange;
-        text = 'FALSE ALARM';
-        break;
-      case 'cancel':
-        color = Colors.red;
-        text = 'DIBATALKAN';
-        break;
-      default:
-        color = Colors.grey;
-        text = status.toUpperCase();
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-
+// ─────────────────────────────────────────────────────────────────────────────
+// REPORT HISTORY TAB
+// ─────────────────────────────────────────────────────────────────────────────
 class _ReportHistoryTab extends StatefulWidget {
   final String token;
   const _ReportHistoryTab({required this.token});
@@ -288,14 +323,12 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
   List<ReportModel> _allReports = [];
   List<ReportModel> _filteredReports = [];
   bool _loading = true;
-  String _selectedFilter = 'Semua';
 
-  final List<String> _filters = [
-    'Semua',
-    'Disetujui',
-    'Ditolak',
-    'Dibatalkan',
-  ];
+  String _filterStatus = 'Semua';
+  String _filterType = 'Semua';
+  String _filterUrgency = 'Semua';
+  String _filterTime = 'Semua Waktu';
+  String _sortOrder = 'Terbaru';
 
   @override
   void initState() {
@@ -311,24 +344,100 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
       setState(() {
         _allReports = data.where((r) => ['resolved', 'rejected', 'canceled'].contains(r.status)).toList();
         _loading = false;
-        _applyFilter(_selectedFilter);
+        _applyFilters();
       });
     }
   }
 
-  void _applyFilter(String filter) {
+  void _applyFilters() {
     setState(() {
-      _selectedFilter = filter;
-      if (filter == 'Semua') {
-        _filteredReports = List.from(_allReports);
-      } else if (filter == 'Disetujui') {
-        _filteredReports = _allReports.where((r) => r.status == 'resolved').toList();
-      } else if (filter == 'Ditolak') {
-        _filteredReports = _allReports.where((r) => r.status == 'rejected').toList();
-      } else if (filter == 'Dibatalkan') {
-        _filteredReports = _allReports.where((r) => r.status == 'canceled').toList();
+      var filtered = List<ReportModel>.from(_allReports);
+
+      // Filter Status
+      if (_filterStatus != 'Semua') {
+        if (_filterStatus == 'Disetujui') {
+          filtered = filtered.where((r) => r.status == 'resolved').toList();
+        } else if (_filterStatus == 'Ditolak') {
+          filtered = filtered.where((r) => r.status == 'rejected').toList();
+        } else if (_filterStatus == 'Dibatalkan') {
+          filtered = filtered.where((r) => r.status == 'canceled').toList();
+        }
       }
+
+      // Filter Tipe Insiden
+      if (_filterType != 'Semua') {
+        filtered = filtered.where((r) => r.incidentType.toLowerCase() == _filterType.toLowerCase()).toList();
+      }
+
+      // Filter Urgensi
+      if (_filterUrgency != 'Semua') {
+        filtered = filtered.where((r) => r.urgencyLabel.toLowerCase() == _filterUrgency.toLowerCase()).toList();
+      }
+
+      // Filter Rentang Waktu
+      final now = DateTime.now();
+      if (_filterTime == 'Hari Ini') {
+        filtered = filtered.where((inc) => inc.createdAt.year == now.year && inc.createdAt.month == now.month && inc.createdAt.day == now.day).toList();
+      } else if (_filterTime == 'Minggu Ini') {
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        filtered = filtered.where((inc) => inc.createdAt.isAfter(startOfWeek) || (inc.createdAt.year == startOfWeek.year && inc.createdAt.month == startOfWeek.month && inc.createdAt.day == startOfWeek.day)).toList();
+      } else if (_filterTime == 'Bulan Ini') {
+        filtered = filtered.where((inc) => inc.createdAt.year == now.year && inc.createdAt.month == now.month).toList();
+      }
+
+      // Sorting
+      if (_sortOrder == 'Terbaru') {
+        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      } else {
+        filtered.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      }
+
+      _filteredReports = filtered;
     });
+  }
+
+  Widget _buildDropdown<T>({
+    required String label,
+    required T value,
+    required List<T> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Container(
+      width: 180,
+      margin: const EdgeInsets.only(right: 12, bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<T>(
+            value: value,
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFFF7418)),
+              ),
+              fillColor: const Color(0xFF1A2035),
+              filled: true,
+            ),
+            dropdownColor: const Color(0xFF1A2035),
+            style: const TextStyle(color: Colors.white, fontSize: 13),
+            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.toString()))).toList(),
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
   }
 
   void _showDetailDialog(ReportModel report) {
@@ -347,33 +456,65 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Filter Chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _filters.map((filter) {
-              final isSelected = filter == _selectedFilter;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: FilterChip(
-                  label: Text(
-                    filter,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white70,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  selected: isSelected,
-                  onSelected: (_) => _applyFilter(filter),
-                  backgroundColor: const Color(0xFF1A2035),
-                  selectedColor: const Color(0xFFFF7418),
-                  checkmarkColor: Colors.white,
-                ),
-              );
-            }).toList(),
-          ),
+        // Filter Dropdowns
+        Wrap(
+          children: [
+            _buildDropdown<String>(
+              label: 'Status Laporan',
+              value: _filterStatus,
+              items: ['Semua', 'Disetujui', 'Ditolak', 'Dibatalkan'],
+              onChanged: (v) {
+                if (v != null) {
+                  _filterStatus = v;
+                  _applyFilters();
+                }
+              },
+            ),
+            _buildDropdown<String>(
+              label: 'Kategori',
+              value: _filterType,
+              items: ['Semua', 'Kebakaran', 'Medis', 'Kejahatan', 'Bencana', 'Lakalantas', 'Infrastruktur', 'Lainnya'],
+              onChanged: (v) {
+                if (v != null) {
+                  _filterType = v;
+                  _applyFilters();
+                }
+              },
+            ),
+            _buildDropdown<String>(
+              label: 'Urgensi',
+              value: _filterUrgency,
+              items: ['Semua', 'Rendah', 'Sedang', 'Tinggi'],
+              onChanged: (v) {
+                if (v != null) {
+                  _filterUrgency = v;
+                  _applyFilters();
+                }
+              },
+            ),
+            _buildDropdown<String>(
+              label: 'Waktu Dibuat',
+              value: _filterTime,
+              items: ['Semua Waktu', 'Hari Ini', 'Minggu Ini', 'Bulan Ini'],
+              onChanged: (v) {
+                if (v != null) {
+                  _filterTime = v;
+                  _applyFilters();
+                }
+              },
+            ),
+            _buildDropdown<String>(
+              label: 'Urutkan Waktu',
+              value: _sortOrder,
+              items: ['Terbaru', 'Terlama'],
+              onChanged: (v) {
+                if (v != null) {
+                  _sortOrder = v;
+                  _applyFilters();
+                }
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Expanded(
@@ -458,6 +599,55 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
   }
 }
 
+class _StatusBadge extends StatelessWidget {
+  final String status;
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    String text;
+    switch (status) {
+      case 'resolved':
+        color = Colors.green;
+        text = 'SELESAI';
+        break;
+      case 'false_alarm':
+        color = Colors.orange;
+        text = 'FALSE ALARM';
+        break;
+      case 'cancel':
+      case 'canceled':
+        color = Colors.red;
+        text = 'DIBATALKAN';
+        break;
+      case 'rejected':
+        color = Colors.red;
+        text = 'DITOLAK';
+        break;
+      default:
+        color = Colors.grey;
+        text = status.toUpperCase();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
 class _ReportHistoryDetailDialog extends StatefulWidget {
   final ReportModel report;
 
@@ -492,6 +682,8 @@ class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> 
             _isPlaying = false;
             _position = Duration.zero;
           });
+          _audioPlayer.seek(Duration.zero);
+          _audioPlayer.pause();
         }
       });
     }
@@ -531,13 +723,15 @@ class _ReportHistoryDetailDialogState extends State<_ReportHistoryDetailDialog> 
               ),
               Expanded(
                 child: Slider(
-                  value: _position.inMilliseconds.toDouble(),
+                  value: _position.inMilliseconds.toDouble().clamp(0.0, _duration.inMilliseconds > 0 ? _duration.inMilliseconds.toDouble() : 1.0),
                   max: _duration.inMilliseconds > 0
                       ? _duration.inMilliseconds.toDouble()
                       : 1.0,
-                  onChanged: (v) {
-                    _audioPlayer.seek(Duration(milliseconds: v.toInt()));
-                  },
+                  onChanged: _duration.inMilliseconds > 0
+                      ? (v) {
+                          _audioPlayer.seek(Duration(milliseconds: v.toInt()));
+                        }
+                      : null,
                 ),
               ),
               Text(

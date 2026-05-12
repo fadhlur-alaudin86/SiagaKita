@@ -226,9 +226,14 @@ func (r *Repository) FindReports(status string) ([]IncidentReport, error) {
 	return reps, q.Find(&reps).Error
 }
 
-func (r *Repository) UpdateReportStatus(id, status string) error {
-	return r.db.Model(&IncidentReport{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"status": status, "updated_at": time.Now()}).Error
+func (r *Repository) UpdateReportStatus(id, status string, urgency *int) error {
+	updates := map[string]interface{}{"status": status, "updated_at": time.Now()}
+	if urgency != nil {
+		updates["urgency_level"] = *urgency
+	} else if status == "rejected" {
+		updates["urgency_level"] = gorm.Expr("NULL")
+	}
+	return r.db.Model(&IncidentReport{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *Repository) FindReportsByUser(userID string) ([]IncidentReport, error) {

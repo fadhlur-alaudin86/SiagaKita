@@ -292,8 +292,8 @@ func (s *Service) GetReportsByUser(userID string) ([]IncidentReport, error) {
 	return s.repo.FindReportsByUser(userID)
 }
 
-func (s *Service) UpdateReportStatus(id, status string) error {
-	return s.repo.UpdateReportStatus(id, status)
+func (s *Service) UpdateReportStatus(id, status string, urgency *int) error {
+	return s.repo.UpdateReportStatus(id, status, urgency)
 }
 
 func (s *Service) CancelReport(reportID, reporterID string) error {

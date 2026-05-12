@@ -408,12 +408,13 @@ func (h *Handler) GetReports(c *fiber.Ctx) error {
 func (h *Handler) UpdateReportStatus(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var body struct {
-		Status string `json:"status"`
+		Status       string `json:"status"`
+		UrgencyLevel *int   `json:"urgency_level"`
 	}
 	if err := c.BodyParser(&body); err != nil || body.Status == "" {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Status wajib diisi")
 	}
-	if err := h.svc.UpdateReportStatus(id, body.Status); err != nil {
+	if err := h.svc.UpdateReportStatus(id, body.Status, body.UrgencyLevel); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{"updated": true})

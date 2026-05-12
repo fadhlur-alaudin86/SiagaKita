@@ -198,7 +198,7 @@ CREATE TABLE public.incident_reports (
     id            uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     reporter_id   uuid REFERENCES public.users(id),
     incident_type public.incident_category NOT NULL DEFAULT 'general',
-    urgency       varchar(10) DEFAULT 'low',
+    urgency_level smallint,
     latitude      numeric(10,8) NOT NULL,
     longitude     numeric(11,8) NOT NULL,
     description   text,

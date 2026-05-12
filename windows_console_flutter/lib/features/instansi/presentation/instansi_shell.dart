@@ -75,6 +75,9 @@ class _InstansiShellState extends State<InstansiShell> {
     if (!mounted) return;
     setState(() {
       _unreadCount = incidents.where((inc) => !_readSosIds.contains(inc.id)).length;
+      if (_unreadCount == 0) {
+        AudioService.stop();
+      }
     });
   }
 
@@ -86,6 +89,7 @@ class _InstansiShellState extends State<InstansiShell> {
         _readSosIds.add(inc.id);
       }
       _unreadCount = 0;
+      AudioService.stop();
     });
   }
 

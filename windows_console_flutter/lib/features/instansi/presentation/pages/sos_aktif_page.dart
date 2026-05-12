@@ -53,6 +53,8 @@ class _SosAktifPageState extends State<SosAktifPage> {
           _isPlaying = false;
           _position = Duration.zero;
         });
+        _audioPlayer.seek(Duration.zero);
+        _audioPlayer.pause();
       }
     });
     _wsSub = widget.ws.eventStream.listen((msg) {
@@ -714,13 +716,15 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     ),
                     Expanded(
                       child: Slider(
-                        value: _position.inMilliseconds.toDouble(),
+                        value: _position.inMilliseconds.toDouble().clamp(0.0, _duration.inMilliseconds > 0 ? _duration.inMilliseconds.toDouble() : 1.0),
                         max: _duration.inMilliseconds > 0
                             ? _duration.inMilliseconds.toDouble()
                             : 1.0,
-                        onChanged: (v) {
-                          _audioPlayer.seek(Duration(milliseconds: v.toInt()));
-                        },
+                        onChanged: _duration.inMilliseconds > 0 
+                            ? (v) {
+                                _audioPlayer.seek(Duration(milliseconds: v.toInt()));
+                              }
+                            : null,
                       ),
                     ),
                     Text(
