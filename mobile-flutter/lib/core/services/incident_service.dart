@@ -354,7 +354,7 @@ class IncidentService {
             body: jsonEncode({
               'latitude': latitude,
               'longitude': longitude,
-              if (addressDetail != null) 'address_detail': addressDetail,
+              'address_detail': addressDetail,
             }),
           )
           .timeout(_defaultTimeout);
@@ -546,7 +546,8 @@ class NearbyIncident {
     trustLabel: json['reporter_trust_label'] as String? ?? 'standard',
     createdAt: json['created_at'] as String,
     distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0.0,
-    photoPaths: (json['photo_paths'] as List<dynamic>?)
+    photoPaths:
+        (json['photo_paths'] as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList() ??
         [],
