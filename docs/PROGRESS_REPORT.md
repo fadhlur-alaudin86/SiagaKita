@@ -99,6 +99,7 @@
 | Dashboard Operasi | ✅ | KPI + live SOS list + pie chart |
 | SOS Aktif | ✅ | Detail korban, false alarm, resolve |
 | Laporan Masuk | ✅ | Jalur B + filter status |
+| Riwayat SOS | ✅ | Filter sejarah insiden per instansi |
 | Peta Operasional | ✅ | OpenStreetMap + markers live |
 | Dispatch Relawan | 🔴 | Placeholder (Sprint B.4) |
 | Admin - KYC | ✅ | UI selesai, backend endpoint tersedia |
@@ -109,6 +110,19 @@
 ---
 
 ## 3. Changelog Per Sprint
+
+---
+
+### 🔖 Patch 1.0.17 - 12 Mei 2026 (Fitur Riwayat Instansi & Perbaikan Bug Inti)
+
+#### 🛡️ Backend - Go Fiber & PostgreSQL
+- **Endpoint Riwayat Instansi**: Menambahkan `GET /api/v1/incidents/agency/history` untuk mengambil data SOS yang telah selesai (`resolved`, `false_alarm`, `cancel`).
+- **Real-Time Trust Label**: Mengubah logika `reporter_trust_label` dari berbasis JWT *Locals* menjadi kueri *real-time* ke tabel `user_profiles` (`GetTrustLabel`).
+- **Fix Sinkronisasi Array PostgreSQL**: Memperbaiki fungsi `UploadEvidence` yang gagal menyimpan array gambar bukti (menggunakan konversi ke `pq.StringArray`).
+
+#### 🖥️ Desktop Console (Instansi)
+- **Halaman Riwayat SOS**: Membuat UI interaktif `riwayat_sos_page.dart` yang mendukung pemilahan insiden masa lalu menggunakan chip navigasi (Selesai Kami, Selesai Instansi Lain, Selesai Relawan, False Alarm, Dibatalkan).
+- **Update Integrasi Model**: Modifikasi `IncidentModel` untuk membaca `reporter_trust_label` langsung dari API JSON, menghapus *workaround* logika yang kadaluarsa.
 
 ---
 
@@ -690,6 +704,7 @@ Base URL: `http://<host>:8080/api/v1`
 | POST | `/incidents/:id/accept` | VolunteerOnly | Relawan menerima misi SOS |
 | POST | `/incidents/:id/mark-false-alarm` | ConsoleOnly | Tandai false alarm |
 | POST | `/incidents/:id/resolve` | ConsoleOnly | Selesaikan insiden |
+| GET | `/incidents/agency/history` | ConsoleOnly | Riwayat insiden khusus instansi |
 
 ### Reports - Jalur B (Protected)
 
