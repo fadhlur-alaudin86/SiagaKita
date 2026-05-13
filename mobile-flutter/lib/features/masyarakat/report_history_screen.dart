@@ -71,7 +71,11 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       );
       if (mounted) {
         setState(() {
-          _sosHistory = history;
+          _sosHistory = history.where((s) => 
+            s.status != 'grace_period' && 
+            s.status != 'broadcasting' && 
+            s.status != 'handled'
+          ).toList();
           _isLoadingSOS = false;
         });
       }
@@ -95,9 +99,17 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   Color _statusColor(String status) {
     switch (status) {
       case 'processing':
-        return Colors.orange;
+        return Colors.blue;
       case 'resolved':
         return Colors.green;
+      case 'canceled':
+        return Colors.grey;
+      case 'rejected':
+      case 'failed':
+        return Colors.red;
+      case 'sent':
+      case 'pending':
+        return Colors.orange;
       default:
         return Colors.blue;
     }
@@ -452,26 +464,34 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                 ],
                 const Spacer(),
                 if (report.status == 'sent' || report.status == 'pending')
-                  TextButton(
-                    onPressed: () => _confirmCancelReport(report.id),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  SizedBox(
+                    width: 100,
+                    child: OutlinedButton(
+                      onPressed: () => _confirmCancelReport(report.id),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text('Batalkan'.tr(context), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
-                    child: Text('Batalkan'.tr(context), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 if (report.status == 'failed')
-                  TextButton(
-                    onPressed: () => _resendFailedReport(report),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  SizedBox(
+                    width: 100,
+                    child: OutlinedButton(
+                      onPressed: () => _resendFailedReport(report),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue,
+                        side: const BorderSide(color: Colors.blue),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text('Kirim Ulang'.tr(context), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
-                    child: Text('Kirim Ulang'.tr(context), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
               ],
             ),
@@ -554,8 +574,9 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   Widget _buildSOSCard(ActiveIncident sos, ColorScheme colors, bool isDark) {
     final cardColor = isDark ? colors.surfaceContainerHighest : Colors.white;
     final isFalseAlarm = sos.status == 'false_alarm';
-    final statusColor = isFalseAlarm ? Colors.orange : Colors.green;
-    final statusLabel = isFalseAlarm ? 'Batal / False Alarm' : 'Selesai';
+    final isCanceled = sos.status == 'canceled';
+    final statusColor = isFalseAlarm || isCanceled ? Colors.red : Colors.green;
+    final statusLabel = isFalseAlarm ? 'Palsu' : (isCanceled ? 'Batal' : 'Selesai');
 
     // Asumsikan darurat selalu tinggi
     const urgencyColor = Colors.red;

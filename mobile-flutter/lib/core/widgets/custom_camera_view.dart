@@ -6,6 +6,7 @@ class CustomCameraView extends StatefulWidget {
   final String title;
   final CameraLensDirection lensDirection;
   final bool isOvalOverlay;
+  final bool showOverlay;
 
   const CustomCameraView({
     super.key,
@@ -13,6 +14,7 @@ class CustomCameraView extends StatefulWidget {
     this.title = 'Ambil Foto',
     this.lensDirection = CameraLensDirection.front,
     this.isOvalOverlay = true,
+    this.showOverlay = true,
   });
 
   @override
@@ -99,25 +101,26 @@ class _CustomCameraViewState extends State<CustomCameraView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Instruksi Text
-          Padding(
-            padding: const EdgeInsets.only(bottom: 24, left: 24, right: 24),
-            child: Text(
-              widget.isOvalOverlay
-                  ? 'Posisikan wajah Anda di dalam area oval\ndan pastikan pencahayaan cukup'
-                  : 'Posisikan KTP Anda di dalam area kotak\ndan pastikan tulisan terbaca jelas',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                shadows: [
-                  Shadow(
-                    blurRadius: 4.0,
-                    color: Colors.black.withValues(alpha: 0.5),
-                  )
-                ],
+          if (widget.showOverlay)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24, left: 24, right: 24),
+              child: Text(
+                widget.isOvalOverlay
+                    ? 'Posisikan wajah Anda di dalam area oval\ndan pastikan pencahayaan cukup'
+                    : 'Posisikan KTP Anda di dalam area kotak\ndan pastikan tulisan terbaca jelas',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 4.0,
+                      color: Colors.black.withValues(alpha: 0.5),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
 
           // Camera Preview (1:1 Aspect Ratio)
           Center(
@@ -137,42 +140,43 @@ class _CustomCameraViewState extends State<CustomCameraView> {
                       ),
                     ),
                     // Overlay (Oval untuk wajah)
-                    ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        Colors.black.withValues(alpha: 0.6),
-                        BlendMode.srcOut,
-                      ),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.black,
-                              backgroundBlendMode: BlendMode.dstOut,
-                            ),
-                          ),
-                          Center(
-                            child: Container(
-                              width: widget.isOvalOverlay
-                                  ? size.width * 0.55 // Oval lebih kecil
-                                  : size.width * 0.85, // KTP lebih lebar
-                              height: widget.isOvalOverlay
-                                  ? size.width * 0.70 // Rasio wajah
-                                  : size.width * 0.53, // Rasio KTP (~1.6:1)
-                              decoration: BoxDecoration(
-                                color: Colors.white, // Membuat tembus pandang
-                                borderRadius: widget.isOvalOverlay
-                                    ? BorderRadius.all(
-                                        Radius.elliptical(
-                                            size.width * 0.275, size.width * 0.35),
-                                      )
-                                    : BorderRadius.circular(16),
+                    if (widget.showOverlay)
+                      ColorFiltered(
+                        colorFilter: ColorFilter.mode(
+                          Colors.black.withValues(alpha: 0.6),
+                          BlendMode.srcOut,
+                        ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.black,
+                                backgroundBlendMode: BlendMode.dstOut,
                               ),
                             ),
-                          ),
-                        ],
+                            Center(
+                              child: Container(
+                                width: widget.isOvalOverlay
+                                    ? size.width * 0.55 // Oval lebih kecil
+                                    : size.width * 0.85, // KTP lebih lebar
+                                height: widget.isOvalOverlay
+                                    ? size.width * 0.70 // Rasio wajah
+                                    : size.width * 0.53, // Rasio KTP (~1.6:1)
+                                decoration: BoxDecoration(
+                                  color: Colors.white, // Membuat tembus pandang
+                                  borderRadius: widget.isOvalOverlay
+                                      ? BorderRadius.all(
+                                          Radius.elliptical(
+                                              size.width * 0.275, size.width * 0.35),
+                                        )
+                                      : BorderRadius.circular(16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

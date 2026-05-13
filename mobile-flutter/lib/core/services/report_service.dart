@@ -71,13 +71,17 @@ class ReportModel {
   String get statusLabel {
     switch (status) {
       case 'processing':
-        return 'Diproses';
+        return 'Ditangani';
       case 'resolved':
         return 'Selesai';
       case 'failed':
-        return 'Gagal (Offline)';
+        return 'Gagal';
+      case 'canceled':
+        return 'Batal';
+      case 'rejected':
+        return 'Ditolak';
       default:
-        return 'Diterima';
+        return 'Terkirim';
     }
   }
 }

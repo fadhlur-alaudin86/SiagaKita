@@ -15,6 +15,8 @@ import 'dart:convert';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/report_service.dart';
+import 'package:camera/camera.dart';
+import '../../core/widgets/custom_camera_view.dart';
 import 'report_history_screen.dart' as import_report_history;
 
 class ReportScreen extends StatefulWidget {
@@ -69,7 +71,6 @@ class _ReportScreenState extends State<ReportScreen> {
 
   // ─── Photos ──────────────────────────────────────────────────────────────────
   final List<File> _photos = [];
-  final ImagePicker _picker = ImagePicker();
 
   // ─── Audio ───────────────────────────────────────────────────────────────────
   final AudioRecorder _recorder = AudioRecorder();
@@ -154,72 +155,54 @@ class _ReportScreenState extends State<ReportScreen> {
 
   // ─── Photos ──────────────────────────────────────────────────────────────────
 
-  Future<void> _pickPhoto(ImageSource source) async {
+  Future<void> _openCamera() async {
     if (_photos.length >= 3) return;
-    final status = source == ImageSource.camera
-        ? await Permission.camera.request()
-        : await Permission.photos.request();
+
+    final status = await Permission.camera.request();
     if (!status.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Izin ditolak. Buka pengaturan untuk mengizinkan.'),
+            content: Text(
+              'Izin kamera ditolak. Buka pengaturan untuk mengizinkan.',
+            ),
           ),
         );
       }
       return;
     }
-    final picked = await _picker.pickImage(source: source, imageQuality: 85);
-    if (picked == null || !mounted) return;
 
-    final dir = await getTemporaryDirectory();
-    final outPath = p.join(
-      dir.path,
-      'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
-    );
-    final compressed = await FlutterImageCompress.compressAndGetFile(
-      picked.path,
-      outPath,
-      quality: 70,
-      minWidth: 1280,
-      minHeight: 960,
-    );
-    if (compressed != null && mounted) {
-      setState(() => _photos.add(File(compressed.path)));
-    }
-  }
-
-  void _showPhotoSource() {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Ambil Foto'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickPhoto(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Pilih dari Galeri'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickPhoto(ImageSource.gallery);
-              },
-            ),
-          ],
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomCameraView(
+          title: 'Ambil Foto Keadaan Darurat',
+          lensDirection: CameraLensDirection.back,
+          showOverlay: false,
+          onPictureTaken: (XFile file) async {
+            final dir = await getTemporaryDirectory();
+            final outPath = p.join(
+              dir.path,
+              'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            );
+            final compressed = await FlutterImageCompress.compressAndGetFile(
+              file.path,
+              outPath,
+              quality: 70,
+              minWidth: 1280,
+              minHeight: 960,
+            );
+            if (compressed != null && mounted) {
+              setState(() => _photos.add(File(compressed.path)));
+            }
+          },
         ),
       ),
     );
   }
+
+  // Removed _showPhotoSource, direct camera instead
 
   // ─── Audio ───────────────────────────────────────────────────────────────────
 
@@ -252,7 +235,12 @@ class _ReportScreenState extends State<ReportScreen> {
       _recordSeconds = 0;
     });
     _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _recordSeconds++);
+      if (mounted) {
+        setState(() => _recordSeconds++);
+        if (_recordSeconds >= 60) {
+          _stopRecording();
+        }
+      }
     });
   }
 
@@ -619,7 +607,10 @@ class _ReportScreenState extends State<ReportScreen> {
           child: TabBarView(
             children: [
               _buildFormTab(colors, primaryColor, isDark),
-              import_report_history.ReportHistoryScreen(accessToken: widget.accessToken, isNested: true), // Will fix import later
+              import_report_history.ReportHistoryScreen(
+                accessToken: widget.accessToken,
+                isNested: true,
+              ), // Will fix import later
             ],
           ),
         ),
@@ -756,7 +747,9 @@ class _ReportScreenState extends State<ReportScreen> {
       child: ScrollbarTheme(
         data: ScrollbarThemeData(
           trackColor: WidgetStateProperty.all(
-            isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+            isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.05),
           ),
         ),
         child: Scrollbar(
@@ -765,63 +758,67 @@ class _ReportScreenState extends State<ReportScreen> {
           trackVisibility: true,
           thickness: 6,
           radius: const Radius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 8), // Padding to avoid overlapping content
-          child: ListView.builder(
-            controller: _categoryScrollCtrl,
-            scrollDirection: Axis.horizontal,
-            itemCount: _categories.length,
-            itemBuilder: (context, index) {
-          final cat = _categories[index];
-          final isSel = _selectedCategoryIndex == index;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedCategoryIndex = index),
-            child: Container(
-              width: 80,
-              margin: const EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                color: isSel ? primaryColor : colors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSel
-                      ? primaryColor
-                      : colors.onSurface.withValues(alpha: 0.1),
-                ),
-                boxShadow: isSel && !isDark
-                    ? [
-                        BoxShadow(
-                          color: primaryColor.withValues(alpha: 0.3),
-                          blurRadius: 8,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              bottom: 8,
+            ), // Padding to avoid overlapping content
+            child: ListView.builder(
+              controller: _categoryScrollCtrl,
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final cat = _categories[index];
+                final isSel = _selectedCategoryIndex == index;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedCategoryIndex = index),
+                  child: Container(
+                    width: 80,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: isSel ? primaryColor : colors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSel
+                            ? primaryColor
+                            : colors.onSurface.withValues(alpha: 0.1),
+                      ),
+                      boxShadow: isSel && !isDark
+                          ? [
+                              BoxShadow(
+                                color: primaryColor.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          cat['icon'] as IconData,
+                          color: isSel ? Colors.white : cat['color'] as Color,
+                          size: 32,
                         ),
-                      ]
-                    : [],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    cat['icon'] as IconData,
-                    color: isSel ? Colors.white : cat['color'] as Color,
-                    size: 32,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    cat['title'].toString(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isSel ? Colors.white : colors.onSurface,
-                      fontSize: 10,
-                      fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                        const SizedBox(height: 8),
+                        Text(
+                          cat['title'].toString(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isSel ? Colors.white : colors.onSurface,
+                            fontSize: 10,
+                            fontWeight: isSel
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
+          ),
         ),
-      ),
       ),
     );
   }
@@ -868,7 +865,7 @@ class _ReportScreenState extends State<ReportScreen> {
         }),
         if (_photos.length < 3)
           GestureDetector(
-            onTap: _showPhotoSource,
+            onTap: _openCamera,
             child: Container(
               width: 100,
               height: 100,
@@ -950,43 +947,59 @@ class _ReportScreenState extends State<ReportScreen> {
       onLongPressEnd: (_) => _stopRecording(),
       onLongPressCancel: () => _stopRecording(),
       onLongPressUp: () => _stopRecording(),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 80,
-        decoration: BoxDecoration(
-          color: _isRecording
-              ? Colors.red.withValues(alpha: 0.15)
-              : colors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _isRecording
-                ? Colors.red
-                : colors.onSurface.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.mic,
-              size: 28,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 80,
+          decoration: BoxDecoration(
+            color: colors.surface,
+            border: Border.all(
               color: _isRecording
                   ? Colors.red
-                  : colors.onSurface.withValues(alpha: 0.5),
+                  : colors.onSurface.withValues(alpha: 0.2),
             ),
-            const SizedBox(width: 12),
-            Text(
-              _isRecording
-                  ? 'Merekam... ${_formatDuration(_recordSeconds)}'
-                  : 'Tahan untuk rekam suara (Opsional)',
-              style: TextStyle(
-                color: _isRecording
-                    ? Colors.red
-                    : colors.onSurface.withValues(alpha: 0.6),
-                fontWeight: _isRecording ? FontWeight.bold : FontWeight.normal,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Stack(
+            children: [
+              // Horizontal fill animation from left to right
+              if (_isRecording)
+                AnimatedFractionallySizedBox(
+                  duration: const Duration(seconds: 1),
+                  curve: Curves.linear,
+                  alignment: Alignment.centerLeft,
+                  widthFactor: (_recordSeconds / 60.0).clamp(0.0, 1.0),
+                  child: Container(color: Colors.red.withValues(alpha: 0.15)),
+                ),
+              // Content
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.mic,
+                    size: 28,
+                    color: _isRecording
+                        ? Colors.red
+                        : colors.onSurface.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    _isRecording
+                        ? 'Merekam... ${_formatDuration(_recordSeconds)} / 01:00'
+                        : 'Tahan untuk rekam suara (Maks 1 Menit)',
+                    style: TextStyle(
+                      color: _isRecording
+                          ? Colors.red
+                          : colors.onSurface.withValues(alpha: 0.6),
+                      fontWeight: _isRecording
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
