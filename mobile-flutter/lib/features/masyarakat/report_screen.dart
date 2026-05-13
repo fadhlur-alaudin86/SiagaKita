@@ -982,17 +982,21 @@ class _ReportScreenState extends State<ReportScreen> {
                         : colors.onSurface.withValues(alpha: 0.5),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    _isRecording
-                        ? 'Merekam... ${_formatDuration(_recordSeconds)} / 01:00'
-                        : 'Tahan untuk rekam suara (Maks 1 Menit)',
-                    style: TextStyle(
-                      color: _isRecording
-                          ? Colors.red
-                          : colors.onSurface.withValues(alpha: 0.6),
-                      fontWeight: _isRecording
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                  Flexible(
+                    child: Text(
+                      _isRecording
+                          ? 'Merekam... ${_formatDuration(_recordSeconds)} / 01:00'
+                          : 'Tahan untuk rekam suara (Opsional, maks 1 menit)',
+                      style: TextStyle(
+                        color: _isRecording
+                            ? Colors.red
+                            : colors.onSurface.withValues(alpha: 0.6),
+                        fontWeight: _isRecording
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
