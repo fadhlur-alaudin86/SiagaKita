@@ -65,7 +65,11 @@ class _MainScreenState extends State<MainScreen> {
             isSOSBanned: user.isSOSBanned,
           ),
           const GuideScreen(),
-          if (isRelawan) RelawanMainScreen(accessToken: widget.accessToken),
+          if (isRelawan)
+            RelawanMainScreen(
+              accessToken: widget.accessToken,
+              onNavigateToMap: () => setState(() => _currentIndex = 3),
+            ),
           MapScreen(accessToken: widget.accessToken),
           ProfileScreen(accessToken: widget.accessToken),
         ];

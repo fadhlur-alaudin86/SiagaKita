@@ -14,6 +14,8 @@ class MapScreen extends StatefulWidget {
   final String? accessToken;
   const MapScreen({super.key, this.accessToken});
 
+  static final ValueNotifier<LatLng?> targetLocation = ValueNotifier(null);
+
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
@@ -30,9 +32,11 @@ class _MapScreenState extends State<MapScreen>
   final _accuracy = 0.0;
   bool _geocodingDone = false;
 
-  // SOS nearby (untuk relawan ON DUTY)
+  // Polling data
   List<NearbyIncident> _nearbySOS = [];
-  Timer? _nearbyTimer;
+  Timer? _pollingTimer;
+  ActiveResponseModel? _activeMission; // For volunteers handling an SOS
+  ActiveIncident? _activeSOS; // For sender viewing their SOS
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -50,6 +54,15 @@ class _MapScreenState extends State<MapScreen>
     LocationController.instance.start();
     _initLocation();
     LocationController.instance.position.addListener(_onLocationChanged);
+    MapScreen.targetLocation.addListener(_onTargetLocationChanged);
+  }
+
+  void _onTargetLocationChanged() {
+    final target = MapScreen.targetLocation.value;
+    if (target != null && mounted) {
+      _mapController.move(target, 16.0);
+      MapScreen.targetLocation.value = null; // Reset after moving
+    }
   }
 
   void _onLocationChanged() {
@@ -76,10 +89,10 @@ class _MapScreenState extends State<MapScreen>
 
   @override
   void dispose() {
-    _pulseController.dispose();
     LocationController.instance.position.removeListener(_onLocationChanged);
-    LocationController.instance.stop();
-    _nearbyTimer?.cancel();
+    MapScreen.targetLocation.removeListener(_onTargetLocationChanged);
+    _pulseController.dispose();
+    _pollingTimer?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -97,7 +110,7 @@ class _MapScreenState extends State<MapScreen>
     } else {
       setState(() => _isLoading = false);
     }
-    _maybeStartNearbyPolling();
+    _startPolling();
   }
 
   Future<void> _reverseGeocode(double lat, double lng) async {
@@ -124,33 +137,56 @@ class _MapScreenState extends State<MapScreen>
     }
   }
 
-  void _maybeStartNearbyPolling() {
-    final user = UserModel.currentUser.value;
-    if (user.role != UserRole.relawan && user.volunteerStatus != 'approved') {
-      return;
-    }
-    if (!user.isAvailableForMission) {
-      return;
-    }
-    if (widget.accessToken == null) {
-      return;
-    }
-    _fetchNearbySOS();
-    _nearbyTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => _fetchNearbySOS(),
+  void _startPolling() {
+    if (widget.accessToken == null) return;
+    _pollData();
+    _pollingTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => _pollData(),
     );
   }
 
-  Future<void> _fetchNearbySOS() async {
-    if (_userLocation == null || widget.accessToken == null) return;
-    final results = await IncidentService.getNearby(
-      accessToken: widget.accessToken!,
-      lat: _userLocation!.latitude,
-      lng: _userLocation!.longitude,
-      radius: 5.0,
-    );
-    if (mounted) setState(() => _nearbySOS = results);
+  Future<void> _pollData() async {
+    if (!mounted || widget.accessToken == null) return;
+    final user = UserModel.currentUser.value;
+
+    // 1. Fetch Active SOS for the current user (sender)
+    try {
+      final activeSos = await IncidentService.getActive(
+        accessToken: widget.accessToken!,
+      );
+      if (mounted) setState(() => _activeSOS = activeSos);
+    } catch (_) {
+      if (mounted) setState(() => _activeSOS = null);
+    }
+
+    // 2. Fetch Active Mission and Nearby SOS for Volunteers
+    final isRelawan =
+        user.role == UserRole.relawan || user.volunteerStatus == 'approved';
+    if (isRelawan) {
+      try {
+        final mission = await IncidentService.getMyActiveResponse(
+          accessToken: widget.accessToken!,
+        );
+        if (mounted) setState(() => _activeMission = mission);
+      } catch (_) {
+        if (mounted) setState(() => _activeMission = null);
+      }
+
+      if (user.isAvailableForMission && _userLocation != null) {
+        try {
+          final results = await IncidentService.getNearby(
+            accessToken: widget.accessToken!,
+            lat: _userLocation!.latitude,
+            lng: _userLocation!.longitude,
+            radius: 5.0,
+          );
+          if (mounted) setState(() => _nearbySOS = results);
+        } catch (_) {}
+      } else {
+        if (mounted) setState(() => _nearbySOS = []);
+      }
+    }
   }
 
   void _recenterMap() {
@@ -403,6 +439,35 @@ class _MapScreenState extends State<MapScreen>
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                           userAgentPackageName: 'com.superbypass.siagakita',
                         ),
+                        if (_activeSOS != null &&
+                            _activeSOS!.volunteerLocations.isNotEmpty)
+                          AnimatedBuilder(
+                            animation: _pulseAnimation,
+                            builder: (context, child) {
+                              return Opacity(
+                                opacity: 0.3 +
+                                    ((_pulseAnimation.value - 1.0) * 1.4),
+                                child: PolylineLayer(
+                                  polylines: _activeSOS!.volunteerLocations
+                                      .map((vl) => Polyline(
+                                            points: [
+                                              LatLng(vl.latitude, vl.longitude),
+                                              LatLng(
+                                                _activeSOS!.latitude,
+                                                _activeSOS!.longitude,
+                                              ),
+                                            ],
+                                            color: const Color(0xFF22C55E),
+                                            strokeWidth: 4,
+                                            pattern: StrokePattern.dashed(
+                                              segments: const [10.0, 10.0],
+                                            ),
+                                          ))
+                                      .toList(),
+                                ),
+                              );
+                            },
+                          ),
                         MarkerLayer(
                           markers: [
                             // SOS Nearby markers (hanya relawan ON DUTY)
@@ -439,6 +504,84 @@ class _MapScreenState extends State<MapScreen>
                                 ),
                               ),
                             ),
+                            // Misi Aktif Relawan
+                            if (_activeMission != null)
+                              Marker(
+                                point: LatLng(
+                                  _activeMission!.reporterLatitude,
+                                  _activeMission!.reporterLongitude,
+                                ),
+                                width: 56,
+                                height: 56,
+                                rotate: true,
+                                child: AnimatedBuilder(
+                                  animation: _pulseAnimation,
+                                  builder: (context, child) => Transform.scale(
+                                    scale: _pulseAnimation.value,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF3B82F6)
+                                            .withValues(alpha: 0.3),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF3B82F6),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                                color: Colors.white, width: 2),
+                                          ),
+                                          child: const Icon(Icons.crisis_alert,
+                                              color: Colors.white, size: 14),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            // Relawan Menuju Lokasi SOS
+                            if (_activeSOS != null &&
+                                _activeSOS!.volunteerLocations.isNotEmpty)
+                              ..._activeSOS!.volunteerLocations.map(
+                                (vl) => Marker(
+                                  point: LatLng(vl.latitude, vl.longitude),
+                                  width: 50,
+                                  height: 50,
+                                  rotate: true,
+                                  child: AnimatedBuilder(
+                                    animation: _pulseAnimation,
+                                    builder: (context, child) =>
+                                        Transform.scale(
+                                      scale: _pulseAnimation.value,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF22C55E)
+                                              .withValues(alpha: 0.3),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Container(
+                                            width: 28,
+                                            height: 28,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF22C55E),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 2),
+                                            ),
+                                            child: const Icon(Icons.two_wheeler,
+                                                color: Colors.white, size: 16),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             // User Position
                             Marker(
                               point: _userLocation!,

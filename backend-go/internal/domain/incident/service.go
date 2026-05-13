@@ -191,17 +191,22 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 	var volunteerStatus *string
 	s.repo.db.Raw(`
 		SELECT status FROM incident_responses
-		WHERE incident_id = ? AND status IN ('en_route', 'waiting_review')
+		WHERE incident_id = ? AND status IN ('en_route', 'waiting_review', 'on_scene')
 		ORDER BY created_at ASC LIMIT 1
 	`, inc.ID).Scan(&volunteerStatus)
 
-	var volunteerNames []string
+	var volunteerLocations []VolunteerLocation
 	s.repo.db.Raw(`
-		SELECT u.full_name 
+		SELECT u.full_name as name, ir.latitude, ir.longitude 
 		FROM incident_responses ir
-		JOIN users u ON u.id = ir.volunteer_id
-		WHERE ir.incident_id = ? AND ir.status IN ('en_route', 'waiting_review')
-	`, inc.ID).Scan(&volunteerNames)
+		JOIN users u ON u.id = ir.responder_id
+		WHERE ir.incident_id = ? AND ir.status IN ('en_route', 'waiting_review', 'on_scene')
+	`, inc.ID).Scan(&volunteerLocations)
+
+	var volunteerNames []string
+	for _, vl := range volunteerLocations {
+		volunteerNames = append(volunteerNames, vl.Name)
+	}
 
 	agencyStatus := inc.AgencyStatus
 	var agencyStatusPtr *string
@@ -227,6 +232,7 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 		AgencyName:              agencyName,
 		VolunteerResponseStatus: volunteerStatus,
 		VolunteerNames:          volunteerNames,
+		VolunteerLocations:      volunteerLocations,
 	}, nil
 }
 

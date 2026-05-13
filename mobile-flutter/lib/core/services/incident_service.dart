@@ -454,6 +454,24 @@ class TriggerSOSResult {
       );
 }
 
+class VolunteerLocation {
+  final String name;
+  final double latitude;
+  final double longitude;
+
+  const VolunteerLocation({
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory VolunteerLocation.fromJson(Map<String, dynamic> json) => VolunteerLocation(
+    name: json['name'] as String,
+    latitude: (json['latitude'] as num).toDouble(),
+    longitude: (json['longitude'] as num).toDouble(),
+  );
+}
+
 class ActiveIncident {
   final String incidentId;
   final String status;
@@ -468,6 +486,7 @@ class ActiveIncident {
   final String? agencyName;
   final String? volunteerResponseStatus;
   final List<String> volunteerNames;
+  final List<VolunteerLocation> volunteerLocations;
 
   const ActiveIncident({
     required this.incidentId,
@@ -483,6 +502,7 @@ class ActiveIncident {
     this.agencyName,
     this.volunteerResponseStatus,
     this.volunteerNames = const [],
+    this.volunteerLocations = const [],
   }) : updatedAt = updatedAt ?? createdAt;
 
   factory ActiveIncident.fromJson(Map<String, dynamic> json) => ActiveIncident(

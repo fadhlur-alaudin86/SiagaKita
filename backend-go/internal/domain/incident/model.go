@@ -156,20 +156,27 @@ type TriggerSOSResponse struct {
 	Message    string `json:"message"`
 }
 
+type VolunteerLocation struct {
+	Name      string  `json:"name"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 // ActiveIncidentResponse - data SOS aktif milik reporter.
 type ActiveIncidentResponse struct {
-	IncidentID              string  `json:"incident_id"`
-	Status                  string  `json:"status"`
-	IncidentType            string  `json:"incident_type"`
-	Latitude                float64 `json:"latitude"`
-	Longitude               float64 `json:"longitude"`
-	CreatedAt               string  `json:"created_at"`
-	ReporterTrustLabel      string   `json:"reporter_trust_label"`
-	AgencyStatus            *string  `json:"agency_status,omitempty"`
-	HandledByAgencyID       *string  `json:"handled_by_agency_id,omitempty"`
-	AgencyName              *string  `json:"agency_name,omitempty"`
-	VolunteerResponseStatus *string  `json:"volunteer_response_status,omitempty"`
-	VolunteerNames          []string `json:"volunteer_names,omitempty"`
+	IncidentID              string              `json:"incident_id"`
+	Status                  string              `json:"status"`
+	IncidentType            string              `json:"incident_type"`
+	Latitude                float64             `json:"latitude"`
+	Longitude               float64             `json:"longitude"`
+	CreatedAt               string              `json:"created_at"`
+	ReporterTrustLabel      string              `json:"reporter_trust_label"`
+	AgencyStatus            *string             `json:"agency_status,omitempty"`
+	HandledByAgencyID       *string             `json:"handled_by_agency_id,omitempty"`
+	AgencyName              *string             `json:"agency_name,omitempty"`
+	VolunteerResponseStatus *string             `json:"volunteer_response_status,omitempty"`
+	VolunteerNames          []string            `json:"volunteer_names,omitempty"`
+	VolunteerLocations      []VolunteerLocation `json:"volunteer_locations,omitempty"`
 }
 
 // AllActiveIncidentResponse - data SOS aktif LENGKAP untuk console desktop (JOIN ke users & profiles).

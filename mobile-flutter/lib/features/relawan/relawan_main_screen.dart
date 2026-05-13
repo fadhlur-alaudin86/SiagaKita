@@ -10,9 +10,17 @@ import '../../core/services/location_controller.dart';
 import '../../core/constants/api_config.dart';
 import 'relawan_history_screen.dart';
 
+import 'package:latlong2/latlong.dart';
+import '../masyarakat/map_screen.dart';
+
 class RelawanMainScreen extends StatefulWidget {
   final String accessToken;
-  const RelawanMainScreen({super.key, required this.accessToken});
+  final VoidCallback? onNavigateToMap;
+  const RelawanMainScreen({
+    super.key,
+    required this.accessToken,
+    this.onNavigateToMap,
+  });
 
   @override
   State<RelawanMainScreen> createState() => _RelawanMainScreenState();
@@ -365,6 +373,14 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
               '${inc.latitude.toStringAsFixed(5)}, ${inc.longitude.toStringAsFixed(5)}',
               primaryText,
               secondaryText,
+              onTapMap: widget.onNavigateToMap != null
+                  ? () {
+                      Navigator.pop(context);
+                      MapScreen.targetLocation.value =
+                          LatLng(inc.latitude, inc.longitude);
+                      widget.onNavigateToMap!();
+                    }
+                  : null,
             ),
             if (inc.addressDetail != null)
               _detailRow(
@@ -496,8 +512,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     String label,
     String value,
     Color primary,
-    Color secondary,
-  ) {
+    Color secondary, {
+    VoidCallback? onTapMap,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -521,6 +538,12 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
               ],
             ),
           ),
+          if (onTapMap != null)
+            IconButton(
+              icon: const Icon(Icons.map, color: Color(0xFF22C55E)),
+              onPressed: onTapMap,
+              tooltip: 'Lihat di Peta',
+            ),
         ],
       ),
     );
@@ -842,10 +865,32 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                             ),
                           ],
                           const SizedBox(height: 4),
-                          Text(
-                            'Lokasi korban: ${_activeMission!.reporterLatitude.toStringAsFixed(5)}, '
-                            '${_activeMission!.reporterLongitude.toStringAsFixed(5)}',
-                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Lokasi korban: ${_activeMission!.reporterLatitude.toStringAsFixed(5)}, '
+                                  '${_activeMission!.reporterLongitude.toStringAsFixed(5)}',
+                                  style: const TextStyle(
+                                      color: Colors.white54, fontSize: 11),
+                                ),
+                              ),
+                              if (widget.onNavigateToMap != null)
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: const Icon(Icons.map, color: Colors.white),
+                                  onPressed: () {
+                                    MapScreen.targetLocation.value = LatLng(
+                                      _activeMission!.reporterLatitude,
+                                      _activeMission!.reporterLongitude,
+                                    );
+                                    widget.onNavigateToMap!();
+                                  },
+                                  tooltip: 'Lihat di Peta',
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 14),
                           SizedBox(
