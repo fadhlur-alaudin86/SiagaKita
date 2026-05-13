@@ -679,25 +679,30 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  Future<void> _onSelectIncidentType(String type) async {
+  Future<void> _onSelectIncidentType(String type, String label) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: Text('Konfirmasi Bantuan'.tr(context)),
         content: Text(
-          'Apakah Anda yakin membutuhkan bantuan segera untuk tipe ini?'.tr(
-            context,
-          ),
+          '${'Apakah Anda yakin membutuhkan bantuan segera untuk tipe'.tr(context)} $label?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('TIDAK'.tr(context)),
+            child: Text(
+              'BATAL'.tr(context),
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('YA, BUTUH BANTUAN'.tr(context)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF4D00),
+              foregroundColor: Colors.white,
+            ),
+            child: Text('YA, KIRIMKAN SEKARANG'.tr(context)),
           ),
         ],
       ),
@@ -873,40 +878,18 @@ class _HomeScreenState extends State<HomeScreen>
                     primaryColor: primaryColor,
                   ),
 
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Align(
-                          alignment: const Alignment(0, 0.45),
-                          child: SOSActionButton(
-                            isSOSActive: isSOSActive,
-                            tapCount: _tapCount,
-                            requiredTaps: _requiredTaps,
-                            primaryColor: primaryColor,
-                            onTap: isSOSActive ? _onCancelTap : _onSOSTap,
-                          ),
-                        ),
+                  const Spacer(flex: 6),
 
-                        // ── Active SOS status banner (Floating at the top of this area) ──
-                        if (isSOSActive &&
-                            !_isLoadingActiveIncident &&
-                            _activeIncident != null)
-                          Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: ActiveSOSBanner(
-                              activeIncident: _activeIncident!,
-                              sosTransmitting: _sosTransmitting,
-                              nextUpdateCountdown: _nextUpdateCountdown,
-                              lastLocationUpdate: _lastLocationUpdate,
-                              volunteerPosition: _volunteerPosition,
-                              uploadStatusBadgeBuilder: _buildUploadStatusBadge,
-                            ),
-                          ),
-                      ],
-                    ),
+                  // ── SOS Button ────────────────────────────────────────────────
+                  SOSActionButton(
+                    isSOSActive: isSOSActive,
+                    tapCount: _tapCount,
+                    requiredTaps: _requiredTaps,
+                    primaryColor: primaryColor,
+                    onTap: isSOSActive ? _onCancelTap : _onSOSTap,
                   ),
+
+                  const Spacer(flex: 4),
 
                   // ── Bottom Action Cards ────────────────────────────────────────
                   Row(
@@ -947,6 +930,24 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
+
+            // ── Active SOS status banner (Floating Overlay) ──────────────────
+            if (isSOSActive &&
+                !_isLoadingActiveIncident &&
+                _activeIncident != null)
+              Positioned(
+                top: 100, // Adjusted to be below the header area
+                left: 24,
+                right: 24,
+                child: ActiveSOSBanner(
+                  activeIncident: _activeIncident!,
+                  sosTransmitting: _sosTransmitting,
+                  nextUpdateCountdown: _nextUpdateCountdown,
+                  lastLocationUpdate: _lastLocationUpdate,
+                  volunteerPosition: _volunteerPosition,
+                  uploadStatusBadgeBuilder: _buildUploadStatusBadge,
+                ),
+              ),
 
             // Grace Period Overlay
             if (_sosPhase == 'gracePeriod') _buildGracePeriodOverlay(colors),
@@ -1037,11 +1038,23 @@ class _HomeScreenState extends State<HomeScreen>
             runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
-              _typeOption(Icons.medical_services, 'Medis', 'medical'),
-              _typeOption(Icons.local_fire_department, 'Kebakaran', 'fire'),
-              _typeOption(Icons.local_police, 'Kriminal', 'crime'),
-              _typeOption(Icons.minor_crash, 'Kecelakaan', 'accident'),
-              _typeOption(Icons.waves, 'Bencana', 'disaster'),
+              _typeOption(
+                Icons.medical_services,
+                'Medis'.tr(context),
+                'medical',
+              ),
+              _typeOption(
+                Icons.local_fire_department,
+                'Kebakaran'.tr(context),
+                'fire',
+              ),
+              _typeOption(Icons.local_police, 'Kriminal'.tr(context), 'crime'),
+              _typeOption(
+                Icons.minor_crash,
+                'Kecelakaan'.tr(context),
+                'accident',
+              ),
+              _typeOption(Icons.waves, 'Bencana'.tr(context), 'disaster'),
             ],
           ),
           const SizedBox(height: 48),
@@ -1079,7 +1092,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _typeOption(IconData icon, String label, String value) {
     return GestureDetector(
-      onTap: () => _onSelectIncidentType(value),
+      onTap: () => _onSelectIncidentType(value, label),
       child: Column(
         children: [
           Container(
