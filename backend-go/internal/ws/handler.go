@@ -142,12 +142,84 @@ func (h *Handler) handleEvent(userID string, msg hub.Message) {
 		h.onCancelSOS(userID, msg.Payload)
 	case "ACCEPT_RESCUE":
 		h.onAcceptRescue(userID, msg.Payload)
+	case "UPDATE_LOCATION":
+		h.onUpdateLocation(userID, msg.Payload)
 	default:
 		utils.Warn().Str("event", msg.Event).Str("user_id", userID).Msg("[WS] Unknown event")
 	}
 }
 
 // ─── Event Handlers ────────────────────────────────────────────────────────────
+
+func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
+	p := toMap(payload)
+	lat, _ := p["latitude"].(float64)
+	lng, _ := p["longitude"].(float64)
+
+	// Cek role user untuk menentukan update kemana
+	var role string
+	h.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
+
+	if role == "masyarakat" {
+		// Cari SOS aktif milik user ini
+		inc, _ := h.incRepo.FindActiveByReporter(userID)
+		if inc != nil {
+			// Update di DB
+			_ = h.incRepo.UpdateLocation(inc.ID, lat, lng)
+
+			msg := hub.Message{
+				Event: "REPORTER_LOCATION_UPDATE",
+				Payload: map[string]interface{}{
+					"sos_id":    inc.ID,
+					"user_id":   userID,
+					"latitude":  lat,
+					"longitude": lng,
+				},
+			}
+
+			// Broadcast ke relawan yang sedang handle
+			responses, _ := h.incRepo.FindResponsesByIncident(inc.ID)
+			for _, r := range responses {
+				if r.Status == "on_scene" || r.Status == "en_route" {
+					_ = h.hub.SendToUser(r.ResponderID, msg)
+				}
+			}
+
+			// Broadcast ke Agency & Admin
+			h.hub.BroadcastToRole("agency", msg)
+			h.hub.BroadcastToRole("admin", msg)
+			h.hub.BroadcastToRole("superadmin", msg)
+		}
+	} else if role == "relawan" {
+		// Cari misi aktif milik relawan ini
+		resp, _ := h.incRepo.GetActiveResponse(userID)
+		if resp != nil {
+			// Update di DB
+			_ = h.incRepo.UpdateResponseLocation(resp.IncidentID, userID, lat, lng, nil)
+
+			msg := hub.Message{
+				Event: "VOLUNTEER_LOCATION_UPDATE",
+				Payload: map[string]interface{}{
+					"incident_id": resp.IncidentID,
+					"user_id":     userID,
+					"latitude":    lat,
+					"longitude":   lng,
+				},
+			}
+
+			// Broadcast ke korban (reporter)
+			inc, _ := h.incRepo.FindByID(resp.IncidentID)
+			if inc != nil {
+				_ = h.hub.SendToUser(inc.ReporterID, msg)
+			}
+
+			// Broadcast ke Agency & Admin
+			h.hub.BroadcastToRole("agency", msg)
+			h.hub.BroadcastToRole("admin", msg)
+			h.hub.BroadcastToRole("superadmin", msg)
+		}
+	}
+}
 
 func (h *Handler) onTriggerSOS(userID string, payload interface{}) {
 	p := toMap(payload)

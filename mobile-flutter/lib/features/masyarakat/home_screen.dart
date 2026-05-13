@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
     _checkActiveIncident();
     // Shared location controller
-    LocationController.instance.start();
+    // LocationController.instance.start(); // Legacy
     // Heartbeat ping setiap 30 detik
     _pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       UserService.ping(widget.accessToken);
@@ -109,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen>
     _ws = MobileWsService(token: widget.accessToken);
     _ws!.connect();
     _wsSub = _ws!.eventStream.listen(_onWsEvent);
+    LocationController.instance.addListener(_handlePositionChange);
   }
 
   void _onWsEvent(MobileWsMessage msg) {
@@ -135,6 +136,10 @@ class _HomeScreenState extends State<HomeScreen>
             );
           });
         }
+        break;
+      case MobileWsEvent.reporterLocationUpdate:
+        // Di HomeScreen (Masyarakat), kita adalah reporter. 
+        // Update ini biasanya untuk relawan/instansi.
         break;
       case MobileWsEvent.sosResolved:
         _stopVibration();
@@ -256,7 +261,8 @@ class _HomeScreenState extends State<HomeScreen>
     if (_ws != null) {
       _ws!.dispose();
     }
-    LocationController.instance.stop();
+    LocationController.instance.removeListener(_handlePositionChange);
+    LocationController.instance.setMode(TrackingMode.off);
     super.dispose();
   }
 
@@ -287,68 +293,46 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── GPS Location Update (setiap 10 detik) ───────────────────────────────────
 
   void _startLocationUpdates() {
-    _locationUpdateTimer?.cancel();
-    _nextUpdateCountdown = 10;
-    _lastLocationUpdate = DateTime.now();
-    _sosTransmitting = true;
     _startCountdownTimer();
 
-    // SINKRONISASI: Alih-alih pakai timer sendiri, kita dengarkan LocationController.
-    // Setiap kali GPS refresh (10 detik sekali di Controller), kita kirim ke server.
-    LocationController.instance.position.addListener(_handlePositionChange);
+    // SINKRONISASI: Set mode ke active agar dapat streaming realtime
+    LocationController.instance.setMode(TrackingMode.active);
   }
 
   void _stopLocationUpdates() {
-    _locationUpdateTimer?.cancel();
-    _locationUpdateTimer = null;
-    _statusCheckTimer?.cancel();
-    _statusCheckTimer = null;
     _countdownTimer?.cancel();
     _countdownTimer = null;
-    LocationController.instance.position.removeListener(_handlePositionChange);
-    LocationController.instance.stop();
+    LocationController.instance.setMode(TrackingMode.off);
   }
 
   Future<void> _handlePositionChange() async {
-    final pos = LocationController.instance.position.value;
+    final pos = LocationController.instance.currentPosition;
     if (pos == null || _activeIncident == null || !mounted) return;
 
-    // 1. Cek status SOS di server (sekaligus ambil update penangan)
-    try {
-      final active = await IncidentService.getActive(
-        accessToken: widget.accessToken,
-      );
-      if (!mounted) return;
-      if (active == null) {
-        _stopVibration();
-        _stopLocationUpdates();
-        setState(() => _activeIncident = null);
-        return;
-      }
-      setState(() {
-        _activeIncident = active;
-        if (active.isBeingHandled) _stopVibration();
-      });
-    } catch (_) {}
+    // 1. Kirim lokasi terbaru via WebSocket (Real-time)
+    _ws?.sendLocation(pos.lat, pos.lng);
 
-    // 2. Kirim lokasi terbaru ke server
-    try {
-      await IncidentService.updateLocation(
-        accessToken: widget.accessToken,
-        incidentId: _activeIncident!.incidentId,
-        latitude: pos.lat,
-        longitude: pos.lng,
-      );
-      if (mounted) {
-        setState(() {
-          _lastLocationUpdate = DateTime.now();
-          _sosTransmitting = true;
-          _nextUpdateCountdown = 10;
-        });
-        _startCountdownTimer(); // Restart hitung mundur agar sinkron 10...0
+    // 2. Fallback: Update di DB via HTTP (misal tiap 10 detik sekali saja)
+    final now = DateTime.now();
+    if (_lastLocationUpdate == null ||
+        now.difference(_lastLocationUpdate!) > const Duration(seconds: 10)) {
+      try {
+        await IncidentService.updateLocation(
+          accessToken: widget.accessToken,
+          incidentId: _activeIncident!.incidentId,
+          latitude: pos.lat,
+          longitude: pos.lng,
+        );
+        if (mounted) {
+          setState(() {
+            _lastLocationUpdate = now;
+            _sosTransmitting = true;
+            _nextUpdateCountdown = 10;
+          });
+        }
+      } catch (_) {
+        if (mounted) setState(() => _sosTransmitting = false);
       }
-    } catch (_) {
-      if (mounted) setState(() => _sosTransmitting = false);
     }
   }
 

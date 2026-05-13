@@ -7,6 +7,7 @@ import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/location_controller.dart';
+import '../../core/services/mobile_ws_service.dart';
 import '../../core/constants/api_config.dart';
 import 'relawan_history_screen.dart';
 
@@ -37,10 +38,13 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
   ({double latitude, double longitude})? _currentPosition;
   Timer? _nearbyTimer;
 
-  // ─── Misi Aktif (Poin 3 & 4) ─────────────────────────────────────────────
+  // ─── Misi Aktif ─────────────────────────────────────────────
   ActiveResponseModel? _activeMission;
   Timer? _missionPollTimer; // poll status misi setiap 15 detik
-  Timer? _missionLocationTimer; // broadcast lokasi relawan setiap 15 detik
+
+  // ─── WebSocket & Vibration ─────────────────────────────────────────────
+  MobileWsService? _ws;
+  StreamSubscription<MobileWsMessage>? _wsSub;
 
   @override
   void initState() {
@@ -48,7 +52,37 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     _loadHistory();
     _initLocation();
     _checkActiveMission();
-    LocationController.instance.start(); // pastikan GPS berjalan
+    
+    // WebSocket real-time
+    _ws = MobileWsService(token: widget.accessToken);
+    _ws!.connect();
+    _wsSub = _ws!.eventStream.listen(_onWsEvent);
+
+    LocationController.instance.addListener(_handleLocationChange);
+  }
+
+  void _onWsEvent(MobileWsMessage msg) {
+    if (!mounted) return;
+    switch (msg.event) {
+      case MobileWsEvent.reporterLocationUpdate:
+        // Update posisi korban jika sedang dalam misi
+        final p = msg.payload;
+        if (_activeMission != null && p['sos_id'] == _activeMission!.incidentId) {
+          // Note: UI update for victim position on map handled via shared state or passing data
+          // For now, we can update _activeMission or a separate state if needed.
+        }
+        break;
+      case MobileWsEvent.sosResolved:
+      case MobileWsEvent.sosCancelled:
+        _checkActiveMission(); // refresh to clear mission
+        break;
+      case MobileWsEvent.agencyHandling:
+      case MobileWsEvent.volunteerHandling:
+      case MobileWsEvent.volunteerLocationUpdate:
+      case MobileWsEvent.connected:
+      case MobileWsEvent.unknown:
+        break;
+    }
   }
 
   @override
@@ -56,7 +90,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     _nearbyTimer?.cancel();
     _missionPollTimer?.cancel();
     _stopMissionLocationBroadcast();
-    LocationController.instance.stop();
+    _wsSub?.cancel();
+    _ws?.dispose();
+    LocationController.instance.removeListener(_handleLocationChange);
+    LocationController.instance.setMode(TrackingMode.off);
     super.dispose();
   }
 
@@ -162,7 +199,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     if (!mounted) return;
     setState(() => _activeMission = mission);
     if (mission != null) {
-      _startMissionLocationBroadcast(mission.incidentId);
+      _startMissionLocationBroadcast();
       // Poll setiap 15 detik apakah misi masih aktif
       _missionPollTimer?.cancel();
       _missionPollTimer = Timer.periodic(const Duration(seconds: 15), (
@@ -186,26 +223,44 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     }
   }
 
-  // ─── Broadcast Lokasi Relawan ke Backend (Poin 4) ───────────────────────
-  void _startMissionLocationBroadcast(String incidentId) {
-    _missionLocationTimer?.cancel();
-    _missionLocationTimer = Timer.periodic(const Duration(seconds: 15), (
-      _,
-    ) async {
-      final pos = LocationController.instance.position.value;
-      if (pos == null || _activeMission == null) return;
-      await IncidentService.updateResponseLocation(
-        accessToken: widget.accessToken,
-        incidentId: incidentId,
-        latitude: pos.lat,
-        longitude: pos.lng,
-      );
-    });
+  // ─── Broadcast Lokasi Relawan ke Backend (Real-time) ───────────────────
+  void _startMissionLocationBroadcast() {
+    // SINKRONISASI: Set mode ke active agar dapat streaming realtime
+    LocationController.instance.setMode(TrackingMode.active);
   }
 
   void _stopMissionLocationBroadcast() {
-    _missionLocationTimer?.cancel();
-    _missionLocationTimer = null;
+    LocationController.instance.setMode(TrackingMode.off);
+  }
+
+  DateTime? _lastLocationUpdate;
+
+  Future<void> _handleLocationChange() async {
+    final pos = LocationController.instance.currentPosition;
+    if (pos == null || _activeMission == null || !mounted) return;
+
+    // 1. Kirim lokasi terbaru via WebSocket (Real-time)
+    _ws?.sendLocation(pos.lat, pos.lng);
+
+    // 2. Fallback: Update di DB via HTTP (misal tiap 10 detik sekali saja)
+    final now = DateTime.now();
+    if (_lastLocationUpdate == null ||
+        now.difference(_lastLocationUpdate!) > const Duration(seconds: 10)) {
+      try {
+        await IncidentService.updateResponseLocation(
+          accessToken: widget.accessToken,
+          incidentId: _activeMission!.incidentId,
+          latitude: pos.lat,
+          longitude: pos.lng,
+        );
+        if (mounted) {
+          setState(() {
+            _lastLocationUpdate = now;
+            _currentPosition = (latitude: pos.lat, longitude: pos.lng);
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   // ─── Selesaikan Misi (upload foto bukti) ─────────────────────────────────

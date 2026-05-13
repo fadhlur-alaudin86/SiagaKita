@@ -226,13 +226,14 @@ class ActiveSOSBanner extends StatelessWidget {
           RepaintBoundary(
             child: Row(
               children: [
-                const Icon(Icons.timer_outlined, size: 12, color: Colors.red),
+                const Icon(Icons.stream, size: 12, color: Colors.greenAccent),
                 const SizedBox(width: 4),
                 Text(
-                  'Next update: ${nextUpdateCountdown}s'.tr(context),
-                  style: TextStyle(
-                    color: Colors.red.withValues(alpha: 0.8),
+                  'Streaming Real-time'.tr(context),
+                  style: const TextStyle(
+                    color: Colors.greenAccent,
                     fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 if (lastLocationUpdate != null) ...[

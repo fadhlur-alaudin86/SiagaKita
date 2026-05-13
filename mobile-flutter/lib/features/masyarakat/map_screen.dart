@@ -51,9 +51,9 @@ class _MapScreenState extends State<MapScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    LocationController.instance.start();
+    LocationController.instance.setMode(TrackingMode.passive);
     _initLocation();
-    LocationController.instance.position.addListener(_onLocationChanged);
+    LocationController.instance.addListener(_onLocationChanged);
     MapScreen.targetLocation.addListener(_onTargetLocationChanged);
   }
 
@@ -66,7 +66,7 @@ class _MapScreenState extends State<MapScreen>
   }
 
   void _onLocationChanged() {
-    final pos = LocationController.instance.position.value;
+    final pos = LocationController.instance.currentPosition;
     if (pos == null || !mounted) return;
     final newLoc = LatLng(pos.lat, pos.lng);
 
@@ -89,8 +89,9 @@ class _MapScreenState extends State<MapScreen>
 
   @override
   void dispose() {
-    LocationController.instance.position.removeListener(_onLocationChanged);
+    LocationController.instance.removeListener(_onLocationChanged);
     MapScreen.targetLocation.removeListener(_onTargetLocationChanged);
+    LocationController.instance.setMode(TrackingMode.off);
     _pulseController.dispose();
     _pollingTimer?.cancel();
     _mapController.dispose();
