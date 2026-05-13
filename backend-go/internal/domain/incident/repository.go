@@ -34,7 +34,7 @@ func (r *Repository) FindByID(id string) (*Incident, error) {
 
 func (r *Repository) UpdateStatus(id, status string) error {
 	updates := map[string]interface{}{"status": status, "updated_at": time.Now()}
-	if status == "resolved" || status == "handled" || status == "cancel" || status == "false_alarm" {
+	if status == "resolved" || status == "handled" || status == "canceled" || status == "false_alarm" {
 		updates["completed_at"] = time.Now()
 	}
 	return r.db.Model(&Incident{}).Where("id = ?", id).Updates(updates).Error
@@ -54,7 +54,7 @@ func (r *Repository) MarkResolved(id string) (*Incident, error) {
 	return r.FindByID(id)
 }
 
-// MarkCancelled memperbarui status insiden menjadi 'cancel' (dibatalkan user).
+// MarkCancelled memperbarui status insiden menjadi 'canceled' (dibatalkan user).
 // Bisa dilakukan jika status masih 'grace_period', 'broadcasting', atau 'handled'.
 func (r *Repository) MarkCancelled(id string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
@@ -63,8 +63,8 @@ func (r *Repository) MarkCancelled(id string) error {
 		db := tx.Model(&Incident{}).
 			Where("id = ? AND status IN (?, ?, ?)", id, "grace_period", "broadcasting", "handled").
 			Updates(map[string]interface{}{
-				"status":        "cancel",
-				"agency_status": "cancelled", // Supaya instansi tahu ini dibatalkan
+				"status":        "canceled",
+				"agency_status": "canceled", // Supaya instansi tahu ini dibatalkan
 				"completed_at":  now,
 				"updated_at":    now,
 			})
@@ -73,10 +73,10 @@ func (r *Repository) MarkCancelled(id string) error {
 			return db.Error
 		}
 		if db.RowsAffected == 0 {
-			return errors.New("conflict: incident cannot be cancelled at its current status")
+			return errors.New("conflict: incident cannot be canceled at its current status")
 		}
 
-		// 2. Cancel all active incident responses (termasuk on_scene)
+		// 2. canceled all active incident responses (termasuk on_scene)
 		if err := tx.Model(&IncidentResponse{}).
 			Where("incident_id = ? AND status IN (?, ?, ?)", id, "en_route", "waiting_review", "on_scene").
 			Updates(map[string]interface{}{
@@ -114,7 +114,7 @@ func (r *Repository) UpdateLocation(id string, lat, lng float64) error {
 func (r *Repository) FindActiveByReporter(reporterID string) (*Incident, error) {
 	var inc Incident
 	err := r.db.Where(
-		"reporter_id = ? AND status NOT IN ('resolved','false_alarm','cancel')", reporterID,
+		"reporter_id = ? AND status NOT IN ('resolved','false_alarm','canceled')", reporterID,
 	).Order("created_at DESC").First(&inc).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -122,11 +122,11 @@ func (r *Repository) FindActiveByReporter(reporterID string) (*Incident, error) 
 	return &inc, err
 }
 
-// FindHistoryByReporter mengembalikan daftar insiden yang sudah selesai (resolved/false_alarm/cancel) untuk reporter tertentu.
+// FindHistoryByReporter mengembalikan daftar insiden yang sudah selesai (resolved/false_alarm/canceled) untuk reporter tertentu.
 func (r *Repository) FindHistoryByReporter(reporterID string) ([]Incident, error) {
 	var incs []Incident
 	err := r.db.Where(
-		"reporter_id = ? AND status IN ('resolved','false_alarm','cancel')", reporterID,
+		"reporter_id = ? AND status IN ('resolved','false_alarm','canceled')", reporterID,
 	).Order("created_at DESC").Find(&incs).Error
 	return incs, err
 }
@@ -165,13 +165,13 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 		FROM incidents i
 		LEFT JOIN users u ON u.id = i.reporter_id
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
-		WHERE i.status NOT IN ('resolved', 'false_alarm', 'cancel')
+		WHERE i.status NOT IN ('resolved', 'false_alarm', 'canceled')
 		ORDER BY i.created_at DESC
 	`).Scan(&results).Error
 	return results, err
 }
 
-// FindAgencyHistory mengembalikan riwayat SOS dengan status resolved, false_alarm, atau cancel.
+// FindAgencyHistory mengembalikan riwayat SOS dengan status resolved, false_alarm, atau canceled.
 func (r *Repository) FindAgencyHistory() ([]AllActiveIncidentResponse, error) {
 	var results []AllActiveIncidentResponse
 	err := r.db.Raw(`
@@ -205,7 +205,7 @@ func (r *Repository) FindAgencyHistory() ([]AllActiveIncidentResponse, error) {
 		FROM incidents i
 		LEFT JOIN users u ON u.id = i.reporter_id
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
-		WHERE i.status IN ('resolved', 'false_alarm', 'cancel')
+		WHERE i.status IN ('resolved', 'false_alarm', 'canceled')
 		ORDER BY i.updated_at DESC
 	`).Scan(&results).Error
 	return results, err
@@ -414,7 +414,7 @@ func (r *Repository) FindNearby(lat, lng, radiusKm float64, volunteerID string) 
 			photo_paths,
 			audio_path
 		FROM incidents
-		WHERE status NOT IN ('resolved', 'false_alarm', 'cancel')
+		WHERE status NOT IN ('resolved', 'false_alarm', 'canceled')
 		  AND reporter_id != $4
 		  AND (
 			6371 * acos(
@@ -434,7 +434,7 @@ func (r *Repository) AcceptIncident(incidentID, volunteerID string) (*IncidentRe
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		// Cek apakah incident ada dan belum selesai
 		var inc Incident
-		if err := tx.Where("id = ? AND status NOT IN ('resolved','false_alarm','cancel')", incidentID).
+		if err := tx.Where("id = ? AND status NOT IN ('resolved','false_alarm','canceled')", incidentID).
 			First(&inc).Error; err != nil {
 			return errors.New("incident tidak ditemukan atau sudah selesai")
 		}
@@ -474,7 +474,7 @@ func (r *Repository) AcceptIncident(incidentID, volunteerID string) (*IncidentRe
 // ─── Lanjutan Handling & Gamifikasi ──────────────────────────────────────────
 
 func (r *Repository) AgencyHandleSOS(incidentID, agencyID string) error {
-	return r.db.Model(&Incident{}).Where("id = ? AND status NOT IN ('resolved','false_alarm','cancel')", incidentID).
+	return r.db.Model(&Incident{}).Where("id = ? AND status NOT IN ('resolved','false_alarm','canceled')", incidentID).
 		Updates(map[string]interface{}{
 			"status":               "handled",
 			"handled_by_agency_id": agencyID,

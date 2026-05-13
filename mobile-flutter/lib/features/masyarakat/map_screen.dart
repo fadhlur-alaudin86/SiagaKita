@@ -440,6 +440,31 @@ class _MapScreenState extends State<MapScreen>
                           userAgentPackageName: 'com.superbypass.siagakita',
                         ),
                         if (_activeSOS != null &&
+                            (_activeSOS!.status == 'broadcasting' ||
+                                _activeSOS!.status == 'handled'))
+                          AnimatedBuilder(
+                            animation: _pulseAnimation,
+                            builder: (context, child) {
+                              final progress =
+                                  (_pulseAnimation.value - 1.0) * 2; // 0.0 to 1.0
+                              return CircleLayer(
+                                circles: [
+                                  CircleMarker(
+                                    point: LatLng(_activeSOS!.latitude,
+                                        _activeSOS!.longitude),
+                                    color: Colors.red
+                                        .withValues(alpha: 0.2 * (1.0 - progress)),
+                                    borderStrokeWidth: 2,
+                                    borderColor: Colors.red
+                                        .withValues(alpha: 0.5 * (1.0 - progress)),
+                                    useRadiusInMeter: true,
+                                    radius: 5000 * progress, // up to 5km
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        if (_activeSOS != null &&
                             _activeSOS!.volunteerLocations.isNotEmpty)
                           AnimatedBuilder(
                             animation: _pulseAnimation,

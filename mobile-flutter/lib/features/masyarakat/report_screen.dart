@@ -749,15 +749,22 @@ class _ReportScreenState extends State<ReportScreen> {
     return Container(
       height: 120, // slightly taller to accommodate the track padding
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : colors.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.onSurface.withValues(alpha: 0.1)),
       ),
       padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
-      child: Scrollbar(
-        controller: _categoryScrollCtrl,
-        thumbVisibility: true,
-        thickness: 4,
-        radius: const Radius.circular(8),
+      child: ScrollbarTheme(
+        data: ScrollbarThemeData(
+          trackColor: WidgetStateProperty.all(
+            isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+          ),
+        ),
+        child: Scrollbar(
+          controller: _categoryScrollCtrl,
+          thumbVisibility: true,
+          trackVisibility: true,
+          thickness: 6,
+          radius: const Radius.circular(8),
         child: Padding(
           padding: const EdgeInsets.only(bottom: 8), // Padding to avoid overlapping content
           child: ListView.builder(
@@ -814,6 +821,7 @@ class _ReportScreenState extends State<ReportScreen> {
         },
       ),
         ),
+      ),
       ),
     );
   }

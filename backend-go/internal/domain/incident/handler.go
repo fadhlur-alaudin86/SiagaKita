@@ -96,7 +96,7 @@ func (h *Handler) Broadcast(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, fiber.Map{"broadcasting": true, "message": "SOS sedang disiarkan ke relawan dan instansi terdekat."})
 }
 
-// POST /api/v1/incidents/:id/cancel
+// POST /api/v1/incidents/:id/canceled
 func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 	reporterID := c.Locals("userID").(string)
 	incidentID := c.Params("id")
@@ -118,7 +118,7 @@ func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 		},
 	})
 
-	return utils.SuccessResponse(c, fiber.Map{"cancelled": true})
+	return utils.SuccessResponse(c, fiber.Map{"canceled": true})
 }
 
 // POST /api/v1/incidents/:id/evidence
@@ -364,7 +364,7 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 	return utils.CreatedResponse(c, rep)
 }
 
-// POST /api/v1/reports/:id/cancel - membatalkan laporan warga
+// POST /api/v1/reports/:id/canceled - membatalkan laporan warga
 func (h *Handler) CancelReport(c *fiber.Ctx) error {
 	reporterID := c.Locals("userID").(string)
 	reportID := c.Params("id")
@@ -381,7 +381,7 @@ func (h *Handler) CancelReport(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, status, err.Error())
 	}
 
-	return utils.SuccessResponse(c, fiber.Map{"cancelled": true})
+	return utils.SuccessResponse(c, fiber.Map{"canceled": true})
 }
 
 // GET /api/v1/reports/my - riwayat laporan milik user yang sedang login

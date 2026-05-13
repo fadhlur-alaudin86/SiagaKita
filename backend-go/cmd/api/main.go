@@ -166,7 +166,7 @@ func main() {
 	incidents.Post("/trigger", middleware.BanCheck(db), incidentHandler.TriggerSOS)
 	incidents.Patch("/:id/type", incidentHandler.UpdateType)
 	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)
-	incidents.Post("/:id/cancel", incidentHandler.CancelSOS)
+	incidents.Post("/:id/canceled", incidentHandler.CancelSOS)
 	incidents.Post("/:id/evidence", incidentHandler.UploadEvidence)
 	incidents.Put("/:id/location", incidentHandler.UpdateLocation)
 	incidents.Post("/:id/accept", middleware.VolunteerOnly(), incidentHandler.AcceptSOS)
@@ -184,7 +184,7 @@ func main() {
 	reports.Post("", middleware.BanCheck(db), incidentHandler.CreateReport)
 	reports.Get("/my", incidentHandler.GetMyReports)
 	reports.Get("", middleware.ConsoleOnly(), incidentHandler.GetReports)
-	reports.Post("/:id/cancel", incidentHandler.CancelReport)
+	reports.Post("/:id/canceled", incidentHandler.CancelReport)
 	reports.Patch("/:id/status", middleware.ConsoleOnly(), incidentHandler.UpdateReportStatus)
 
 	// ── Telemetry ─────────────────────────────────────────────────────────────

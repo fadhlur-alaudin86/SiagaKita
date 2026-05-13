@@ -121,7 +121,7 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
               .where((inc) => inc.status == 'false_alarm')
               .toList();
         } else if (_filterStatus == 'Dibatalkan') {
-          filtered = filtered.where((inc) => inc.status == 'cancel').toList();
+          filtered = filtered.where((inc) => inc.status == 'canceled').toList();
         }
       }
 
@@ -731,7 +731,7 @@ class _StatusBadge extends StatelessWidget {
         color = Colors.orange;
         text = 'FALSE ALARM';
         break;
-      case 'cancel':
+      case 'cancelled':
       case 'canceled':
         color = Colors.red;
         text = 'DIBATALKAN';

@@ -7,7 +7,7 @@ import (
 )
 
 // Nilai-nilai valid untuk incident_status:
-// 'grace_period' | 'broadcasting' | 'handled' | 'resolved' | 'false_alarm' | 'cancel'
+// 'grace_period' | 'broadcasting' | 'handled' | 'resolved' | 'false_alarm' | 'canceled'
 
 // ─── DB Models ────────────────────────────────────────────────────────────────
 

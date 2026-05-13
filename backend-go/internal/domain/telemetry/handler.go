@@ -41,8 +41,8 @@ func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+	ctx, canceled := context.WithTimeout(context.Background(), 3*time.Second)
+	defer canceled()
 
 	if err := h.rdb.GeoAdd(ctx, relawanGeoKey, &redis.GeoLocation{
 		Name:      userID,
@@ -94,8 +94,8 @@ func (h *Handler) GetOnlineStatus(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+	ctx, canceled := context.WithTimeout(context.Background(), 3*time.Second)
+	defer canceled()
 
 	statusMap := make(map[string]bool)
 	if len(body.UserIDs) == 0 {
@@ -159,8 +159,8 @@ func (h *Handler) SMSFallback(c *fiber.Ctx) error {
 // broadcastEmergency finds nearby volunteers via Redis GEORADIUS and sends
 // INCOMING_EMERGENCY to all online volunteers within 5 km.
 func broadcastEmergency(rdb *redis.Client, h *hub.Hub, incidentID interface{}, reporterID string, lat, lng float64) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	ctx, canceled := context.WithTimeout(context.Background(), 5*time.Second)
+	defer canceled()
 
 	// Find volunteers within 5 km
 	locations, err := rdb.GeoRadius(ctx, relawanGeoKey, lng, lat, &redis.GeoRadiusQuery{ //nolint:staticcheck

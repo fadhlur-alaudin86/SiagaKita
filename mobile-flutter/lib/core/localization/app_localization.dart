@@ -313,7 +313,7 @@ class AppLocalization {
         'Are you sure the situation is safe and you want to cancel this SOS report?',
     'TIDAK': 'NO',
     'YA, BATALKAN': 'YES, CANCEL',
-    'SOS berhasil dibatalkan.': 'SOS successfully cancelled.',
+    'SOS berhasil dibatalkan.': 'SOS successfully canceled.',
     'Gagal membatalkan SOS:': 'Failed to cancel SOS:',
     'SOS sudah diselesaikan oleh instansi.':
         'SOS has been resolved by the agency.',

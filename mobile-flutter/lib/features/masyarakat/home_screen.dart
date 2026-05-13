@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _tapResetTimer;
 
   // ─── SOS Phase State Machine ────────────────────────────────────────────────
-  // idle → gracePeriod → broadcasting → (cancelled)
+  // idle → gracePeriod → broadcasting → (canceled)
   String _sosPhase = 'idle'; // 'idle' | 'gracePeriod' | 'broadcasting'
   bool _isTriggeringSOS = false;
   // Status upload SOS ke server
@@ -81,7 +81,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ─── Lokasi Relawan (Poin 4) ─────────────────────────────────────────────────
   // Posisi terkini relawan yang sedang menangani SOS ini (dari WS)
-  ({double lat, double lng, String? address, String? updatedAt})? _volunteerPosition;
+  ({double lat, double lng, String? address, String? updatedAt})?
+  _volunteerPosition;
 
   // ─── Heartbeat Ping ──────────────────────────────────────────────────────────
   Timer? _pingTimer;
@@ -149,7 +150,9 @@ class _HomeScreenState extends State<HomeScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('SOS Anda telah diselesaikan. Terima kasih!'.tr(context)),
+              content: Text(
+                'SOS Anda telah diselesaikan. Terima kasih!'.tr(context),
+              ),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 5),
             ),
@@ -188,7 +191,9 @@ class _HomeScreenState extends State<HomeScreen>
   /// Polling status penangan dari server (dipanggil setelah event WS).
   Future<void> _checkHandlerStatus() async {
     try {
-      final active = await IncidentService.getActive(accessToken: widget.accessToken);
+      final active = await IncidentService.getActive(
+        accessToken: widget.accessToken,
+      );
       if (!mounted) return;
       if (active == null) {
         _stopVibration();
@@ -289,7 +294,9 @@ class _HomeScreenState extends State<HomeScreen>
     _sosTransmitting = true;
     _startCountdownTimer();
 
-    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 10), (
+      _,
+    ) async {
       if (_activeIncident == null || !mounted) return;
 
       setState(() {
@@ -309,7 +316,9 @@ class _HomeScreenState extends State<HomeScreen>
           setState(() => _activeIncident = null);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Status SOS telah diselesaikan oleh instansi.'.tr(context)),
+              content: Text(
+                'Status SOS telah diselesaikan oleh instansi.'.tr(context),
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -886,9 +895,13 @@ class _HomeScreenState extends State<HomeScreen>
       if (_activeIncident!.isHandledByVolunteer) {
         if (handlerDesc.isNotEmpty) handlerDesc.write(' dan ');
         if (_activeIncident!.volunteerNames.isNotEmpty) {
-           handlerDesc.write(_activeIncident!.volunteerNames.map((n) => '$n (relawan)').join(', '));
+          handlerDesc.write(
+            _activeIncident!.volunteerNames
+                .map((n) => '$n (relawan)')
+                .join(', '),
+          );
         } else {
-           handlerDesc.write('Relawan');
+          handlerDesc.write('Relawan');
         }
       }
 
@@ -896,14 +909,18 @@ class _HomeScreenState extends State<HomeScreen>
         context: context,
         builder: (_) => AlertDialog(
           backgroundColor: Colors.red.shade900,
-          title: Row(children: [
-            const Icon(Icons.warning_rounded, color: Colors.yellow),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text('SOS Sedang Ditangani!'.tr(context),
-                  style: const TextStyle(color: Colors.white)),
-            ),
-          ]),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_rounded, color: Colors.yellow),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'SOS Sedang Ditangani!'.tr(context),
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
           content: Text(
             '$handlerDesc sedang merespons dan menuju lokasi Anda. '
             'Membatalkan SOS sekarang dapat membingungkan tim penyelamat dan '
@@ -914,8 +931,13 @@ class _HomeScreenState extends State<HomeScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('TIDAK, JAGA SOS'.tr(context),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: Text(
+                'TIDAK, JAGA SOS'.tr(context),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             OutlinedButton(
               onPressed: () {
@@ -925,8 +947,10 @@ class _HomeScreenState extends State<HomeScreen>
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.white54),
               ),
-              child: Text('BATALKAN TETAP'.tr(context),
-                  style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              child: Text(
+                'BATALKAN TETAP'.tr(context),
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
           ],
         ),
@@ -944,8 +968,10 @@ class _HomeScreenState extends State<HomeScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('TIDAK'.tr(context),
-                  style: const TextStyle(color: Colors.grey)),
+              child: Text(
+                'TIDAK'.tr(context),
+                style: const TextStyle(color: Colors.grey),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -1288,7 +1314,11 @@ class _HomeScreenState extends State<HomeScreen>
                           // Baris 3: Handler Status (NEW)
                           if (_activeIncident!.isBeingHandled) ...[
                             const SizedBox(height: 10),
-                            const Divider(color: Colors.red, thickness: 0.5, height: 1),
+                            const Divider(
+                              color: Colors.red,
+                              thickness: 0.5,
+                              height: 1,
+                            ),
                             const SizedBox(height: 10),
                             Text(
                               'BANTUAN SEDANG MENUJU LOKASI'.tr(context),
@@ -1744,7 +1774,7 @@ class _HomeScreenState extends State<HomeScreen>
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white54, fontSize: 11),
               ),
-              
+
               // Safe Zone (Middle)
               Expanded(
                 child: Center(
@@ -1771,7 +1801,9 @@ class _HomeScreenState extends State<HomeScreen>
                           value: _graceCountdown / 10,
                           minHeight: 8,
                           backgroundColor: Colors.white24,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -1783,26 +1815,50 @@ class _HomeScreenState extends State<HomeScreen>
               // Row 1: Medis, Kriminal
               Row(
                 children: [
-                  Expanded(child: _buildThumbButton('MEDIS', Icons.medical_services, 'medical')),
+                  Expanded(
+                    child: _buildThumbButton(
+                      'MEDIS',
+                      Icons.medical_services,
+                      'medical',
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildThumbButton('KRIMINAL', Icons.warning_rounded, 'crime')),
+                  Expanded(
+                    child: _buildThumbButton(
+                      'KRIMINAL',
+                      Icons.warning_rounded,
+                      'crime',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
               // Row 2: Kebakaran, Kecelakaan
               Row(
                 children: [
-                  Expanded(child: _buildThumbButton('KEBAKARAN', Icons.local_fire_department, 'fire')),
+                  Expanded(
+                    child: _buildThumbButton(
+                      'KEBAKARAN',
+                      Icons.local_fire_department,
+                      'fire',
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildThumbButton('KECELAKAAN', Icons.car_crash, 'accident')),
+                  Expanded(
+                    child: _buildThumbButton(
+                      'KECELAKAAN',
+                      Icons.car_crash,
+                      'accident',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
               // Row 3: Bencana Alam (Full Width)
               _buildThumbButton('BENCANA ALAM', Icons.water_damage, 'disaster'),
-              
+
               const SizedBox(height: 32),
-              
+
               // Cancel Button
               SizedBox(
                 width: double.infinity,

@@ -1,7 +1,7 @@
 -- ============================================================
 -- SIAGAKITA — Migration 008: Incident Enhancements
 -- Perubahan:
---   1. Tambah nilai 'cancel' ke enum incident_status
+--   1. Tambah nilai 'canceled' ke enum incident_status
 --   2. Hapus kolom trigger_method dari tabel incidents (tidak diperlukan)
 --   3. Tambah kolom photo_paths dan audio_path ke tabel incidents
 --      (untuk menyimpan bukti situasi yang diambil otomatis pasca broadcasting)
@@ -10,16 +10,16 @@
 --   sudo docker exec -i siagakita_postgres psql -U siagakita_admin -d siagakita < backend-go/migrations/008_incident_enhancements.sql
 -- ============================================================
 
--- 1. Tambah nilai 'cancel' ke enum incident_status
---    'cancel' = pembatalan OLEH USER (berbeda dari 'false_alarm' = ditandai oleh agency/admin)
+-- 1. Tambah nilai 'canceled' ke enum incident_status
+--    'canceled' = pembatalan OLEH USER (berbeda dari 'false_alarm' = ditandai oleh agency/admin)
 DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_enum
-        WHERE enumlabel = 'cancel'
+        WHERE enumlabel = 'canceled'
           AND enumtypid = 'public.incident_status'::regtype
     ) THEN
-        ALTER TYPE public.incident_status ADD VALUE 'cancel';
+        ALTER TYPE public.incident_status ADD VALUE 'canceled';
     END IF;
 END;
 $$;

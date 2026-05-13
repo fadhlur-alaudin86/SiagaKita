@@ -78,7 +78,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
               _incidents[idx] = _incidents[idx].copyWith(
                 latitude: lat,
                 longitude: lng,
-                updatedAt: updatedStr != null ? DateTime.tryParse(updatedStr) : null,
+                updatedAt: updatedStr != null
+                    ? DateTime.tryParse(updatedStr)
+                    : null,
               );
               if (_selected?.id == incId) {
                 _selected = _incidents[idx];
@@ -104,13 +106,17 @@ class _SosAktifPageState extends State<SosAktifPage> {
         if (_selected != null) {
           final updated = data.where((i) => i.id == _selected!.id).firstOrNull;
           if (updated != null) {
-             if (updated.audioPath != null && _selected!.audioPath != updated.audioPath) {
-                 final url = updated.audioPath!.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + updated.audioPath! : updated.audioPath!;
-                 _audioPlayer.setSourceUrl(url);
-             }
-             _selected = updated;
+            if (updated.audioPath != null &&
+                _selected!.audioPath != updated.audioPath) {
+              final url = updated.audioPath!.startsWith('/uploads')
+                  ? ApiConstants.baseUrl.replaceAll('/api/v1', '') +
+                        updated.audioPath!
+                  : updated.audioPath!;
+              _audioPlayer.setSourceUrl(url);
+            }
+            _selected = updated;
           } else {
-             _selected = null;
+            _selected = null;
           }
         }
         _loading = false;
@@ -296,7 +302,14 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                 onTap: () {
                                   setState(() => _selected = inc);
                                   if (inc.audioPath != null) {
-                                    final url = inc.audioPath!.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + inc.audioPath! : inc.audioPath!;
+                                    final url =
+                                        inc.audioPath!.startsWith('/uploads')
+                                        ? ApiConstants.baseUrl.replaceAll(
+                                                '/api/v1',
+                                                '',
+                                              ) +
+                                              inc.audioPath!
+                                        : inc.audioPath!;
                                     _audioPlayer.setSourceUrl(url);
                                   } else {
                                     _audioPlayer.stop();
@@ -658,7 +671,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
               Wrap(
                 spacing: 8,
                 children: inc.photoPaths.map((url) {
-                  final fullUrl = url.startsWith('/uploads') ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + url : url;
+                  final fullUrl = url.startsWith('/uploads')
+                      ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + url
+                      : url;
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
@@ -716,20 +731,30 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     ),
                     Expanded(
                       child: Slider(
-                        value: _position.inMilliseconds.toDouble().clamp(0.0, _duration.inMilliseconds > 0 ? _duration.inMilliseconds.toDouble() : 1.0),
+                        value: _position.inMilliseconds.toDouble().clamp(
+                          0.0,
+                          _duration.inMilliseconds > 0
+                              ? _duration.inMilliseconds.toDouble()
+                              : 1.0,
+                        ),
                         max: _duration.inMilliseconds > 0
                             ? _duration.inMilliseconds.toDouble()
                             : 1.0,
-                        onChanged: _duration.inMilliseconds > 0 
+                        onChanged: _duration.inMilliseconds > 0
                             ? (v) {
-                                _audioPlayer.seek(Duration(milliseconds: v.toInt()));
+                                _audioPlayer.seek(
+                                  Duration(milliseconds: v.toInt()),
+                                );
                               }
                             : null,
                       ),
                     ),
                     Text(
                       '${_position.inMinutes.toString().padLeft(2, '0')}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / ${_duration.inMinutes.toString().padLeft(2, '0')}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -749,7 +774,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
             ),
             const SizedBox(height: 12),
 
-            if (inc.agencyStatus == 'pending' && inc.status != 'resolved' && inc.status != 'false_alarm' && inc.status != 'cancel')
+            if (inc.agencyStatus == 'pending' &&
+                inc.status != 'resolved' &&
+                inc.status != 'false_alarm' &&
+                inc.status != 'canceled')
               Row(
                 children: [
                   Expanded(
@@ -791,7 +819,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         ),
                       ),
                       onPressed: () async {
-                        final ok = await IncidentApiService.agencyHandle(widget.token, inc.id);
+                        final ok = await IncidentApiService.agencyHandle(
+                          widget.token,
+                          inc.id,
+                        );
                         if (ok && mounted) {
                           _showSnack('Status ditangani', Colors.blue);
                           _load();
@@ -822,15 +853,19 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     ),
                   ),
                   onPressed: () async {
-                     final ok = await IncidentApiService.resolve(widget.token, inc.id);
-                     if (ok && mounted) {
-                         _showSnack('Insiden diselesaikan', Colors.green);
-                         _load();
-                     }
+                    final ok = await IncidentApiService.resolve(
+                      widget.token,
+                      inc.id,
+                    );
+                    if (ok && mounted) {
+                      _showSnack('Insiden diselesaikan', Colors.green);
+                      _load();
+                    }
                   },
                 ),
               )
-            else if (inc.handledByAgencyId != null && inc.handledByAgencyId!.isNotEmpty)
+            else if (inc.handledByAgencyId != null &&
+                inc.handledByAgencyId!.isNotEmpty)
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -848,8 +883,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
                   ],
                 ),
               ),
-            
-            if (inc.volunteerResponseStatus == 'on_scene' || inc.volunteerResponseStatus == 'waiting_review') ...[
+
+            if (inc.volunteerResponseStatus == 'on_scene' ||
+                inc.volunteerResponseStatus == 'waiting_review') ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),

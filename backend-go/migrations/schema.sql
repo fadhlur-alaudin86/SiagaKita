@@ -124,7 +124,7 @@ CREATE TYPE public.incident_status AS ENUM (
     'handled',
     'resolved',
     'false_alarm',
-    'cancel'
+    'canceled'
 );
 
 
