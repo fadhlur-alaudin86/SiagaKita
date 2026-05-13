@@ -746,15 +746,20 @@ class _ReportScreenState extends State<ReportScreen> {
     Color primaryColor,
     bool isDark,
   ) {
-    return SizedBox(
-      height: 110, // Increased height slightly to accommodate the scrollbar
+    return Container(
+      height: 120, // slightly taller to accommodate the track padding
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : colors.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
       child: Scrollbar(
         controller: _categoryScrollCtrl,
         thumbVisibility: true,
         thickness: 4,
         radius: const Radius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 10), // Padding to avoid overlapping content
+          padding: const EdgeInsets.only(bottom: 8), // Padding to avoid overlapping content
           child: ListView.builder(
             controller: _categoryScrollCtrl,
             scrollDirection: Axis.horizontal,
