@@ -8,6 +8,7 @@ import '../../core/localization/app_localization.dart';
 import '../../core/services/kyc_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/widgets/custom_camera_view.dart';
+import '../../core/utils/responsive.dart';
 
 /// KycScreen memungkinkan warga mengajukan verifikasi identitas NIK.
 /// Pengguna perlu mengisi NIK 16 digit, nama lengkap, foto KTP, dan foto wajah (selfie).
@@ -139,9 +140,7 @@ class _KycScreenState extends State<KycScreen> {
         final msg = e.toString().replaceFirst('Exception: ', '');
         final isNikDuplicate = msg.contains('sudah terdaftar');
         _showSnack(
-          isNikDuplicate
-              ? msg
-              : msg,
+          isNikDuplicate ? msg : msg,
           isNikDuplicate ? Colors.red.shade700 : Colors.red,
         );
         // Jika NIK sudah digunakan, fokuskan kembali ke field NIK
@@ -183,25 +182,25 @@ class _KycScreenState extends State<KycScreen> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: textColor,
-            fontSize: 16,
+            fontSize: 16.sp(context),
           ),
         ),
       ),
       body: _loadingStatus
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20.w(context)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Status Banner
                   _buildStatusBanner(isDark),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20.h(context)),
 
                   // Hanya tampilkan form jika status none atau rejected
                   if (_kycStatus == 'none' || _kycStatus == 'rejected') ...[
                     _buildInfoCard(cardColor, textColor, primary),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h(context)),
                     _buildForm(cardColor, textColor, primary, isDark),
                   ],
                 ],
@@ -236,23 +235,23 @@ class _KycScreenState extends State<KycScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w(context)),
       decoration: BoxDecoration(
         color: config.color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.w(context)),
         border: Border.all(color: config.color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10.w(context)),
             decoration: BoxDecoration(
               color: config.color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(config.icon, color: config.color, size: 28),
+            child: Icon(config.icon, color: config.color, size: 28.w(context)),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16.w(context)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +261,7 @@ class _KycScreenState extends State<KycScreen> {
                   style: TextStyle(
                     color: config.color,
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontSize: 15.sp(context),
                   ),
                 ),
                 if (_kycMessage.isNotEmpty) ...[
@@ -271,7 +270,7 @@ class _KycScreenState extends State<KycScreen> {
                     _kycMessage,
                     style: TextStyle(
                       color: config.color.withValues(alpha: 0.8),
-                      fontSize: 13,
+                      fontSize: 13.sp(context),
                     ),
                   ),
                 ],
@@ -285,10 +284,10 @@ class _KycScreenState extends State<KycScreen> {
 
   Widget _buildInfoCard(Color cardColor, Color textColor, Color primary) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.w(context)),
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.w(context)),
         border: Border.all(color: primary.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -296,31 +295,35 @@ class _KycScreenState extends State<KycScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.info_outline, color: primary, size: 18),
-              const SizedBox(width: 8),
+              Icon(Icons.info_outline, color: primary, size: 18.w(context)),
+              SizedBox(width: 8.w(context)),
               Text(
                 'Mengapa perlu verifikasi?'.tr(context),
-                style: TextStyle(color: primary, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13.sp(context),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h(context)),
           Text(
             'Verifikasi NIK dan wajah meningkatkan kepercayaan responden terhadap laporan darurat Anda '
             'dan akan digunakan sebagai foto profil resmi Anda di aplikasi.',
             style: TextStyle(
               color: textColor.withValues(alpha: 0.7),
-              fontSize: 13,
+              fontSize: 13.sp(context),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h(context)),
           Text(
             '• Data diproses dalam 1-3 hari kerja\n'
             '• Wajah harus terlihat jelas tanpa aksesoris penutup\n'
             '• NIK terenkripsi dan aman',
             style: TextStyle(
               color: textColor.withValues(alpha: 0.6),
-              fontSize: 12,
+              fontSize: 12.sp(context),
             ),
           ),
         ],
@@ -345,10 +348,10 @@ class _KycScreenState extends State<KycScreen> {
             style: TextStyle(
               color: textColor,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 14.sp(context),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h(context)),
           TextFormField(
             controller: _nikCtrl,
             keyboardType: TextInputType.number,
@@ -357,14 +360,18 @@ class _KycScreenState extends State<KycScreen> {
               LengthLimitingTextInputFormatter(16),
             ],
             style: TextStyle(color: textColor),
-            decoration: _inputDecoration('Masukkan 16 digit NIK KTP', isDark),
+            decoration: _inputDecoration(
+              'Masukkan 16 digit NIK KTP',
+              isDark,
+              context,
+            ),
             validator: (v) {
               if (v == null || v.isEmpty) return 'NIK wajib diisi';
               if (v.length != 16) return 'NIK harus tepat 16 digit';
               return null;
             },
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h(context)),
 
           // Nama Lengkap Field
           Text(
@@ -372,22 +379,26 @@ class _KycScreenState extends State<KycScreen> {
             style: TextStyle(
               color: textColor,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 14.sp(context),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h(context)),
           TextFormField(
             controller: _nameCtrl,
             textCapitalization: TextCapitalization.words,
-            style: TextStyle(color: textColor),
-            decoration: _inputDecoration('Masukkan nama sesuai KTP', isDark),
+            style: TextStyle(color: textColor, fontSize: 14.sp(context)),
+            decoration: _inputDecoration(
+              'Masukkan nama sesuai KTP',
+              isDark,
+              context,
+            ),
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Nama wajib diisi';
               if (v.trim().length < 3) return 'Nama terlalu pendek';
               return null;
             },
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24.h(context)),
 
           // Foto KTP
           Text(
@@ -395,10 +406,10 @@ class _KycScreenState extends State<KycScreen> {
             style: TextStyle(
               color: textColor,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 14.sp(context),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h(context)),
           _buildPhotoSelector(
             label: _ktpPhoto == null
                 ? 'Ambil / Pilih Foto KTP'.tr(context)
@@ -411,7 +422,7 @@ class _KycScreenState extends State<KycScreen> {
             cardColor: cardColor,
             isDark: isDark,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h(context)),
 
           // Selfie (wajib dan ganti foto profil)
           Text(
@@ -419,10 +430,10 @@ class _KycScreenState extends State<KycScreen> {
             style: TextStyle(
               color: textColor,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 14.sp(context),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h(context)),
           _buildPhotoSelector(
             label: _selfiePhoto == null
                 ? 'Ambil Selfie Wajah'.tr(context)
@@ -435,7 +446,7 @@ class _KycScreenState extends State<KycScreen> {
             cardColor: cardColor,
             isDark: isDark,
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32.h(context)),
 
           // Submit Button
           SizedBox(
@@ -445,9 +456,9 @@ class _KycScreenState extends State<KycScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 16.h(context)),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(14.w(context)),
                 ),
                 disabledBackgroundColor: primary.withValues(alpha: 0.4),
               ),
@@ -460,19 +471,19 @@ class _KycScreenState extends State<KycScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.send_outlined),
+                  : Icon(Icons.send_outlined, size: 20.w(context)),
               label: Text(
                 _isLoading
                     ? 'Mengirim...'.tr(context)
                     : 'Ajukan Verifikasi NIK'.tr(context),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                  fontSize: 15.sp(context),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: 40.h(context)),
         ],
       ),
     );
@@ -491,7 +502,7 @@ class _KycScreenState extends State<KycScreen> {
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.w(context)),
         border: Border.all(
           color: photo != null
               ? Colors.green.withValues(alpha: 0.4)
@@ -502,47 +513,54 @@ class _KycScreenState extends State<KycScreen> {
         children: [
           if (photo != null) ...[
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(11),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(11.w(context)),
               ),
               child: Image.file(
                 photo,
-                height: 160,
+                height: 160.h(context),
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
             ),
           ],
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16.w(context),
+              vertical: 12.h(context),
+            ),
             child: Row(
               children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(width: 10),
+                Icon(icon, color: color, size: 20.w(context)),
+                SizedBox(width: 10.w(context)),
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(color: color, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13.sp(context),
+                    ),
                   ),
                 ),
 
                 const SizedBox(width: 4),
                 ElevatedButton.icon(
                   onPressed: onCamera,
-                  icon: const Icon(Icons.camera_alt_outlined, size: 16),
+                  icon: Icon(Icons.camera_alt_outlined, size: 16.w(context)),
                   label: Text(
                     photo == null ? 'Kamera' : 'Ulang',
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 12.sp(context)),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: color,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w(context),
+                      vertical: 6.h(context),
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.w(context)),
                     ),
                   ),
                 ),
@@ -554,12 +572,16 @@ class _KycScreenState extends State<KycScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String hint, bool isDark) {
+  InputDecoration _inputDecoration(
+    String hint,
+    bool isDark,
+    BuildContext context,
+  ) {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
         color: isDark ? Colors.white38 : Colors.black38,
-        fontSize: 13,
+        fontSize: 13.sp(context),
       ),
       filled: true,
       fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
@@ -570,23 +592,26 @@ class _KycScreenState extends State<KycScreen> {
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.w(context)),
         borderSide: BorderSide(
           color: isDark ? Colors.white24 : Colors.grey.shade300,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.w(context)),
         borderSide: BorderSide(
           color: Theme.of(context).colorScheme.primary,
-          width: 2,
+          width: 2.w(context),
         ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.w(context)),
         borderSide: const BorderSide(color: Colors.red),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16.w(context),
+        vertical: 14.h(context),
+      ),
     );
   }
 }

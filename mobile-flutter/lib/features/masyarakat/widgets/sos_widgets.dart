@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/responsive.dart';
 
 class SOSButton extends StatelessWidget {
   final String phase; // 'idle' | 'gracePeriod' | 'broadcasting'
@@ -38,23 +39,22 @@ class SOSButton extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           // Outer Glow/Pulse
-          if (isBroadcasting)
-            const PulsingRing(color: Color(0xFFEF4444)),
-          
+          if (isBroadcasting) const PulsingRing(color: Color(0xFFEF4444)),
+
           GestureDetector(
             onTap: isBroadcasting ? onCancelTap : onTap,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              width: 200,
-              height: 200,
+              width: 200.w(context),
+              height: 200.w(context),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: baseColor,
                 boxShadow: [
                   BoxShadow(
                     color: baseColor.withValues(alpha: 0.4),
-                    blurRadius: isBroadcasting ? 30 : 20,
-                    spreadRadius: isBroadcasting ? 10 : 5,
+                    blurRadius: isBroadcasting ? 30.w(context) : 20.w(context),
+                    spreadRadius: isBroadcasting ? 10.w(context) : 5.w(context),
                   ),
                 ],
               ),
@@ -62,45 +62,59 @@ class SOSButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (isIdle) ...[
-                    const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 48),
-                    const SizedBox(height: 8),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.white,
+                      size: 48.w(context),
+                    ),
+                    SizedBox(height: 8.h(context)),
                     Text(
                       tapCount > 0 ? '$tapCount / $requiredTaps' : 'TEKAN SOS',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: 18,
+                        fontSize: 18.sp(context),
                       ),
                     ),
                   ],
                   if (isGrace) ...[
                     Text(
                       '$graceCountdown',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: 64,
+                        fontSize: 64.sp(context),
                       ),
                     ),
-                    const Text(
+                    Text(
                       'MEMBATALKAN...',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12.sp(context),
+                      ),
                     ),
                   ],
                   if (isBroadcasting) ...[
-                    const Icon(Icons.sensors, color: Colors.white, size: 48),
-                    const SizedBox(height: 8),
-                    const Text(
+                    Icon(
+                      Icons.sensors,
+                      color: Colors.white,
+                      size: 48.w(context),
+                    ),
+                    SizedBox(height: 8.h(context)),
+                    Text(
                       'SOS AKTIF',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: 18,
+                        fontSize: 18.sp(context),
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Mencari Bantuan...',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12.sp(context),
+                      ),
                     ),
                   ],
                 ],
@@ -129,49 +143,59 @@ class SOSStatusBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     if (uploadStatus == 'idle') return const SizedBox.shrink();
 
-    Color bgColor = isTransmitting ? const Color(0xFF065F46) : const Color(0xFF991B1B);
+    Color bgColor = isTransmitting
+        ? const Color(0xFF065F46)
+        : const Color(0xFF991B1B);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: EdgeInsets.symmetric(
+        vertical: 12.h(context),
+        horizontal: 16.w(context),
+      ),
       color: bgColor,
       child: Row(
         children: [
           Icon(
             isTransmitting ? Icons.wifi_tethering : Icons.wifi_tethering_off,
             color: Colors.white,
-            size: 20,
+            size: 20.w(context),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w(context)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isTransmitting ? 'SINYAL SOS TERPANCAR' : 'GANGGUAN TRANSMISI',
-                  style: const TextStyle(
+                  isTransmitting
+                      ? 'SINYAL SOS TERPANCAR'
+                      : 'GANGGUAN TRANSMISI',
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    fontSize: 13.sp(context),
                   ),
                 ),
                 Text(
                   uploadStatus == 'sending'
                       ? 'Menghubungkan ke server...'
                       : 'Update lokasi dalam $nextUpdateIn dtk',
-                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11.sp(context),
+                  ),
                 ),
               ],
             ),
           ),
           if (!isTransmitting)
-            const Text(
+            Text(
               'RETRYING...',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 10,
+                fontSize: 10.sp(context),
               ),
             ),
         ],
@@ -213,13 +237,13 @@ class _PulsingRingState extends State<PulsingRing>
       animation: _controller,
       builder: (context, child) {
         return Container(
-          width: 200 + (100 * _controller.value),
-          height: 200 + (100 * _controller.value),
+          width: (200.w(context)) + (100.w(context) * _controller.value),
+          height: (200.w(context)) + (100.w(context) * _controller.value),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
               color: widget.color.withValues(alpha: 1 - _controller.value),
-              width: 4,
+              width: 4.w(context),
             ),
           ),
         );

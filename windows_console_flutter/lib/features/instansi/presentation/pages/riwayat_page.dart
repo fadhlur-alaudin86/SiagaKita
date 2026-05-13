@@ -192,7 +192,7 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
   }) {
     final colors = Theme.of(context).colorScheme;
     return Container(
-      width: 200,
+      constraints: const BoxConstraints(minWidth: 150, maxWidth: 220),
       margin: const EdgeInsets.only(right: 16, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -912,7 +912,8 @@ class _ReportHistoryDetailDialogState
       backgroundColor: const Color(0xFF1A2035),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 500,
+        constraints: const BoxConstraints(maxWidth: 600),
+        width: MediaQuery.of(context).size.width * 0.7,
         padding: const EdgeInsets.all(24),
         child: SingleChildScrollView(
           child: Column(

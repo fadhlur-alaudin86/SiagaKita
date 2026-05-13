@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/localization/app_localization.dart';
+import '../../../core/utils/responsive.dart';
 
 class HomeHeader extends StatelessWidget {
   final bool isSOSActive;
@@ -31,7 +32,7 @@ class HomeHeader extends StatelessWidget {
                     user.name,
                     style: TextStyle(
                       color: isSOSActive ? Colors.red : primaryColor,
-                      fontSize: 20,
+                      fontSize: 20.sp(context),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -42,13 +43,13 @@ class HomeHeader extends StatelessWidget {
                       final statusText = isSOSActive
                           ? 'SOS AKTIF'.tr(context)
                           : online
-                              ? 'Online'.tr(context)
-                              : 'Offline'.tr(context);
+                          ? 'Online'.tr(context)
+                          : 'Offline'.tr(context);
                       final statusColor = isSOSActive
                           ? Colors.red
                           : online
-                              ? Colors.green
-                              : Colors.grey;
+                          ? Colors.green
+                          : Colors.grey;
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -65,7 +66,7 @@ class HomeHeader extends StatelessWidget {
                             statusText,
                             style: TextStyle(
                               color: statusColor,
-                              fontSize: 10,
+                              fontSize: 10.sp(context),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -74,7 +75,7 @@ class HomeHeader extends StatelessWidget {
                             '• ${user.roleLabel.tr(context)}',
                             style: TextStyle(
                               color: colors.onSurface.withValues(alpha: 0.6),
-                              fontSize: 10,
+                              fontSize: 10.sp(context),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -91,9 +92,10 @@ class HomeHeader extends StatelessWidget {
                       color: isSOSActive
                           ? Colors.red.withValues(alpha: 0.8)
                           : colors.onSurface.withValues(alpha: 0.6),
-                      fontSize: 11,
-                      fontWeight:
-                          isSOSActive ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 11.sp(context),
+                      fontWeight: isSOSActive
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ],
@@ -131,17 +133,17 @@ class ActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20.w(context)),
         decoration: BoxDecoration(
           color: isDarkMode
               ? colors.surfaceContainerHighest.withValues(alpha: 0.4)
               : Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(24.w(context)),
           boxShadow: [
             BoxShadow(
               color: colors.shadow.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              blurRadius: 10.w(context),
+              offset: Offset(0, 4.w(context)),
             ),
           ],
         ),
@@ -150,30 +152,30 @@ class ActionCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(10.w(context)),
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.w(context)),
               ),
-              child: Icon(icon, color: iconColor, size: 24),
+              child: Icon(icon, color: iconColor, size: 24.w(context)),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h(context)),
             Text(
               title,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.onSurface,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 16.sp(context),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h(context)),
             Text(
               subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.6),
-                fontSize: 12,
+                fontSize: 12.sp(context),
               ),
             ),
           ],

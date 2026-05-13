@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/services/incident_service.dart';
+import '../../../core/utils/responsive.dart';
 
 class SOSActionButton extends StatelessWidget {
   final bool isSOSActive;
@@ -31,8 +32,8 @@ class SOSActionButton extends StatelessWidget {
         GestureDetector(
           onTap: isDisabled ? null : onTap,
           child: SizedBox(
-            width: 250,
-            height: 250,
+            width: 250.w(context),
+            height: 250.w(context),
             child: RepaintBoundary(
               child: Stack(
                 alignment: Alignment.center,
@@ -40,15 +41,16 @@ class SOSActionButton extends StatelessWidget {
                   // Outer progress ring (tap count)
                   if (tapCount > 0 && !isDisabled)
                     SizedBox(
-                      width: 240,
-                      height: 240,
+                      width: 240.w(context),
+                      height: 240.w(context),
                       child: CircularProgressIndicator(
                         value: tapCount / requiredTaps,
-                        strokeWidth: 8,
-                        backgroundColor: (isSOSActive ? Colors.red : primaryColor)
-                            .withValues(alpha: 0.15),
+                        strokeWidth: 8.w(context),
+                        backgroundColor:
+                            (isSOSActive ? Colors.red : primaryColor)
+                                .withValues(alpha: 0.15),
                         valueColor: AlwaysStoppedAnimation<Color>(
-                           isSOSActive ? Colors.red : primaryColor,
+                          isSOSActive ? Colors.red : primaryColor,
                         ),
                       ),
                     ),
@@ -57,13 +59,16 @@ class SOSActionButton extends StatelessWidget {
                     scale: (tapCount > 0 && !isDisabled) ? 0.96 : 1.0,
                     duration: const Duration(milliseconds: 80),
                     child: Container(
-                      width: 220,
-                      height: 220,
+                      width: 220.w(context),
+                      height: 220.w(context),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: isDisabled
                             ? LinearGradient(
-                                colors: [Colors.grey.shade600, Colors.grey.shade800],
+                                colors: [
+                                  Colors.grey.shade600,
+                                  Colors.grey.shade800,
+                                ],
                               )
                             : RadialGradient(
                                 colors: isSOSActive
@@ -74,23 +79,36 @@ class SOSActionButton extends StatelessWidget {
                           color: isDisabled
                               ? Colors.white24
                               : (tapCount > 0
-                                  ? (isSOSActive ? Colors.red : const Color(0xFFCB5100))
-                                  : (isDarkMode
-                                      ? Colors.white.withValues(alpha: 0.2)
-                                      : (isSOSActive ? Colors.red : primaryColor)
-                                          .withValues(alpha: 0.3))),
-                          width: 8,
+                                    ? (isSOSActive
+                                          ? Colors.red
+                                          : const Color(0xFFCB5100))
+                                    : (isDarkMode
+                                          ? Colors.white.withValues(alpha: 0.2)
+                                          : (isSOSActive
+                                                    ? Colors.red
+                                                    : primaryColor)
+                                                .withValues(alpha: 0.3))),
+                          width: 8.w(context),
                         ),
                         boxShadow: isDisabled
                             ? []
                             : [
                                 BoxShadow(
-                                  color: (isSOSActive ? Colors.red : primaryColor)
-                                      .withValues(
-                                    alpha: tapCount > 0 ? 0.8 : (isDarkMode ? 0.3 : 0.6),
-                                  ),
-                                  blurRadius: tapCount > 0 ? 50 : 30,
-                                  spreadRadius: tapCount > 0 ? 10 : (isDarkMode ? 5 : 10),
+                                  color:
+                                      (isSOSActive ? Colors.red : primaryColor)
+                                          .withValues(
+                                            alpha: tapCount > 0
+                                                ? 0.8
+                                                : (isDarkMode ? 0.3 : 0.6),
+                                          ),
+                                  blurRadius: tapCount > 0
+                                      ? 50.w(context)
+                                      : 30.w(context),
+                                  spreadRadius: tapCount > 0
+                                      ? 10.w(context)
+                                      : (isDarkMode
+                                            ? 5.w(context)
+                                            : 10.w(context)),
                                 ),
                               ],
                       ),
@@ -100,11 +118,13 @@ class SOSActionButton extends StatelessWidget {
                           Icon(
                             isDisabled
                                 ? Icons.lock_person_outlined
-                                : (isSOSActive ? Icons.cancel_outlined : Icons.error_outline),
+                                : (isSOSActive
+                                      ? Icons.cancel_outlined
+                                      : Icons.error_outline),
                             color: Colors.white,
-                            size: 60,
+                            size: 60.w(context),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8.h(context)),
                           Text(
                             isDisabled
                                 ? 'SOS Terkunci'.tr(context)
@@ -112,19 +132,24 @@ class SOSActionButton extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: isDisabled ? 24 : 40,
+                              fontSize: isDisabled
+                                  ? 24.sp(context)
+                                  : 40.sp(context),
                               fontWeight: FontWeight.w900,
                             ),
                           ),
                           if (isDisabled && disabledReason != null)
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 4,
+                              ),
                               child: Text(
                                 disabledReason!.tr(context),
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.white70,
-                                  fontSize: 10,
+                                  fontSize: 10.sp(context),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -136,9 +161,9 @@ class SOSActionButton extends StatelessWidget {
                                   : 'KETUK 3×'.tr(context),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 9,
+                                fontSize: 9.sp(context),
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
+                                letterSpacing: 1.5.w(context),
                               ),
                             ),
                         ],
@@ -151,7 +176,7 @@ class SOSActionButton extends StatelessWidget {
           ),
         ),
         // Tap count indicator dots
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h(context)),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(requiredTaps, (i) {
@@ -159,9 +184,9 @@ class SOSActionButton extends StatelessWidget {
             final dotColor = isSOSActive ? Colors.red : primaryColor;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 5),
-              width: filled ? 14 : 10,
-              height: filled ? 14 : 10,
+              margin: EdgeInsets.symmetric(horizontal: 5.w(context)),
+              width: filled ? 14.w(context) : 10.w(context),
+              height: filled ? 14.w(context) : 10.w(context),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: filled ? dotColor : Colors.grey.withValues(alpha: 0.2),
@@ -169,7 +194,7 @@ class SOSActionButton extends StatelessWidget {
                     ? [
                         BoxShadow(
                           color: dotColor.withValues(alpha: 0.5),
-                          blurRadius: 6,
+                          blurRadius: 6.w(context),
                         ),
                       ]
                     : [],
@@ -188,7 +213,7 @@ class ActiveSOSBanner extends StatelessWidget {
   final int nextUpdateCountdown;
   final DateTime? lastLocationUpdate;
   final ({double lat, double lng, String? address, String? updatedAt})?
-      volunteerPosition;
+  volunteerPosition;
   final Widget Function() uploadStatusBadgeBuilder;
 
   const ActiveSOSBanner({
@@ -204,10 +229,13 @@ class ActiveSOSBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.w(context),
+        vertical: 10.h(context),
+      ),
       decoration: BoxDecoration(
         color: Colors.red.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.w(context)),
         border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
       ),
       child: Column(
@@ -215,14 +243,18 @@ class ActiveSOSBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.emergency_share, color: Colors.red, size: 18),
-              const SizedBox(width: 8),
+              Icon(
+                Icons.emergency_share,
+                color: Colors.red,
+                size: 18.w(context),
+              ),
+              SizedBox(width: 8.w(context)),
               Expanded(
                 child: Text(
                   'SOS AKTIF'.tr(context),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.red,
-                    fontSize: 12,
+                    fontSize: 12.sp(context),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -231,51 +263,61 @@ class ActiveSOSBanner extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 8.w(context),
+                    height: 8.w(context),
                     decoration: BoxDecoration(
                       color: sosTransmitting ? Colors.greenAccent : Colors.grey,
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4.w(context)),
                   Text(
-                    sosTransmitting ? 'Transmitting'.tr(context) : 'Signal Lost'.tr(context),
+                    sosTransmitting
+                        ? 'Transmitting'.tr(context)
+                        : 'Signal Lost'.tr(context),
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 10.sp(context),
                       fontWeight: FontWeight.bold,
                       color: sosTransmitting ? Colors.greenAccent : Colors.grey,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w(context)),
               uploadStatusBadgeBuilder(),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6.h(context)),
           RepaintBoundary(
             child: Row(
               children: [
-                const Icon(Icons.stream, size: 12, color: Colors.greenAccent),
-                const SizedBox(width: 4),
+                Icon(
+                  Icons.stream,
+                  size: 12.w(context),
+                  color: Colors.greenAccent,
+                ),
+                SizedBox(width: 4.w(context)),
                 Text(
                   'Streaming Real-time'.tr(context),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.greenAccent,
-                    fontSize: 10,
+                    fontSize: 10.sp(context),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 if (lastLocationUpdate != null) ...[
-                  const SizedBox(width: 12),
-                  const Icon(Icons.location_on_outlined, size: 12, color: Colors.red),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 12.w(context)),
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 12.w(context),
+                    color: Colors.red,
+                  ),
+                  SizedBox(width: 4.w(context)),
                   Text(
                     'Last: ${lastLocationUpdate!.hour.toString().padLeft(2, '0')}:${lastLocationUpdate!.minute.toString().padLeft(2, '0')}:${lastLocationUpdate!.second.toString().padLeft(2, '0')}',
                     style: TextStyle(
                       color: Colors.red.withValues(alpha: 0.8),
-                      fontSize: 10,
+                      fontSize: 10.sp(context),
                     ),
                   ),
                 ],
@@ -288,26 +330,29 @@ class ActiveSOSBanner extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'BANTUAN SEDANG MENUJU LOKASI'.tr(context),
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.red,
-                fontSize: 10,
+                fontSize: 10.sp(context),
                 fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+                letterSpacing: 0.5.w(context),
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6.h(context)),
             Row(
               children: [
                 if (activeIncident.isHandledByAgency)
                   _buildHandlerBadge(
+                    context: context,
                     icon: Icons.account_balance,
                     label: 'INSTANSI'.tr(context),
                     color: Colors.blue.shade700,
                   ),
-                if (activeIncident.isHandledByAgency && activeIncident.isHandledByVolunteer)
+                if (activeIncident.isHandledByAgency &&
+                    activeIncident.isHandledByVolunteer)
                   const SizedBox(width: 8),
                 if (activeIncident.isHandledByVolunteer)
                   _buildHandlerBadge(
+                    context: context,
                     icon: Icons.person,
                     label: 'RELAWAN'.tr(context),
                     color: Colors.orange.shade800,
@@ -318,14 +363,21 @@ class ActiveSOSBanner extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.directions_walk, size: 12, color: Colors.orangeAccent),
-                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.directions_walk,
+                    size: 12.w(context),
+                    color: Colors.orangeAccent,
+                  ),
+                  SizedBox(width: 4.w(context)),
                   Expanded(
                     child: Text(
                       volunteerPosition!.address != null
                           ? 'Relawan di: ${volunteerPosition!.address}'
                           : 'Relawan: ${volunteerPosition!.lat.toStringAsFixed(5)}, ${volunteerPosition!.lng.toStringAsFixed(5)}',
-                      style: const TextStyle(color: Colors.orangeAccent, fontSize: 10),
+                      style: TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 10.sp(context),
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -339,25 +391,33 @@ class ActiveSOSBanner extends StatelessWidget {
   }
 
   Widget _buildHandlerBadge({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: 8.w(context),
+        vertical: 4.h(context),
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.w(context)),
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 12),
-          const SizedBox(width: 4),
+          Icon(icon, color: color, size: 12.w(context)),
+          SizedBox(width: 4.w(context)),
           Text(
             label,
-            style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: color,
+              fontSize: 9.sp(context),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

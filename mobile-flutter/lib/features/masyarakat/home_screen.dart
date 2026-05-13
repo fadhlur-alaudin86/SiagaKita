@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 import 'package:vibration/vibration.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_controller.dart';
@@ -139,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen>
         }
         break;
       case MobileWsEvent.reporterLocationUpdate:
-        // Di HomeScreen (Masyarakat), kita adalah reporter. 
+        // Di HomeScreen (Masyarakat), kita adalah reporter.
         // Update ini biasanya untuk relawan/instansi.
         break;
       case MobileWsEvent.sosResolved:
@@ -442,7 +443,10 @@ class _HomeScreenState extends State<HomeScreen>
 
     // Kirim update availability ke server (background)
     if (currentUser.isAvailableForMission) {
-      UserService.updateAvailability(widget.accessToken, false).catchError((_) {});
+      UserService.updateAvailability(
+        widget.accessToken,
+        false,
+      ).catchError((_) {});
     }
 
     // Ambil posisi GPS di background
@@ -846,7 +850,10 @@ class _HomeScreenState extends State<HomeScreen>
           children: [
             // Main Content
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: EdgeInsets.symmetric(
+                horizontal: 24.w(context),
+                vertical: 16.h(context),
+              ),
               child: Column(
                 children: [
                   HomeHeader(
@@ -898,7 +905,7 @@ class _HomeScreenState extends State<HomeScreen>
                           },
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w(context)),
                       Expanded(
                         child: ActionCard(
                           icon: Icons.phone_in_talk,
@@ -912,7 +919,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h(context)),
                 ],
               ),
             ),
@@ -922,9 +929,9 @@ class _HomeScreenState extends State<HomeScreen>
                 !_isLoadingActiveIncident &&
                 _activeIncident != null)
               Positioned(
-                top: 100, // Adjusted to be below the header area
-                left: 24,
-                right: 24,
+                top: 100.h(context), // Adjusted to be below the header area
+                left: 24.w(context),
+                right: 24.w(context),
                 child: ActiveSOSBanner(
                   activeIncident: _activeIncident!,
                   sosTransmitting: _sosTransmitting,
