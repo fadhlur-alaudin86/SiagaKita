@@ -91,6 +91,7 @@
 | Map | ✅ v2 | Polling 10s, geocoding Nominatim, marker SOS nearby, status transmisi dinamis |
 | Relawan Dashboard | ✅ v2 | Total redesign: Duty toggle, XP bar, radar SOS real-time, detail bottomsheet, riwayat misi |
 | Session Management | ✅ Baru | `SessionService` (SharedPreferences) - login persist, logout clear |
+| UI Responsiveness | ✅ Baru | **Scaling Utility (Normalization)**: lib/core/utils/responsive.dart |
 
 ### 🟢 Desktop Console (`windows_console_flutter/`)
 
@@ -113,6 +114,20 @@
 ---
 
 ## 3. Changelog Per Sprint
+
+---
+
+### 🔖 Patch 1.0.20 - 13 Mei 2026 (UI Normalization & Scaling)
+
+#### 🎨 Mobile Flutter (Citizen/Volunteer)
+- **Responsive Scaling Utility**: Membuat modul `responsive.dart` untuk normalisasi ukuran font, padding, dan dimensi widget berdasarkan resolusi layar (referensi 390x844).
+- **Home & SOS Normalization**: Redesign `SOSActionButton` dan `HomeHeader` agar tidak overflow pada layar kecil (misal: 320px width) dan tetap terlihat premium pada layar besar.
+- **Form Scaling**: Mengintegrasikan scaling pada `KycScreen` untuk memastikan input field dan banner status terverifikasi tetap proporsional.
+- **Typography Standardization**: Memastikan semua teks menggunakan unit `.sp(context)` agar mengikuti kepadatan pixel layar tanpa terpotong.
+
+#### 🖥️ Desktop Console (Admin/Instansi)
+- **Flexible Dropdown Layout**: Mengganti `width: 200` statis pada filter `RiwayatPage` dengan `BoxConstraints` agar filter tidak bertumpukan saat window diperkecil.
+- **Detail Dialog Adaptability**: Menyesuaikan lebar dialog detail laporan agar menggunakan persentase layar dengan batas maksimal, mencegah UI terpotong pada monitor resolusi rendah (720p).
 
 ---
 

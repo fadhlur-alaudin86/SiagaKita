@@ -9,11 +9,12 @@ CATATAN PENTING:
   Modul lain (Biodata, Map, Relawan) masih menggunakan data MOCK.
   Dokumentasi ini menjelaskan state terkini dan kebutuhan integrasi berikutnya.
 
-  PERUBAHAN TERBARU (9 Mei 2026 - Fitur Operasi Relawan Real-Time & Pemetaan):
-  - MapScreen: polling lokasi 10s, reverse geocoding (Nominatim), marker SOS nearby, status transmisi.
-  - RelawanMainScreen: Redesign total (XP bar, Duty toggle, radar SOS real-time, bottomsheet detail).
-  - ProfileScreen: Reputasi Relawan (XP, level, progress) untuk volunteer approved.
-  - Console: Auto-refresh data pada halaman SOS Aktif (15s) dan Laporan Masuk (30s).
+  PERUBAHAN TERBARU (13 Mei 2026 - UI Normalization & Scaling):
+  - Responsive Scaling Utility: Implementasi lib/core/utils/responsive.dart untuk normalisasi UI.
+  - Normalisasi Komponen: HomeHeader, SOSButton, ActionCard, dan KycScreen kini adaptif terhadap resolusi layar.
+  - Desktop Optimization: Perbaikan overflow pada RiwayatPage dan dialog detail laporan di console admin.
+
+  PERUBAHAN SEBELUMNYA (9 Mei 2026 - Fitur Operasi Relawan Real-Time & Pemetaan):
   
   PERUBAHAN SEBELUMNYA (4 Mei 2026 - Sprint Stabilisasi):
   - Offline Mode: SessionService + ConnectivityService + _AppStartup auto-login.
@@ -56,6 +57,8 @@ lib/
 │   │   ├── session_service.dart      ★ BARU - SharedPrefs: simpan/baca/hapus sesi lokal
 │   │   ├── connectivity_service.dart ★ BARU - Monitor online/offline (ValueNotifier<bool>)
 │   │   └── otp_service.dart          - WA OTP client (phone verification)
+│   ├── utils/
+│   │   └── responsive.dart           ★ BARU - UI Scaling Utility (.w, .h, .sp context extensions)
 │   └── router.dart                   - AppRouter: routing berdasarkan role + token
 │
 ├── features/
@@ -437,8 +440,26 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   9. LOKALISASI (ID/EN) dikelola frontend-side via ValueNotifier. Tidak butuh API.
 
 ===========================================================================
+8. STANDAR UI SCALING (mobile-flutter)
+===========================================================================
+
+  Aplikasi menggunakan lib/core/utils/responsive.dart untuk memastikan UI konsisten
+  di berbagai ukuran layar (referensi desain: iPhone 13/14 - 390x844).
+
+  CARA PENGGUNAAN:
+  - Import: import '../../core/utils/responsive.dart';
+  - Width:  double lebar = 100.w(context);  // Proporsional terhadap lebar layar
+  - Height: double tinggi = 50.h(context); // Proporsional terhadap tinggi layar
+  - Font:   double size = 16.sp(context);  // Scaled font (mengikuti kerapatan pixel)
+
+  ATURAN:
+  - Hindari hardcoded pixel (misal: width: 200) untuk widget besar atau teks.
+  - Gunakan Expanded, Flexible, atau Wrap jika memungkinkan sebelum scaling.
+  - Untuk popup/dialog di desktop (console), gunakan BoxConstraints(maxWidth: ...).
+
+===========================================================================
   Dibuat oleh: Tim Frontend SiagaKita
   Branch: frontend / main
   Repo:   https://github.com/SuperBypassUdinnn/SIAGAKITA
-  Diperbarui: 4 Mei 2026
+  Diperbarui: 13 Mei 2026
 ===========================================================================
