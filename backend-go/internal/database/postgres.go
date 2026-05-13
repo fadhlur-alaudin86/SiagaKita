@@ -2,7 +2,7 @@ package database
 
 import (
 	"fmt"
-	"log"
+	"siagakita-backend/internal/utils"
 
 	"siagakita-backend/internal/config"
 
@@ -22,16 +22,16 @@ func NewPostgres(cfg *config.Config) *gorm.DB {
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		log.Fatalf("[DB] Failed to connect to PostgreSQL: %v", err)
+		utils.Fatal().Err(err).Msg("[DB] Failed to connect to PostgreSQL")
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Fatalf("[DB] Failed to get underlying sql.DB: %v", err)
+		utils.Fatal().Err(err).Msg("[DB] Failed to get underlying sql.DB")
 	}
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetMaxIdleConns(10)
 
-	log.Println("[DB] PostgreSQL connected successfully")
+	utils.Info().Msg("[DB] PostgreSQL connected successfully")
 	return db
 }

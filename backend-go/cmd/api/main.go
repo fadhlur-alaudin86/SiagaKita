@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -19,8 +18,10 @@ import (
 	userDomain "siagakita-backend/internal/domain/user"
 	"siagakita-backend/internal/hub"
 	"siagakita-backend/internal/middleware"
+	"siagakita-backend/internal/utils"
 	"siagakita-backend/internal/ws"
 
+	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -30,10 +31,13 @@ import (
 )
 
 func main() {
+	// ── 0. Init Logger ────────────────────────────────────────────────────────
+	utils.InitLogger(os.Getenv("GO_ENV") == "production")
+
 	// ── 1. Load Config ────────────────────────────────────────────────────────
 	cfg := config.Load()
 	if cfg.JWTSecret == "" {
-		log.Fatal("[Config] JWT_SECRET tidak boleh kosong")
+		utils.Fatal().Msg("[Config] JWT_SECRET tidak boleh kosong")
 	}
 
 	// ── 2. Connect to PostgreSQL & Redis ─────────────────────────────────────
@@ -42,7 +46,7 @@ func main() {
 
 	// ── 3. Superadmin seeding ─────────────────────────────────────────────────
 	if err := seedSuperAdmin(db, cfg); err != nil {
-		log.Fatalf("[SuperAdmin] Gagal seed superadmin: %v", err)
+		utils.Fatal().Err(err).Msg("[SuperAdmin] Gagal seed superadmin")
 	}
 
 	// ── 4. Connection Hub (WebSocket registry) ────────────────────────────────
@@ -53,7 +57,7 @@ func main() {
 	fonnteGateway := otpDomain.NewFonnteGateway(cfg.FonnteToken)
 
 	// Email gateway menggunakan Gmail REST API (OAuth2)
-	log.Printf("[Email] Menggunakan Gmail REST API (from: %s)", cfg.EmailFrom)
+	utils.Info().Str("from", cfg.EmailFrom).Msg("[Email] Menggunakan Gmail REST API")
 	emailGateway := otpDomain.NewGmailAPIGateway(cfg.GmailClientID, cfg.GmailClientSecret, cfg.GmailRefreshToken, cfg.EmailFrom)
 
 	otpSvc := otpDomain.NewService(rdb, fonnteGateway, emailGateway)
@@ -82,8 +86,10 @@ func main() {
 	telemetryHandler := telemetry.NewHandler(rdb, wsHub, cfg)
 
 	app := fiber.New(fiber.Config{
-		AppName:   "SiagaKita API v1",
-		BodyLimit: 15 * 1024 * 1024, // 15 MB
+		AppName:     "SiagaKita API v1",
+		BodyLimit:   15 * 1024 * 1024, // 15 MB
+		JSONEncoder: sonic.Marshal,
+		JSONDecoder: sonic.Unmarshal,
 	})
 
 	app.Use(recover.New())
@@ -245,17 +251,17 @@ func main() {
 	// ── 6. WebSocket Server (port :8081) ──────────────────────────────────────
 	wsServer := ws.NewServer(wsHub, rdb, db, cfg)
 	go func() {
-		log.Printf("[WS] Starting WebSocket server on :%s", cfg.WSPort)
+		utils.Info().Str("port", cfg.WSPort).Msg("[WS] Starting WebSocket server")
 		if err := wsServer.ListenAndServe(); err != nil {
-			log.Fatalf("[WS] Server error: %v", err)
+			utils.Fatal().Err(err).Msg("[WS] Server error")
 		}
 	}()
 
 	// ── 7. Start Fiber REST API ───────────────────────────────────────────────
 	go func() {
-		log.Printf("[API] Starting REST API on :%s", cfg.HTTPPort)
+		utils.Info().Str("port", cfg.HTTPPort).Msg("[API] Starting REST API")
 		if err := app.Listen(":" + cfg.HTTPPort); err != nil {
-			log.Fatalf("[API] Server error: %v", err)
+			utils.Fatal().Err(err).Msg("[API] Server error")
 		}
 	}()
 
@@ -264,21 +270,21 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	log.Println("[Main] Shutting down gracefully...")
+	utils.Info().Msg("[Main] Shutting down gracefully...")
 	if err := app.Shutdown(); err != nil {
-		log.Printf("[API] Shutdown error: %v", err)
+		utils.Error().Err(err).Msg("[API] Shutdown error")
 	}
 	if err := wsServer.Shutdown(context.Background()); err != nil {
-		log.Printf("[WS] Shutdown error: %v", err)
+		utils.Error().Err(err).Msg("[WS] Shutdown error")
 	}
 	sqlDB, _ := db.DB()
 	if err := sqlDB.Close(); err != nil {
-		log.Printf("[DB] Close error: %v", err)
+		utils.Error().Err(err).Msg("[DB] Close error")
 	}
 	if err := rdb.Close(); err != nil {
-		log.Printf("[Redis] Close error: %v", err)
+		utils.Error().Err(err).Msg("[Redis] Close error")
 	}
-	log.Println("[Main] Goodbye.")
+	utils.Info().Msg("[Main] Goodbye.")
 }
 
 // seedSuperAdmin memastikan tepat satu akun superadmin ada di DB.
@@ -289,7 +295,7 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 	pass := cfg.SuperAdminPass
 
 	if email == "" || pass == "" {
-		log.Println("[SuperAdmin] SUPERADMIN_EMAIL/PASS tidak diset di .env - skip seeding.")
+		utils.Warn().Msg("[SuperAdmin] SUPERADMIN_EMAIL/PASS tidak diset di .env - skip seeding.")
 		return nil
 	}
 
@@ -317,7 +323,7 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 		}
 
 		if existing.Email != email {
-			log.Printf("[SuperAdmin] Memperbarui email superadmin menjadi: %s", email)
+			utils.Info().Str("email", email).Msg("[SuperAdmin] Memperbarui email superadmin")
 		}
 		return db.Model(&existing).Updates(map[string]interface{}{
 			"email":         email,
@@ -359,6 +365,6 @@ func seedSuperAdmin(db *gorm.DB, cfg *config.Config) error {
 		return err
 	}
 
-	log.Printf("[SuperAdmin] Akun superadmin berhasil dibuat: %s", email)
+	utils.Info().Str("email", email).Msg("[SuperAdmin] Akun superadmin berhasil dibuat")
 	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -446,7 +445,7 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 	// Ambil data incident dari DB
 	inc, err := h.svc.repo.FindByID(incidentID)
 	if err != nil || inc == nil {
-		log.Printf("[IncidentHandler] broadcastSOSViaREST: incident %s not found: %v", incidentID, err)
+		utils.Error().Err(err).Str("incident_id", incidentID).Msg("[IncidentHandler] broadcastSOSViaREST: incident not found")
 		return
 	}
 
@@ -486,7 +485,7 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 			}
 		}
 	}
-	log.Printf("[IncidentHandler] REST-triggered SOS broadcast: incident %s → %d console users", incidentID, sent)
+	utils.Info().Str("incident_id", incidentID).Int("sent_count", sent).Msg("[IncidentHandler] REST-triggered SOS broadcast")
 }
 
 func (h *Handler) broadcastEventToAgencies(msg hub.Message) {
@@ -517,7 +516,7 @@ func (h *Handler) notifyReporter(incidentID, event string, payload map[string]in
 	}
 	inc, err := h.svc.repo.FindByID(incidentID)
 	if err != nil || inc == nil {
-		log.Printf("[Handler] notifyReporter: incident %s not found: %v", incidentID, err)
+		utils.Error().Err(err).Str("incident_id", incidentID).Msg("[Handler] notifyReporter: incident not found")
 		return
 	}
 	_ = h.hub.SendToUser(inc.ReporterID, hub.Message{

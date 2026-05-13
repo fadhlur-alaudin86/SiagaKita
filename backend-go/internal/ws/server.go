@@ -2,7 +2,6 @@ package ws
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"siagakita-backend/internal/config"
@@ -26,7 +25,7 @@ func NewServer(h *hub.Hub, rdb *redis.Client, db *gorm.DB, cfg *config.Config) *
 	})
 
 	addr := fmt.Sprintf(":%s", cfg.WSPort)
-	log.Printf("[WS] Server listening on %s", addr)
+	// Log removed, we log it in main.go
 
 	return &http.Server{
 		Addr:    addr,

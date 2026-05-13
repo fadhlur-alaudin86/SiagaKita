@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -82,7 +81,7 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("[WS] Upgrade error: %v", err)
+		utils.Error().Err(err).Msg("[WS] Upgrade error")
 		return
 	}
 
@@ -111,7 +110,7 @@ func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
 		_, raw, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("[WS] Read error for user %s: %v", userID, err)
+				utils.Warn().Err(err).Str("user_id", userID).Msg("[WS] Read error")
 			}
 			return
 		}
@@ -121,7 +120,7 @@ func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
 
 		var msg hub.Message
 		if err := json.Unmarshal(raw, &msg); err != nil {
-			log.Printf("[WS] Invalid JSON from user %s: %v", userID, err)
+			utils.Warn().Err(err).Str("user_id", userID).Msg("[WS] Invalid JSON")
 			continue
 		}
 
@@ -144,7 +143,7 @@ func (h *Handler) handleEvent(userID string, msg hub.Message) {
 	case "ACCEPT_RESCUE":
 		h.onAcceptRescue(userID, msg.Payload)
 	default:
-		log.Printf("[WS] Unknown event %q from user %s", msg.Event, userID)
+		utils.Warn().Str("event", msg.Event).Str("user_id", userID).Msg("[WS] Unknown event")
 	}
 }
 
@@ -166,7 +165,7 @@ func (h *Handler) onTriggerSOS(userID string, payload interface{}) {
 		Status:       "grace_period",
 	}
 	if err := h.incRepo.CreateIncident(inc); err != nil {
-		log.Printf("[WS] Failed to create incident for user %s: %v", userID, err)
+		utils.Error().Err(err).Str("user_id", userID).Msg("[WS] Failed to create incident")
 		return
 	}
 
@@ -189,7 +188,11 @@ func (h *Handler) onTriggerSOS(userID string, payload interface{}) {
 		},
 	})
 
-	log.Printf("[WS] SOS triggered by user %s → incident %s (grace %ds)", userID, inc.ID, int(gracePeriod.Seconds()))
+	utils.Info().
+		Str("user_id", userID).
+		Str("incident_id", inc.ID).
+		Int("grace_seconds", int(gracePeriod.Seconds())).
+		Msg("[WS] SOS triggered")
 }
 
 func (h *Handler) onCancelSOS(userID string, payload interface{}) {
@@ -210,7 +213,7 @@ func (h *Handler) onCancelSOS(userID string, payload interface{}) {
 		Payload: map[string]string{"message": "SOS dibatalkan"},
 	})
 
-	log.Printf("[WS] SOS %s canceled by user %s", sosID, userID)
+	utils.Info().Str("sos_id", sosID).Str("user_id", userID).Msg("[WS] SOS canceled")
 }
 
 func (h *Handler) onAcceptRescue(responderID string, payload interface{}) {
@@ -224,7 +227,7 @@ func (h *Handler) onAcceptRescue(responderID string, payload interface{}) {
 		Status:      "en_route",
 	}
 	if err := h.incRepo.CreateResponse(resp); err != nil {
-		log.Printf("[WS] Failed to create response for incident %s: %v", sosID, err)
+		utils.Error().Err(err).Str("sos_id", sosID).Str("responder_id", responderID).Msg("[WS] Failed to create response")
 		return
 	}
 
@@ -235,7 +238,7 @@ func (h *Handler) onAcceptRescue(responderID string, payload interface{}) {
 	// 3. Get reporter ID from incident
 	inc, err := h.incRepo.FindByID(sosID)
 	if err != nil {
-		log.Printf("[WS] Incident %s not found: %v", sosID, err)
+		utils.Error().Err(err).Str("sos_id", sosID).Msg("[WS] Incident not found")
 		return
 	}
 
@@ -250,7 +253,11 @@ func (h *Handler) onAcceptRescue(responderID string, payload interface{}) {
 		},
 	})
 
-	log.Printf("[WS] Rescue accepted: incident %s ← relawan %s (%s)", sosID, responderID, responderName)
+	utils.Info().
+		Str("sos_id", sosID).
+		Str("responder_id", responderID).
+		Str("responder_name", responderName).
+		Msg("[WS] Rescue accepted")
 }
 
 // ─── Redis Expired Key Subscriber ─────────────────────────────────────────────
@@ -263,7 +270,7 @@ func (h *Handler) startExpiredKeySubscriber() {
 
 	go func() {
 		defer func() { _ = pubsub.Close() }()
-		log.Println("[WS] Redis expired-key subscriber started")
+		utils.Info().Msg("[WS] Redis expired-key subscriber started")
 		ch := pubsub.Channel()
 
 		for msg := range ch {
@@ -280,7 +287,7 @@ func (h *Handler) startExpiredKeySubscriber() {
 				continue
 			}
 
-			log.Printf("[WS] Grace period expired for incident %s → broadcasting SOS", incidentID)
+			utils.Info().Str("incident_id", incidentID).Msg("[WS] Grace period expired → broadcasting SOS")
 			go h.broadcastSOS(incidentID)
 		}
 	}()
@@ -299,7 +306,7 @@ func (h *Handler) broadcastSOS(incidentID string) {
 	locKey := fmt.Sprintf(incidentLocKey, incidentID)
 	vals, err := h.rdb.HGetAll(ctx, locKey).Result()
 	if err != nil || len(vals) == 0 {
-		log.Printf("[WS] Location not found for incident %s", incidentID)
+		utils.Error().Err(err).Str("incident_id", incidentID).Msg("[WS] Location not found for incident")
 		return
 	}
 
@@ -316,7 +323,7 @@ func (h *Handler) broadcastSOS(incidentID string) {
 		Sort:     "ASC",
 	}).Result()
 	if err != nil {
-		log.Printf("[WS] GeoRadius error for incident #%s: %v", incidentID, err)
+		utils.Error().Err(err).Str("incident_id", incidentID).Msg("[WS] GeoRadius error")
 		return
 	}
 
@@ -363,7 +370,7 @@ func (h *Handler) broadcastSOS(incidentID string) {
 		}
 	}
 
-	log.Printf("[WS] SOS #%s broadcast to %d volunteers+agencies online", incidentID, sent)
+	utils.Info().Str("incident_id", incidentID).Int("sent_count", sent).Msg("[WS] SOS broadcast completed")
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

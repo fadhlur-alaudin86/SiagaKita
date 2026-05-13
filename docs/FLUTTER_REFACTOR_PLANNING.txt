@@ -1,0 +1,39 @@
+Untuk frontend yang berbasis Flutter (baik aplikasi mobile maupun konsol desktop/web), fokus utamanya adalah menjaga FPS tetap stabil di 60/120 FPS agar responsif saat menangani data darurat yang masuk secara real-time.
+
+Berikut adalah beberapa area yang bisa dioptimalkan:
+
+1. Optimasi Rendering & Rebuild
+Rebuild yang tidak perlu adalah penyebab utama aplikasi terasa "lag".
+
+Gunakan const Constructor: Sebisa mungkin gunakan const pada widget agar Flutter tidak perlu membangun ulang widget tersebut.
+RepaintBoundary: Bungkus widget yang sering berubah (seperti peta yang bergeser atau indikator lokasi relawan yang bergerak) dengan RepaintBoundary. Ini memisahkan proses painting widget tersebut dari sisa layar lainnya.
+Pecah Widget Kecil: Jangan membuat satu fungsi build() yang sangat besar. Pecah menjadi kelas StatelessWidget kecil agar Flutter bisa melakukan optimasi render secara granular.
+2. Gunakan Isolate untuk Tugas Berat
+Flutter berjalan di satu Main Thread. Jika Anda melakukan parsing data JSON yang sangat besar (misal: ribuan riwayat insiden) di thread utama, UI akan membeku (freeze).
+
+Solusi: Gunakan compute() atau Isolate.run() untuk memindahkan proses parsing JSON atau kalkulasi data berat ke thread latar belakang.
+3. Efisiensi State Management
+Pastikan Anda hanya memperbarui bagian UI yang memang berubah.
+
+Granular Update: Jika menggunakan Provider, gunakan context.select() atau Selector. Jika menggunakan Bloc/Riverpod, pastikan listen hanya pada field yang spesifik.
+Hindari setState di Level Tinggi: Jangan memanggil setState di widget paling atas (root) jika yang berubah hanya satu tombol di bawah.
+4. Caching & Local Database
+Untuk sistem keselamatan, data harus tetap bisa diakses meskipun koneksi buruk.
+
+Pengganti: Gunakan Isar atau Hive daripada SQFlite.
+Keuntungan: Isar/Hive adalah database NoSQL yang sangat cepat (synchronous/asynchronous) dan memiliki footprint memori yang kecil, sangat cocok untuk menyimpan cache peta atau status insiden secara lokal.
+5. Network Layer (Protobuf & Dio)
+Protobuf: Seperti yang disarankan untuk backend, menggunakan Protobuf di Flutter jauh lebih cepat didecode daripada JSON, terutama untuk koordinat GPS relawan yang masuk secara beruntun.
+Dio Caching: Gunakan interceptor pada library Dio untuk melakukan caching otomatis di sisi klien.
+6. Asset & Image Optimization
+Format WebP: Gunakan format .webp untuk gambar daripada .png atau .jpg untuk mengurangi beban memori.
+Rive Animation: Untuk animasi yang kompleks (misal: radar pencarian), gunakan Rive daripada Lottie. Rive jauh lebih ringan karena berbasis vektor dan dijalankan langsung di engine render Flutter.
+Ringkasan Optimasi Frontend:
+Komponen	Teknik Optimasi	Manfaat
+Rendering	RepaintBoundary & const	Mencegah UI Junk / Lag
+Data Parsing	Background Isolate	UI tetap responsif saat olah data
+Local Storage	Isar / Hive DB	Akses data instan (offline-first)
+State Management	Granular Rebuilds	Mengurangi beban CPU
+Communication	Protobuf	Decode data super cepat
+
+Dengan kombinasi optimasi Backend (Sonic + pgx) dan Frontend (Isolate + Isar + RepaintBoundary), sistem SiagaKita akan memiliki latensi yang sangat rendah, yang sangat krusial untuk aplikasi berbasis keselamatan jiwa.

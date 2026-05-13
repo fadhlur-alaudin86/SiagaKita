@@ -1,0 +1,36 @@
+Selain komunikasi database, ada beberapa komponen lain dalam backend Go Anda yang dapat dioptimalkan untuk mencapai performa ekstrem (low latency & high throughput):
+
+1. JSON Serialization (JSON "Tax")
+Saat ini, aplikasi Anda kemungkinan besar menggunakan encoding/json bawaan Go atau Fiber default. JSON bawaan Go sangat bergantung pada reflection yang lambat.
+
+Pengganti: Sonic atau goccy/go-json.
+Keuntungan: Sonic (dari ByteDance) menggunakan JIT compilation dan instruksi SIMD untuk memproses JSON hingga 3-5x lebih cepat daripada standar library.
+Opsi Ekstrem: Gunakan Protocol Buffers (Protobuf) untuk komunikasi internal atau ke aplikasi mobile. Protobuf jauh lebih kecil dan cepat didecode daripada JSON.
+2. Logging (Zero Allocation Logging)
+Banyak aplikasi melambat justru karena logger yang melakukan alokasi memori di setiap baris log.
+
+Pengganti: Zap (Uber) atau Zerolog.
+Keuntungan: Keduanya didesain untuk "Zero Allocation". Mereka tidak membuat objek baru hanya untuk mencatat log, sehingga tidak membebani Garbage Collector (GC).
+Tips: Gunakan level Info atau Error di produksi, dan pastikan logging ke file/stdout dilakukan secara asynchronous.
+3. WebSocket Engine
+Anda saat ini menggunakan gorilla/websocket. Meskipun stabil, untuk ribuan koneksi simultan (seperti pelacakan lokasi relawan secara masif), ada opsi yang lebih efisien.
+
+Pengganti: gobwas/ws atau nhooyr/websocket.
+Keuntungan: gobwas/ws adalah engine WebSocket paling efisien di ekosistem Go yang memungkinkan kontrol memori tingkat rendah, sangat cocok jika Anda ingin menangani C10k/C100k (puluhan ribu koneksi) dengan RAM minimal.
+4. Memory Management (Object Pooling)
+Dalam sistem keselamatan, lonjakan penggunaan memori bisa memicu STW (Stop The World) pada Garbage Collector yang menyebabkan aplikasi "hang" selama beberapa milidetik.
+
+Teknik: Gunakan sync.Pool.
+Kegunaan: Jika Anda sering membuat dan membuang objek (misalnya buffer untuk koordinat GPS), sync.Pool memungkinkan Anda untuk menggunakan kembali (reuse) memori yang sudah ada daripada meminta memori baru ke sistem operasi.
+5. Hashing & Validation
+Password Hashing: Tetap gunakan bcrypt atau argon2 (karena memang harus lambat demi keamanan).
+Internal Hashing: Jika Anda butuh melakukan hashing untuk ID atau cache key, ganti MD5/SHA dengan xxHash yang didesain khusus untuk kecepatan ekstrem.
+Validation: Ganti go-playground/validator (berbasis reflection) dengan validasi manual atau generator seperti ozzo-validation.
+Ringkasan Optimasi Performa Ekstrem:
+Komponen	Sekarang	Alternatif Performa Tinggi
+Database	GORM	sqlc + pgx
+JSON	encoding/json	Sonic atau Protobuf
+Logging	log (std)	Zerolog atau Zap
+WebSocket	gorilla/websocket	gobwas/ws
+Memory	Alokasi Baru	sync.Pool (Reuse memori)
+Kesimpulan: Untuk sistem keselamatan, langkah pertama yang paling berdampak adalah mengganti Database Driver (ke pgx) dan JSON Library (ke Sonic). Dua hal ini biasanya memakan 70-80% dari total waktu pemrosesan di backend.

@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
+	"siagakita-backend/internal/utils"
 	"strings"
 
 	"siagakita-backend/internal/config"
@@ -20,10 +20,10 @@ func NewRedis(cfg *config.Config) *redis.Client {
 	})
 
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		log.Fatalf("[Redis] Failed to connect: %v", err)
+		utils.Fatal().Err(err).Msg("[Redis] Failed to connect")
 	}
 
-	log.Println("[Redis] Connected successfully")
+	utils.Info().Msg("[Redis] Connected successfully")
 	return rdb
 }
 
@@ -36,7 +36,7 @@ func SubscribeExpiredKeys(ctx context.Context, rdb *redis.Client, prefix string,
 
 	go func() {
 		defer func() { _ = pubsub.Close() }()
-		log.Printf("[Redis] Subscribed to expired key events (prefix=%q)", prefix)
+		utils.Info().Str("prefix", prefix).Msg("[Redis] Subscribed to expired key events")
 		for {
 			select {
 			case <-ctx.Done():

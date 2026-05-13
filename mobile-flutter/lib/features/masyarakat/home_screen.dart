@@ -1276,40 +1276,42 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                           const SizedBox(height: 6),
                           // Baris 2: Countdown & last update
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.timer_outlined,
-                                size: 12,
-                                color: Colors.red,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Next update: ${_nextUpdateCountdown}s'.tr(
-                                  context,
-                                ),
-                                style: TextStyle(
-                                  color: Colors.red.withValues(alpha: 0.8),
-                                  fontSize: 10,
-                                ),
-                              ),
-                              if (_lastLocationUpdate != null) ...[
-                                const SizedBox(width: 12),
+                          RepaintBoundary(
+                            child: Row(
+                              children: [
                                 const Icon(
-                                  Icons.location_on_outlined,
+                                  Icons.timer_outlined,
                                   size: 12,
                                   color: Colors.red,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Last: ${_lastLocationUpdate!.hour.toString().padLeft(2, '0')}:${_lastLocationUpdate!.minute.toString().padLeft(2, '0')}:${_lastLocationUpdate!.second.toString().padLeft(2, '0')}',
+                                  'Next update: ${_nextUpdateCountdown}s'.tr(
+                                    context,
+                                  ),
                                   style: TextStyle(
                                     color: Colors.red.withValues(alpha: 0.8),
                                     fontSize: 10,
                                   ),
                                 ),
+                                if (_lastLocationUpdate != null) ...[
+                                  const SizedBox(width: 12),
+                                  const Icon(
+                                    Icons.location_on_outlined,
+                                    size: 12,
+                                    color: Colors.red,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Last: ${_lastLocationUpdate!.hour.toString().padLeft(2, '0')}:${_lastLocationUpdate!.minute.toString().padLeft(2, '0')}:${_lastLocationUpdate!.second.toString().padLeft(2, '0')}',
+                                    style: TextStyle(
+                                      color: Colors.red.withValues(alpha: 0.8),
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                           // Baris 3: Handler Status (NEW)
                           if (_activeIncident!.isBeingHandled) ...[
@@ -1391,123 +1393,125 @@ class _HomeScreenState extends State<HomeScreen>
                         child: SizedBox(
                           width: 250,
                           height: 250,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Outer progress ring (tap count)
-                              if (_tapCount > 0)
-                                SizedBox(
-                                  width: 240,
-                                  height: 240,
-                                  child: CircularProgressIndicator(
-                                    value: _tapCount / _requiredTaps,
-                                    strokeWidth: 8,
-                                    backgroundColor:
-                                        (isSOSActive
-                                                ? Colors.red
-                                                : primaryColor)
-                                            .withValues(alpha: 0.15),
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      isSOSActive
-                                          ? Colors.red
-                                          : Colors.orangeAccent,
+                          child: RepaintBoundary(
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Outer progress ring (tap count)
+                                if (_tapCount > 0)
+                                  SizedBox(
+                                    width: 240,
+                                    height: 240,
+                                    child: CircularProgressIndicator(
+                                      value: _tapCount / _requiredTaps,
+                                      strokeWidth: 8,
+                                      backgroundColor:
+                                          (isSOSActive
+                                                  ? Colors.red
+                                                  : primaryColor)
+                                              .withValues(alpha: 0.15),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        isSOSActive
+                                            ? Colors.red
+                                            : Colors.orangeAccent,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              // Main SOS / Cancel Button
-                              AnimatedScale(
-                                scale: _tapCount > 0 ? 0.96 : 1.0,
-                                duration: const Duration(milliseconds: 80),
-                                child: Container(
-                                  width: 220,
-                                  height: 220,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: RadialGradient(
-                                      colors: isSOSActive
-                                          ? [
-                                              Colors.red,
-                                              const Color(0xFF8B0000),
-                                            ]
-                                          : [
-                                              primaryColor,
-                                              const Color(0xFFCB5100),
-                                            ],
-                                    ),
-                                    border: Border.all(
-                                      color: (_tapCount > 0
-                                          ? (isSOSActive
-                                                ? Colors.red
-                                                : const Color(0xFFFFA265))
-                                          : (isDarkMode
-                                                ? Colors.white.withValues(
-                                                    alpha: 0.2,
-                                                  )
-                                                : (isSOSActive
-                                                          ? Colors.red
-                                                          : primaryColor)
-                                                      .withValues(alpha: 0.3))),
-                                      width: 8,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            (isSOSActive
-                                                    ? Colors.red
-                                                    : primaryColor)
-                                                .withValues(
-                                                  alpha: _tapCount > 0
-                                                      ? 0.8
-                                                      : (isDarkMode
-                                                            ? 0.3
-                                                            : 0.6),
-                                                ),
-                                        blurRadius: _tapCount > 0 ? 50 : 30,
-                                        spreadRadius: _tapCount > 0
-                                            ? 10
-                                            : (isDarkMode ? 5 : 10),
+                                // Main SOS / Cancel Button
+                                AnimatedScale(
+                                  scale: _tapCount > 0 ? 0.96 : 1.0,
+                                  duration: const Duration(milliseconds: 80),
+                                  child: Container(
+                                    width: 220,
+                                    height: 220,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: RadialGradient(
+                                        colors: isSOSActive
+                                            ? [
+                                                Colors.red,
+                                                const Color(0xFF8B0000),
+                                              ]
+                                            : [
+                                                primaryColor,
+                                                const Color(0xFFCB5100),
+                                              ],
                                       ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        isSOSActive
-                                            ? Icons.cancel_outlined
-                                            : Icons.error_outline,
-                                        color: Colors.white,
-                                        size: 60,
+                                      border: Border.all(
+                                        color: (_tapCount > 0
+                                            ? (isSOSActive
+                                                  ? Colors.red
+                                                  : const Color(0xFFFFA265))
+                                            : (isDarkMode
+                                                  ? Colors.white.withValues(
+                                                      alpha: 0.2,
+                                                    )
+                                                  : (isSOSActive
+                                                            ? Colors.red
+                                                            : primaryColor)
+                                                        .withValues(alpha: 0.3))),
+                                        width: 8,
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        isSOSActive
-                                            ? 'AKTIF'.tr(context)
-                                            : 'SOS',
-                                        style: const TextStyle(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color:
+                                              (isSOSActive
+                                                      ? Colors.red
+                                                      : primaryColor)
+                                                  .withValues(
+                                                    alpha: _tapCount > 0
+                                                        ? 0.8
+                                                        : (isDarkMode
+                                                              ? 0.3
+                                                              : 0.6),
+                                                  ),
+                                          blurRadius: _tapCount > 0 ? 50 : 30,
+                                          spreadRadius: _tapCount > 0
+                                              ? 10
+                                              : (isDarkMode ? 5 : 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          isSOSActive
+                                              ? Icons.cancel_outlined
+                                              : Icons.error_outline,
                                           color: Colors.white,
-                                          fontSize: 40,
-                                          fontWeight: FontWeight.w900,
+                                          size: 60,
                                         ),
-                                      ),
-                                      Text(
-                                        isSOSActive
-                                            ? 'KETUK 3× BATALKAN'.tr(context)
-                                            : 'KETUK 3×'.tr(context),
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.9,
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          isSOSActive
+                                              ? 'AKTIF'.tr(context)
+                                              : 'SOS',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 40,
+                                            fontWeight: FontWeight.w900,
                                           ),
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.5,
                                         ),
-                                      ),
-                                    ],
+                                        Text(
+                                          isSOSActive
+                                              ? 'KETUK 3× BATALKAN'.tr(context)
+                                              : 'KETUK 3×'.tr(context),
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.9,
+                                            ),
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

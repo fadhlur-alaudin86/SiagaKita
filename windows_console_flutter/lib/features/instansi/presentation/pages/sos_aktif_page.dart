@@ -267,115 +267,117 @@ class _SosAktifPageState extends State<SosAktifPage> {
                 ),
                 const Divider(color: Colors.white12, height: 1),
                 Expanded(
-                  child: _loading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _incidents.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.check_circle_outline,
-                                color: Colors.green,
-                                size: 36,
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Tidak ada SOS aktif',
-                                style: TextStyle(color: Colors.white38),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.separated(
-                          itemCount: _incidents.length,
-                          separatorBuilder: (context, index) =>
-                              const Divider(color: Colors.white10, height: 1),
-                          itemBuilder: (context, i) {
-                            final inc = _incidents[i];
-                            final isSelected = _selected?.id == inc.id;
-                            return Material(
-                              color: isSelected
-                                  ? Colors.red.withValues(alpha: 0.1)
-                                  : Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() => _selected = inc);
-                                  if (inc.audioPath != null) {
-                                    final url =
-                                        inc.audioPath!.startsWith('/uploads')
-                                        ? ApiConstants.baseUrl.replaceAll(
-                                                '/api/v1',
-                                                '',
-                                              ) +
-                                              inc.audioPath!
-                                        : inc.audioPath!;
-                                    _audioPlayer.setSourceUrl(url);
-                                  } else {
-                                    _audioPlayer.stop();
-                                  }
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.warning_amber_rounded,
-                                        color: Colors.red,
-                                        size: 22,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              inc.typeLabel,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              '${inc.reporterName} • ${inc.timeAgo}',
-                                              style: const TextStyle(
-                                                color: Colors.white54,
-                                                fontSize: 11,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      // Indikator Online/Offline korban
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: inc.isOnline
-                                              ? Colors.greenAccent
-                                              : Colors.grey,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      if (isSelected)
+                  child: RepaintBoundary(
+                    child: _loading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _incidents.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle_outline,
+                                  color: Colors.green,
+                                  size: 36,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Tidak ada SOS aktif',
+                                  style: TextStyle(color: Colors.white38),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: _incidents.length,
+                            separatorBuilder: (context, index) =>
+                                const Divider(color: Colors.white10, height: 1),
+                            itemBuilder: (context, i) {
+                              final inc = _incidents[i];
+                              final isSelected = _selected?.id == inc.id;
+                              return Material(
+                                color: isSelected
+                                    ? Colors.red.withValues(alpha: 0.1)
+                                    : Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() => _selected = inc);
+                                    if (inc.audioPath != null) {
+                                      final url =
+                                          inc.audioPath!.startsWith('/uploads')
+                                          ? ApiConstants.baseUrl.replaceAll(
+                                                  '/api/v1',
+                                                  '',
+                                                ) +
+                                                inc.audioPath!
+                                          : inc.audioPath!;
+                                      _audioPlayer.setSourceUrl(url);
+                                    } else {
+                                      _audioPlayer.stop();
+                                    }
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 14,
+                                    ),
+                                    child: Row(
+                                      children: [
                                         const Icon(
-                                          Icons.chevron_right,
+                                          Icons.warning_amber_rounded,
                                           color: Colors.red,
-                                          size: 18,
+                                          size: 22,
                                         ),
-                                    ],
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                inc.typeLabel,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '${inc.reporterName} • ${inc.timeAgo}',
+                                                style: const TextStyle(
+                                                  color: Colors.white54,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        // Indikator Online/Offline korban
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: inc.isOnline
+                                                ? Colors.greenAccent
+                                                : Colors.grey,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        if (isSelected)
+                                          const Icon(
+                                            Icons.chevron_right,
+                                            color: Colors.red,
+                                            size: 18,
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
+                              );
+                            },
+                          ),
+                  ),
                 ),
               ],
             ),

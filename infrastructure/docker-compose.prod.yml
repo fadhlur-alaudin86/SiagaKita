@@ -60,9 +60,9 @@ services:
     ports:
       - "8080:8080"   # REST API
       - "8081:8081"   # WebSocket
-    volumes:
-      # Mount direktori upload dari host ke dalam container
+      # Mount direktori upload dan log dari host ke dalam container
       - /opt/siagakita/uploads:/app/uploads
+      - /opt/siagakita/logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy

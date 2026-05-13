@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:http/http.dart' as http;
 import '../constants/api_config.dart';
 
@@ -59,7 +60,7 @@ class IncidentService {
       ),
       timeout: _sosTimeout, // SOS harus cepat
     );
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
     if (response.statusCode == 403) {
       throw SOSBannedException(
         body['message'] as String? ?? 'Fitur SOS dinonaktifkan',
@@ -134,7 +135,7 @@ class IncidentService {
     if (response.statusCode != 200) {
       String errorMessage = 'Gagal membatalkan SOS';
       try {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
         errorMessage = body['message'] as String? ?? errorMessage;
       } catch (_) {
         // Jika bukan JSON (misal 404 Fiber HTML), ambil text body jika pendek
@@ -213,7 +214,7 @@ class IncidentService {
       ),
     );
     if (response.statusCode != 200) return null;
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
     final data = body['data'];
     if (data == null) return null;
     return ActiveIncident.fromJson(data as Map<String, dynamic>);
@@ -231,12 +232,12 @@ class IncidentService {
       ),
     );
     if (response.statusCode != 200) {
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
       throw IncidentException(
         body['message'] as String? ?? 'Gagal memuat riwayat SOS',
       );
     }
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
     final data = body['data'] as List?;
     if (data == null) return [];
     return data

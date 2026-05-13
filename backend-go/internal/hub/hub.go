@@ -2,7 +2,7 @@ package hub
 
 import (
 	"encoding/json"
-	"log"
+	"siagakita-backend/internal/utils"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -43,7 +43,7 @@ func (h *Hub) Register(userID, role string, conn *websocket.Conn) {
 		_ = existing.Conn.Close()
 	}
 	h.clients[userID] = &Client{Conn: conn, Role: role}
-	log.Printf("[Hub] User %s (role: %s) connected (total=%d)", userID, role, len(h.clients))
+	utils.Info().Str("user_id", userID).Str("role", role).Int("total_clients", len(h.clients)).Msg("[Hub] User connected")
 }
 
 // Unregister closes and removes the connection for the given userID.
@@ -54,7 +54,7 @@ func (h *Hub) Unregister(userID string) {
 	if client, ok := h.clients[userID]; ok {
 		_ = client.Conn.Close()
 		delete(h.clients, userID)
-		log.Printf("[Hub] User %s disconnected (total=%d)", userID, len(h.clients))
+		utils.Info().Str("user_id", userID).Int("total_clients", len(h.clients)).Msg("[Hub] User disconnected")
 	}
 }
 

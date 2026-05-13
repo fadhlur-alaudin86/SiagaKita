@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -94,9 +95,9 @@ class WsService extends ChangeNotifier {
 
   // ─── Event handler ──────────────────────────────────────────────────────────
 
-  void _onData(dynamic raw) {
+  void _onData(dynamic raw) async {
     try {
-      final json = jsonDecode(raw as String) as Map<String, dynamic>;
+      final json = await Isolate.run(() => jsonDecode(raw as String) as Map<String, dynamic>);
       final msg = WsMessage.fromRaw(json);
 
       switch (msg.event) {
