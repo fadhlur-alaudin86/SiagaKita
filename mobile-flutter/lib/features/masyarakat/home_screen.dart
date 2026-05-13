@@ -849,22 +849,39 @@ class _HomeScreenState extends State<HomeScreen>
                     primaryColor: primaryColor,
                   ),
 
-                  // ── Active SOS status banner ─────────────────────────────────
-                  if (isSOSActive &&
-                      !_isLoadingActiveIncident &&
-                      _activeIncident != null) ...[
-                    const SizedBox(height: 16),
-                    ActiveSOSBanner(
-                      activeIncident: _activeIncident!,
-                      sosTransmitting: _sosTransmitting,
-                      nextUpdateCountdown: _nextUpdateCountdown,
-                      lastLocationUpdate: _lastLocationUpdate,
-                      volunteerPosition: _volunteerPosition,
-                      uploadStatusBadgeBuilder: _buildUploadStatusBadge,
-                    ),
-                  ],
+                  Expanded(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // ── SOS Button (Centered in the available space) ──
+                        SOSActionButton(
+                          isSOSActive: isSOSActive,
+                          tapCount: _tapCount,
+                          requiredTaps: _requiredTaps,
+                          primaryColor: primaryColor,
+                          onTap: isSOSActive ? _onCancelTap : _onSOSTap,
+                        ),
 
-                  const Spacer(),
+                        // ── Active SOS status banner (Floating at the top of this area) ──
+                        if (isSOSActive &&
+                            !_isLoadingActiveIncident &&
+                            _activeIncident != null)
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: ActiveSOSBanner(
+                              activeIncident: _activeIncident!,
+                              sosTransmitting: _sosTransmitting,
+                              nextUpdateCountdown: _nextUpdateCountdown,
+                              lastLocationUpdate: _lastLocationUpdate,
+                              volunteerPosition: _volunteerPosition,
+                              uploadStatusBadgeBuilder: _buildUploadStatusBadge,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
 
                   // ── Bottom Action Cards ────────────────────────────────────────
                   Row(
@@ -903,17 +920,6 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   const SizedBox(height: 24),
                 ],
-              ),
-            ),
-
-            // ── Fixed Position SOS Button ────────────────────────────────────
-            Center(
-              child: SOSActionButton(
-                isSOSActive: isSOSActive,
-                tapCount: _tapCount,
-                requiredTaps: _requiredTaps,
-                primaryColor: primaryColor,
-                onTap: isSOSActive ? _onCancelTap : _onSOSTap,
               ),
             ),
 

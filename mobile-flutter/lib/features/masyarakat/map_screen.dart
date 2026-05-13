@@ -446,17 +446,22 @@ class _MapScreenState extends State<MapScreen>
                             animation: _pulseAnimation,
                             builder: (context, child) {
                               final progress =
-                                  (_pulseAnimation.value - 1.0) * 2; // 0.0 to 1.0
+                                  (_pulseAnimation.value - 1.0) *
+                                  2; // 0.0 to 1.0
                               return CircleLayer(
                                 circles: [
                                   CircleMarker(
-                                    point: LatLng(_activeSOS!.latitude,
-                                        _activeSOS!.longitude),
-                                    color: Colors.red
-                                        .withValues(alpha: 0.2 * (1.0 - progress)),
+                                    point: LatLng(
+                                      _activeSOS!.latitude,
+                                      _activeSOS!.longitude,
+                                    ),
+                                    color: Colors.red.withValues(
+                                      alpha: 0.2 * (1.0 - progress),
+                                    ),
                                     borderStrokeWidth: 2,
-                                    borderColor: Colors.red
-                                        .withValues(alpha: 0.5 * (1.0 - progress)),
+                                    borderColor: Colors.red.withValues(
+                                      alpha: 0.5 * (1.0 - progress),
+                                    ),
                                     useRadiusInMeter: true,
                                     radius: 5000 * progress, // up to 5km
                                   ),
@@ -470,24 +475,26 @@ class _MapScreenState extends State<MapScreen>
                             animation: _pulseAnimation,
                             builder: (context, child) {
                               return Opacity(
-                                opacity: 0.3 +
-                                    ((_pulseAnimation.value - 1.0) * 1.4),
+                                opacity:
+                                    0.3 + ((_pulseAnimation.value - 1.0) * 1.4),
                                 child: PolylineLayer(
                                   polylines: _activeSOS!.volunteerLocations
-                                      .map((vl) => Polyline(
-                                            points: [
-                                              LatLng(vl.latitude, vl.longitude),
-                                              LatLng(
-                                                _activeSOS!.latitude,
-                                                _activeSOS!.longitude,
-                                              ),
-                                            ],
-                                            color: const Color(0xFF22C55E),
-                                            strokeWidth: 4,
-                                            pattern: StrokePattern.dashed(
-                                              segments: const [10.0, 10.0],
+                                      .map(
+                                        (vl) => Polyline(
+                                          points: [
+                                            LatLng(vl.latitude, vl.longitude),
+                                            LatLng(
+                                              _activeSOS!.latitude,
+                                              _activeSOS!.longitude,
                                             ),
-                                          ))
+                                          ],
+                                          color: const Color(0xFF22C55E),
+                                          strokeWidth: 4,
+                                          pattern: StrokePattern.dashed(
+                                            segments: const [10.0, 10.0],
+                                          ),
+                                        ),
+                                      )
                                       .toList(),
                                 ),
                               );
@@ -545,8 +552,9 @@ class _MapScreenState extends State<MapScreen>
                                     scale: _pulseAnimation.value,
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF3B82F6)
-                                            .withValues(alpha: 0.3),
+                                        color: const Color(
+                                          0xFF3B82F6,
+                                        ).withValues(alpha: 0.3),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Center(
@@ -557,10 +565,15 @@ class _MapScreenState extends State<MapScreen>
                                             color: const Color(0xFF3B82F6),
                                             shape: BoxShape.circle,
                                             border: Border.all(
-                                                color: Colors.white, width: 2),
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
                                           ),
-                                          child: const Icon(Icons.crisis_alert,
-                                              color: Colors.white, size: 14),
+                                          child: const Icon(
+                                            Icons.crisis_alert,
+                                            color: Colors.white,
+                                            size: 14,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -580,30 +593,37 @@ class _MapScreenState extends State<MapScreen>
                                     animation: _pulseAnimation,
                                     builder: (context, child) =>
                                         Transform.scale(
-                                      scale: _pulseAnimation.value,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF22C55E)
-                                              .withValues(alpha: 0.3),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Center(
+                                          scale: _pulseAnimation.value,
                                           child: Container(
-                                            width: 28,
-                                            height: 28,
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF22C55E),
+                                              color: const Color(
+                                                0xFF22C55E,
+                                              ).withValues(alpha: 0.3),
                                               shape: BoxShape.circle,
-                                              border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 2),
                                             ),
-                                            child: const Icon(Icons.two_wheeler,
-                                                color: Colors.white, size: 16),
+                                            child: Center(
+                                              child: Container(
+                                                width: 28,
+                                                height: 28,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                    0xFF22C55E,
+                                                  ),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: Colors.white,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.two_wheeler,
+                                                  color: Colors.white,
+                                                  size: 16,
+                                                ),
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ),
                                   ),
                                 ),
                               ),
@@ -616,42 +636,47 @@ class _MapScreenState extends State<MapScreen>
                               child: AnimatedBuilder(
                                 animation: _pulseAnimation,
                                 builder: (context, child) {
-                                  final isSOSActive =
-                                      user.isAvailableForMission ==
-                                      false; // simplification
-                                  final markerColor = isSOSActive
+                                  final isTransmitting =
+                                      _activeSOS != null ||
+                                      _activeMission != null;
+                                  final markerColor = (_activeSOS != null)
                                       ? const Color(0xFFEF4444)
                                       : colors.primary;
-                                  return Transform.scale(
-                                    scale: _pulseAnimation.value,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: markerColor.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                      ),
-                                      child: Center(
-                                        child: Container(
-                                          width: 24,
-                                          height: 24,
-                                          decoration: BoxDecoration(
-                                            color: markerColor,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 2,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.person,
-                                            color: Colors.white,
-                                            size: 14,
-                                          ),
-                                        ),
+
+                                  Widget marker = Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: markerColor,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
                                       ),
                                     ),
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
                                   );
+
+                                  if (isTransmitting) {
+                                    return Transform.scale(
+                                      scale: _pulseAnimation.value,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: markerColor.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                        ),
+                                        child: Center(child: marker),
+                                      ),
+                                    );
+                                  }
+
+                                  return Center(child: marker);
                                 },
                               ),
                             ),
