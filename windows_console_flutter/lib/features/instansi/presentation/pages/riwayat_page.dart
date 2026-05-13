@@ -12,21 +12,24 @@ class RiwayatPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return DefaultTabController(
       length: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TabBar(
-            labelColor: Color(0xFFFF7418),
-            unselectedLabelColor: Colors.white54,
-            indicatorColor: Color(0xFFFF7418),
-            tabs: [
-              Tab(text: 'Riwayat SOS'),
-              Tab(text: 'Riwayat Laporan'),
+          TabBar(
+            labelColor: colors.primary,
+            unselectedLabelColor: colors.onSurfaceVariant,
+            indicatorColor: colors.primary,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            tabs: const [
+              Tab(text: 'RIWAYAT SOS'),
+              Tab(text: 'RIWAYAT LAPORAN'),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Expanded(
             child: TabBarView(
               children: [
@@ -184,47 +187,46 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
     required List<T> items,
     required ValueChanged<T?> onChanged,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
-      width: 180,
-      margin: const EdgeInsets.only(right: 12, bottom: 12),
+      width: 200,
+      margin: const EdgeInsets.only(right: 16, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
-            style: const TextStyle(color: Colors.white54, fontSize: 11),
+            label.toUpperCase(),
+            style: TextStyle(
+              color: colors.onSurfaceVariant,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           DropdownButtonFormField<T>(
-            initialValue: value,
+            value: value,
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.white24),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.outline),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.white24),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.outline),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFFF7418)),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.primary),
               ),
-              fillColor: const Color(0xFF1A2035),
               filled: true,
+              fillColor: colors.surface,
             ),
-            dropdownColor: const Color(0xFF1A2035),
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-            items: items
-                .map(
-                  (e) => DropdownMenuItem(value: e, child: Text(e.toString())),
-                )
-                .toList(),
+            dropdownColor: colors.surface,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.toString()))).toList(),
             onChanged: onChanged,
           ),
         ],
@@ -315,46 +317,41 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                 )
               : ListView.builder(
                   itemCount: _filteredIncidents.length,
+                  padding: const EdgeInsets.only(right: 16),
                   itemBuilder: (context, index) {
                     final inc = _filteredIncidents[index];
                     return Card(
-                      color: const Color(0xFF1E293B),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      margin: const EdgeInsets.only(bottom: 16),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.all(16),
+                        contentPadding: const EdgeInsets.all(20),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.orange.withValues(alpha: 0.1),
+                          radius: 24,
+                          child: const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+                        ),
                         title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               inc.typeLabel,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
+                            const Spacer(),
                             _StatusBadge(status: inc.status),
                           ],
                         ),
                         subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Row(
                             children: [
+                              const Icon(Icons.person_outline, size: 14, color: Colors.white54),
+                              const SizedBox(width: 6),
+                              Text(inc.reporterName, style: const TextStyle(color: Colors.white70)),
+                              const SizedBox(width: 16),
+                              const Icon(Icons.access_time, size: 14, color: Colors.white54),
+                              const SizedBox(width: 6),
                               Text(
-                                'Pelapor: ${inc.reporterName} (${inc.reporterPhone})',
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Waktu Laporan: ${DateFormat('dd MMM yyyy, HH:mm').format(inc.createdAt)}',
-                                style: const TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
-                                ),
+                                DateFormat('dd MMM yyyy, HH:mm').format(inc.createdAt),
+                                style: const TextStyle(color: Colors.white54, fontSize: 12),
                               ),
                             ],
                           ),
@@ -497,47 +494,46 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
     required List<T> items,
     required ValueChanged<T?> onChanged,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
-      width: 180,
-      margin: const EdgeInsets.only(right: 12, bottom: 12),
+      width: 200,
+      margin: const EdgeInsets.only(right: 16, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
-            style: const TextStyle(color: Colors.white54, fontSize: 11),
+            label.toUpperCase(),
+            style: TextStyle(
+              color: colors.onSurfaceVariant,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           DropdownButtonFormField<T>(
-            initialValue: value,
+            value: value,
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.white24),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.outline),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.white24),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.outline),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFFF7418)),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.primary),
               ),
-              fillColor: const Color(0xFF1A2035),
               filled: true,
+              fillColor: colors.surface,
             ),
-            dropdownColor: const Color(0xFF1A2035),
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-            items: items
-                .map(
-                  (e) => DropdownMenuItem(value: e, child: Text(e.toString())),
-                )
-                .toList(),
+            dropdownColor: colors.surface,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.toString()))).toList(),
             onChanged: onChanged,
           ),
         ],
@@ -720,46 +716,42 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color;
-    String text;
-    switch (status) {
-      case 'resolved':
-        color = Colors.green;
-        text = 'SELESAI';
-        break;
-      case 'false_alarm':
-        color = Colors.orange;
-        text = 'FALSE ALARM';
-        break;
-      case 'cancelled':
-      case 'canceled':
-        color = Colors.red;
-        text = 'DIBATALKAN';
-        break;
-      case 'rejected':
-        color = Colors.red;
-        text = 'DITOLAK';
-        break;
-      default:
-        color = Colors.grey;
-        text = status.toUpperCase();
-    }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        color: _getColor(status).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _getColor(status).withValues(alpha: 0.3)),
       ),
       child: Text(
-        text,
+        _getText(status),
         style: TextStyle(
-          color: color,
+          color: _getColor(status),
           fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
         ),
       ),
     );
+  }
+
+  Color _getColor(String status) {
+    return switch (status) {
+      'resolved' => Colors.greenAccent,
+      'false_alarm' => Colors.orangeAccent,
+      'cancelled' || 'canceled' || 'rejected' => Colors.redAccent,
+      _ => Colors.grey,
+    };
+  }
+
+  String _getText(String status) {
+    return switch (status) {
+      'resolved' => 'SELESAI',
+      'false_alarm' => 'FALSE ALARM',
+      'cancelled' || 'canceled' => 'DIBATALKAN',
+      'rejected' => 'DITOLAK',
+      _ => status.toUpperCase(),
+    };
   }
 }
 

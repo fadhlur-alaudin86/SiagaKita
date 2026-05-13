@@ -478,10 +478,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final user = UserModel.currentUser.value;
         final updatedUser = user.copyWith(phoneNumber: phoneNumber);
         await UserService.updateProfile(widget.accessToken, updatedUser);
-        
+
         // Refresh global state untuk mendapatkan status isPhoneVerified terbaru
         await UserService.refreshCurrentUser(widget.accessToken);
-        
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -607,7 +607,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            (user.name.isNotEmpty ? user.name : 'Pengguna'.tr(context)) +
+                            (user.name.isNotEmpty
+                                    ? user.name
+                                    : 'Pengguna'.tr(context)) +
                                 (user.age != null
                                     ? ' (${user.age} ${'Tahun'.tr(context)})'
                                     : ''),
@@ -1310,7 +1312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                   icon: const Icon(Icons.logout, color: Colors.red),
                   label: Text(
-                    'Keluar Aplikasi'.tr(context),
+                    'Keluar'.tr(context),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.red,

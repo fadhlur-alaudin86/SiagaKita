@@ -15,7 +15,7 @@ class SiagaKitaConsoleApp extends StatelessWidget {
     return MaterialApp(
       title: 'SiagaKita Console',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
+      theme: AppTheme.dark(),
       home: const _SplashRouter(),
     );
   }

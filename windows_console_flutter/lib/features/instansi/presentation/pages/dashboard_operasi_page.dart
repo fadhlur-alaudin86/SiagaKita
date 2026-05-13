@@ -65,151 +65,146 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
 
   @override
   Widget build(BuildContext context) {
+    // final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     if (_loading) return const Center(child: CircularProgressIndicator());
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── KPI Cards ────────────────────────────────────────────────────────
-        Row(
-          children: [
-            _KpiCard(
-              label: 'SOS Aktif',
-              value: '${_recentSOS.length}',
-              icon: Icons.sensors,
-              color: Colors.red,
-              pulse: _recentSOS.isNotEmpty,
-            ),
-            const SizedBox(width: 16),
-            _KpiCard(
-              label: 'Total Diselesaikan',
-              value: '${_stats.totalResolved}',
-              icon: Icons.check_circle_outline,
-              color: Colors.green,
-            ),
-            const SizedBox(width: 16),
-            _KpiCard(
-              label: 'Avg Respons',
-              value: '${_stats.avgResponseMinutes.toStringAsFixed(1)} mnt',
-              icon: Icons.timer_outlined,
-              color: Colors.blue,
-            ),
-            const SizedBox(width: 16),
-            _KpiCard(
-              label: 'False Alarm',
-              value: '${_stats.falseAlarmRate.toStringAsFixed(1)}%',
-              icon: Icons.warning_amber_outlined,
-              color: Colors.orange,
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(right: 16, bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── KPI Cards ────────────────────────────────────────────────────────
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return GridView.count(
+                crossAxisCount: 4,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                shrinkWrap: true,
+                childAspectRatio: 1.6,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _KpiCard(
+                    label: 'SOS AKTIF',
+                    value: '${_recentSOS.length}',
+                    icon: Icons.sensors,
+                    color: Colors.redAccent,
+                    pulse: _recentSOS.isNotEmpty,
+                  ),
+                  _KpiCard(
+                    label: 'TOTAL DISELESAIKAN',
+                    value: '${_stats.totalResolved}',
+                    icon: Icons.check_circle_rounded,
+                    color: Colors.greenAccent,
+                  ),
+                  _KpiCard(
+                    label: 'RATA-RATA RESPONS',
+                    value:
+                        '${_stats.avgResponseMinutes.toStringAsFixed(1)} mnt',
+                    icon: Icons.timer_outlined,
+                    color: Colors.blueAccent,
+                  ),
+                  _KpiCard(
+                    label: 'FALSE ALARM RATE',
+                    value: '${_stats.falseAlarmRate.toStringAsFixed(1)}%',
+                    icon: Icons.warning_amber_rounded,
+                    color: Colors.orangeAccent,
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
 
-        // ── Bottom Panels ─────────────────────────────────────────────────────
-        Expanded(
-          child: Row(
+          // ── Bottom Panels ─────────────────────────────────────────────────────
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // SOS list terbaru
               Expanded(
                 flex: 5,
                 child: Card(
-                  color: const Color(0xFF1A2035),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         child: Row(
                           children: [
                             const Icon(
                               Icons.sensors,
-                              color: Colors.red,
-                              size: 18,
+                              color: Colors.redAccent,
+                              size: 20,
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'SOS Terbaru',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            const SizedBox(width: 12),
+                            Text('SOS Terbaru', style: textTheme.titleMedium),
                             const Spacer(),
                             if (_recentSOS.isNotEmpty)
-                              GestureDetector(
-                                onTap: AudioService.stop,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
+                              FilledButton.icon(
+                                onPressed: AudioService.stop,
+                                icon: const Icon(Icons.volume_off, size: 16),
+                                label: const Text('Hentikan Alarm'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.red.withValues(
+                                    alpha: 0.1,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(99),
-                                    border: Border.all(
-                                      color: Colors.red.withValues(alpha: 0.4),
+                                  foregroundColor: Colors.redAccent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    side: BorderSide(
+                                      color: Colors.red.withValues(alpha: 0.2),
                                     ),
-                                  ),
-                                  child: const Row(
-                                    children: [
-                                      Icon(
-                                        Icons.volume_off,
-                                        color: Colors.red,
-                                        size: 14,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Matikan Alarm',
-                                        style: TextStyle(
-                                          color: Colors.red,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ),
                               ),
                           ],
                         ),
                       ),
-                      const Divider(color: Colors.white12, height: 1),
-                      Expanded(
+                      const Divider(height: 1),
+                      SizedBox(
+                        height: 400,
                         child: _recentSOS.isEmpty
-                            ? const Center(
+                            ? Center(
                                 child: Text(
-                                  'Tidak ada SOS aktif 🟢',
-                                  style: TextStyle(color: Colors.white38),
+                                  'Sistem Terpantau Aman 🟢',
+                                  style: textTheme.bodySmall,
                                 ),
                               )
                             : ListView.separated(
-                                itemCount: _recentSOS.length,
-                                separatorBuilder: (context, index) => const Divider(
-                                  color: Colors.white10,
-                                  height: 1,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
                                 ),
+                                itemCount: _recentSOS.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(indent: 70),
                                 itemBuilder: (context, i) {
                                   final inc = _recentSOS[i];
                                   return ListTile(
-                                    leading: const Icon(
-                                      Icons.warning_amber_rounded,
-                                      color: Colors.red,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 4,
+                                    ),
+                                    leading: CircleAvatar(
+                                      backgroundColor: Colors.red.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      child: const Icon(
+                                        Icons.warning_amber_rounded,
+                                        color: Colors.redAccent,
+                                        size: 20,
+                                      ),
                                     ),
                                     title: Text(
                                       inc.typeLabel,
                                       style: const TextStyle(
-                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     subtitle: Text(
-                                      inc.timeAgo,
-                                      style: const TextStyle(
-                                        color: Colors.white54,
-                                        fontSize: 12,
-                                      ),
+                                      'Dilaporkan ${inc.timeAgo}',
+                                      style: textTheme.bodySmall,
                                     ),
                                     trailing: _TrustBadge(
                                       label: inc.trustLabel,
@@ -223,44 +218,69 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 24),
 
               // Pie Chart distribusi
               Expanded(
                 flex: 4,
                 child: Card(
-                  color: const Color(0xFF1A2035),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Distribusi Tipe SOS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: textTheme.titleMedium,
                         ),
-                        const SizedBox(height: 16),
-                        Expanded(
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          height: 300,
                           child: _stats.byType.isEmpty
-                              ? const Center(
+                              ? Center(
                                   child: Text(
-                                    'Belum ada data',
-                                    style: TextStyle(color: Colors.white38),
+                                    'Belum ada data statistik',
+                                    style: textTheme.bodySmall,
                                   ),
                                 )
                               : PieChart(
                                   PieChartData(
-                                    sectionsSpace: 2,
-                                    centerSpaceRadius: 30,
+                                    sectionsSpace: 4,
+                                    centerSpaceRadius: 60,
                                     sections: _buildSections(),
                                   ),
                                 ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Legend sederhana
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 8,
+                          children: _stats.byType.keys.map((k) {
+                            final idx = _stats.byType.keys.toList().indexOf(k);
+                            const pieColors = [
+                              Colors.redAccent,
+                              Colors.blueAccent,
+                              Colors.orangeAccent,
+                              Colors.purpleAccent,
+                              Colors.tealAccent,
+                            ];
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: pieColors[idx % pieColors.length],
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(k, style: const TextStyle(fontSize: 12)),
+                              ],
+                            );
+                          }).toList(),
                         ),
                       ],
                     ),
@@ -269,18 +289,18 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   List<PieChartSectionData> _buildSections() {
-    const colors = [
-      Colors.red,
-      Colors.blue,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
+    const pieColors = [
+      Colors.redAccent,
+      Colors.blueAccent,
+      Colors.orangeAccent,
+      Colors.purpleAccent,
+      Colors.tealAccent,
     ];
     final entries = _stats.byType.entries.toList();
     final total = entries.fold(0, (s, e) => s + e.value);
@@ -288,11 +308,11 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
       final pct = total == 0 ? 0.0 : e.value.value / total * 100;
       return PieChartSectionData(
         value: e.value.value.toDouble(),
-        color: colors[e.key % colors.length],
+        color: pieColors[e.key % pieColors.length],
         title: '${pct.toStringAsFixed(0)}%',
-        radius: 70,
+        radius: 40,
         titleStyle: const TextStyle(
-          fontSize: 10,
+          fontSize: 12,
           color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
@@ -319,41 +339,67 @@ class _KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    final textTheme = Theme.of(context).textTheme;
+    return Card(
       child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A2035),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: pulse ? color : color.withValues(alpha: 0.2),
-            width: pulse ? 1.5 : 1,
-          ),
-        ),
+        padding: const EdgeInsets.all(24),
+        decoration: pulse
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
+              )
+            : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 20),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const Spacer(),
+                if (pulse)
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.5),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             Text(
               value,
-              style: TextStyle(
+              style: textTheme.displaySmall?.copyWith(
                 color: color,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
+                fontSize: 32,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+              style: textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8,
+              ),
             ),
           ],
         ),
@@ -369,28 +415,29 @@ class _TrustBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (label) {
-      'verified' => Colors.green,
-      'unverified' => Colors.red,
-      _ => Colors.orange,
+      'verified' => Colors.greenAccent,
+      'unverified' => Colors.redAccent,
+      _ => Colors.orangeAccent,
     };
     final text = switch (label) {
-      'verified' => '✓ Verified',
-      'unverified' => '⚠ Unverified',
-      _ => '~ Standard',
+      'verified' => 'VERIFIED',
+      'unverified' => 'UNVERIFIED',
+      _ => 'STANDARD',
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         text,
         style: TextStyle(
           color: color,
           fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
         ),
       ),
     );
