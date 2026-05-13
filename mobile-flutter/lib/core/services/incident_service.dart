@@ -123,7 +123,7 @@ class IncidentService {
   }) async {
     final response = await _req(
       () => http.post(
-        Uri.parse('$_baseUrl/incidents/$incidentId/cancel'),
+        Uri.parse('$_baseUrl/incidents/$incidentId/canceled'),
         headers: {'Authorization': 'Bearer $accessToken'},
       ),
       timeout: _sosTimeout,

@@ -280,7 +280,7 @@ class ReportService {
     try {
       final response = await http
           .post(
-            Uri.parse('$_baseUrl/reports/$reportId/cancel'),
+            Uri.parse('$_baseUrl/reports/$reportId/canceled'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $accessToken',
