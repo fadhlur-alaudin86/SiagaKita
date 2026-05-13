@@ -680,18 +680,42 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _onSelectIncidentType(String type) async {
-    _graceTimer?.cancel();
-    if (_pendingIncidentId == null) return;
-    try {
-      await IncidentService.updateType(
-        accessToken: widget.accessToken,
-        incidentId: _pendingIncidentId!,
-        incidentType: type,
-      );
-    } catch (_) {
-      /* silent */
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text('Konfirmasi Bantuan'.tr(context)),
+        content: Text(
+          'Apakah Anda yakin membutuhkan bantuan segera untuk tipe ini?'.tr(
+            context,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('TIDAK'.tr(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('YA, BUTUH BANTUAN'.tr(context)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (_pendingIncidentId == null) return;
+      try {
+        await IncidentService.updateType(
+          accessToken: widget.accessToken,
+          incidentId: _pendingIncidentId!,
+          incidentType: type,
+        );
+      } catch (_) {
+        /* silent */
+      }
+      _transitionToBroadcasting();
     }
-    _transitionToBroadcasting();
   }
 
   Future<void> _onGraceTimeout() async {
@@ -851,15 +875,16 @@ class _HomeScreenState extends State<HomeScreen>
 
                   Expanded(
                     child: Stack(
-                      alignment: Alignment.center,
                       children: [
-                        // ── SOS Button (Centered in the available space) ──
-                        SOSActionButton(
-                          isSOSActive: isSOSActive,
-                          tapCount: _tapCount,
-                          requiredTaps: _requiredTaps,
-                          primaryColor: primaryColor,
-                          onTap: isSOSActive ? _onCancelTap : _onSOSTap,
+                        Align(
+                          alignment: const Alignment(0, 0.45),
+                          child: SOSActionButton(
+                            isSOSActive: isSOSActive,
+                            tapCount: _tapCount,
+                            requiredTaps: _requiredTaps,
+                            primaryColor: primaryColor,
+                            onTap: isSOSActive ? _onCancelTap : _onSOSTap,
+                          ),
                         ),
 
                         // ── Active SOS status banner (Floating at the top of this area) ──
@@ -1189,7 +1214,7 @@ class _HomeScreenState extends State<HomeScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Panggilan SOS telah dibatalkan.'.tr(context)),
-            backgroundColor: const Color(0xFF50C878),
+            backgroundColor: Colors.green,
           ),
         );
       }
