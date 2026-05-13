@@ -293,80 +293,63 @@ class _HomeScreenState extends State<HomeScreen>
     _sosTransmitting = true;
     _startCountdownTimer();
 
-    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 10), (
-      _,
-    ) async {
-      if (_activeIncident == null || !mounted) return;
+    // SINKRONISASI: Alih-alih pakai timer sendiri, kita dengarkan LocationController.
+    // Setiap kali GPS refresh (10 detik sekali di Controller), kita kirim ke server.
+    LocationController.instance.position.addListener(_handlePositionChange);
+  }
 
+  void _stopLocationUpdates() {
+    _locationUpdateTimer?.cancel();
+    _locationUpdateTimer = null;
+    _statusCheckTimer?.cancel();
+    _statusCheckTimer = null;
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+    LocationController.instance.position.removeListener(_handlePositionChange);
+    LocationController.instance.stop();
+  }
+
+  Future<void> _handlePositionChange() async {
+    final pos = LocationController.instance.position.value;
+    if (pos == null || _activeIncident == null || !mounted) return;
+
+    // 1. Cek status SOS di server (sekaligus ambil update penangan)
+    try {
+      final active = await IncidentService.getActive(
+        accessToken: widget.accessToken,
+      );
+      if (!mounted) return;
+      if (active == null) {
+        _stopVibration();
+        _stopLocationUpdates();
+        setState(() => _activeIncident = null);
+        return;
+      }
       setState(() {
-        _nextUpdateCountdown = 10;
-        _sosTransmitting = true;
+        _activeIncident = active;
+        if (active.isBeingHandled) _stopVibration();
       });
+    } catch (_) {}
 
-      // 1. Cek apakah SOS masih aktif di server (sekaligus ambil status penangan terbaru)
-      try {
-        final active = await IncidentService.getActive(
-          accessToken: widget.accessToken,
-        );
-        if (!mounted) return;
-        if (active == null) {
-          _stopVibration();
-          _stopLocationUpdates();
-          setState(() => _activeIncident = null);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Status SOS telah diselesaikan oleh instansi.'.tr(context),
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-          return;
-        }
-        // Update activeIncident (termasuk status penangan terbaru)
-        if (mounted) {
-          setState(() {
-            _activeIncident = active;
-            _lastLocationUpdate = DateTime.now();
-          });
-          // Hentikan vibration jika ada yang handle
-          if (active.isBeingHandled) {
-            _stopVibration();
-          } else {
-            _startVibration();
-          }
-        }
-      } catch (_) {
-        if (mounted) setState(() => _sosTransmitting = false);
+    // 2. Kirim lokasi terbaru ke server
+    try {
+      await IncidentService.updateLocation(
+        accessToken: widget.accessToken,
+        incidentId: _activeIncident!.incidentId,
+        latitude: pos.lat,
+        longitude: pos.lng,
+      );
+      if (mounted) {
+        setState(() {
+          _lastLocationUpdate = DateTime.now();
+          _sosTransmitting = true;
+          _nextUpdateCountdown = 10;
+        });
+        _startCountdownTimer(); // Restart hitung mundur agar sinkron 10...0
       }
-
-      // 2. Kirim posisi GPS dari LocationController (tidak ada panggilan GPS duplikat)
-      final pos = LocationController.instance.position.value;
-      if (pos != null && _activeIncident != null) {
-        try {
-          await IncidentService.updateLocation(
-            accessToken: widget.accessToken,
-            incidentId: _activeIncident!.incidentId,
-            latitude: pos.lat,
-            longitude: pos.lng,
-          );
-          if (mounted) {
-            setState(() {
-              _lastLocationUpdate = DateTime.now();
-              _sosTransmitting = true;
-              // Reset countdown tepat saat update lokasi berhasil
-              _nextUpdateCountdown = 10;
-            });
-            // Restart countdown timer dari 10 agar sinkron
-            _startCountdownTimer();
-          }
-        } catch (_) {
-          if (mounted) {
-            setState(() => _sosTransmitting = false);
-          }
-        }
-      }
-    });
+    } catch (_) {
+      if (mounted) setState(() => _sosTransmitting = false);
+    }
   }
 
   /// Countdown timer 1 detik untuk menampilkan hitung mundur update lokasi.
@@ -380,15 +363,6 @@ class _HomeScreenState extends State<HomeScreen>
         }
       });
     });
-  }
-
-  void _stopLocationUpdates() {
-    _locationUpdateTimer?.cancel();
-    _locationUpdateTimer = null;
-    _statusCheckTimer?.cancel();
-    _statusCheckTimer = null;
-    _countdownTimer?.cancel();
-    _countdownTimer = null;
   }
 
   // ─── SOS Tap Logic (Send) ────────────────────────────────────────────────────
@@ -733,6 +707,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _transitionToBroadcasting() {
+    _graceTimer?.cancel(); // Fix: Hentikan getaran/timer grace period segera
     if (!mounted) return;
     final incidentId = _pendingIncidentId!;
     final newIncident = ActiveIncident(
