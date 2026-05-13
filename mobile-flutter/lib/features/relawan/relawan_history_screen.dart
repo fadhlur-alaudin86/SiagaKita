@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/incident_service.dart';
+import 'widgets/relawan_card_widgets.dart';
 
 class RelawanHistoryScreen extends StatefulWidget {
   final String accessToken;
@@ -88,99 +89,16 @@ class _RelawanHistoryScreenState extends State<RelawanHistoryScreen> {
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _missionHistory.length,
-        itemBuilder: (context, index) => _historyCard(
-          _missionHistory[index],
-          isDark,
-          primaryText,
-          secondaryText,
+        itemBuilder: (context, index) => MissionHistoryCard(
+          inc: _missionHistory[index],
+          isDark: isDark,
+          primaryText: primaryText,
+          secondaryText: secondaryText,
         ),
       ),
     );
   }
 
-  Widget _historyCard(
-    MissionHistory inc,
-    bool isDark,
-    Color primaryText,
-    Color secondaryText,
-  ) {
-    final statusColor = switch (inc.responseStatus) {
-      'completed' => const Color(0xFF22C55E),
-      'rejected' => const Color(0xFFEF4444),
-      'waiting_review' => const Color(0xFFF59E0B),
-      'canceled' => Colors.grey,
-      _ => const Color(0xFF3B82F6),
-    };
-    final statusLabel = switch (inc.responseStatus) {
-      'completed' => 'Selesai (+${inc.xpEarned} XP)',
-      'rejected' => 'Ditolak',
-      'waiting_review' => 'Menunggu Review',
-      'canceled' => 'Dibatalkan',
-      _ => inc.responseStatus,
-    };
-
-    const typeEmojis = {
-      'medical': '🚑',
-      'fire': '🔥',
-      'crime': '🚨',
-      'rescue': '🆘',
-      'accident': '🚗',
-      'disaster': '🌊',
-    };
-    final emoji = typeEmojis[inc.incidentType] ?? '⚠️';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.grey.shade200,
-        ),
-      ),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  inc.incidentType,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: primaryText,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  _formatDate(inc.acceptedAt),
-                  style: TextStyle(color: secondaryText, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Text(
-              statusLabel,
-              style: TextStyle(
-                color: statusColor,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _emptyPlaceholder(
     IconData icon,
@@ -230,14 +148,5 @@ class _RelawanHistoryScreenState extends State<RelawanHistoryScreen> {
         ),
       ),
     );
-  }
-
-  String _formatDate(String isoStr) {
-    try {
-      final dt = DateTime.parse(isoStr).toLocal();
-      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}.${dt.minute.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return isoStr;
-    }
   }
 }

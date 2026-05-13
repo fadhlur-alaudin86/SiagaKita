@@ -13,14 +13,14 @@ import 'package:uuid/uuid.dart';
 import 'package:vibration/vibration.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import '../../core/localization/app_localization.dart';
-import '../../core/models/user_model.dart';
-import '../../core/services/connectivity_service.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_controller.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/mobile_ws_service.dart';
 import '../../core/services/user_service.dart';
 import 'report_screen.dart';
+import 'widgets/home_widgets.dart';
+import 'widgets/sos_active_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accessToken;
@@ -64,7 +64,6 @@ class _HomeScreenState extends State<HomeScreen>
   // ─── Active SOS State ───────────────────────────────────────────────────────
   ActiveIncident? _activeIncident;
   bool _showSOSSentBanner = false;
-  String? _lastTriggerMethod;
   Timer? _locationUpdateTimer;
   Timer? _statusCheckTimer; // polling cepat (10 detik) khusus saat SOS aktif
   bool _isLoadingActiveIncident = true;
@@ -827,740 +826,56 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  void _showSOSBannedDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.block, color: Colors.red),
-            const SizedBox(width: 8),
-            Text('SOS Dinonaktifkan'.tr(context)),
-          ],
-        ),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Tutup'.tr(context)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Badge kecil yang menampilkan status upload SOS ke server.
-  Widget _buildUploadStatusBadge() {
-    if (_sosUploadStatus == 'idle') return const SizedBox.shrink();
-    final isSent = _sosUploadStatus == 'sent';
-    final text = isSent ? 'Terkirim ✓'.tr(context) : 'Mengirim...'.tr(context);
-    final color = isSent ? Colors.green : Colors.orange;
-    final icon = isSent ? Icons.check_circle_outline : Icons.sync;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: color),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── Cancel Active SOS ───────────────────────────────────────────────────────
-
-  void _showCancelConfirmationDialog() {
-    final isBeingHandled = _activeIncident?.isBeingHandled ?? false;
-
-    if (isBeingHandled) {
-      // Dialog peringatan keras — ada yang sudah merespons
-      final handlerDesc = StringBuffer();
-      if (_activeIncident!.isHandledByAgency) {
-        handlerDesc.write(_activeIncident!.agencyName ?? 'Instansi');
-      }
-      if (_activeIncident!.isHandledByVolunteer) {
-        if (handlerDesc.isNotEmpty) handlerDesc.write(' dan ');
-        if (_activeIncident!.volunteerNames.isNotEmpty) {
-          handlerDesc.write(
-            _activeIncident!.volunteerNames
-                .map((n) => '$n (relawan)')
-                .join(', '),
-          );
-        } else {
-          handlerDesc.write('Relawan');
-        }
-      }
-
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: Colors.red.shade900,
-          title: Row(
-            children: [
-              const Icon(Icons.warning_rounded, color: Colors.yellow),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'SOS Sedang Ditangani!'.tr(context),
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            '$handlerDesc sedang merespons dan menuju lokasi Anda. '
-            'Membatalkan SOS sekarang dapat membingungkan tim penyelamat dan '
-            'berakibat Anda tidak mendapat bantuan.\n\n'
-            'Yakin ingin batalkan?',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'TIDAK, JAGA SOS'.tr(context),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            OutlinedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _executeCancelSOS();
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.white54),
-              ),
-              child: Text(
-                'BATALKAN TETAP'.tr(context),
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      // Dialog konfirmasi normal
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text('Batalkan SOS?'.tr(context)),
-          content: Text(
-            'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?'
-                .tr(context),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'TIDAK'.tr(context),
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _executeCancelSOS();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: Text('YA, BATALKAN'.tr(context)),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  Future<void> _executeCancelSOS() async {
-    setState(() => _tapCount = 0);
-
-    // Hentikan retry loop jika masih berjalan
-    _sosRetryTimer?.cancel();
-
-    final targetId = _activeIncident?.incidentId ?? _pendingIncidentId;
-    if (targetId == null) return;
-
-    if (_sosUploadStatus == 'sending') {
-      _cancelledLocalId = targetId;
-    } else {
-      try {
-        await IncidentService.cancelSOS(
-          accessToken: widget.accessToken,
-          incidentId: targetId,
-        );
-      } on SOSConflictException catch (e) {
-        if (!mounted) return;
-        _stopLocationUpdates();
-        setState(() {
-          _activeIncident = null;
-          _sosPhase = 'idle';
-          _sosUploadStatus = 'idle';
-          _tapCount = 0;
-          _cancelledLocalId = null;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message.tr(context)),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-        return;
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal membatalkan SOS: $e'.tr(context)),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
-        return; // jangan clear state jika gagal di server (biar bisa dicoba lagi)
-      }
-    }
-
-    if (!mounted) return;
-    _stopVibration();
-    _stopLocationUpdates();
-    setState(() {
-      _activeIncident = null;
-      _pendingIncidentId = null;
-      _sosPhase = 'idle';
-      _sosUploadStatus = 'idle';
-      _tapCount = 0;
-      _cancelledLocalId = null;
-      _nextUpdateCountdown = 10;
-      _lastLocationUpdate = null;
-      _sosTransmitting = true;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('SOS berhasil dibatalkan.'.tr(context)),
-        backgroundColor: Colors.green.shade700,
-      ),
-    );
-  }
-
-  Future<void> _call112() async {
-    final Uri phoneUri = Uri(scheme: 'tel', path: '112');
-    try {
-      if (await canLaunchUrl(phoneUri)) {
-        await launchUrl(phoneUri);
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Tidak dapat membuka telepon.'.tr(context))),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${'Gagal menelpon 112:'.tr(context)} $e')),
-      );
-    }
-  }
-
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final primaryColor = Theme.of(context).primaryColor;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final isSOSActive = _activeIncident != null;
+    final primaryColor =
+        isDarkMode ? Colors.orangeAccent : const Color(0xFFFF6B00);
+    final isSOSActive = _activeIncident != null || _sosPhase != 'idle';
 
     return Scaffold(
       backgroundColor: colors.surface,
       body: SafeArea(
         child: Stack(
           children: [
+            // Main Content
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 32.0,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 children: [
                   // ── Header ──────────────────────────────────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const SizedBox(
-                        width: 40,
-                      ), // placeholder to balance header
-                      Expanded(
-                        child: ValueListenableBuilder<UserModel>(
-                          valueListenable: UserModel.currentUser,
-                          builder: (context, user, child) {
-                            return Column(
-                              children: [
-                                Text(
-                                  user.name,
-                                  style: TextStyle(
-                                    color: isSOSActive
-                                        ? Colors.red
-                                        : primaryColor,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                ValueListenableBuilder<bool>(
-                                  valueListenable: ConnectivityService.isOnline,
-                                  builder: (_, online, child) {
-                                    final statusText = isSOSActive
-                                        ? 'SOS AKTIF'.tr(context)
-                                        : online
-                                        ? 'Online'.tr(context)
-                                        : 'Offline'.tr(context);
-                                    final statusColor = isSOSActive
-                                        ? Colors.red
-                                        : online
-                                        ? Colors.green
-                                        : Colors.grey;
-                                    return Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: statusColor,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          statusText,
-                                          style: TextStyle(
-                                            color: statusColor,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          '• ${user.roleLabel.tr(context)}',
-                                          style: TextStyle(
-                                            color: colors.onSurface.withValues(
-                                              alpha: 0.6,
-                                            ),
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  isSOSActive
-                                      ? 'SOS AKTIF - Ketuk 3× untuk batalkan'
-                                            .tr(context)
-                                      : 'Ketuk 3× untuk mengirim SOS'.tr(
-                                          context,
-                                        ),
-                                  style: TextStyle(
-                                    color: isSOSActive
-                                        ? Colors.red.withValues(alpha: 0.8)
-                                        : colors.onSurface.withValues(
-                                            alpha: 0.6,
-                                          ),
-                                    fontSize: 11,
-                                    fontWeight: isSOSActive
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 40,
-                      ), // placeholder to balance header
-                    ],
+                  HomeHeader(
+                    isSOSActive: isSOSActive,
+                    primaryColor: primaryColor,
                   ),
 
                   // ── Active SOS status banner ─────────────────────────────────
-                  if (isSOSActive && !_isLoadingActiveIncident) ...[
+                  if (isSOSActive &&
+                      !_isLoadingActiveIncident &&
+                      _activeIncident != null) ...[
                     const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Baris 1: ikon + label + indikator online
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.emergency_share,
-                                color: Colors.red,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'SOS AKTIF'.tr(context),
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              // Indikator Transmisi SOS (Online/Kehilangan Sinyal)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: _sosTransmitting
-                                          ? Colors.greenAccent
-                                          : Colors.grey,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _sosTransmitting
-                                        ? 'Transmitting'.tr(context)
-                                        : 'Signal Lost'.tr(context),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: _sosTransmitting
-                                          ? Colors.greenAccent
-                                          : Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 8),
-                              // Badge status upload
-                              _buildUploadStatusBadge(),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          // Baris 2: Countdown & last update
-                          RepaintBoundary(
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.timer_outlined,
-                                  size: 12,
-                                  color: Colors.red,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Next update: ${_nextUpdateCountdown}s'.tr(
-                                    context,
-                                  ),
-                                  style: TextStyle(
-                                    color: Colors.red.withValues(alpha: 0.8),
-                                    fontSize: 10,
-                                  ),
-                                ),
-                                if (_lastLocationUpdate != null) ...[
-                                  const SizedBox(width: 12),
-                                  const Icon(
-                                    Icons.location_on_outlined,
-                                    size: 12,
-                                    color: Colors.red,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Last: ${_lastLocationUpdate!.hour.toString().padLeft(2, '0')}:${_lastLocationUpdate!.minute.toString().padLeft(2, '0')}:${_lastLocationUpdate!.second.toString().padLeft(2, '0')}',
-                                    style: TextStyle(
-                                      color: Colors.red.withValues(alpha: 0.8),
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          // Baris 3: Handler Status (NEW)
-                          if (_activeIncident!.isBeingHandled) ...[
-                            const SizedBox(height: 10),
-                            const Divider(
-                              color: Colors.red,
-                              thickness: 0.5,
-                              height: 1,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'BANTUAN SEDANG MENUJU LOKASI'.tr(context),
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                if (_activeIncident!.isHandledByAgency) ...[
-                                  _buildHandlerBadge(
-                                    icon: Icons.account_balance,
-                                    label: 'INSTANSI'.tr(context),
-                                    color: Colors.blue.shade700,
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                                if (_activeIncident!.isHandledByVolunteer) ...[
-                                  _buildHandlerBadge(
-                                    icon: Icons.person,
-                                    label: 'RELAWAN'.tr(context),
-                                    color: Colors.orange.shade800,
-                                  ),
-                                ],
-                              ],
-                            ),
-                            // Posisi relawan (update dari WS VOLUNTEER_LOCATION_UPDATE)
-                            if (_volunteerPosition != null) ...[
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.directions_walk,
-                                    size: 12,
-                                    color: Colors.orangeAccent,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      _volunteerPosition!.address != null
-                                          ? 'Relawan di: ${_volunteerPosition!.address}'
-                                          : 'Relawan: ${_volunteerPosition!.lat.toStringAsFixed(5)}, ${_volunteerPosition!.lng.toStringAsFixed(5)}',
-                                      style: const TextStyle(
-                                        color: Colors.orangeAccent,
-                                        fontSize: 10,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ],
-                      ),
+                    ActiveSOSBanner(
+                      activeIncident: _activeIncident!,
+                      sosTransmitting: _sosTransmitting,
+                      nextUpdateCountdown: _nextUpdateCountdown,
+                      lastLocationUpdate: _lastLocationUpdate,
+                      volunteerPosition: _volunteerPosition,
+                      uploadStatusBadgeBuilder: _buildUploadStatusBadge,
                     ),
                   ],
 
                   const Spacer(),
 
                   // ── SOS Button ────────────────────────────────────────────────
-                  Column(
-                    children: [
-                      GestureDetector(
-                        onTap: isSOSActive ? _onCancelTap : _onSOSTap,
-                        child: SizedBox(
-                          width: 250,
-                          height: 250,
-                          child: RepaintBoundary(
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // Outer progress ring (tap count)
-                                if (_tapCount > 0)
-                                  SizedBox(
-                                    width: 240,
-                                    height: 240,
-                                    child: CircularProgressIndicator(
-                                      value: _tapCount / _requiredTaps,
-                                      strokeWidth: 8,
-                                      backgroundColor:
-                                          (isSOSActive
-                                                  ? Colors.red
-                                                  : primaryColor)
-                                              .withValues(alpha: 0.15),
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        isSOSActive
-                                            ? Colors.red
-                                            : Colors.orangeAccent,
-                                      ),
-                                    ),
-                                  ),
-                                // Main SOS / Cancel Button
-                                AnimatedScale(
-                                  scale: _tapCount > 0 ? 0.96 : 1.0,
-                                  duration: const Duration(milliseconds: 80),
-                                  child: Container(
-                                    width: 220,
-                                    height: 220,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: RadialGradient(
-                                        colors: isSOSActive
-                                            ? [
-                                                Colors.red,
-                                                const Color(0xFF8B0000),
-                                              ]
-                                            : [
-                                                primaryColor,
-                                                const Color(0xFFCB5100),
-                                              ],
-                                      ),
-                                      border: Border.all(
-                                        color: (_tapCount > 0
-                                            ? (isSOSActive
-                                                  ? Colors.red
-                                                  : const Color(0xFFFFA265))
-                                            : (isDarkMode
-                                                  ? Colors.white.withValues(
-                                                      alpha: 0.2,
-                                                    )
-                                                  : (isSOSActive
-                                                            ? Colors.red
-                                                            : primaryColor)
-                                                        .withValues(alpha: 0.3))),
-                                        width: 8,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color:
-                                              (isSOSActive
-                                                      ? Colors.red
-                                                      : primaryColor)
-                                                  .withValues(
-                                                    alpha: _tapCount > 0
-                                                        ? 0.8
-                                                        : (isDarkMode
-                                                              ? 0.3
-                                                              : 0.6),
-                                                  ),
-                                          blurRadius: _tapCount > 0 ? 50 : 30,
-                                          spreadRadius: _tapCount > 0
-                                              ? 10
-                                              : (isDarkMode ? 5 : 10),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          isSOSActive
-                                              ? Icons.cancel_outlined
-                                              : Icons.error_outline,
-                                          color: Colors.white,
-                                          size: 60,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          isSOSActive
-                                              ? 'AKTIF'.tr(context)
-                                              : 'SOS',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 40,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                        Text(
-                                          isSOSActive
-                                              ? 'KETUK 3× BATALKAN'.tr(context)
-                                              : 'KETUK 3×'.tr(context),
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.9,
-                                            ),
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Tap count indicator dots
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(_requiredTaps, (i) {
-                          final filled = i < _tapCount;
-                          final dotColor = isSOSActive
-                              ? Colors.red
-                              : primaryColor;
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.symmetric(horizontal: 5),
-                            width: filled ? 14 : 10,
-                            height: filled ? 14 : 10,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: filled
-                                  ? dotColor
-                                  : colors.onSurface.withValues(alpha: 0.2),
-                              boxShadow: filled
-                                  ? [
-                                      BoxShadow(
-                                        color: dotColor.withValues(alpha: 0.5),
-                                        blurRadius: 6,
-                                      ),
-                                    ]
-                                  : [],
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 8),
-                      AnimatedOpacity(
-                        opacity: _tapCount > 0 ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          '$_tapCount/$_requiredTaps',
-                          style: TextStyle(
-                            color: isSOSActive ? Colors.red : primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
+                  SOSActionButton(
+                    isSOSActive: isSOSActive,
+                    tapCount: _tapCount,
+                    requiredTaps: _requiredTaps,
+                    primaryColor: primaryColor,
+                    onTap: isSOSActive ? _onCancelTap : _onSOSTap,
                   ),
 
                   const Spacer(),
@@ -1569,7 +884,11 @@ class _HomeScreenState extends State<HomeScreen>
                   Row(
                     children: [
                       Expanded(
-                        child: GestureDetector(
+                        child: ActionCard(
+                          icon: Icons.description_outlined,
+                          iconColor: colors.secondary,
+                          title: 'Pelaporan'.tr(context),
+                          subtitle: 'Kirim bukti & titik\nlokasi'.tr(context),
                           onTap: () {
                             Navigator.push(
                               context,
@@ -1580,161 +899,143 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             );
                           },
-                          child: _actionCard(
-                            colors: colors,
-                            isDarkMode: isDarkMode,
-                            icon: Icons.description_outlined,
-                            iconColor: colors.secondary,
-                            title: 'Pelaporan'.tr(context),
-                            subtitle: 'Kirim bukti & titik\nlokasi'.tr(context),
-                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: GestureDetector(
+                        child: ActionCard(
+                          icon: Icons.phone_in_talk,
+                          iconColor: const Color(0xFF22C55E),
+                          title: 'Call 112',
+                          subtitle: 'Panggilan darurat\nbebas pulsa'.tr(context),
                           onTap: _call112,
-                          child: _actionCard(
-                            colors: colors,
-                            isDarkMode: isDarkMode,
-                            icon: Icons.phone_in_talk,
-                            iconColor: Colors.red.shade700,
-                            title: 'Telepon 112'.tr(context),
-                            subtitle: 'Panggilan\ndarurat'.tr(context),
-                          ),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
 
-            // ── Grace Period Overlay (pilih tipe insiden) ──────────────────
+            // Grace Period Overlay
             if (_sosPhase == 'gracePeriod') _buildGracePeriodOverlay(colors),
 
-            // ── SOS Sent Banner ────────────────────────────────────────────────
-            if (_showSOSSentBanner)
-              Positioned(
-                top: 40,
-                left: 16,
-                right: 16,
-                child: TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 300),
-                  tween: Tween(begin: -60, end: 0),
-                  builder: (context, value, child) => Transform.translate(
-                    offset: Offset(0, value),
-                    child: child!,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF7418),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF7418).withValues(alpha: 0.4),
-                          blurRadius: 25,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'SINYAL SOS TERKIRIM!'.tr(context),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Bantuan sedang diarahkan ke lokasi Anda.'.tr(
-                            context,
-                          ),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 11,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        if (_lastTriggerMethod == 'timeout') ...[
-                          const SizedBox(height: 4),
-                          const Text(
-                            '(Terkirim otomatis - konfirmasi habis)',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            // SOS Sent Success Banner (Floating)
+            if (_showSOSSentBanner) _buildSOSSentBanner(),
           ],
         ),
       ),
     );
   }
 
-  // ─── Action Card helper ────────────────────────────────────────────────────
+  Widget _buildUploadStatusBadge() {
+    Color color = Colors.grey;
+    String label = 'Idle';
 
-  Widget _actionCard({
-    required ColorScheme colors,
-    required bool isDarkMode,
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-  }) {
+    switch (_sosUploadStatus) {
+      case 'sending':
+        color = Colors.orange;
+        label = 'Sending...'.tr(context);
+        break;
+      case 'sent':
+        color = Colors.green;
+        label = 'Sent'.tr(context);
+        break;
+      case 'failed':
+        color = Colors.red;
+        label = 'Retry...'.tr(context);
+        break;
+    }
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: isDarkMode
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                ),
-              ],
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(4),
       ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 8,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGracePeriodOverlay(ColorScheme colors) {
+    return Container(
+      color: Colors.black87,
+      width: double.infinity,
+      height: double.infinity,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: iconColor, size: 28),
-          ),
-          const SizedBox(height: 12),
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 80),
+          const SizedBox(height: 20),
           Text(
-            title,
-            style: TextStyle(
-              color: colors.onSurface,
-              fontWeight: FontWeight.bold,
+            'SOS AKAN DIKIRIM DALAM'.tr(context),
+            style: const TextStyle(
+              color: Colors.white,
               fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
             ),
           ),
-          const SizedBox(height: 4),
           Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.onSurface.withValues(alpha: 0.5),
-              fontSize: 10,
+            '$_graceCountdown',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 100,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Pilih tipe bantuan (opsional):'.tr(context),
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: [
+              _typeOption(Icons.medical_services, 'Medis', 'medical'),
+              _typeOption(Icons.local_fire_department, 'Kebakaran', 'fire'),
+              _typeOption(Icons.local_police, 'Kriminal', 'crime'),
+              _typeOption(Icons.minor_crash, 'Kecelakaan', 'accident'),
+              _typeOption(Icons.waves, 'Bencana', 'disaster'),
+            ],
+          ),
+          const SizedBox(height: 48),
+          TextButton.icon(
+            onPressed: () {
+              _graceTimer?.cancel();
+              _sosRetryTimer?.cancel();
+              setState(() {
+                _sosPhase = 'idle';
+                _pendingIncidentId = null;
+                _isTriggeringSOS = false;
+                _sosUploadStatus = 'idle';
+              });
+            },
+            icon: const Icon(Icons.close, color: Colors.white),
+            label: Text(
+              'BATALKAN SEKARANG'.tr(context),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.red.shade900,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
           ),
         ],
@@ -1742,167 +1043,71 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ─── Confirmation Dialog ────────────────────────────────────────────────────
+  Widget _typeOption(IconData icon, String label, String value) {
+    return GestureDetector(
+      onTap: () => _onSelectIncidentType(value),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Icon(icon, color: Colors.white, size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
 
-  // ─── Grace Period Overlay ─────────────────────────────────────────────────────
-
-  Widget _buildGracePeriodOverlay(ColorScheme colors) {
-    return Container(
-      color: const Color(0xFFCC0000),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top Text
-              const Text(
-                'SOS DIKIRIM',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                ),
+  Widget _buildSOSSentBanner() {
+    return Positioned(
+      top: 40,
+      left: 16,
+      right: 16,
+      child: TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 300),
+        tween: Tween(begin: -60, end: 0),
+        builder: (context, value, child) => Transform.translate(
+          offset: Offset(0, value),
+          child: child!,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFF7418),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF7418).withValues(alpha: 0.4),
+                blurRadius: 25,
+                offset: const Offset(0, 10),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Pilih jenis darurat (opsional)',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'SINYAL SOS TERKIRIM!'.tr(context),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Tidak memilih pun tidak apa-apa - bantuan tetap datang',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white54, fontSize: 11),
-              ),
-
-              // Safe Zone (Middle)
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AnimatedOpacity(
-                        opacity: _graceCountdown % 2 == 0 ? 1.0 : 0.6,
-                        duration: const Duration(milliseconds: 500),
-                        child: Text(
-                          'MENGIRIM SINYAL... (${_graceCountdown}s)',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: _graceCountdown / 10,
-                          minHeight: 8,
-                          backgroundColor: Colors.white24,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Thumb Zone (Bottom Third)
-              // Row 1: Medis, Kriminal
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildThumbButton(
-                      'MEDIS',
-                      Icons.medical_services,
-                      'medical',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildThumbButton(
-                      'KRIMINAL',
-                      Icons.warning_rounded,
-                      'crime',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Row 2: Kebakaran, Kecelakaan
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildThumbButton(
-                      'KEBAKARAN',
-                      Icons.local_fire_department,
-                      'fire',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildThumbButton(
-                      'KECELAKAAN',
-                      Icons.car_crash,
-                      'accident',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Row 3: Bencana Alam (Full Width)
-              _buildThumbButton('BENCANA ALAM', Icons.water_damage, 'disaster'),
-
-              const SizedBox(height: 32),
-
-              // Cancel Button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    _graceTimer?.cancel();
-
-                    if (_sosUploadStatus == 'sending') {
-                      _cancelledLocalId = _pendingIncidentId;
-                    } else {
-                      IncidentService.cancelSOS(
-                        accessToken: widget.accessToken,
-                        incidentId: _pendingIncidentId!,
-                      ).catchError((_) {});
-                    }
-
-                    setState(() {
-                      _sosPhase = 'idle';
-                      _pendingIncidentId = null;
-                      _isTriggeringSOS = false;
-                      _sosUploadStatus = 'idle';
-                      _graceCountdown = 10;
-                    });
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white54),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'BATALKAN SOS',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
+              Text(
+                'Bantuan sedang dikoordinasikan.'.tr(context),
+                style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ],
           ),
@@ -1911,71 +1116,35 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildThumbButton(String label, IconData icon, String value) {
-    return GestureDetector(
-      onTap: () => _showTypeConfirmDialog(label, value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 36, color: Colors.white),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _call112() async {
+    final uri = Uri.parse('tel:112');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 
-  void _showTypeConfirmDialog(String label, String value) {
+  void _showCancelConfirmationDialog() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF990000),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Konfirmasi Tipe Darurat',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+      builder: (ctx) => AlertDialog(
+        title: Text('Batalkan SOS?'.tr(context)),
         content: Text(
-          'Anda memilih: $label\n\nApakah ini jenis darurat yang tepat?',
-          style: const TextStyle(color: Colors.white70),
+          'Pastikan Anda sudah aman atau bantuan sudah tiba.'.tr(context),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('TIDAK', style: TextStyle(color: Colors.white54)),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('TIDAK'.tr(context)),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              _onSelectIncidentType(value);
+              Navigator.pop(ctx);
+              _cancelSOS();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFCC0000),
-            ),
-            child: const Text(
-              'YA, LANJUTKAN',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(
+              'YA, BATALKAN'.tr(context),
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -1983,30 +1152,62 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildHandlerBadge({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-            ),
+  Future<void> _cancelSOS() async {
+    if (_activeIncident == null && _pendingIncidentId == null) return;
+
+    final incidentId = _activeIncident?.incidentId ?? _pendingIncidentId;
+    if (incidentId == null) return;
+
+    try {
+      if (_sosUploadStatus == 'sending') {
+        _cancelledLocalId = _pendingIncidentId;
+      }
+
+      await IncidentService.cancelSOS(
+        accessToken: widget.accessToken,
+        incidentId: incidentId,
+      );
+
+      _stopVibration();
+      _stopLocationUpdates();
+
+      if (mounted) {
+        setState(() {
+          _activeIncident = null;
+          _sosPhase = 'idle';
+          _sosUploadStatus = 'idle';
+          _tapCount = 0;
+          _volunteerPosition = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Panggilan SOS telah dibatalkan.'.tr(context)),
+            backgroundColor: Colors.grey.shade800,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membatalkan SOS. Coba lagi.'.tr(context)),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showSOSBannedDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Akses Ditolak'.tr(context)),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
           ),
         ],
       ),
