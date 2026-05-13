@@ -259,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         content: Text(
           'Perubahan NIK membutuhkan verifikasi ulang oleh admin (1-3 hari kerja). '
-          'Status verifikasi saat ini akan direset ke "pending".\n\nApakah Anda ingin melanjutkan?',
+          'Status verifikasi saat ini akan direset ke "Menunggu Verifikasi".\n\nApakah Anda ingin melanjutkan?',
           style: const TextStyle(height: 1.5),
         ),
         actions: [
@@ -313,7 +313,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         content: Text(
           'Pengubahan nomor WhatsApp memerlukan verifikasi ulang melalui OTP. '
-          'Nomor baru tidak dapat digunakan sebelum terverifikasi.\n\nApakah Anda ingin melanjutkan?',
+          'Tingkat kepercayaan laporan Anda akan berkurang jika nomor belum diverifikasi.'
+          '\n\nApakah Anda ingin melanjutkan?',
           style: const TextStyle(height: 1.5),
         ),
         actions: [

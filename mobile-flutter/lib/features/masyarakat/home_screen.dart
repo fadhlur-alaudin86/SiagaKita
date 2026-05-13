@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 import 'package:vibration/vibration.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_controller.dart';
 import '../../core/services/location_service.dart';
@@ -151,6 +152,10 @@ class _HomeScreenState extends State<HomeScreen>
           _tapCount = 0;
           _volunteerPosition = null;
         });
+        // Sync ke global state
+        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+          isSOSActive: false,
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -427,6 +432,18 @@ class _HomeScreenState extends State<HomeScreen>
       _sosUploadStatus = 'sending';
     });
     _startGracePeriodCountdown();
+
+    // Constraint 2: Set global SOS status and turn off duty
+    final currentUser = UserModel.currentUser.value;
+    UserModel.currentUser.value = currentUser.copyWith(
+      isSOSActive: true,
+      isAvailableForMission: false,
+    );
+
+    // Kirim update availability ke server (background)
+    if (currentUser.isAvailableForMission) {
+      UserService.updateAvailability(widget.accessToken, false).catchError((_) {});
+    }
 
     // Ambil posisi GPS di background
     double lat = 0.0;
@@ -840,12 +857,22 @@ class _HomeScreenState extends State<HomeScreen>
                   const Spacer(flex: 6),
 
                   // ── SOS Button ────────────────────────────────────────────────
-                  SOSActionButton(
-                    isSOSActive: isSOSActive,
-                    tapCount: _tapCount,
-                    requiredTaps: _requiredTaps,
-                    primaryColor: primaryColor,
-                    onTap: isSOSActive ? _onCancelTap : _onSOSTap,
+                  ValueListenableBuilder<UserModel>(
+                    valueListenable: UserModel.currentUser,
+                    builder: (context, UserModel user, _) {
+                      final bool missionLocked = user.hasActiveMission;
+                      return SOSActionButton(
+                        isSOSActive: isSOSActive,
+                        tapCount: _tapCount,
+                        requiredTaps: _requiredTaps,
+                        primaryColor: primaryColor,
+                        onTap: isSOSActive ? _onCancelTap : _onSOSTap,
+                        isDisabled: missionLocked,
+                        disabledReason: missionLocked
+                            ? 'Selesaikan/batalkan misi yang sedang aktif'
+                            : null,
+                      );
+                    },
                   ),
 
                   const Spacer(flex: 4),
@@ -1183,6 +1210,10 @@ class _HomeScreenState extends State<HomeScreen>
           _tapCount = 0;
           _volunteerPosition = null;
         });
+        // Sync ke global state
+        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+          isSOSActive: false,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Panggilan SOS telah dibatalkan.'.tr(context)),

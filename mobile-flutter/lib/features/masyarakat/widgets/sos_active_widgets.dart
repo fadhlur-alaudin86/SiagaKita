@@ -8,6 +8,8 @@ class SOSActionButton extends StatelessWidget {
   final int requiredTaps;
   final Color primaryColor;
   final VoidCallback onTap;
+  final bool isDisabled;
+  final String? disabledReason;
 
   const SOSActionButton({
     super.key,
@@ -16,6 +18,8 @@ class SOSActionButton extends StatelessWidget {
     required this.requiredTaps,
     required this.primaryColor,
     required this.onTap,
+    this.isDisabled = false,
+    this.disabledReason,
   });
 
   @override
@@ -25,7 +29,7 @@ class SOSActionButton extends StatelessWidget {
     return Column(
       children: [
         GestureDetector(
-          onTap: onTap,
+          onTap: isDisabled ? null : onTap,
           child: SizedBox(
             width: 250,
             height: 250,
@@ -34,7 +38,7 @@ class SOSActionButton extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   // Outer progress ring (tap count)
-                  if (tapCount > 0)
+                  if (tapCount > 0 && !isDisabled)
                     SizedBox(
                       width: 240,
                       height: 240,
@@ -44,72 +48,99 @@ class SOSActionButton extends StatelessWidget {
                         backgroundColor: (isSOSActive ? Colors.red : primaryColor)
                             .withValues(alpha: 0.15),
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          isSOSActive ? Colors.red : primaryColor,
+                           isSOSActive ? Colors.red : primaryColor,
                         ),
                       ),
                     ),
                   // Main SOS / Cancel Button
                   AnimatedScale(
-                    scale: tapCount > 0 ? 0.96 : 1.0,
+                    scale: (tapCount > 0 && !isDisabled) ? 0.96 : 1.0,
                     duration: const Duration(milliseconds: 80),
                     child: Container(
                       width: 220,
                       height: 220,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: isSOSActive
-                              ? [Colors.red, const Color(0xFF8B0000)]
-                              : [primaryColor, const Color(0xFFCB5100)],
-                        ),
+                        gradient: isDisabled
+                            ? LinearGradient(
+                                colors: [Colors.grey.shade600, Colors.grey.shade800],
+                              )
+                            : RadialGradient(
+                                colors: isSOSActive
+                                    ? [Colors.red, const Color(0xFF8B0000)]
+                                    : [primaryColor, const Color(0xFFCB5100)],
+                              ),
                         border: Border.all(
-                          color: (tapCount > 0
-                              ? (isSOSActive ? Colors.red : const Color(0xFFCB5100))
-                              : (isDarkMode
-                                  ? Colors.white.withValues(alpha: 0.2)
-                                  : (isSOSActive ? Colors.red : primaryColor)
-                                      .withValues(alpha: 0.3))),
+                          color: isDisabled
+                              ? Colors.white24
+                              : (tapCount > 0
+                                  ? (isSOSActive ? Colors.red : const Color(0xFFCB5100))
+                                  : (isDarkMode
+                                      ? Colors.white.withValues(alpha: 0.2)
+                                      : (isSOSActive ? Colors.red : primaryColor)
+                                          .withValues(alpha: 0.3))),
                           width: 8,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (isSOSActive ? Colors.red : primaryColor)
-                                .withValues(
-                              alpha: tapCount > 0 ? 0.8 : (isDarkMode ? 0.3 : 0.6),
-                            ),
-                            blurRadius: tapCount > 0 ? 50 : 30,
-                            spreadRadius: tapCount > 0 ? 10 : (isDarkMode ? 5 : 10),
-                          ),
-                        ],
+                        boxShadow: isDisabled
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: (isSOSActive ? Colors.red : primaryColor)
+                                      .withValues(
+                                    alpha: tapCount > 0 ? 0.8 : (isDarkMode ? 0.3 : 0.6),
+                                  ),
+                                  blurRadius: tapCount > 0 ? 50 : 30,
+                                  spreadRadius: tapCount > 0 ? 10 : (isDarkMode ? 5 : 10),
+                                ),
+                              ],
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            isSOSActive ? Icons.cancel_outlined : Icons.error_outline,
+                            isDisabled
+                                ? Icons.lock_person_outlined
+                                : (isSOSActive ? Icons.cancel_outlined : Icons.error_outline),
                             color: Colors.white,
                             size: 60,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            isSOSActive ? 'AKTIF'.tr(context) : 'SOS',
-                            style: const TextStyle(
+                            isDisabled
+                                ? 'SOS Terkunci'.tr(context)
+                                : (isSOSActive ? 'AKTIF'.tr(context) : 'SOS'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 40,
+                              fontSize: isDisabled ? 24 : 40,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                          Text(
-                            isSOSActive
-                                ? 'KETUK 3× BATALKAN'.tr(context)
-                                : 'KETUK 3×'.tr(context),
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
+                          if (isDisabled && disabledReason != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                              child: Text(
+                                disabledReason!.tr(context),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          else
+                            Text(
+                              isSOSActive
+                                  ? 'KETUK 3× BATALKAN'.tr(context)
+                                  : 'KETUK 3×'.tr(context),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),

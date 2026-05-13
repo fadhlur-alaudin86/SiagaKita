@@ -177,7 +177,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                                   vertical: 8,
                                 ),
                                 itemCount: _recentSOS.length,
-                                separatorBuilder: (_, __) =>
+                                separatorBuilder: (_, _) =>
                                     const Divider(indent: 70),
                                 itemBuilder: (context, i) {
                                   final inc = _recentSOS[i];

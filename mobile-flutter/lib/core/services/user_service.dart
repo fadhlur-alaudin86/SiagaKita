@@ -235,4 +235,27 @@ class UserService {
       // Abaikan error ping — tidak perlu menampilkan error ke user
     }
   }
+
+  // ─── Update Availability (Khusus Relawan) ───────────────────────────────────
+  static Future<void> updateAvailability(String token, bool isAvailable) async {
+    try {
+      final response = await http
+          .patch(
+            Uri.parse('$_baseUrl/users/volunteer/availability'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'is_available': isAvailable}),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        final body = jsonDecode(response.body);
+        throw Exception(body['message'] ?? 'Gagal memperbarui status');
+      }
+    } catch (e) {
+      throw Exception('Gagal memperbarui status ketersediaan: $e');
+    }
+  }
 }

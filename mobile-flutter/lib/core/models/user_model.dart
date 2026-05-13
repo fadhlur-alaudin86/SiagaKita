@@ -28,6 +28,8 @@ class UserModel {
   final String volunteerLevel;
   final bool isAvailableForMission;
   final bool isSOSBanned; // ← status blokir SOS dari admin
+  final bool isSOSActive; // ← sedang mengirim SOS
+  final bool hasActiveMission; // ← sedang menangani misi (untuk relawan)
   final Map<String, dynamic>? medicalData;
   final List<Map<String, dynamic>>? emergencyContacts;
 
@@ -49,6 +51,8 @@ class UserModel {
     this.volunteerLevel = 'Pemula',
     this.isAvailableForMission = false,
     this.isSOSBanned = false,
+    this.isSOSActive = false,
+    this.hasActiveMission = false,
     this.medicalData,
     this.emergencyContacts,
   });
@@ -76,6 +80,8 @@ class UserModel {
     String? volunteerLevel,
     bool? isAvailableForMission,
     bool? isSOSBanned,
+    bool? isSOSActive,
+    bool? hasActiveMission,
     Map<String, dynamic>? medicalData,
     List<Map<String, dynamic>>? emergencyContacts,
   }) {
@@ -99,6 +105,8 @@ class UserModel {
       isAvailableForMission:
           isAvailableForMission ?? this.isAvailableForMission,
       isSOSBanned: isSOSBanned ?? this.isSOSBanned,
+      isSOSActive: isSOSActive ?? this.isSOSActive,
+      hasActiveMission: hasActiveMission ?? this.hasActiveMission,
       medicalData: medicalData ?? this.medicalData,
       emergencyContacts: emergencyContacts ?? this.emergencyContacts,
     );
@@ -201,6 +209,8 @@ class UserModel {
       }(),
       isAvailableForMission: json['is_available_for_mission'] ?? false,
       isSOSBanned: json['is_sos_banned'] as bool? ?? false,
+      isSOSActive: json['is_sos_active'] as bool? ?? false,
+      hasActiveMission: json['has_active_mission'] as bool? ?? false,
       medicalData: json['medical_data'] != null
           ? Map<String, dynamic>.from(json['medical_data'])
           : _buildMedicalData(json),
@@ -263,6 +273,8 @@ class UserModel {
       'volunteer_level': volunteerLevel,
       'is_available_for_mission': isAvailableForMission,
       'is_sos_banned': isSOSBanned,
+      'is_sos_active': isSOSActive,
+      'has_active_mission': hasActiveMission,
       'medical_data': medicalData,
       'emergency_contacts': emergencyContacts,
     };

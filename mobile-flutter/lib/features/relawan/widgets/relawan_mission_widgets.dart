@@ -6,11 +6,13 @@ import '../../masyarakat/map_screen.dart';
 class DutyStatusToggle extends StatelessWidget {
   final bool isOnDuty;
   final ValueChanged<bool> onChanged;
+  final bool isDisabled;
 
   const DutyStatusToggle({
     super.key,
     required this.isOnDuty,
     required this.onChanged,
+    this.isDisabled = false,
   });
 
   @override
@@ -20,21 +22,26 @@ class DutyStatusToggle extends StatelessWidget {
     final primaryText = isDark ? Colors.white : Colors.black87;
     final secondaryText = isDark ? Colors.white60 : Colors.black54;
 
+    final effectiveIsOnDuty = isDisabled ? false : isOnDuty;
+    final backgroundColor = isDisabled
+        ? (isDark ? Colors.white10 : Colors.grey.shade200)
+        : (effectiveIsOnDuty
+            ? null
+            : (isDark
+                ? const Color(0xFF1E293B)
+                : colors.surfaceContainerHighest));
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        gradient: isOnDuty
+        gradient: (effectiveIsOnDuty && !isDisabled)
             ? const LinearGradient(
                 colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
               )
             : null,
-        color: isOnDuty
-            ? null
-            : (isDark
-                  ? const Color(0xFF1E293B)
-                  : colors.surfaceContainerHighest),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: isOnDuty
+        boxShadow: (effectiveIsOnDuty && !isDisabled)
             ? [
                 BoxShadow(
                   color: const Color(0xFF22C55E).withValues(alpha: 0.35),
@@ -47,8 +54,10 @@ class DutyStatusToggle extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            isOnDuty ? Icons.radar : Icons.radar_outlined,
-            color: isOnDuty ? Colors.white : secondaryText,
+            isDisabled
+                ? Icons.lock_outline
+                : (effectiveIsOnDuty ? Icons.radar : Icons.radar_outlined),
+            color: (effectiveIsOnDuty && !isDisabled) ? Colors.white : secondaryText,
             size: 26,
           ),
           const SizedBox(width: 12),
@@ -57,19 +66,27 @@ class DutyStatusToggle extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isOnDuty ? 'ON DUTY - Siap Bertugas' : 'OFF DUTY - Istirahat',
+                  isDisabled
+                      ? 'FITUR TERKUNCI'
+                      : (effectiveIsOnDuty
+                          ? 'ON DUTY - Siap Bertugas'
+                          : 'OFF DUTY - Istirahat'),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isOnDuty ? Colors.white : primaryText,
+                    color: (effectiveIsOnDuty && !isDisabled) ? Colors.white : primaryText,
                     fontSize: 15,
                   ),
                 ),
                 Text(
-                  isOnDuty
-                      ? 'Memantau SOS dalam radius 5 km'
-                      : 'Aktifkan untuk menerima panggilan darurat',
+                  isDisabled
+                      ? 'Dinonaktifkan saat SOS sedang aktif'
+                      : (effectiveIsOnDuty
+                          ? 'Memantau SOS dalam radius 5 km'
+                          : 'Aktifkan untuk menerima panggilan darurat'),
                   style: TextStyle(
-                    color: isOnDuty ? Colors.white70 : secondaryText,
+                    color: (effectiveIsOnDuty && !isDisabled)
+                        ? Colors.white70
+                        : secondaryText,
                     fontSize: 12,
                   ),
                 ),
@@ -77,8 +94,8 @@ class DutyStatusToggle extends StatelessWidget {
             ),
           ),
           Switch(
-            value: isOnDuty,
-            onChanged: onChanged,
+            value: effectiveIsOnDuty,
+            onChanged: isDisabled ? null : onChanged,
             activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFF16A34A),
             inactiveTrackColor: isDark ? Colors.white12 : Colors.grey.shade300,

@@ -23,7 +23,10 @@ class RiwayatPage extends StatelessWidget {
             unselectedLabelColor: colors.onSurfaceVariant,
             indicatorColor: colors.primary,
             indicatorWeight: 3,
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
             tabs: const [
               Tab(text: 'RIWAYAT SOS'),
               Tab(text: 'RIWAYAT LAPORAN'),
@@ -205,10 +208,13 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<T>(
-            value: value,
+            initialValue: value,
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: colors.outline),
@@ -226,7 +232,11 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
             ),
             dropdownColor: colors.surface,
             style: const TextStyle(color: Colors.white, fontSize: 14),
-            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.toString()))).toList(),
+            items: items
+                .map(
+                  (e) => DropdownMenuItem(value: e, child: Text(e.toString())),
+                )
+                .toList(),
             onChanged: onChanged,
           ),
         ],
@@ -327,13 +337,19 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                         leading: CircleAvatar(
                           backgroundColor: Colors.orange.withValues(alpha: 0.1),
                           radius: 24,
-                          child: const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+                          child: const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orangeAccent,
+                          ),
                         ),
                         title: Row(
                           children: [
                             Text(
                               inc.typeLabel,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                             const Spacer(),
                             _StatusBadge(status: inc.status),
@@ -343,15 +359,31 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                           padding: const EdgeInsets.only(top: 12),
                           child: Row(
                             children: [
-                              const Icon(Icons.person_outline, size: 14, color: Colors.white54),
-                              const SizedBox(width: 6),
-                              Text(inc.reporterName, style: const TextStyle(color: Colors.white70)),
-                              const SizedBox(width: 16),
-                              const Icon(Icons.access_time, size: 14, color: Colors.white54),
+                              const Icon(
+                                Icons.person_outline,
+                                size: 14,
+                                color: Colors.white54,
+                              ),
                               const SizedBox(width: 6),
                               Text(
-                                DateFormat('dd MMM yyyy, HH:mm').format(inc.createdAt),
-                                style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                inc.reporterName,
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                              const SizedBox(width: 16),
+                              const Icon(
+                                Icons.access_time,
+                                size: 14,
+                                color: Colors.white54,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                DateFormat(
+                                  'dd MMM yyyy, HH:mm',
+                                ).format(inc.createdAt),
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -512,10 +544,13 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<T>(
-            value: value,
+            initialValue: value,
             decoration: InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: colors.outline),
@@ -533,7 +568,11 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
             ),
             dropdownColor: colors.surface,
             style: const TextStyle(color: Colors.white, fontSize: 14),
-            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.toString()))).toList(),
+            items: items
+                .map(
+                  (e) => DropdownMenuItem(value: e, child: Text(e.toString())),
+                )
+                .toList(),
             onChanged: onChanged,
           ),
         ],

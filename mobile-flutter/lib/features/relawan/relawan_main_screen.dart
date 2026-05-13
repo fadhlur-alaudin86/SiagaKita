@@ -198,6 +198,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     );
     if (!mounted) return;
     setState(() => _activeMission = mission);
+    // Sync ke global state
+    UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+      hasActiveMission: mission != null,
+    );
     if (mission != null) {
       _startMissionLocationBroadcast();
       // Poll setiap 15 detik apakah misi masih aktif
@@ -214,6 +218,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             _stopMissionLocationBroadcast();
             _missionPollTimer?.cancel();
             _loadHistory();
+            UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+              hasActiveMission: false,
+            );
           }
         }
       });
@@ -231,6 +238,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
 
   void _stopMissionLocationBroadcast() {
     LocationController.instance.setMode(TrackingMode.off);
+    UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+      hasActiveMission: false,
+    );
   }
 
   DateTime? _lastLocationUpdate;
@@ -316,6 +326,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
       );
       if (mounted) {
         setState(() => _activeMission = null);
+        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+          hasActiveMission: false,
+        );
         _stopMissionLocationBroadcast();
         _missionPollTimer?.cancel();
         _loadHistory();
@@ -666,6 +679,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                     child: DutyStatusToggle(
                       isOnDuty: isOnDuty,
                       onChanged: _toggleAvailability,
+                      isDisabled: user.isSOSActive,
                     ),
                   ),
 
