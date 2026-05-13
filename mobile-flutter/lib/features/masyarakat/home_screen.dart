@@ -832,8 +832,9 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor =
-        isDarkMode ? Colors.orangeAccent : const Color(0xFFFF6B00);
+    final primaryColor = isDarkMode
+        ? Colors.orangeAccent
+        : const Color(0xFFFF6B00);
     final isSOSActive = _activeIncident != null || _sosPhase != 'idle';
 
     return Scaffold(
@@ -903,13 +904,15 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: ActionCard(
-                          icon: Icons.phone_in_talk,
-                          iconColor: const Color(0xFF22C55E),
-                          title: 'Call 112',
-                          subtitle: 'Panggilan darurat\nbebas pulsa'.tr(context),
-                          onTap: _call112,
-                        ),
+                          child: ActionCard(
+                            icon: Icons.phone_in_talk,
+                            iconColor: const Color(0xFF22C55E),
+                            title: 'Panggil 112'.tr(context),
+                            subtitle: 'Panggilan darurat\nbebas pulsa'.tr(
+                              context,
+                            ),
+                            onTap: _call112,
+                          ),
                       ),
                     ],
                   ),
@@ -973,7 +976,11 @@ class _HomeScreenState extends State<HomeScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 80),
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.orange,
+            size: 80,
+          ),
           const SizedBox(height: 20),
           Text(
             'SOS AKAN DIKIRIM DALAM'.tr(context),
@@ -994,7 +1001,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 10),
           Text(
-            'Pilih tipe bantuan (opsional):'.tr(context),
+            'Pilih tipe bantuan:'.tr(context),
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 24),
@@ -1076,10 +1083,8 @@ class _HomeScreenState extends State<HomeScreen>
       child: TweenAnimationBuilder<double>(
         duration: const Duration(milliseconds: 300),
         tween: Tween(begin: -60, end: 0),
-        builder: (context, value, child) => Transform.translate(
-          offset: Offset(0, value),
-          child: child!,
-        ),
+        builder: (context, value, child) =>
+            Transform.translate(offset: Offset(0, value), child: child!),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(

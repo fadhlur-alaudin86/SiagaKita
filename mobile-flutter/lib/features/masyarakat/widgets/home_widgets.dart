@@ -146,7 +146,8 @@ class ActionCard extends StatelessWidget {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
@@ -159,6 +160,7 @@ class ActionCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               title,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.onSurface,
                 fontWeight: FontWeight.bold,
@@ -168,6 +170,7 @@ class ActionCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.6),
                 fontSize: 12,

@@ -742,7 +742,7 @@ class _ReportScreenState extends State<ReportScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.onSurface.withValues(alpha: 0.1)),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 0, 0),
       child: ScrollbarTheme(
         data: ScrollbarThemeData(
           trackColor: WidgetStateProperty.all(
@@ -759,8 +759,8 @@ class _ReportScreenState extends State<ReportScreen> {
           radius: const Radius.circular(8),
           child: Padding(
             padding: const EdgeInsets.only(
-              bottom: 8,
-            ), // Padding to avoid overlapping content
+              bottom: 4,
+            ),
             child: ListView.builder(
               controller: _categoryScrollCtrl,
               scrollDirection: Axis.horizontal,
@@ -971,35 +971,56 @@ class _ReportScreenState extends State<ReportScreen> {
                   child: Container(color: Colors.red.withValues(alpha: 0.15)),
                 ),
               // Content
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.mic,
-                    size: 28,
-                    color: _isRecording
-                        ? Colors.red
-                        : colors.onSurface.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Text(
-                      _isRecording
-                          ? 'Merekam... ${_formatDuration(_recordSeconds)} / 01:00'
-                          : 'Tahan untuk rekam suara (Opsional, maks 1 menit)',
-                      style: TextStyle(
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.mic,
+                        size: 40,
                         color: _isRecording
                             ? Colors.red
-                            : colors.onSurface.withValues(alpha: 0.6),
-                        fontWeight: _isRecording
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                            : colors.onSurface.withValues(alpha: 0.5),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _isRecording ? 'Merekam...' : 'Tahan untuk rekam suara',
+                              style: TextStyle(
+                                color: _isRecording
+                                    ? Colors.red
+                                    : colors.onSurface.withValues(alpha: 0.8),
+                                fontWeight: FontWeight.bold,
+                                fontSize: _isRecording ? 18 : 14,
+                              ),
+                            ),
+                            if (!_isRecording)
+                              Text(
+                                '(Opsional, maks 1 menit)',
+                                style: TextStyle(
+                                  color: colors.onSurface.withValues(alpha: 0.5),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            if (_isRecording)
+                              Text(
+                                '${_formatDuration(_recordSeconds)} / 01:00',
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 14,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
           ),

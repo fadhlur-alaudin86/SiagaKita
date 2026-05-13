@@ -147,6 +147,7 @@ class AppLocalization {
     'KONTAK DARURAT': 'EMERGENCY CONTACTS',
     'Tidak ada kontak terdaftar': 'No registered contacts',
     'Memanggil': 'Calling',
+    'Panggil 112': 'Call 112',
     'PENGATURAN & BANTUAN': 'SETTINGS & HELP',
     'Tentang Aplikasi': 'About App',
     'DAFTAR MENJADI RELAWAN': 'REGISTER AS VOLUNTEER',
