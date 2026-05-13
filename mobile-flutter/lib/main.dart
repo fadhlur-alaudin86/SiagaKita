@@ -105,7 +105,9 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                   surface: darkCardColor,
                   onSurface: Colors.white,
                 ),
-                textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+                textTheme: GoogleFonts.interTextTheme(
+                  ThemeData.dark().textTheme,
+                ),
                 appBarTheme: const AppBarTheme(
                   backgroundColor: darkBgColor,
                   elevation: 0,
@@ -153,9 +155,7 @@ class _AppStartupState extends State<_AppStartup> {
         email: session.email,
         role: session.role == 'volunteer'
             ? UserRole.relawan
-            : session.role == 'admin'
-                ? UserRole.admin
-                : UserRole.masyarakat,
+            : UserRole.masyarakat,
       );
 
       // Ambil data profil lengkap dari server (background refresh)
@@ -169,24 +169,20 @@ class _AppStartupState extends State<_AppStartup> {
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => MainScreen(
-            accessToken: session.token,
-            userId: session.userId,
-          ),
+          builder: (_) =>
+              MainScreen(accessToken: session.token, userId: session.userId),
         ),
       );
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     // Layar loading sementara sambil cek sesi
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

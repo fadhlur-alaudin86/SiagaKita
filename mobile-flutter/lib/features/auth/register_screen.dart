@@ -170,9 +170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: result.user.email,
         role: result.user.role == 'volunteer'
             ? UserRole.relawan
-            : result.user.role == 'admin'
-                ? UserRole.admin
-                : UserRole.masyarakat,
+            : UserRole.masyarakat,
       );
 
       Navigator.of(context).pushReplacement(

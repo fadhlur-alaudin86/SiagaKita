@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart';
 enum UserRole {
   masyarakat, // Masyarakat umum
   relawan, // Relawan terverifikasi
-  instansi, // Instansi penyelamat (Damkar, BPBD, Polisi, dll)
-  admin, // Administrator sistem
 }
 
 // Model data pengguna yang sedang login
@@ -22,13 +20,14 @@ class UserModel {
   final String? birthDate; // format: DD-MM-YYYY or YYYY-MM-DD
   final String? bio;
   final String? volunteerStatus; // 'none', 'pending', 'approved'
-  final String nikVerificationStatus; // 'none', 'pending', 'approved', 'rejected'
-  final String? profilePhotoUrl;      // URL foto selfie KYC (sekaligus foto profil)
+  final String
+  nikVerificationStatus; // 'none', 'pending', 'approved', 'rejected'
+  final String? profilePhotoUrl; // URL foto selfie KYC (sekaligus foto profil)
   final String? specialization;
   final int volunteerPoints;
   final String volunteerLevel;
   final bool isAvailableForMission;
-  final bool isSOSBanned;  // ← status blokir SOS dari admin
+  final bool isSOSBanned; // ← status blokir SOS dari admin
   final Map<String, dynamic>? medicalData;
   final List<Map<String, dynamic>>? emergencyContacts;
 
@@ -56,12 +55,7 @@ class UserModel {
 
   // Global User State
   static final ValueNotifier<UserModel> currentUser = ValueNotifier(
-    const UserModel(
-      id: '',
-      name: '',
-      email: '',
-      role: UserRole.masyarakat,
-    ),
+    const UserModel(id: '', name: '', email: '', role: UserRole.masyarakat),
   );
 
   UserModel copyWith({
@@ -149,10 +143,6 @@ class UserModel {
         return 'Masyarakat Umum';
       case UserRole.relawan:
         return 'Relawan';
-      case UserRole.instansi:
-        return 'Instansi Penyelamat';
-      case UserRole.admin:
-        return 'Administrator';
     }
   }
 
@@ -163,10 +153,6 @@ class UserModel {
         return '#18A3FF'; // Biru
       case UserRole.relawan:
         return '#22C55E'; // Hijau
-      case UserRole.instansi:
-        return '#FF7418'; // Oranye
-      case UserRole.admin:
-        return '#A855F7'; // Ungu
     }
   }
 
@@ -201,11 +187,16 @@ class UserModel {
       specialization: json['specialization'],
       volunteerPoints: () {
         final rep = json['volunteer_reputation'] as Map<String, dynamic>?;
-        return (rep?['exp_points'] as int?) ?? (json['volunteer_points'] as int?) ?? 0;
+        return (rep?['exp_points'] as int?) ??
+            (json['volunteer_points'] as int?) ??
+            0;
       }(),
       volunteerLevel: () {
         final rep = json['volunteer_reputation'] as Map<String, dynamic>?;
-        final xp = (rep?['exp_points'] as int?) ?? (json['volunteer_points'] as int?) ?? 0;
+        final xp =
+            (rep?['exp_points'] as int?) ??
+            (json['volunteer_points'] as int?) ??
+            0;
         return json['volunteer_level'] as String? ?? _levelFromExp(xp);
       }(),
       isAvailableForMission: json['is_available_for_mission'] ?? false,
@@ -221,12 +212,6 @@ class UserModel {
     switch (role) {
       case 'volunteer':
         return UserRole.relawan;
-      case 'admin':
-      case 'superadmin':
-        return UserRole.admin;
-      case 'agency':
-      case 'agency_personnel':
-        return UserRole.instansi;
       default:
         return UserRole.masyarakat;
     }
@@ -242,7 +227,8 @@ class UserModel {
 
   /// Build medicalData map from flat backend profile response.
   static Map<String, dynamic>? _buildMedicalData(Map<String, dynamic> json) {
-    final hasData = json['blood_type'] != null ||
+    final hasData =
+        json['blood_type'] != null ||
         json['allergies'] != null ||
         json['medical_conditions'] != null ||
         json['height_cm'] != null ||

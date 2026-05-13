@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'models/user_model.dart';
 import '../features/masyarakat/main_screen.dart';
 import '../features/relawan/relawan_main_screen.dart';
-import '../features/instansi/instansi_main_screen.dart';
-import '../features/admin/admin_main_screen.dart';
 
 /// Router utama SiagaKita.
 /// Setelah login berhasil, panggil [getHomeByRole] dengan role, token, dan userId.
@@ -22,10 +20,6 @@ class AppRouter {
         return MainScreen(accessToken: accessToken, userId: userId);
       case UserRole.relawan:
         return RelawanMainScreen(accessToken: accessToken);
-      case UserRole.instansi:
-        return const InstansiMainScreen();
-      case UserRole.admin:
-        return const AdminMainScreen();
     }
   }
 

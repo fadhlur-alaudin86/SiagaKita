@@ -72,11 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
         id: result.user.id,
         name: result.user.fullName ?? 'Pengguna',
         email: result.user.email,
-        role: result.user.role == 'admin'
-            ? UserRole.admin
-            : result.user.role == 'volunteer'
-                ? UserRole.relawan
-                : UserRole.masyarakat,
+        role: result.user.role == 'volunteer'
+            ? UserRole.relawan
+            : UserRole.masyarakat,
       );
 
       // Minta izin GPS setelah auth berhasil
