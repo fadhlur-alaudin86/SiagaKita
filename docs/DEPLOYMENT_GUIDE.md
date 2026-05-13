@@ -1,7 +1,7 @@
 # 🚀 SiagaKita — Panduan Deployment Production
 
 > **Server:** `139.59.99.230` (DigitalOcean / VPS)
-> **Diperbarui:** 3 Mei 2026
+> **Diperbarui:** 13 Mei 2026
 
 ---
 
@@ -59,6 +59,7 @@ REDIS_PASSWORD=<password_kuat>
 REDIS_HOST=redis
 REDIS_PORT=6379
 
+API_HOST=[IP_ADDRESS]
 HTTP_PORT=8080
 WS_PORT=8081
 
@@ -83,20 +84,33 @@ DOCKERHUB_USERNAME=<username_dockerhub>
 
 # Upload Storage (wajib untuk fitur laporan foto & audio)
 UPLOAD_DIR=/app/uploads
-UPLOAD_BASE_URL=http://139.59.99.230:8080/uploads
+UPLOAD_BASE_URL=http://[IP_ADDRESS]:8080/uploads
+
+# Performance & Logging
+GO_ENV=production
+LOG_PATH=logs/app.log
 ```
 
-### 2c. Setup direktori upload
+### 2c. Setup direktori upload & log
 
 ```bash
 # Di VPS — buat direktori penyimpanan file laporan
 sudo mkdir -p /opt/siagakita/uploads/reports/photos
 sudo mkdir -p /opt/siagakita/uploads/reports/audio
-sudo chown -R ubuntu:ubuntu /opt/siagakita/uploads
+sudo mkdir -p /opt/siagakita/logs
+
+# Set permission agar bisa ditulis oleh container
+sudo chown -R 1000:1000 /opt/siagakita/uploads
+sudo chown -R 1000:1000 /opt/siagakita/logs
 chmod -R 755 /opt/siagakita/uploads
+chmod -R 755 /opt/siagakita/logs
 ```
 
-> Volume ini sudah di-mount di `docker-compose.prod.yml` sebagai `/opt/siagakita/uploads:/app/uploads`. File yang ditulis backend akan persisten meski container di-restart.
+> [!NOTE]
+> Volume ini sudah di-mount di `docker-compose.prod.yml` sebagai:
+> - `/opt/siagakita/uploads:/app/uploads`
+> - `/opt/siagakita/logs:/app/logs`
+> File yang ditulis backend akan persisten di VPS meski container di-restart. Log dapat diakses langsung di `/opt/siagakita/logs/app.log`.
 
 ### 2d. Verifikasi infrastruktur berjalan
 
@@ -121,7 +135,7 @@ Tambahkan secret berikut:
 |-------------|-------|-----------|
 | `DOCKERHUB_USERNAME` | Username Docker Hub kamu | Untuk login & tag image |
 | `DOCKERHUB_TOKEN` | Access token Docker Hub | Buat di hub.docker.com → Account Settings → Security |
-| `VPS_HOST` | `139.59.99.230` | IP server |
+| `VPS_HOST` | `[IP_ADDRESS]` | IP server |
 | `VPS_USERNAME` | `root` | User SSH di server |
 | `VPS_SSH_KEY` | Isi private key SSH | Gunakan `cat ~/.ssh/id_rsa` atau key khusus deploy |
 

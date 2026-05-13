@@ -1,8 +1,8 @@
 # 🏗️ SiagaKita - Arsitektur Backend
 
-> **Diperbarui:** 9 Mei 2026
+> **Diperbarui:** 13 Mei 2026
 > **Versi Schema:** v3
-> **Stack:** Go 1.23 + Fiber v2 + PostgreSQL 15 + Redis
+> **Stack:** Go 1.26 + Fiber v2 + Sonic + Zerolog + PostgreSQL 15 + Redis
 
 ---
 
@@ -59,6 +59,7 @@ backend-go/
 │   ├── middleware/
 │   │   └── auth.go          - JWT Auth + RBAC middleware
 │   ├── utils/
+│   │   ├── logger.go        - Centralized Zerolog utility (Console + File)
 │   │   ├── response.go      - SuccessResponse, ErrorResponse, CreatedResponse
 │   │   └── jwt.go           - GenerateAccessToken, GenerateRefreshToken, ParseToken
 │   └── ws/
@@ -355,8 +356,22 @@ File: `infrastructure/.env` (lihat `infrastructure/.env-example` sebagai templat
 | `SMS_GATEWAY_SECRET` | Secret key SMS fallback endpoint | - |
 | `SUPERADMIN_EMAIL` | Email akun superadmin pertama | ✅ |
 | `SUPERADMIN_PASS` | Password akun superadmin pertama | ✅ |
-| `PGADMIN_EMAIL` | pgAdmin login email | - |
-| `PGADMIN_PASSWORD` | pgAdmin login password | - |
+| `GO_ENV` | Environment mode (`production` / `development`) | - |
+| `LOG_PATH` | Path file log (default: `logs/app.log`) | - |
+
+---
+
+## 9. Performance & Observability
+
+### 9.1 Sonic JSON Engine
+Backend menggunakan **Sonic** sebagai JSON encoder/decoder default pada Fiber. Sonic menggunakan teknik JIT (Just-In-Time) compilation yang jauh lebih cepat daripada pustaka standar Go, terutama untuk payload WebSocket yang intensif dan parsing data insiden.
+
+### 9.2 Zerolog (Structured Logging)
+Logging telah dimigrasikan dari `log` standar ke **Zerolog** untuk mendukung:
+- **Output Terstruktur (JSON):** Memudahkan integrasi dengan log aggregator (ELK, Loki).
+- **Log Persistence:** Secara otomatis menyimpan log ke file yang ditentukan di `LOG_PATH`.
+- **Leveling:** Mendukung Debug, Info, Warn, Error, dan Fatal dengan *field* tambahan (Contextual Logging).
+- **MultiWriter:** Output simultan ke terminal (Console) dan file disk.
 
 ---
 

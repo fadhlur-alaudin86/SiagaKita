@@ -1,8 +1,8 @@
 # 📋 SiagaKita - Laporan Kemajuan Pengembangan
 
-> **Terakhir diperbarui:** 12 Mei 2026
+> **Terakhir diperbarui:** 13 Mei 2026
 > **Branch aktif:** `main`
-> **Status keseluruhan:** 🟡 Dalam Pengembangan Aktif
+> **Status keseluruhan:** 🟢 Stabil & Dioptimasi Performa
 
 ---
 
@@ -50,12 +50,12 @@
 | Mobile Citizen | Flutter (Dart) - `mobile-flutter/` |
 | Desktop Console | Flutter Desktop - `windows_console_flutter/` |
 | Mobile Responder | Flutter (belum dibuat) - `mobile-flutter-responder/` |
-| Backend | Go 1.26 + Fiber v2 |
+| Backend | Go 1.26 + Fiber v2 + Sonic + Zerolog |
 | Database | PostgreSQL 15 (Schema v12) |
 | Cache / Ephemeral | Redis |
 | Email OTP | SMTP (Gmail) |
 | WA OTP | Fonnte API |
-| Container | Docker Compose |
+| Container | Docker Compose (Persisten Log) |
 
 ---
 
@@ -74,6 +74,8 @@
 | `internal/middleware/` | ✅ v3 | JWT Auth + RBAC granular (AdminOnly, ConsoleOnly, dll.) |
 | `config/config.go` | ✅ | + SuperAdminEmail, SuperAdminPass |
 | `cmd/api/main.go` | ✅ | seedSuperAdmin(), login routes, admin & badges routes |
+| `internal/utils/logger.go` | ✅ Baru | Zerolog + File Persistence Support |
+| JSON Engine | ✅ Baru | Sonic (High Performance) |
 
 ### 🟢 Mobile Flutter - Citizen/Volunteer (`mobile-flutter/`)
 
@@ -98,6 +100,7 @@
 | InstansiShell | ✅ | Sidebar + WS indicator |
 | Dashboard Operasi | ✅ | KPI + live SOS list + pie chart |
 | SOS Aktif | ✅ | Detail korban, false alarm, resolve |
+| Performance | ✅ Baru | RepaintBoundary & Isolate parsing |
 | Laporan Masuk | ✅ | Jalur B + filter status |
 | Riwayat SOS | ✅ | Filter sejarah insiden per instansi |
 | Peta Operasional | ✅ | OpenStreetMap + markers live |
@@ -596,6 +599,24 @@
 
 ---
 
+### 🔖 Sprint: Performance & Reliability Refactor - 13 Mei 2026
+
+#### Fokus: Optimalisasi Low-Latency & High-Throughput
+
+- **Backend (Go):**
+    - [x] Migrasi ke `Sonic` JSON engine (JIT Parsing).
+    - [x] Implementasi `Zerolog` untuk logging terstruktur & asinkron.
+    - [x] Dukungan log persistence ke `/opt/siagakita/logs/app.log`.
+    - [x] Konfigurasi Connection Pool GORM (25 max connections).
+- **Mobile (Flutter):**
+    - [x] Optimalisasi `RepaintBoundary` pada tombol SOS & Telemetri.
+    - [x] Offloading `jsonDecode` ke `Isolate.run()` pada `IncidentService`.
+- **Console (Flutter Desktop):**
+    - [x] Implementasi `RepaintBoundary` pada list insiden aktif.
+    - [x] Offloading WebSocket parsing ke background Isolate di `WsService`.
+
+---
+
 ### 🔖 Sprint B - 29–30 April 2026
 
 #### Desktop Console - Modul Instansi
@@ -822,6 +843,8 @@ Base URL: `http://<host>:8080/api/v1`
 - [x] **Profile Screen → API** - Wire `ProfileScreen` ke `GET /users/profile`
 - [x] **Environment Security** - Pindah IP hardcode ke `.env`
 - [ ] **Desktop Console → Admin endpoints** - Hubungkan halaman KYC, User Mgmt, Gamifikasi, Statistik ke endpoint `/admin/...`
+- [ ] **Backend Refactor Phase 2** - Migrasi GORM pool ke `pgx` driver asli untuk performa raw query yang lebih tinggi.
+- [ ] **Frontend Refactor Phase 2** - Refactor `Provider` ke `Selector`/`context.select` di Console App untuk optimalisasi build widget.
 
 ### Prioritas Sedang
 
