@@ -83,7 +83,7 @@ Output yang diharapkan di akhir:
 'handled'        -- Ada responder yang menerima
 'resolved'       -- Insiden selesai
 'false_alarm'    -- Ditandai false alarm oleh admin/agency
-'cancel'         -- Dibatalkan oleh warga (reporter)
+'canceled'       -- Dibatalkan oleh warga (reporter)
 ```
 
 ### `response_status`
@@ -270,7 +270,7 @@ CREATE TABLE public.incident_reports (
     description   text,
     photo_url     varchar(255),
     audio_url     varchar(255),
-    status        varchar(20) DEFAULT 'pending',  -- pending|reviewed|actioned
+    status        varchar(20) DEFAULT 'sent',  -- sent|processing|resolved|canceled|rejected|failed
     created_at    timestamptz DEFAULT now()
 );
 ```
@@ -476,7 +476,7 @@ CREATE TABLE incident_reports (
     description   TEXT,
     photo_paths   TEXT[] DEFAULT '{}',          -- array URL publik foto (max 3)
     audio_path    TEXT,                         -- URL publik audio (nullable)
-    status        VARCHAR(20) NOT NULL DEFAULT 'received', -- received|processing|resolved
+    status        VARCHAR(20) NOT NULL DEFAULT 'sent', -- sent|processing|resolved|canceled|rejected|failed
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

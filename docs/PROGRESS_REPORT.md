@@ -113,6 +113,16 @@
 
 ---
 
+### 🔖 Patch 1.0.19 - 13 Mei 2026 (UI Audio Recording & Report Endpoint Consistency)
+
+#### 📱 Mobile App (SiagaKita Warga)
+- **Audio Recording UI**: Memperbaiki masalah tampilan teks "Tahan untuk rekam suara" yang sebelumnya terpotong pada layar pelaporan dengan mengimplementasikan widget `Flexible` dan properti `TextOverflow.ellipsis`.
+- **Timezone Lokal**: Memperbarui riwayat laporan agar selalu menampilkan waktu dalam *timezone* lokal pengguna (`toLocal()`), bukan UTC, baik untuk Riwayat Laporan biasa maupun SOS.
+- **Konsistensi Endpoint Pembatalan**: Mengubah *path* endpoint pembatalan (laporan dan SOS) di dalam `incident_service.dart` dan `report_service.dart` agar selaras dengan *backend* (dari `/cancel` menjadi `/canceled`).
+- **Custom Camera Toggle**: Memperluas kapabilitas `CustomCameraView` dengan opsi untuk menonaktifkan *overlay* KYC (KTP/Wajah) ketika widget kamera dipanggil dari dalam konteks pelaporan biasa.
+
+---
+
 ### 🔖 Patch 1.0.18 - 12 Mei 2026 (Environment Security & UI Consistency)
 
 #### 🛡️ Keamanan & Konfigurasi
