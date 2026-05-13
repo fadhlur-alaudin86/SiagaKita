@@ -1723,7 +1723,7 @@ class _HomeScreenState extends State<HomeScreen>
             children: [
               // Top Text
               const Text(
-                '🆘 SOS DIKIRIM',
+                'SOS DIKIRIM',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
@@ -1783,23 +1783,23 @@ class _HomeScreenState extends State<HomeScreen>
               // Row 1: Medis, Kriminal
               Row(
                 children: [
-                  Expanded(child: _buildThumbButton('MEDIS', '🚑', 'medical')),
+                  Expanded(child: _buildThumbButton('MEDIS', Icons.medical_services, 'medical')),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildThumbButton('KRIMINAL', '🔪', 'crime')),
+                  Expanded(child: _buildThumbButton('KRIMINAL', Icons.warning_rounded, 'crime')),
                 ],
               ),
               const SizedBox(height: 12),
               // Row 2: Kebakaran, Kecelakaan
               Row(
                 children: [
-                  Expanded(child: _buildThumbButton('KEBAKARAN', '🔥', 'fire')),
+                  Expanded(child: _buildThumbButton('KEBAKARAN', Icons.local_fire_department, 'fire')),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildThumbButton('KECELAKAAN', '💥', 'rescue')),
+                  Expanded(child: _buildThumbButton('KECELAKAAN', Icons.car_crash, 'accident')),
                 ],
               ),
               const SizedBox(height: 12),
               // Row 3: Bencana Alam (Full Width)
-              _buildThumbButton('BENCANA ALAM', '🌪️', 'disaster'),
+              _buildThumbButton('BENCANA ALAM', Icons.water_damage, 'disaster'),
               
               const SizedBox(height: 32),
               
@@ -1851,7 +1851,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildThumbButton(String label, String icon, String value) {
+  Widget _buildThumbButton(String label, IconData icon, String value) {
     return GestureDetector(
       onTap: () => _showTypeConfirmDialog(label, value),
       child: Container(
@@ -1867,7 +1867,7 @@ class _HomeScreenState extends State<HomeScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(icon, style: const TextStyle(fontSize: 32)),
+            Icon(icon, size: 36, color: Colors.white),
             const SizedBox(height: 6),
             Text(
               label,
