@@ -289,8 +289,8 @@ func (h *Handler) startExpiredKeySubscriber() {
 // broadcastSOS is called when the grace period expires.
 // It updates the incident status and sends INCOMING_EMERGENCY to nearby volunteers.
 func (h *Handler) broadcastSOS(incidentID string) {
-	ctx, canceled := context.WithTimeout(context.Background(), 10*time.Second)
-	defer canceled()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	// 1. Update incident status to broadcasting
 	_ = h.incRepo.UpdateStatus(incidentID, "broadcasting")

@@ -132,10 +132,17 @@ class IncidentService {
       throw const SOSConflictException('SOS sudah diselesaikan oleh instansi.');
     }
     if (response.statusCode != 200) {
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw IncidentException(
-        body['message'] as String? ?? 'Gagal membatalkan SOS',
-      );
+      String errorMessage = 'Gagal membatalkan SOS';
+      try {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        errorMessage = body['message'] as String? ?? errorMessage;
+      } catch (_) {
+        // Jika bukan JSON (misal 404 Fiber HTML), ambil text body jika pendek
+        if (response.body.length < 100) {
+          errorMessage = response.body;
+        }
+      }
+      throw IncidentException(errorMessage);
     }
   }
 
@@ -465,11 +472,12 @@ class VolunteerLocation {
     required this.longitude,
   });
 
-  factory VolunteerLocation.fromJson(Map<String, dynamic> json) => VolunteerLocation(
-    name: json['name'] as String,
-    latitude: (json['latitude'] as num).toDouble(),
-    longitude: (json['longitude'] as num).toDouble(),
-  );
+  factory VolunteerLocation.fromJson(Map<String, dynamic> json) =>
+      VolunteerLocation(
+        name: json['name'] as String,
+        latitude: (json['latitude'] as num).toDouble(),
+        longitude: (json['longitude'] as num).toDouble(),
+      );
 }
 
 class ActiveIncident {
@@ -518,7 +526,11 @@ class ActiveIncident {
     handledByAgencyId: json['handled_by_agency_id'] as String?,
     agencyName: json['agency_name'] as String?,
     volunteerResponseStatus: json['volunteer_response_status'] as String?,
-    volunteerNames: (json['volunteer_names'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+    volunteerNames:
+        (json['volunteer_names'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        [],
   );
 
   /// Apakah instansi sedang aktif menangani SOS ini.
