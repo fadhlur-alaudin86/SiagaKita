@@ -124,8 +124,8 @@ class MissionActiveCard extends StatelessWidget {
           const Row(
             children: [
               Icon(Icons.crisis_alert, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'MISI SEDANG BERJALAN',
                 style: TextStyle(
                   color: Colors.white,
