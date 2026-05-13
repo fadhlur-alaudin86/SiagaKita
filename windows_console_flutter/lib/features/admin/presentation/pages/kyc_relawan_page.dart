@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
@@ -560,7 +559,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label tipe + tombol buka di browser
+          // Label tipe
           Row(
             children: [
               const Icon(
@@ -578,76 +577,158 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                   ),
                 ),
               ),
-              TextButton.icon(
-                onPressed: () async {
-                  final uri = Uri.parse(cert.url);
-                  if (await canLaunchUrl(uri)) launchUrl(uri);
-                },
-                icon: const Icon(Icons.open_in_new, size: 14),
-                label: const Text(
-                  'Buka di Browser',
-                  style: TextStyle(fontSize: 12),
-                ),
-                style: TextButton.styleFrom(foregroundColor: Colors.blue),
-              ),
             ],
           ),
-          const SizedBox(height: 6),
-          // Area preview
-          Container(
-            height: isPdf ? 420 : null,
-            decoration: BoxDecoration(
-              color: Colors.black26,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white12),
-            ),
-            clipBehavior: Clip.hardEdge,
-            child: isPdf
-                ? PdfViewer.uri(
-                    Uri.parse(cert.url),
-                    params: const PdfViewerParams(
-                      backgroundColor: Color(0xFF1A2035),
-                    ),
-                  )
-                : isImage
-                ? Image.network(
-                    cert.url,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (_, child, progress) => progress == null
-                        ? child
-                        : const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24),
-                              child: CircularProgressIndicator(),
+          const SizedBox(height: 8),
+          // Area preview kecil (Thumbnail)
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _showFullScreenCert(cert),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 120,
+                width: 220,
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: isPdf
+                          ? IgnorePointer(
+                              child: PdfViewer.uri(
+                                Uri.parse(cert.url),
+                                params: const PdfViewerParams(
+                                  backgroundColor: Color(0xFF1A2035),
+                                ),
+                              ),
+                            )
+                          : isImage
+                          ? Image.network(
+                              cert.url,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => const Icon(
+                                Icons.image_not_supported,
+                                color: Colors.white24,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.insert_drive_file,
+                              color: Colors.white24,
+                              size: 40,
                             ),
+                    ),
+                    // Overlay klik
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.5),
+                            ],
                           ),
-                    errorBuilder: (_, _, _) => const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text(
-                        'Gagal memuat gambar',
-                        style: TextStyle(color: Colors.white38),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.fullscreen,
+                            color: Colors.white70,
+                            size: 32,
+                          ),
+                        ),
                       ),
                     ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.insert_drive_file,
-                          color: Colors.white38,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Format .$ext tidak dapat dipratinjau — gunakan "Buka di Browser"',
-                          style: const TextStyle(color: Colors.white38),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFullScreenCert(VolunteerCert cert) {
+    final ext = cert.url.split('.').last.toLowerCase();
+    final isPdf = ext == 'pdf';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog.fullscreen(
+        backgroundColor: Colors.black.withValues(alpha: 0.9),
+        child: Stack(
+          children: [
+            // Konten utama
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(40, 80, 40, 40),
+                child: Center(
+                  child: isPdf
+                      ? PdfViewer.uri(
+                          Uri.parse(cert.url),
+                          params: const PdfViewerParams(
+                            backgroundColor: Colors.transparent,
+                          ),
+                        )
+                      : InteractiveViewer(
+                          maxScale: 5.0,
+                          minScale: 0.5,
+                          child: Image.network(
+                            cert.url,
+                            fit: BoxFit.contain,
+                            loadingBuilder: (_, child, progress) =>
+                                progress == null
+                                ? child
+                                : const CircularProgressIndicator(
+                                    color: Colors.orange,
+                                  ),
+                          ),
+                        ),
+                ),
+              ),
+            ),
+            // Header Dialog
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                color: Colors.black45,
+                child: Row(
+                  children: [
+                    const Icon(Icons.workspace_premium, color: Colors.orange),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        cert.type,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(ctx),
+                      tooltip: 'Tutup',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
