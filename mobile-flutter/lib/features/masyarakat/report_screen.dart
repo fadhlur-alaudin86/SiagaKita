@@ -32,6 +32,7 @@ class _ReportScreenState extends State<ReportScreen> {
   bool _isLoadingLocation = true;
 
   // ─── Category ────────────────────────────────────────────────────────────────
+  final ScrollController _categoryScrollCtrl = ScrollController();
   int _selectedCategoryIndex = -1;
   final List<Map<String, dynamic>> _categories = [
     {
@@ -96,6 +97,7 @@ class _ReportScreenState extends State<ReportScreen> {
     _recorder.dispose();
     _player.dispose();
     _descCtrl.dispose();
+    _categoryScrollCtrl.dispose();
     super.dispose();
   }
 
@@ -745,11 +747,19 @@ class _ReportScreenState extends State<ReportScreen> {
     bool isDark,
   ) {
     return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        itemBuilder: (context, index) {
+      height: 110, // Increased height slightly to accommodate the scrollbar
+      child: Scrollbar(
+        controller: _categoryScrollCtrl,
+        thumbVisibility: true,
+        thickness: 4,
+        radius: const Radius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 10), // Padding to avoid overlapping content
+          child: ListView.builder(
+            controller: _categoryScrollCtrl,
+            scrollDirection: Axis.horizontal,
+            itemCount: _categories.length,
+            itemBuilder: (context, index) {
           final cat = _categories[index];
           final isSel = _selectedCategoryIndex == index;
           return GestureDetector(
@@ -797,6 +807,8 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
           );
         },
+      ),
+        ),
       ),
     );
   }
