@@ -831,10 +831,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDarkMode
-        ? Colors.orangeAccent
-        : const Color(0xFFFF6B00);
+    final primaryColor = const Color(0xFFFF6B00);
     final isSOSActive = _activeIncident != null || _sosPhase != 'idle';
 
     return Scaffold(
@@ -847,7 +844,6 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 children: [
-                  // ── Header ──────────────────────────────────────────────────
                   HomeHeader(
                     isSOSActive: isSOSActive,
                     primaryColor: primaryColor,
@@ -867,17 +863,6 @@ class _HomeScreenState extends State<HomeScreen>
                       uploadStatusBadgeBuilder: _buildUploadStatusBadge,
                     ),
                   ],
-
-                  const Spacer(),
-
-                  // ── SOS Button ────────────────────────────────────────────────
-                  SOSActionButton(
-                    isSOSActive: isSOSActive,
-                    tapCount: _tapCount,
-                    requiredTaps: _requiredTaps,
-                    primaryColor: primaryColor,
-                    onTap: isSOSActive ? _onCancelTap : _onSOSTap,
-                  ),
 
                   const Spacer(),
 
@@ -904,20 +889,31 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                          child: ActionCard(
-                            icon: Icons.phone_in_talk,
-                            iconColor: const Color(0xFF22C55E),
-                            title: 'Panggil 112'.tr(context),
-                            subtitle: 'Panggilan darurat\nbebas pulsa'.tr(
-                              context,
-                            ),
-                            onTap: _call112,
+                        child: ActionCard(
+                          icon: Icons.phone_in_talk,
+                          iconColor: const Color(0xFFD32F2D),
+                          title: 'Panggil 112'.tr(context),
+                          subtitle: 'Panggilan darurat\nbebas pulsa'.tr(
+                            context,
                           ),
+                          onTap: _call112,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
                 ],
+              ),
+            ),
+
+            // ── Fixed Position SOS Button ────────────────────────────────────
+            Center(
+              child: SOSActionButton(
+                isSOSActive: isSOSActive,
+                tapCount: _tapCount,
+                requiredTaps: _requiredTaps,
+                primaryColor: primaryColor,
+                onTap: isSOSActive ? _onCancelTap : _onSOSTap,
               ),
             ),
 
@@ -1187,7 +1183,7 @@ class _HomeScreenState extends State<HomeScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Panggilan SOS telah dibatalkan.'.tr(context)),
-            backgroundColor: Colors.grey.shade800,
+            backgroundColor: const Color(0xFF50C878),
           ),
         );
       }

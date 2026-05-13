@@ -36,8 +36,8 @@ func TouchLastActive(db *gorm.DB, rdb *redis.Client) fiber.Handler {
 			
 			// Update Redis online status TTL (90s = 3x 30s heartbeat)
 			if rdb != nil {
-				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-				defer cancel()
+				ctx, canceled := context.WithTimeout(context.Background(), 2*time.Second)
+				defer canceled()
 				rdb.Set(ctx, "user:online:"+userID, "1", 90*time.Second)
 			}
 		}()

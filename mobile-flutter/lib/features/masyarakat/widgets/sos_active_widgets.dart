@@ -44,7 +44,7 @@ class SOSActionButton extends StatelessWidget {
                         backgroundColor: (isSOSActive ? Colors.red : primaryColor)
                             .withValues(alpha: 0.15),
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          isSOSActive ? Colors.red : Colors.orangeAccent,
+                          isSOSActive ? Colors.red : primaryColor,
                         ),
                       ),
                     ),
@@ -64,7 +64,7 @@ class SOSActionButton extends StatelessWidget {
                         ),
                         border: Border.all(
                           color: (tapCount > 0
-                              ? (isSOSActive ? Colors.red : const Color(0xFFFFA265))
+                              ? (isSOSActive ? Colors.red : const Color(0xFFCB5100))
                               : (isDarkMode
                                   ? Colors.white.withValues(alpha: 0.2)
                                   : (isSOSActive ? Colors.red : primaryColor)

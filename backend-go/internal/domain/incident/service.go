@@ -484,8 +484,8 @@ func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) 
 	// Cari relawan yang berstatus en_route atau on_scene
 	responses, err := s.repo.FindResponsesByIncident(incidentID)
 	if err == nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
+		ctx, canceled := context.WithTimeout(context.Background(), 5*time.Second)
+		defer canceled()
 		for _, resp := range responses {
 			if resp.Status == "en_route" || resp.Status == "on_scene" {
 				// Cek posisi terakhir di Redis
