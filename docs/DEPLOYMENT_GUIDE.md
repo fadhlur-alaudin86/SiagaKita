@@ -121,6 +121,11 @@ docker ps
 # Output yang diharapkan:
 # siagakita_postgres  → Up (healthy)
 # siagakita_redis     → Up (healthy)
+
+> [!IMPORTANT]
+> **Ketergantungan Redis**: Mulai Patch 1.0.21, Redis bukan lagi sekadar cache opsional. Redis **wajib** berjalan sehat karena digunakan untuk:
+> 1.  **Session Guard**: Validasi JTI (mencegah login ganda mobile). Jika Redis mati, user tidak bisa login/akses API.
+> 2.  **Idempotency**: Mencegah double-submit aksi kritis di multi-device console.
 ```
 
 ---

@@ -117,6 +117,21 @@
 
 ---
 
+### 🔖 Patch 1.0.21 - 14 Mei 2026 (Session Security & Multi-Device Sync)
+
+#### 🛡️ Backend - Go Fiber & Redis
+- **JTI Session Guard**: Implementasi JTI (JWT ID) pada Access & Refresh token. Middleware `SessionGuard` memvalidasi JTI terhadap Redis untuk memaksakan **Single-Device Login** pada perangkat mobile.
+- **Idempotency Guard**: Middleware baru untuk mencegah eksekusi ganda pada operasi kritis menggunakan header `X-Idempotency-Key` (UUID).
+- **Multi-Connection Hub**: Refaktorisasi `Hub` WebSocket agar mendukung banyak koneksi per `userID` khusus untuk role Console (`admin`, `agency`).
+- **Broadcast Events**: Penambahan event `FORCE_LOGOUT` (saat sesi diganti) dan `INCIDENT_UPDATED` (untuk sinkronisasi dashboard otomatis).
+
+#### 📱 Mobile & Console Flutter
+- **Mobile Logout Handling**: Menambahkan listener `FORCE_LOGOUT` pada `MobileWsService` untuk segera menghentikan aktivitas dan mengarahkan user ke login jika sesi digantikan.
+- **Console Auto-Sync**: Implementasi listener `INCIDENT_UPDATED` untuk memicu pembaruan data otomatis pada dashboard tanpa *refresh* manual.
+- **Idempotency Integration**: Pengiriman otomatis header `X-Idempotency-Key` pada setiap aksi perubahan status insiden di Desktop Console.
+
+---
+
 ### 🔖 Patch 1.0.20 - 13 Mei 2026 (UI Normalization & Scaling)
 
 #### 🎨 Mobile Flutter (Citizen/Volunteer)

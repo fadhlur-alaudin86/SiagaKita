@@ -26,15 +26,20 @@ The SiagaKita system consists of three main components:
 
 ### For Agencies & Admins
 *   **Live Operational Map**: Monitor all active incidents and moving volunteers on an interactive map.
+*   **Multi-Device Sync**: Console users can login from multiple devices simultaneously with real-time state synchronization via WebSockets.
 *   **Incident Management**: Review incoming reports, assign urgency levels, dispatch personnel, and resolve incidents.
 *   **User Management**: Approve or reject volunteer KYC applications, and manage SOS abuse (strikes and bans).
+
+### System Reliability
+*   **Single-Device Mobile Session**: Prevents account sharing and enhances security by enforcing one active session per mobile user via Redis-backed JTI validation.
+*   **Idempotent Operations**: Ensures consistency for critical state changes using `X-Idempotency-Key` headers, preventing duplicate actions from synchronized devices.
 
 ## Technology Stack
 
 *   **Mobile & Desktop Frontend**: Flutter (Dart)
 *   **Backend Framework**: Go 1.26 with Fiber v2
 *   **Database**: PostgreSQL 15
-*   **Caching & Live State**: Redis
+*   **Caching & Session Store**: Redis (Mandatory for Session Guard & Sync)
 *   **Deployment**: Docker & Docker Compose
 *   **Maps & Geocoding**: OpenStreetMap (OSM) & Nominatim API
 

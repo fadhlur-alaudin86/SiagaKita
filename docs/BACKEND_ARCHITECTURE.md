@@ -177,10 +177,10 @@ Alur registrasi telah diperkuat untuk memastikan **integritas data** dan **mence
 
 ```go
 // Access Token - berumur pendek (default: 15 menit)
-Claims: { user_id, role, exp }
+Claims: { user_id, role, jti, exp }
 
 // Refresh Token - berumur panjang (default: 168 jam / 7 hari)
-Claims: { user_id, role, exp }
+Claims: { user_id, role, jti, exp }
 ```
 
 Token dilewatkan via header:
@@ -191,6 +191,28 @@ Authorization: Bearer <access_token>
 Setelah JWT divalidasi, middleware menyimpan ke `c.Locals`:
 - `c.Locals("userID")` - UUID user
 - `c.Locals("userRole")` - role string
+- `c.Locals("jti")` - Unique session ID (JWT ID)
+
+### 3.4 Session Management (SessionGuard)
+
+Backend menggunakan **Redis** sebagai *single source of truth* untuk validasi sesi aktif.
+
+1. **JTI (JWT ID)**: Setiap token yang diterbitkan memiliki `jti` unik. Saat login, `jti` disimpan di Redis dengan key `session:{userID}`.
+2. **SessionGuard Middleware**:
+   - Khusus untuk role `civilian`, `volunteer`, dan `agency_personnel` (Mobile).
+   - Memeriksa apakah `jti` di dalam token sama dengan yang ada di Redis.
+   - Jika berbeda (karena user login di perangkat baru), request ditolak dengan error `SESSION_REPLACED`.
+   - Hal ini memaksa **Single-Device Login** pada aplikasi mobile.
+3. **Force Logout**: Saat sesi digantikan, server mengirimkan event `FORCE_LOGOUT` via WebSocket ke koneksi lama agar aplikasi klien segera melakukan logout UI.
+
+### 3.5 Idempotensi (Console Only)
+
+Untuk mencegah eksekusi ganda pada aksi yang mengubah state (POST/PATCH/DELETE) dari banyak perangkat console yang tersinkron, backend menerapkan **Idempotency Guard**.
+
+- **Header**: Klien wajib mengirim `X-Idempotency-Key` (UUID v4).
+- **Mekanisme**:
+  - Backend menyimpan hash respons berdasarkan key tersebut di Redis selama 60 detik.
+  - Jika key yang sama dikirim dalam waktu singkat, backend akan mengembalikan respons yang sama tanpa menjalankan logika bisnis kembali.
 
 ---
 
@@ -212,6 +234,8 @@ route.Method("/path", authMw, middleware.AdminOnly(), handler)
 | Middleware | Role yang Diizinkan | Digunakan untuk |
 |-----------|---------------------|-----------------|
 | `Auth(cfg)` | Semua (hanya validasi JWT) | Semua protected route |
+| `SessionGuard(redis)` | Mobile Roles | Enforce single-device login |
+| `Idempotency(redis)` | Console Roles | Cegah double-submit di multi-device |
 | `RequireRoles("x","y")` | Custom | Kasus spesifik |
 | `SuperAdminOnly()` | superadmin | Operasi paling sensitif |
 | `AdminOnly()` | admin, superadmin | KYC, ban user, rank CRUD |
@@ -238,23 +262,25 @@ ws://<host>:8081/ws/connect?token=<jwt>
 ```go
 // hub.go - registry koneksi aktif
 type Client struct {
-    Conn *websocket.Conn
-    Role string
+    ConnID string
+    Conn   *websocket.Conn
+    Role   string
 }
 
 type Hub struct {
-    clients map[string]*Client  // userID → Client
+    // userID → []Client (Mendukung banyak koneksi per user untuk Console)
+    clients map[string][]*Client
     mu      sync.RWMutex
 }
 
-// Broadcast ke semua koneksi yang terhubung
-hub.BroadcastAll(event)
+// Broadcast ke semua koneksi milik seorang user
+hub.BroadcastToUser(userID, event)
 
 // Broadcast ke role tertentu (contoh: "admin" atau "agency")
 hub.BroadcastToRole("agency", event)
 ```
 
-> **Catatan Hub**: Pada versi terbaru, Hub sudah menyimpan informasi *Role* (peran) klien berbarengan dengan koneksi `Conn` saat proses Register. Ini memungkinkan pencarian (*filtering*) target *broadcast* jauh lebih efisien di lapisan *memory*, tanpa perlu melakukan *lookup* lagi ke database/Redis.
+> **Catatan Hub Multi-Connection**: Untuk role **Console** (`admin`, `superadmin`, `agency`), Hub mengizinkan lebih dari satu koneksi aktif per `userID`. Hal ini memungkinkan staf instansi membuka dashboard di PC dan tablet secara bersamaan dengan state yang tersinkronisasi. Sedangkan untuk role **Mobile**, koneksi baru akan memicu pemutusan koneksi lama.
 
 ### Event dari Backend ke Client
 
@@ -263,6 +289,8 @@ hub.BroadcastToRole("agency", event)
 | `INCOMING_EMERGENCY` | Semua agency/admin | SOS baru masuk (status: broadcasting) |
 | `SOS_CANCELLED` | Semua agency/admin | User batalkan SOS |
 | `RESCUE_ACCEPTED` | Reporter | Responder en_route |
+| `INCIDENT_UPDATED` | Semua agency/admin | Perubahan status insiden (Handled/Resolved/dll) |
+| `FORCE_LOGOUT` | User spesifik | Sesi digantikan oleh login baru |
 | `LOCATION_UPDATE` | Agency | GPS reporter diperbarui |
 | `VOLUNTEER_LOCATION_UPDATE` | Agency/admin | Koordinat GPS relawan online diperbarui secara _real-time_ |
 
