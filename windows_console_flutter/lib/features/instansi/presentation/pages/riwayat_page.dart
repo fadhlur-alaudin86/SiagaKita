@@ -190,8 +190,9 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
     required ValueChanged<T?> onChanged,
   }) {
     final colors = Theme.of(context).colorScheme;
+    const boxWidth = 180.0;
     return Container(
-      constraints: const BoxConstraints(minWidth: 150, maxWidth: 220),
+      width: boxWidth,
       margin: const EdgeInsets.only(right: 16, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,6 +211,7 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
             initialValue: value,
             color: const Color(0xFF1E2537),
             offset: const Offset(0, 48),
+            constraints: const BoxConstraints(minWidth: boxWidth, maxWidth: boxWidth),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: colors.outline),
@@ -225,6 +227,7 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                     ))
                 .toList(),
             child: Container(
+              width: boxWidth,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: colors.surface,
@@ -564,8 +567,9 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
     required ValueChanged<T?> onChanged,
   }) {
     final colors = Theme.of(context).colorScheme;
+    const boxWidth = 180.0;
     return Container(
-      width: 200,
+      width: boxWidth,
       margin: const EdgeInsets.only(right: 16, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,6 +588,7 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
             initialValue: value,
             color: const Color(0xFF1E2537),
             offset: const Offset(0, 48),
+            constraints: const BoxConstraints(minWidth: boxWidth, maxWidth: boxWidth),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: colors.outline),
@@ -599,6 +604,7 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
                     ))
                 .toList(),
             child: Container(
+              width: boxWidth,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: colors.surface,

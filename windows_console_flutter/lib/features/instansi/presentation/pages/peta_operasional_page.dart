@@ -222,31 +222,9 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                     ..._volunteers.entries.map((entry) {
                       return Marker(
                         point: entry.value,
-                        width: 40,
-                        height: 40,
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.green.withValues(alpha: 0.5),
-                                    blurRadius: 8,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ],
-                        ),
+                        width: 60,
+                        height: 60,
+                        child: const _AnimatedVolunteerMarker(),
                       );
                     }),
                   ],
@@ -342,4 +320,80 @@ class _TrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
+}
+
+class _AnimatedVolunteerMarker extends StatefulWidget {
+  const _AnimatedVolunteerMarker();
+
+  @override
+  State<_AnimatedVolunteerMarker> createState() => _AnimatedVolunteerMarkerState();
+}
+
+class _AnimatedVolunteerMarkerState extends State<_AnimatedVolunteerMarker>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1500),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) {
+        final scale = 1.0 + (_ctrl.value * 0.2);
+        final opacity = 1.0 - (_ctrl.value * 0.5);
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // Pulse circle
+            Container(
+              width: 40 * scale,
+              height: 40 * scale,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.green.withValues(alpha: opacity * 0.4),
+              ),
+            ),
+            // Main Icon
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withValues(alpha: 0.5),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.person, color: Colors.white, size: 18),
+            ),
+            // Floating Arrow
+            Positioned(
+              top: 0 - (_ctrl.value * 5),
+              child: Opacity(
+                opacity: _ctrl.value,
+                child: const Icon(
+                  Icons.keyboard_double_arrow_up_rounded,
+                  color: Colors.greenAccent,
+                  size: 16,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

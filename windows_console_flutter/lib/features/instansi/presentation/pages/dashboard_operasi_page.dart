@@ -168,8 +168,8 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                         child: _recentSOS.isEmpty
                             ? Center(
                                 child: Text(
-                                  'Sistem Terpantau Aman 🟢',
-                                  style: textTheme.bodySmall,
+                                  'Sistem Terpantau Aman',
+                                  style: textTheme.bodyMedium,
                                 ),
                               )
                             : ListView.separated(
@@ -220,7 +220,6 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
 
               const SizedBox(width: 24),
 
-              // Pie Chart distribusi
               Expanded(
                 flex: 4,
                 child: Card(
@@ -229,58 +228,46 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Distribusi Tipe SOS',
-                          style: textTheme.titleMedium,
+                        Row(
+                          children: [
+                            const Icon(Icons.pie_chart, color: Colors.orangeAccent, size: 18),
+                            const SizedBox(width: 8),
+                            Text('Distribusi Tipe SOS', style: textTheme.titleMedium),
+                          ],
                         ),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          height: 300,
-                          child: _stats.byType.isEmpty
-                              ? Center(
+                        const SizedBox(height: 24),
+                        _stats.byType.isEmpty
+                            ? SizedBox(
+                                height: 220,
+                                child: Center(
                                   child: Text(
                                     'Belum ada data statistik',
                                     style: textTheme.bodySmall,
                                   ),
-                                )
-                              : PieChart(
+                                ),
+                              )
+                            : AspectRatio(
+                                aspectRatio: 1,
+                                child: PieChart(
                                   PieChartData(
-                                    sectionsSpace: 4,
-                                    centerSpaceRadius: 60,
+                                    sectionsSpace: 2,
+                                    centerSpaceRadius: 0,
+                                    startDegreeOffset: -90,
                                     sections: _buildSections(),
+                                    pieTouchData: PieTouchData(
+                                      touchCallback: (event, response) {},
+                                    ),
                                   ),
+                                  swapAnimationDuration: const Duration(milliseconds: 600),
+                                  swapAnimationCurve: Curves.easeInOutCubic,
                                 ),
-                        ),
-                        const SizedBox(height: 24),
-                        // Legend sederhana
+                              ),
+                        const SizedBox(height: 20),
+                        // Legend
                         Wrap(
-                          spacing: 16,
-                          runSpacing: 8,
-                          children: _stats.byType.keys.map((k) {
-                            final idx = _stats.byType.keys.toList().indexOf(k);
-                            const pieColors = [
-                              Colors.redAccent,
-                              Colors.blueAccent,
-                              Colors.orangeAccent,
-                              Colors.purpleAccent,
-                              Colors.tealAccent,
-                            ];
-                            return Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: pieColors[idx % pieColors.length],
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(k, style: const TextStyle(fontSize: 12)),
-                              ],
-                            );
-                          }).toList(),
+                          spacing: 12,
+                          runSpacing: 10,
+                          children: _buildLegend(),
                         ),
                       ],
                     ),
@@ -294,28 +281,72 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
     );
   }
 
+  // Kamus tipe insiden → nama Indonesia
+  static const _typeLabels = <String, String>{
+    'fire': 'Kebakaran',
+    'medical': 'Medis',
+    'crime': 'Kriminalitas',
+    'disaster': 'Bencana',
+    'accident': 'Kecelakaan',
+    'unknown': 'Tidak Diketahui',
+  };
+
+  static const _pieColors = [
+    Color(0xFFEF5350), // merah
+    Color(0xFF42A5F5), // biru
+    Color(0xFFFF7043), // oranye
+    Color(0xFFAB47BC), // ungu
+    Color(0xFF26C6DA), // cyan
+    Color(0xFF66BB6A), // hijau
+    Color(0xFFFFCA28), // kuning
+  ];
+
   List<PieChartSectionData> _buildSections() {
-    const pieColors = [
-      Colors.redAccent,
-      Colors.blueAccent,
-      Colors.orangeAccent,
-      Colors.purpleAccent,
-      Colors.tealAccent,
-    ];
     final entries = _stats.byType.entries.toList();
     final total = entries.fold(0, (s, e) => s + e.value);
     return entries.asMap().entries.map((e) {
       final pct = total == 0 ? 0.0 : e.value.value / total * 100;
+      final color = _pieColors[e.key % _pieColors.length];
       return PieChartSectionData(
         value: e.value.value.toDouble(),
-        color: pieColors[e.key % pieColors.length],
+        color: color,
         title: '${pct.toStringAsFixed(0)}%',
-        radius: 40,
-        titleStyle: const TextStyle(
-          fontSize: 12,
+        radius: 110,
+        titleStyle: TextStyle(
+          fontSize: pct < 8 ? 0 : 13, // sembunyi label kalau irisan kecil
           color: Colors.white,
           fontWeight: FontWeight.bold,
+          shadows: const [Shadow(color: Colors.black38, blurRadius: 4)],
         ),
+        badgeWidget: pct < 8
+            ? null
+            : null, // bisa pakai badge kalau mau
+      );
+    }).toList();
+  }
+
+  List<Widget> _buildLegend() {
+    final entries = _stats.byType.entries.toList();
+    return entries.asMap().entries.map((e) {
+      final color = _pieColors[e.key % _pieColors.length];
+      final label = _typeLabels[e.value.key] ?? e.value.key;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          ),
+        ],
       );
     }).toList();
   }
