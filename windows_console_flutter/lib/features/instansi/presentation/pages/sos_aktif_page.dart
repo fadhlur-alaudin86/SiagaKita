@@ -28,6 +28,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
   List<IncidentModel> _incidents = [];
   IncidentModel? _selected;
   bool _loading = true;
+  String _filterStatus = 'semua'; // semua | masuk | ditangani
   StreamSubscription<WsMessage>? _wsSub;
   Timer?
   _refreshTimer; // refresh tiap 5 detik agar indikator online/offline akurat
@@ -121,6 +122,19 @@ class _SosAktifPageState extends State<SosAktifPage> {
         _loading = false;
       });
     }
+  }
+
+  List<IncidentModel> get _filteredIncidents {
+    return switch (_filterStatus) {
+      'masuk' => _incidents
+          .where(
+            (i) =>
+                i.status == 'grace_period' || i.status == 'broadcasting',
+          )
+          .toList(),
+      'ditangani' => _incidents.where((i) => i.status == 'handled').toList(),
+      _ => _incidents, // 'semua'
+    };
   }
 
   Future<void> _markFalseAlarm() async {
@@ -269,11 +283,48 @@ class _SosAktifPageState extends State<SosAktifPage> {
                   ),
                 ),
                 const Divider(color: Colors.white12, height: 1),
+
+                // Filter chips
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: Row(
+                    children: [
+                      for (final entry in [
+                        ('semua', 'SEMUA'),
+                        ('masuk', 'MASUK'),
+                        ('ditangani', 'DITANGANI'),
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: ChoiceChip(
+                            label: Text(entry.$2),
+                            selected: _filterStatus == entry.$1,
+                            onSelected: (_) => setState(
+                              () => _filterStatus = entry.$1,
+                            ),
+                            selectedColor: Colors.red,
+                            labelStyle: TextStyle(
+                              color: _filterStatus == entry.$1
+                                  ? Colors.white
+                                  : Colors.white54,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            backgroundColor: const Color(0xFF111827),
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Divider(color: Colors.white12, height: 1),
                 Expanded(
                   child: RepaintBoundary(
                     child: _loading
                         ? const Center(child: CircularProgressIndicator())
-                        : _incidents.isEmpty
+                        : _filteredIncidents.isEmpty
                         ? const Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -292,11 +343,11 @@ class _SosAktifPageState extends State<SosAktifPage> {
                             ),
                           )
                         : ListView.separated(
-                            itemCount: _incidents.length,
+                            itemCount: _filteredIncidents.length,
                             separatorBuilder: (context, index) =>
                                 const Divider(color: Colors.white10, height: 1),
                             itemBuilder: (context, i) {
-                              final inc = _incidents[i];
+                              final inc = _filteredIncidents[i];
                               final isSelected = _selected?.id == inc.id;
                               return Material(
                                 color: isSelected
