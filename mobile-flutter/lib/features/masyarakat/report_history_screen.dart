@@ -424,20 +424,22 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    report.statusLabel,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: statusColor,
+                  child: SizedBox(
+                    width: 85,
+                    child: Center(
+                      child: Text(
+                        report.getStatusLabel(context),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -459,19 +461,30 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             const SizedBox(height: 10),
             Row(
               children: [
-                // Chip urgensi — hanya tampilkan jika sudah ditentukan agensi
-                if (report.urgencyLevel != null)
-                  _chip(report.urgencyLabel, urgencyColor),
-                if (report.urgencyLevel != null) const SizedBox(width: 8),
-                if (report.photoPaths.isNotEmpty)
-                  _chip(
-                    '${report.photoPaths.length} ${'foto'.tr(context)}',
-                    Colors.blue,
-                  ),
-                if (report.audioPath != null) ...[
-                  const SizedBox(width: 8),
-                  _chip('audio'.tr(context), Colors.purple),
-                ],
+                // 1. Chip Urgensi (Selalu tampil, '-' jika null)
+                _chip(
+                  report.getUrgencyLabel(context),
+                  urgencyColor,
+                  width: 75,
+                ),
+                const SizedBox(width: 8),
+
+                // 2. Chip Foto (Selalu tampil, '-' jika kosong)
+                _chip(
+                  report.photoPaths.isNotEmpty
+                      ? '${report.photoPaths.length} ${'foto'.tr(context)}'
+                      : '-',
+                  Colors.blue,
+                  width: 75,
+                ),
+                const SizedBox(width: 8),
+
+                // 3. Chip Audio (Selalu tampil, '-' jika null)
+                _chip(
+                  report.audioPath != null ? 'audio'.tr(context) : '-',
+                  Colors.purple,
+                  width: 75,
+                ),
                 const Spacer(),
                 if (report.status == 'sent' || report.status == 'pending')
                   SizedBox(
@@ -624,7 +637,11 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     final cardColor = isDark ? colors.surfaceContainerHighest : Colors.white;
     final isFalseAlarm = sos.status == 'false_alarm';
     final isCanceled = sos.status == 'canceled';
-    final statusColor = isFalseAlarm || isCanceled ? Colors.red : Colors.green;
+    final statusColor = isFalseAlarm
+        ? Colors.red
+        : isCanceled
+        ? Colors.grey
+        : Colors.green;
     final statusLabel = isFalseAlarm
         ? 'Palsu'.tr(context)
         : (isCanceled ? 'Batal'.tr(context) : 'Selesai'.tr(context));
@@ -692,17 +709,22 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                statusLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: statusColor,
+              child: SizedBox(
+                width: 85,
+                child: Center(
+                  child: Text(
+                    statusLabel,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -712,8 +734,8 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     );
   }
 
-  Widget _chip(String label, Color color) {
-    return Container(
+  Widget _chip(String label, Color color, {double? width}) {
+    Widget content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -721,6 +743,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       ),
       child: Text(
         label,
+        textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,
@@ -728,6 +751,14 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
         ),
       ),
     );
+
+    if (width != null) {
+      return SizedBox(
+        width: width,
+        child: content,
+      );
+    }
+    return content;
   }
 
   String _incidentLabel(String type) {

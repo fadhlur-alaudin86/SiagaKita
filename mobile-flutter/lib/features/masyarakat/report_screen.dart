@@ -736,12 +736,17 @@ class _ReportScreenState extends State<ReportScreen> {
     bool isDark,
   ) {
     return Container(
-      height: 120, // slightly taller to accommodate the track padding
+      height: 140, // Increased to accommodate lower slider and wider outline
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.onSurface.withValues(alpha: 0.1)),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 12, 0, 0),
+      padding: const EdgeInsets.fromLTRB(
+        12,
+        12,
+        12,
+        10,
+      ), // Added bottom padding
       child: ScrollbarTheme(
         data: ScrollbarThemeData(
           trackColor: WidgetStateProperty.all(
@@ -749,15 +754,20 @@ class _ReportScreenState extends State<ReportScreen> {
                 ? Colors.white.withValues(alpha: 0.08)
                 : Colors.black.withValues(alpha: 0.05),
           ),
+          thumbColor: WidgetStateProperty.all(
+            primaryColor.withValues(alpha: 0.5),
+          ),
         ),
         child: Scrollbar(
           controller: _categoryScrollCtrl,
           thumbVisibility: true,
           trackVisibility: true,
-          thickness: 6,
+          thickness: 4,
           radius: const Radius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.only(
+              bottom: 24,
+            ), // Gap between cards and slider
             child: ListView.builder(
               controller: _categoryScrollCtrl,
               scrollDirection: Axis.horizontal,

@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../constants/api_config.dart';
+import '../localization/app_localization.dart';
 
 class ReportException implements Exception {
   final String message;
@@ -56,32 +58,32 @@ class ReportModel {
     );
   }
 
-  String get urgencyLabel {
+  String getUrgencyLabel(BuildContext context) {
     if (urgencyLevel == null) return '-';
     switch (urgencyLevel) {
       case 0:
-        return 'Ringan';
+        return 'Ringan'.tr(context);
       case 2:
-        return 'Kritis';
+        return 'Kritis'.tr(context);
       default:
-        return 'Sedang';
+        return 'Sedang'.tr(context);
     }
   }
 
-  String get statusLabel {
+  String getStatusLabel(BuildContext context) {
     switch (status) {
-      case 'processing':
-        return 'Ditangani';
+      case 'handled':
+        return 'Ditangani'.tr(context);
       case 'resolved':
-        return 'Selesai';
+        return 'Selesai'.tr(context);
       case 'failed':
-        return 'Gagal';
+        return 'Gagal'.tr(context);
       case 'canceled':
-        return 'Batal';
+        return 'Batal'.tr(context);
       case 'rejected':
-        return 'Ditolak';
+        return 'Ditolak'.tr(context);
       default:
-        return 'Terkirim';
+        return 'Terkirim'.tr(context);
     }
   }
 }
@@ -160,7 +162,9 @@ class ReportService {
         photos: photos,
         audio: audio,
       );
-      throw ReportException('Gagal terhubung ke server, laporan disimpan offline.');
+      throw ReportException(
+        'Gagal terhubung ke server, laporan disimpan offline.',
+      );
     }
   }
 
@@ -176,7 +180,8 @@ class ReportService {
     File? audio,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String> currentFailed = prefs.getStringList(_failedReportsKey) ?? [];
+    final List<String> currentFailed =
+        prefs.getStringList(_failedReportsKey) ?? [];
 
     final reportMap = {
       'id': 'offline_${const Uuid().v4()}',
@@ -196,13 +201,17 @@ class ReportService {
 
   static Future<List<ReportModel>> getFailedReports() async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String> currentFailed = prefs.getStringList(_failedReportsKey) ?? [];
-    return currentFailed.map((e) => ReportModel.fromJson(jsonDecode(e))).toList();
+    final List<String> currentFailed =
+        prefs.getStringList(_failedReportsKey) ?? [];
+    return currentFailed
+        .map((e) => ReportModel.fromJson(jsonDecode(e)))
+        .toList();
   }
 
   static Future<void> removeFailedReport(String id) async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String> currentFailed = prefs.getStringList(_failedReportsKey) ?? [];
+    final List<String> currentFailed =
+        prefs.getStringList(_failedReportsKey) ?? [];
     currentFailed.removeWhere((item) {
       final decoded = jsonDecode(item);
       return decoded['id'] == id;
@@ -252,8 +261,12 @@ class ReportService {
     required String accessToken,
     required ReportModel failedReport,
   }) async {
-    final List<File> photos = failedReport.photoPaths.map((p) => File(p)).toList();
-    final File? audio = failedReport.audioPath != null ? File(failedReport.audioPath!) : null;
+    final List<File> photos = failedReport.photoPaths
+        .map((p) => File(p))
+        .toList();
+    final File? audio = failedReport.audioPath != null
+        ? File(failedReport.audioPath!)
+        : null;
 
     try {
       await submitReport(
