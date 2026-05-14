@@ -932,33 +932,48 @@ class _DropdownFilter<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2035),
+    final displayText = items[value] ?? label;
+    return PopupMenuButton<T>(
+      initialValue: value,
+      color: const Color(0xFF1E2537),
+      offset: const Offset(0, 40),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white12),
+        side: const BorderSide(color: Colors.white12),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          dropdownColor: const Color(0xFF1E2537),
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-          icon: Icon(
-            icon ?? Icons.filter_list,
-            color: Colors.white38,
-            size: 16,
-          ),
-          hint: Text(
-            label,
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
-          ),
-          items: items.entries
-              .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
-              .toList(),
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
+      onSelected: onChanged,
+      itemBuilder: (ctx) => items.entries
+          .map(
+            (e) => PopupMenuItem<T>(
+              value: e.key,
+              child: Text(
+                e.value,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          )
+          .toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A2035),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              displayText,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              icon ?? Icons.filter_list,
+              color: Colors.white38,
+              size: 16,
+            ),
+          ],
         ),
       ),
     );
@@ -972,34 +987,52 @@ class _StrikeFilterBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2035),
+    final label = value == 0 ? 'Semua Strike' : 'Strike ≥ $value';
+    return PopupMenuButton<int>(
+      initialValue: value,
+      color: const Color(0xFF1E2537),
+      offset: const Offset(0, 40),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: value > 0 ? Colors.orange : Colors.white12),
+        side: BorderSide(
+          color: value > 0 ? Colors.orange.withValues(alpha: 0.4) : Colors.white12,
+        ),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: value,
-          dropdownColor: const Color(0xFF1E2537),
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-          icon: Icon(
-            Icons.warning_amber_rounded,
-            color: value > 0 ? Colors.orange : Colors.white38,
-            size: 16,
+      onSelected: onChanged,
+      itemBuilder: (ctx) => [0, 1, 2, 3]
+          .map(
+            (v) => PopupMenuItem<int>(
+              value: v,
+              child: Text(
+                v == 0 ? 'Semua Strike' : 'Strike ≥ $v',
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          )
+          .toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A2035),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: value > 0 ? Colors.orange : Colors.white12,
           ),
-          items: [0, 1, 2, 3]
-              .map(
-                (v) => DropdownMenuItem(
-                  value: v,
-                  child: Text(v == 0 ? 'Semua Strike' : 'Strike ≥ $v'),
-                ),
-              )
-              .toList(),
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.warning_amber_rounded,
+              color: value > 0 ? Colors.orange : Colors.white38,
+              size: 16,
+            ),
+          ],
         ),
       ),
     );

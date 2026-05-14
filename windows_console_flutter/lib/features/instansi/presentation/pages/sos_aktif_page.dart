@@ -29,7 +29,6 @@ class _SosAktifPageState extends State<SosAktifPage> {
   IncidentModel? _selected;
   bool _loading = true;
   StreamSubscription<WsMessage>? _wsSub;
-  final _falseAlarmCtrl = TextEditingController();
   Timer?
   _refreshTimer; // refresh tiap 5 detik agar indikator online/offline akurat
 
@@ -126,40 +125,18 @@ class _SosAktifPageState extends State<SosAktifPage> {
 
   Future<void> _markFalseAlarm() async {
     if (_selected == null) return;
-    _falseAlarmCtrl.clear();
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
         title: const Text(
-          'Tandai False Alarm?',
+          'Konfirmasi Alarm Palsu',
           style: TextStyle(color: Colors.white),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Pengguna akan mendapat 1 strike. Setelah 3 strike, akun SOS akan diblokir.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _falseAlarmCtrl,
-              style: const TextStyle(color: Colors.white),
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Alasan (wajib)',
-                labelStyle: TextStyle(color: Colors.white54),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white24),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.orange),
-                ),
-              ),
-            ),
-          ],
+        content: const Text(
+          'Pengguna akan mendapat 1 strike. Setelah 3 strike, akun SOS akan diblokir.',
+          style: TextStyle(color: Colors.white70, fontSize: 13),
         ),
         actions: [
           TextButton(
@@ -167,19 +144,28 @@ class _SosAktifPageState extends State<SosAktifPage> {
             child: const Text('Batal', style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Tandai False Alarm'),
+            child: const Text(
+              'Tandai Alarm Palsu',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
     );
 
-    if (confirmed != true || _falseAlarmCtrl.text.isEmpty) return;
+    if (confirmed != true) return;
     final ok = await IncidentApiService.markFalseAlarm(
       widget.token,
       _selected!.id,
-      _falseAlarmCtrl.text,
+      '',
     );
     if (ok && mounted) {
       _showSnack(
@@ -205,9 +191,26 @@ class _SosAktifPageState extends State<SosAktifPage> {
   void dispose() {
     _audioPlayer.dispose();
     _wsSub?.cancel();
-    _falseAlarmCtrl.dispose();
     _refreshTimer?.cancel();
     super.dispose();
+  }
+
+  // Maps incident type string to the same icon used in the mobile app
+  IconData _incidentIcon(String type) {
+    switch (type) {
+      case 'fire':
+        return Icons.local_fire_department;
+      case 'accident':
+        return Icons.car_crash;
+      case 'disaster':
+        return Icons.water_damage;
+      case 'crime':
+        return Icons.warning_rounded;
+      case 'medical':
+        return Icons.medical_services;
+      default:
+        return Icons.report_outlined;
+    }
   }
 
   @override
@@ -323,10 +326,17 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                     ),
                                     child: Row(
                                       children: [
-                                        const Icon(
-                                          Icons.warning_amber_rounded,
-                                          color: Colors.red,
-                                          size: 22,
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Icon(
+                                            _incidentIcon(inc.incidentType),
+                                            color: Colors.red,
+                                            size: 18,
+                                          ),
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
@@ -436,8 +446,8 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     color: Colors.red.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.warning_amber_rounded,
+                  child: Icon(
+                    _incidentIcon(inc.incidentType),
                     color: Colors.red,
                     size: 28,
                   ),
@@ -523,7 +533,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
             const Divider(color: Colors.white12),
             const SizedBox(height: 16),
             const Text(
-              '📡 TELEMETRI KORBAN',
+              'TELEMETRI KORBAN',
               style: TextStyle(
                 color: Colors.white70,
                 fontWeight: FontWeight.bold,
@@ -590,7 +600,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
             const Divider(color: Colors.white12),
             const SizedBox(height: 16),
             const Text(
-              '👤 PROFIL KORBAN',
+              'PROFIL KORBAN',
               style: TextStyle(
                 color: Colors.white70,
                 fontWeight: FontWeight.bold,
@@ -676,20 +686,55 @@ class _SosAktifPageState extends State<SosAktifPage> {
                   final fullUrl = url.startsWith('/uploads')
                       ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + url
                       : url;
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      fullUrl,
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, _) => Container(
+                  return GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => Dialog(
+                          backgroundColor: Colors.black,
+                          insetPadding: EdgeInsets.zero,
+                          child: Stack(
+                            children: [
+                              InteractiveViewer(
+                                child: Center(
+                                  child: Image.network(
+                                    fullUrl,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 16,
+                                right: 16,
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        fullUrl,
                         width: 100,
                         height: 100,
-                        color: Colors.white10,
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.white54,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, _) => Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.white10,
+                          child: const Icon(
+                            Icons.broken_image,
+                            color: Colors.white54,
+                          ),
                         ),
                       ),
                     ),

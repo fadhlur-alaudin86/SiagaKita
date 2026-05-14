@@ -207,37 +207,45 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
             ),
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<T>(
+          PopupMenuButton<T>(
             initialValue: value,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.outline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.outline),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.primary),
-              ),
-              filled: true,
-              fillColor: colors.surface,
+            color: const Color(0xFF1E2537),
+            offset: const Offset(0, 48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: colors.outline),
             ),
-            dropdownColor: colors.surface,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
-            items: items
-                .map(
-                  (e) => DropdownMenuItem(value: e, child: Text(e.toString())),
-                )
+            onSelected: onChanged,
+            itemBuilder: (ctx) => items
+                .map((e) => PopupMenuItem<T>(
+                      value: e,
+                      child: Text(
+                        e.toString(),
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ))
                 .toList(),
-            onChanged: onChanged,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colors.outline),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      value.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(Icons.arrow_drop_down, color: Colors.white54, size: 20),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -543,37 +551,45 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
             ),
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<T>(
+          PopupMenuButton<T>(
             initialValue: value,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.outline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.outline),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.primary),
-              ),
-              filled: true,
-              fillColor: colors.surface,
+            color: const Color(0xFF1E2537),
+            offset: const Offset(0, 48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: colors.outline),
             ),
-            dropdownColor: colors.surface,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
-            items: items
-                .map(
-                  (e) => DropdownMenuItem(value: e, child: Text(e.toString())),
-                )
+            onSelected: onChanged,
+            itemBuilder: (ctx) => items
+                .map((e) => PopupMenuItem<T>(
+                      value: e,
+                      child: Text(
+                        e.toString(),
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ))
                 .toList(),
-            onChanged: onChanged,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colors.outline),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      value.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(Icons.arrow_drop_down, color: Colors.white54, size: 20),
+                ],
+              ),
+            ),
           ),
         ],
       ),

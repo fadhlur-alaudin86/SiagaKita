@@ -266,10 +266,7 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                 label: 'SOS Aktif (${_incidents.length})',
               ),
               const SizedBox(width: 16),
-              _LegendItem(
-                color: Colors.green,
-                label: 'Relawan Online (via WS Telemetry)',
-              ),
+              _LegendItem(color: Colors.green, label: 'Relawan Aktif'),
             ],
           ),
         ),

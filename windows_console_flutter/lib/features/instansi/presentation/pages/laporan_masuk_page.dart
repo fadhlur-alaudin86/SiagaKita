@@ -93,7 +93,9 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
-                    label: Text(f.toUpperCase()),
+                    label: Text(
+                      f == 'sent' ? 'MASUK' : f == 'handled' ? 'DITANGANI' : 'SEMUA'
+                    ),
                     selected: _filterStatus == f,
                     onSelected: (_) => setState(() {
                       _filterStatus = f;
@@ -388,20 +390,55 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
                 Wrap(
                   spacing: 8,
                   children: r.photoPaths.map((url) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        url,
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        errorBuilder: (ctx, err, _) => Container(
+                    return GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => Dialog(
+                            backgroundColor: Colors.transparent,
+                            insetPadding: EdgeInsets.zero,
+                            child: Stack(
+                              children: [
+                                InteractiveViewer(
+                                  child: Center(
+                                    child: Image.network(
+                                      url,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 16,
+                                  right: 16,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 32,
+                                    ),
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          url,
                           width: 100,
                           height: 100,
-                          color: Colors.white10,
-                          child: const Icon(
-                            Icons.broken_image,
-                            color: Colors.white54,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, _) => Container(
+                            width: 100,
+                            height: 100,
+                            color: Colors.white10,
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.white54,
+                            ),
                           ),
                         ),
                       ),
@@ -434,24 +471,46 @@ class _ReportDetailDialogState extends State<_ReportDetailDialog> {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<int>(
+                child: PopupMenuButton<int>(
                   initialValue: _selectedUrgency,
-                  hint: const Text(
-                    'Pilih Urgensi',
-                    style: TextStyle(color: Colors.white38),
+                  color: const Color(0xFF1E2537),
+                  offset: const Offset(0, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(color: Colors.white12),
                   ),
-                  dropdownColor: const Color(0xFF1A2035),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 0, child: Text('Rendah')),
-                    DropdownMenuItem(value: 1, child: Text('Sedang')),
-                    DropdownMenuItem(value: 2, child: Text('Tinggi')),
+                  onSelected: (v) => setState(() => _selectedUrgency = v),
+                  itemBuilder: (ctx) => const [
+                    PopupMenuItem(value: 0, child: Text('Rendah', style: TextStyle(color: Colors.white))),
+                    PopupMenuItem(value: 1, child: Text('Sedang', style: TextStyle(color: Colors.white))),
+                    PopupMenuItem(value: 2, child: Text('Tinggi', style: TextStyle(color: Colors.white))),
                   ],
-                  onChanged: (v) => setState(() => _selectedUrgency = v),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white24),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedUrgency == null
+                              ? 'Pilih Urgensi'
+                              : _selectedUrgency == 0
+                                  ? 'Rendah'
+                                  : _selectedUrgency == 1
+                                      ? 'Sedang'
+                                      : 'Tinggi',
+                          style: TextStyle(
+                            color: _selectedUrgency == null ? Colors.white38 : Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const Icon(Icons.arrow_drop_down, color: Colors.white54),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],

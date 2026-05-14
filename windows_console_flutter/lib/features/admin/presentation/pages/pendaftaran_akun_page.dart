@@ -230,28 +230,56 @@ class _FormInstansiState extends State<_FormInstansi> {
           style: TextStyle(color: Colors.white70, fontSize: 13),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
+        PopupMenuButton<String>(
           initialValue: _type,
-          dropdownColor: const Color(0xFF1A1F2E),
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.05),
-            border: OutlineInputBorder(
+          color: const Color(0xFF1A1F2E),
+          offset: const Offset(0, 52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide.none,
+          ),
+          onSelected: (v) => setState(() => _type = v),
+          itemBuilder: (ctx) => const [
+            PopupMenuItem(
+              value: 'police',
+              child: Text('Kepolisian', style: TextStyle(color: Colors.white)),
+            ),
+            PopupMenuItem(
+              value: 'fire',
+              child: Text('Pemadam Kebakaran', style: TextStyle(color: Colors.white)),
+            ),
+            PopupMenuItem(
+              value: 'medical',
+              child: Text('Medis / Rumah Sakit', style: TextStyle(color: Colors.white)),
+            ),
+            PopupMenuItem(
+              value: 'sar',
+              child: Text('Tim SAR', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  switch (_type) {
+                    'police' => 'Kepolisian',
+                    'fire' => 'Pemadam Kebakaran',
+                    'medical' => 'Medis / Rumah Sakit',
+                    'sar' => 'Tim SAR',
+                    _ => _type,
+                  },
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const Icon(Icons.arrow_drop_down, color: Colors.white54),
+              ],
             ),
           ),
-          items: const [
-            DropdownMenuItem(value: 'police', child: Text('Kepolisian')),
-            DropdownMenuItem(value: 'fire', child: Text('Pemadam Kebakaran')),
-            DropdownMenuItem(
-              value: 'medical',
-              child: Text('Medis / Rumah Sakit'),
-            ),
-            DropdownMenuItem(value: 'sar', child: Text('Tim SAR')),
-          ],
-          onChanged: (v) => setState(() => _type = v!),
         ),
         const SizedBox(height: 16),
         const Text(

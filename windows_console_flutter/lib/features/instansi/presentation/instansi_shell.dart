@@ -74,7 +74,9 @@ class _InstansiShellState extends State<InstansiShell> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Sesi Anda telah berakhir karena login di perangkat lain.'),
+                content: Text(
+                  'Sesi Anda telah berakhir karena login di perangkat lain.',
+                ),
                 backgroundColor: Colors.redAccent,
                 duration: Duration(seconds: 4),
               ),
@@ -111,7 +113,9 @@ class _InstansiShellState extends State<InstansiShell> {
     final incidents = await IncidentApiService.getActiveIncidents(widget.token);
     if (!mounted) return;
     setState(() {
-      _unreadCount = incidents.where((inc) => !_readSosIds.contains(inc.id)).length;
+      _unreadCount = incidents
+          .where((inc) => !_readSosIds.contains(inc.id))
+          .length;
       if (_unreadCount == 0) {
         AudioService.stop();
       }
@@ -238,7 +242,7 @@ class _SideNavigation extends StatelessWidget {
                 onTap: () => onSelected(InstansiMenu.sosAktif),
               ),
               _NavItem(
-                label: 'Laporan Masuk',
+                label: 'Laporan Aktif',
                 icon: Icons.inbox_outlined,
                 selected: activeMenu == InstansiMenu.laporanMasuk,
                 onTap: () => onSelected(InstansiMenu.laporanMasuk),
@@ -334,14 +338,21 @@ class _NavItem extends StatelessWidget {
                 ),
                 if (badgeCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.redAccent,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       badgeCount.toString(),
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
               ],
