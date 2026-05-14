@@ -12,7 +12,8 @@ import '../../core/services/connectivity_service.dart';
 
 class MapScreen extends StatefulWidget {
   final String? accessToken;
-  const MapScreen({super.key, this.accessToken});
+  final bool isActive;
+  const MapScreen({super.key, this.accessToken, this.isActive = false});
 
   static final ValueNotifier<LatLng?> targetLocation = ValueNotifier(null);
 
@@ -51,10 +52,28 @@ class _MapScreenState extends State<MapScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    LocationController.instance.setMode(TrackingMode.passive);
+    // Daftarkan GPS hanya jika tab map sedang aktif
+    if (widget.isActive) {
+      LocationController.instance.requestMode('map_screen', TrackingMode.passive);
+    }
     _initLocation();
     LocationController.instance.addListener(_onLocationChanged);
     MapScreen.targetLocation.addListener(_onTargetLocationChanged);
+    // Dengarkan perubahan UserModel untuk deteksi SOS state change
+    UserModel.currentUser.addListener(_onUserModelChanged);
+  }
+
+  bool _lastSOSActive = false;
+
+  void _onUserModelChanged() {
+    final isSOSActive = UserModel.currentUser.value.isSOSActive;
+    if (isSOSActive != _lastSOSActive) {
+      _lastSOSActive = isSOSActive;
+      // Trigger poll segera saat status SOS berubah
+      _pollData();
+      // Restart polling dengan interval yang sesuai
+      _startPolling();
+    }
   }
 
   void _onTargetLocationChanged() {
@@ -88,10 +107,26 @@ class _MapScreenState extends State<MapScreen>
   }
 
   @override
+  void didUpdateWidget(MapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Kelola GPS berdasarkan visibilitas tab
+    if (widget.isActive != oldWidget.isActive) {
+      if (widget.isActive) {
+        // Tab map aktif: nyalakan GPS passive (jika tidak ada SOS yang pakai active)
+        LocationController.instance.requestMode('map_screen', TrackingMode.passive);
+      } else {
+        // Tab map tidak aktif: lepaskan GPS dari map screen
+        LocationController.instance.releaseMode('map_screen');
+      }
+    }
+  }
+
+  @override
   void dispose() {
     LocationController.instance.removeListener(_onLocationChanged);
     MapScreen.targetLocation.removeListener(_onTargetLocationChanged);
-    LocationController.instance.setMode(TrackingMode.off);
+    UserModel.currentUser.removeListener(_onUserModelChanged);
+    LocationController.instance.releaseMode('map_screen');
     _pulseController.dispose();
     _pollingTimer?.cancel();
     _mapController.dispose();
@@ -140,11 +175,14 @@ class _MapScreenState extends State<MapScreen>
 
   void _startPolling() {
     if (widget.accessToken == null) return;
+    _pollingTimer?.cancel();
     _pollData();
-    _pollingTimer = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) => _pollData(),
-    );
+    // Gunakan interval 5 detik saat SOS aktif, 15 detik saat idle
+    final isSOSActive = UserModel.currentUser.value.isSOSActive;
+    final interval = isSOSActive
+        ? const Duration(seconds: 5)
+        : const Duration(seconds: 15);
+    _pollingTimer = Timer.periodic(interval, (_) => _pollData());
   }
 
   Future<void> _pollData() async {

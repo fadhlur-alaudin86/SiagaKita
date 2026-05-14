@@ -15,14 +15,18 @@ class AppBackgroundService {
   static const notificationChannelId = 'siagakita_bg_channel';
   static const notificationId = 888;
 
+  // SharedPreferences keys untuk komunikasi foreground ↔ background
+  static const _keySOSIncidentId = 'bg_sos_incident_id';
+  static const _keySOSActive = 'bg_sos_active';
+
   static Future<void> initialize() async {
     final service = FlutterBackgroundService();
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      notificationChannelId, // id
-      'SiagaKita Service', // name
-      description: 'Menjaga koneksi ke server SiagaKita', // description
-      importance: Importance.low, // low agar tidak bunyi terus
+      notificationChannelId,
+      'SiagaKita Service',
+      description: 'Menjaga koneksi ke server SiagaKita',
+      importance: Importance.low,
     );
 
     final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -36,7 +40,6 @@ class AppBackgroundService {
 
     await service.configure(
       androidConfiguration: AndroidConfiguration(
-        // The entry point for background execution
         onStart: onStart,
         autoStart: true,
         isForegroundMode: true,
@@ -46,7 +49,6 @@ class AppBackgroundService {
         foregroundServiceNotificationId: notificationId,
         foregroundServiceTypes: [AndroidForegroundType.location],
       ),
-      // iOS is not fully supported for this use case yet, but required for config
       iosConfiguration: IosConfiguration(
         autoStart: false,
         onForeground: onStart,
@@ -64,6 +66,26 @@ class AppBackgroundService {
     final service = FlutterBackgroundService();
     service.invoke("stopService");
   }
+
+  /// Beritahu background service bahwa SOS sedang aktif.
+  /// GPS background akan mulai mengirim lokasi ke endpoint incidents/{id}/location.
+  static Future<void> startSOSTracking(String incidentId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySOSIncidentId, incidentId);
+    await prefs.setBool(_keySOSActive, true);
+    // Kirim event ke service instance yang sedang berjalan
+    FlutterBackgroundService().invoke('startSOSTracking', {
+      'incident_id': incidentId,
+    });
+  }
+
+  /// Beritahu background service bahwa SOS sudah selesai.
+  static Future<void> stopSOSTracking() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keySOSIncidentId);
+    await prefs.setBool(_keySOSActive, false);
+    FlutterBackgroundService().invoke('stopSOSTracking');
+  }
 }
 
 @pragma('vm:entry-point')
@@ -73,7 +95,6 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
-  // Hanya berjalan di Isolate terpisah, tidak bisa akses UI/Widget.
   DartPluginRegistrant.ensureInitialized();
 
   if (service is AndroidServiceInstance) {
@@ -90,6 +111,7 @@ void onStart(ServiceInstance service) async {
     service.stopSelf();
   });
 
+  // ─── Vibration Control ────────────────────────────────────────────────────
   Timer? vibrationTimer;
 
   service.on('startVibration').listen((event) {
@@ -108,14 +130,97 @@ void onStart(ServiceInstance service) async {
     Vibration.cancel();
   });
 
-  // Loop setiap 30 detik
+  // ─── SOS GPS Tracking (Background) ────────────────────────────────────────
+  // Saat app diminimalkan, kirim lokasi setiap 5 detik selama SOS aktif.
+  String? sosIncidentId;
+  Timer? sosLocationTimer;
+
+  void stopSOSTimer() {
+    sosLocationTimer?.cancel();
+    sosLocationTimer = null;
+    sosIncidentId = null;
+    if (service is AndroidServiceInstance) {
+      service.setForegroundNotificationInfo(
+        title: 'SiagaKita Aktif',
+        content: 'Menjaga koneksi ke server',
+      );
+    }
+  }
+
+  void startSOSTimer(String incidentId) {
+    sosIncidentId = incidentId;
+    sosLocationTimer?.cancel();
+
+    if (service is AndroidServiceInstance) {
+      service.setForegroundNotificationInfo(
+        title: '🆘 SOS Aktif — Berbagi Lokasi',
+        content: 'Lokasi Anda sedang dikirim ke tim respons',
+      );
+    }
+
+    sosLocationTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      if (sosIncidentId == null) return;
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('session_token');
+      final sosActive = prefs.getBool('bg_sos_active') ?? false;
+
+      if (token == null || !sosActive) {
+        stopSOSTimer();
+        return;
+      }
+
+      try {
+        final hasPermission = await Geolocator.checkPermission();
+        if (hasPermission == LocationPermission.always ||
+            hasPermission == LocationPermission.whileInUse) {
+          final isGpsOn = await Geolocator.isLocationServiceEnabled();
+          if (!isGpsOn) return;
+
+          final position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 8),
+            ),
+          );
+
+          await http
+              .put(
+                Uri.parse(
+                  '${ApiConfig.baseUrl}/incidents/$sosIncidentId/location',
+                ),
+                headers: {
+                  'Authorization': 'Bearer $token',
+                  'Content-Type': 'application/json',
+                },
+                body: jsonEncode({
+                  'latitude': position.latitude,
+                  'longitude': position.longitude,
+                }),
+              )
+              .timeout(const Duration(seconds: 8));
+        }
+      } catch (_) {
+        // Silent fail — akan dicoba di interval berikutnya
+      }
+    });
+  }
+
+  service.on('startSOSTracking').listen((event) {
+    final incidentId = event?['incident_id'] as String?;
+    if (incidentId != null && incidentId.isNotEmpty) {
+      startSOSTimer(incidentId);
+    }
+  });
+
+  service.on('stopSOSTracking').listen((event) {
+    stopSOSTimer();
+  });
+
+  // ─── Regular Background Loop (setiap 30 detik) ───────────────────────────
   Timer.periodic(const Duration(seconds: 30), (timer) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('session_token');
-    if (token == null) {
-      // User belum login, skip
-      return;
-    }
+    if (token == null) return;
 
     final baseUrl = ApiConfig.baseUrl;
 
@@ -127,15 +232,15 @@ void onStart(ServiceInstance service) async {
             headers: {'Authorization': 'Bearer $token'},
           )
           .timeout(const Duration(seconds: 10));
-    } catch (_) {
-      // Abaikan error koneksi
-    }
+    } catch (_) {}
 
-    // 2. LOCATION: Cek apakah fitur "On Duty" aktif
+    // 2. LOCATION: Cek apakah fitur "On Duty" aktif (Relawan)
+    // Hanya kirim lokasi relawan jika bukan sedang dalam mode SOS
     final isOnDuty = prefs.getBool('is_on_duty') ?? false;
     final role = prefs.getString('session_role');
+    final isSosActive = prefs.getBool('bg_sos_active') ?? false;
 
-    if (isOnDuty && role == 'volunteer') {
+    if (isOnDuty && role == 'volunteer' && !isSosActive) {
       try {
         final hasPermission = await Geolocator.checkPermission();
         if (hasPermission == LocationPermission.always ||
@@ -149,7 +254,6 @@ void onStart(ServiceInstance service) async {
               ),
             );
 
-            // Broadcast ke server
             await http
                 .put(
                   Uri.parse('$baseUrl/telemetry/location'),
@@ -164,7 +268,6 @@ void onStart(ServiceInstance service) async {
                 )
                 .timeout(const Duration(seconds: 10));
 
-            // Update notifikasi jika berhasil
             if (service is AndroidServiceInstance) {
               service.setForegroundNotificationInfo(
                 title: "Relawan Aktif (On Duty)",
@@ -173,10 +276,8 @@ void onStart(ServiceInstance service) async {
             }
           }
         }
-      } catch (_) {
-        // Abaikan error GPS
-      }
-    } else {
+      } catch (_) {}
+    } else if (!isSosActive) {
       if (service is AndroidServiceInstance) {
         service.setForegroundNotificationInfo(
           title: "SiagaKita Aktif",

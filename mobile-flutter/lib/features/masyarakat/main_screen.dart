@@ -68,9 +68,12 @@ class _MainScreenState extends State<MainScreen> {
           if (isRelawan)
             RelawanMainScreen(
               accessToken: widget.accessToken,
-              onNavigateToMap: () => setState(() => _currentIndex = 3),
+              onNavigateToMap: () => setState(() => _currentIndex = isRelawan ? 3 : 2),
             ),
-          MapScreen(accessToken: widget.accessToken),
+          MapScreen(
+            accessToken: widget.accessToken,
+            isActive: _currentIndex == (isRelawan ? 3 : 2),
+          ),
           ProfileScreen(accessToken: widget.accessToken),
         ];
 

@@ -15,6 +15,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/models/user_model.dart';
+import '../../core/services/background_service.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_controller.dart';
 import '../../core/services/location_service.dart';
@@ -72,7 +73,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ─── Telemetri SOS (Tahap 4) ──────────────────────────────────────────────────
   int _nextUpdateCountdown =
-      10; // hitung mundur update lokasi berikutnya (detik)
+      3; // hitung mundur update lokasi berikutnya (detik)
+
   DateTime? _lastLocationUpdate; // timestamp lokasi terakhir berhasil diupdate
   bool _sosTransmitting = true; // apakah koneksi SOS dalam keadaan baik
   Timer? _countdownTimer; // hitung mundur 1 detik
@@ -268,7 +270,8 @@ class _HomeScreenState extends State<HomeScreen>
       _ws!.dispose();
     }
     LocationController.instance.removeListener(_handlePositionChange);
-    LocationController.instance.setMode(TrackingMode.off);
+    // Lepaskan semua GPS caller dari HomeScreen
+    LocationController.instance.releaseMode('home_screen_sos');
     super.dispose();
   }
 
@@ -301,14 +304,23 @@ class _HomeScreenState extends State<HomeScreen>
   void _startLocationUpdates() {
     _startCountdownTimer();
 
-    // SINKRONISASI: Set mode ke active agar dapat streaming realtime
-    LocationController.instance.setMode(TrackingMode.active);
+    // Daftarkan GPS mode active dengan caller ID khusus SOS
+    LocationController.instance.requestMode('home_screen_sos', TrackingMode.active);
+
+    // Beritahu background service untuk mulai mengirim lokasi (saat app di-background)
+    final incidentId = _activeIncident?.incidentId ?? _pendingIncidentId ?? '';
+    if (incidentId.isNotEmpty) {
+      AppBackgroundService.startSOSTracking(incidentId);
+    }
   }
 
   void _stopLocationUpdates() {
     _countdownTimer?.cancel();
     _countdownTimer = null;
-    LocationController.instance.setMode(TrackingMode.off);
+    // Lepaskan GPS dari SOS caller
+    LocationController.instance.releaseMode('home_screen_sos');
+    // Beritahu background service agar berhenti mengirim lokasi SOS
+    AppBackgroundService.stopSOSTracking();
   }
 
   Future<void> _handlePositionChange() async {
@@ -318,10 +330,10 @@ class _HomeScreenState extends State<HomeScreen>
     // 1. Kirim lokasi terbaru via WebSocket (Real-time)
     _ws?.sendLocation(pos.lat, pos.lng);
 
-    // 2. Fallback: Update di DB via HTTP (misal tiap 10 detik sekali saja)
+    // 2. Fallback: Update di DB via HTTP setiap 3 detik saat SOS aktif
     final now = DateTime.now();
     if (_lastLocationUpdate == null ||
-        now.difference(_lastLocationUpdate!) > const Duration(seconds: 10)) {
+        now.difference(_lastLocationUpdate!) > const Duration(seconds: 3)) {
       try {
         await IncidentService.updateLocation(
           accessToken: widget.accessToken,
@@ -333,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen>
           setState(() {
             _lastLocationUpdate = now;
             _sosTransmitting = true;
-            _nextUpdateCountdown = 10;
+            _nextUpdateCountdown = 3;
           });
         }
       } catch (_) {
@@ -714,7 +726,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _transitionToBroadcasting() {
-    _graceTimer?.cancel(); // Fix: Hentikan getaran/timer grace period segera
+    _graceTimer?.cancel();
     if (!mounted) return;
     final incidentId = _pendingIncidentId!;
     final newIncident = ActiveIncident(
@@ -732,8 +744,10 @@ class _HomeScreenState extends State<HomeScreen>
       _showSOSSentBanner = true;
     });
     _startLocationUpdates();
+    // Update background service dengan incidentId yang valid
+    AppBackgroundService.startSOSTracking(incidentId);
     _startStatusPolling();
-    _startVibration(); // Mulai getaran saat SOS aktif
+    _startVibration();
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _showSOSSentBanner = false);
     });
@@ -816,7 +830,8 @@ class _HomeScreenState extends State<HomeScreen>
             _sosUploadStatus = 'idle';
             _tapCount = 0;
             _cancelledLocalId = null;
-            _nextUpdateCountdown = 10;
+            _nextUpdateCountdown = 3;
+
             _lastLocationUpdate = null;
           });
           if (mounted) {

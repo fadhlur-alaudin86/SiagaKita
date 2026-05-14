@@ -95,7 +95,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     _wsSub?.cancel();
     _ws?.dispose();
     LocationController.instance.removeListener(_handleLocationChange);
-    LocationController.instance.setMode(TrackingMode.off);
+    // Lepaskan GPS dari relawan caller
+    LocationController.instance.releaseMode('relawan_mission');
     super.dispose();
   }
 
@@ -234,12 +235,13 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
 
   // ─── Broadcast Lokasi Relawan ke Backend (Real-time) ───────────────────
   void _startMissionLocationBroadcast() {
-    // SINKRONISASI: Set mode ke active agar dapat streaming realtime
-    LocationController.instance.setMode(TrackingMode.active);
+    // Daftarkan GPS mode active dengan caller ID khusus misi relawan
+    LocationController.instance.requestMode('relawan_mission', TrackingMode.active);
   }
 
   void _stopMissionLocationBroadcast() {
-    LocationController.instance.setMode(TrackingMode.off);
+    // Lepaskan GPS dari relawan caller
+    LocationController.instance.releaseMode('relawan_mission');
     UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
       hasActiveMission: false,
     );
