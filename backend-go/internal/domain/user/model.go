@@ -37,7 +37,7 @@ type UserProfile struct {
 	MedicalConditions     *string    `json:"medical_conditions,omitempty"`
 	HeightCm              *int       `json:"height_cm,omitempty"`
 	WeightKg              *int       `json:"weight_kg,omitempty"`
-	Alamat                *string    `json:"alamat,omitempty"`
+	Domicile              *string    `json:"domicile,omitempty"`
 	Bio                   *string    `json:"bio,omitempty"`
 	// KYC Warga (NIK Verification)
 	KYCKtpURL             *string    `gorm:"column:kyc_ktp_url" json:"kyc_ktp_url,omitempty"`
@@ -161,7 +161,7 @@ type BiodataRequest struct {
 	MedicalConditions     *string `json:"medical_conditions"`
 	HeightCm              *int    `json:"height_cm"`
 	WeightKg              *int    `json:"weight_kg"`
-	Alamat                *string `json:"alamat"`
+	Domicile              *string `json:"domicile"`
 	EmergencyContactName  *string `json:"emergency_contact_name"`
 	EmergencyContactPhone *string `json:"emergency_contact_phone"`
 	EmergencyRelation     *string `json:"emergency_relation"`
@@ -218,7 +218,7 @@ type ProfileResponse struct {
 	MedicalConditions     *string              `json:"medical_conditions,omitempty"`
 	HeightCm              *int                 `json:"height_cm,omitempty"`
 	WeightKg              *int                 `json:"weight_kg,omitempty"`
-	Alamat                *string              `json:"alamat,omitempty"`
+	Domicile              *string              `json:"domicile,omitempty"`
 	Bio                   *string              `json:"bio,omitempty"`
 	VolunteerExperience   *string              `json:"volunteer_experience,omitempty"`
 	VolunteerStatus       string               `json:"volunteer_status"` // 'none' | 'pending' | 'approved'
@@ -235,7 +235,7 @@ type UpdateProfileRequest struct {
 	MedicalConditions    *string `json:"medical_conditions"`
 	HeightCm             *int    `json:"height_cm"`
 	WeightKg             *int    `json:"weight_kg"`
-	Alamat               *string `json:"alamat"`
+	Domicile             *string `json:"domicile"`
 	Bio                  *string `json:"bio"`
 	EmergencyContacts    []EmergencyContactInput `json:"emergency_contacts"`
 }

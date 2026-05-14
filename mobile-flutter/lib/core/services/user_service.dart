@@ -79,11 +79,11 @@ class UserService {
         'medical_conditions': medData['medical_history'],
         'height_cm': heightCm,
         'weight_kg': weightKg,
-        'alamat': medData['address'],
+        'domicile': medData['address'],
         'bio': updatedUser.bio,
         'emergency_contacts': contacts ?? [],
       };
-      
+
       payload.removeWhere((k, v) => v == null);
 
       final response = await http
@@ -131,8 +131,7 @@ class UserService {
       }
 
       // Kirim tipe sertifikat (urutan sama dengan file yang dikirim)
-      request.fields['cert_types'] =
-          certificatesPath.keys.toList().join(',');
+      request.fields['cert_types'] = certificatesPath.keys.toList().join(',');
 
       // Add certificates — gunakan ekstensi file asli
       for (var entry in certificatesPath.entries) {
@@ -142,8 +141,9 @@ class UserService {
         final ext = path.contains('.')
             ? path.split('.').last.toLowerCase()
             : 'bin';
-        final safeSpecName =
-            specName.replaceAll('&', 'dan').replaceAll(' ', '_');
+        final safeSpecName = specName
+            .replaceAll('&', 'dan')
+            .replaceAll(' ', '_');
         request.files.add(
           await http.MultipartFile.fromPath(
             'certificates',
@@ -158,7 +158,9 @@ class UserService {
       final body = jsonDecode(response.body);
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception(body['message'] ?? 'Gagal mengirim pendaftaran relawan');
+        throw Exception(
+          body['message'] ?? 'Gagal mengirim pendaftaran relawan',
+        );
       }
     } catch (e) {
       throw Exception('Kesalahan: $e');

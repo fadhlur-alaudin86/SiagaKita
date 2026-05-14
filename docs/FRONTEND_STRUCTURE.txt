@@ -246,7 +246,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
       "height_cm":             175,
       "medical_conditions":    "Asma Ringan",
       "allergies":             "Penisilin",
-      "alamat":                "Jl. ...",
+      "domicile":                "Jl. ...",
       "emergency_contact_name":  "Siti Aminah",
       "emergency_contact_phone": "0812-3456-7890",
       "emergency_relation":      "Ibu / Wali"
@@ -308,7 +308,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
       "blood_type":          "O" | null,
       "allergies":           "..." | null,
       "medical_conditions":  "..." | null,
-      "alamat":              "..." | null,
+      "domicile":              "..." | null,
       "emergency_contacts":  [...],
       "volunteer_reputation": null | {...}
     }
@@ -392,7 +392,7 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
     is_email_verified, is_phone_verified, is_verified_volunteer,
     sos_strike_count, is_sos_banned, banned_until,
     blood_type, allergies, medical_conditions, height_cm, weight_kg,
-    alamat, updated_at
+    domicile, updated_at
     → Profil lengkap civilian & volunteer. Dibuat bersamaan dengan users (transaksi).
 
   emergency_contacts

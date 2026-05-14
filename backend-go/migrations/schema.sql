@@ -430,7 +430,7 @@ CREATE TABLE public.user_profiles (
     medical_conditions text,
     height_cm integer,
     weight_kg integer,
-    alamat text,
+    domicile text,
     updated_at timestamp with time zone DEFAULT now(),
     bio text,
     kyc_ktp_url text,

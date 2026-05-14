@@ -243,7 +243,7 @@ class UserModel {
         json['medical_conditions'] != null ||
         json['height_cm'] != null ||
         json['weight_kg'] != null ||
-        json['alamat'] != null;
+        json['domicile'] != null;
     if (!hasData) return null;
     return {
       'blood_type': json['blood_type'],
@@ -251,7 +251,7 @@ class UserModel {
       'medical_history': json['medical_conditions'],
       'height': json['height_cm']?.toString(),
       'weight': json['weight_kg']?.toString(),
-      'address': json['alamat'],
+      'address': json['domicile'],
     };
   }
 

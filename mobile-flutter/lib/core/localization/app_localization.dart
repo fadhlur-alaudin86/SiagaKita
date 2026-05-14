@@ -154,7 +154,6 @@ class AppLocalization {
     'PENGATURAN & BANTUAN': 'SETTINGS & HELP',
     'Tentang Aplikasi': 'About App',
     'DAFTAR MENJADI RELAWAN': 'REGISTER AS VOLUNTEER',
-    'Edit Profil Utama': 'Edit Main Profile',
     'Nomor telepon pengguna minimal 10 digit':
         'User phone number must be at least 10 digits',
     'Form kontak baris ke': 'Contact form row',

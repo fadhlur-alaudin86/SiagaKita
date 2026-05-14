@@ -134,7 +134,7 @@ CREATE TABLE public.user_profiles (
     medical_conditions    text,
     height_cm             int CHECK (height_cm > 0),
     weight_kg             int CHECK (weight_kg > 0),
-    alamat                text,
+    domicile                text,
     -- KYC Warga & Foto Profil (ditambahkan v9)
     kyc_ktp_url              text,          -- Path foto KTP yang diunggah
     profile_photo_url        text,          -- Path selfie (berfungsi sbg verifikasi & foto profil)

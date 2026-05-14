@@ -123,7 +123,7 @@ CREATE TABLE public.user_profiles (
     medical_conditions    text,
     height_cm             int CHECK (height_cm > 0),
     weight_kg             int CHECK (weight_kg > 0),
-    alamat                text,
+    domicile              text,
     updated_at            timestamptz DEFAULT now()
 );
 CREATE INDEX idx_up_phone ON public.user_profiles(phone_number);

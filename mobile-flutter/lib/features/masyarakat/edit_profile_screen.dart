@@ -138,7 +138,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   /// Lakukan penyimpanan profil ke server.
   Future<void> _doSaveProfile() async {
-
     // Validate contacts
     for (var i = 0; i < _contacts.length; i++) {
       final c = _contacts[i];
@@ -239,7 +238,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: colors.surface,
       appBar: AppBar(
         title: Text(
-          'Edit Profil Utama'.tr(context),
+          'Edit Profil'.tr(context),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,

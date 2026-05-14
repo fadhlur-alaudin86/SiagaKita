@@ -124,8 +124,8 @@ func (r *Repository) UpdateProfile(userID string, req *UpdateProfileRequest) err
 		if req.WeightKg != nil {
 			profileMap["weight_kg"] = *req.WeightKg
 		}
-		if req.Alamat != nil {
-			profileMap["alamat"] = *req.Alamat
+		if req.Domicile != nil {
+			profileMap["domicile"] = *req.Domicile
 		}
 		if req.Bio != nil {
 			profileMap["bio"] = *req.Bio
@@ -177,7 +177,7 @@ func (r *Repository) SaveBiodata(userID string, req *BiodataRequest) error {
 			MedicalConditions: req.MedicalConditions,
 			HeightCm:          req.HeightCm,
 			WeightKg:          req.WeightKg,
-			Alamat:            req.Alamat,
+			Domicile:          req.Domicile,
 			UpdatedAt:         time.Now(),
 		}
 
@@ -188,7 +188,7 @@ func (r *Repository) SaveBiodata(userID string, req *BiodataRequest) error {
 			"medical_conditions": req.MedicalConditions,
 			"height_cm":          req.HeightCm,
 			"weight_kg":          req.WeightKg,
-			"alamat":             req.Alamat,
+			"domicile":           req.Domicile,
 			"updated_at":         time.Now(),
 		}
 		if req.NIK != nil {
@@ -264,7 +264,7 @@ func (r *Repository) GetProfile(userID string) (*ProfileResponse, error) {
 		resp.MedicalConditions = profile.MedicalConditions
 		resp.HeightCm = profile.HeightCm
 		resp.WeightKg = profile.WeightKg
-		resp.Alamat = profile.Alamat
+		resp.Domicile = profile.Domicile
 		resp.Bio = profile.Bio
 
 		if profile.DateOfBirth != nil {

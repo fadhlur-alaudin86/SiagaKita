@@ -69,7 +69,7 @@ type UserDetailResponse struct {
 	DateOfBirth           *string         `json:"date_of_birth,omitempty"`
 	BloodType             *string         `json:"blood_type,omitempty"`
 	Allergies             *string         `json:"allergies,omitempty"`
-	Alamat                *string         `json:"alamat,omitempty"`
+	Domicile              *string         `json:"domicile,omitempty"`
 	SOSStrikeCount        int             `json:"sos_strike_count"`
 	IsSOSBanned           bool            `json:"is_sos_banned"`
 	LastActiveAt          *time.Time      `json:"last_active_at,omitempty"`

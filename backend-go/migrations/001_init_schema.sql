@@ -335,7 +335,7 @@ CREATE TABLE public.user_medical_profiles (
     medical_conditions text,
     height_cm integer,
     weight_kg integer,
-    alamat text,
+    domicile text,
     updated_at timestamp with time zone DEFAULT now(),
     CONSTRAINT user_medical_profiles_height_cm_check CHECK ((height_cm > 0)),
     CONSTRAINT user_medical_profiles_weight_kg_check CHECK ((weight_kg > 0))

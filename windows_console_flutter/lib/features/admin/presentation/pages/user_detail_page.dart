@@ -278,7 +278,7 @@ class _UserDetailPageState extends State<UserDetailPage>
               ],
             ),
             const SizedBox(height: 10),
-            _InfoCard('Alamat', d.alamat, icon: Icons.location_on),
+            _InfoCard('Alamat', d.domicile, icon: Icons.location_on),
             const SizedBox(height: 24),
 
             // ── Dokumen KTP ───────────────────────────────────────────────────

@@ -287,8 +287,9 @@ func (r *Repository) GetUserDetail(userID string) (*UserDetailResponse, error) {
 		DateOfBirth           *string    `gorm:"column:date_of_birth"`
 		BloodType             *string    `gorm:"column:blood_type"`
 		Allergies             *string    `gorm:"column:allergies"`
-		Alamat                *string    `gorm:"column:alamat"`
+		Domicile              *string    `gorm:"column:domicile"`
 		IsSOSBanned           bool       `gorm:"column:is_sos_banned"`
+		BannedUntil           *time.Time `gorm:"column:banned_until"`
 		LastActiveAt          *time.Time `gorm:"column:last_active_at"`
 		CreatedAt             time.Time  `gorm:"column:created_at"`
 		SOSStrikeCount        int        `gorm:"column:sos_strike_count"`
@@ -301,7 +302,7 @@ func (r *Repository) GetUserDetail(userID string) (*UserDetailResponse, error) {
 		       COALESCE(p.nik_verification_status, 'none') AS nik_verification_status,
 		       p.kyc_ktp_url, p.profile_photo_url,
 		       TO_CHAR(p.date_of_birth, 'DD-MM-YYYY') AS date_of_birth,
-		       p.blood_type::text, p.allergies, p.alamat,
+		       p.blood_type::text, p.allergies, p.domicile,
 		       p.is_sos_banned,
 		       COALESCE((
 		           SELECT COUNT(*) FROM incidents i
@@ -347,7 +348,7 @@ func (r *Repository) GetUserDetail(userID string) (*UserDetailResponse, error) {
 		DateOfBirth:           base.DateOfBirth,
 		BloodType:             base.BloodType,
 		Allergies:             base.Allergies,
-		Alamat:                base.Alamat,
+		Domicile:              base.Domicile,
 		SOSStrikeCount:        base.SOSStrikeCount,
 		IsSOSBanned:           base.IsSOSBanned,
 		LastActiveAt:          base.LastActiveAt,

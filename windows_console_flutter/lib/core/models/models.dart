@@ -497,7 +497,7 @@ class UserDetailModel {
   final String? dateOfBirth;
   final String? bloodType;
   final String? allergies;
-  final String? alamat;
+  final String? domicile;
   final int sosStrikeCount;
   final bool isSosBanned;
   final DateTime? lastActiveAt;
@@ -520,7 +520,7 @@ class UserDetailModel {
     this.dateOfBirth,
     this.bloodType,
     this.allergies,
-    this.alamat,
+    this.domicile,
     required this.sosStrikeCount,
     required this.isSosBanned,
     this.lastActiveAt,
@@ -546,7 +546,7 @@ class UserDetailModel {
         dateOfBirth: json['date_of_birth'] as String?,
         bloodType: json['blood_type'] as String?,
         allergies: json['allergies'] as String?,
-        alamat: json['alamat'] as String?,
+        domicile: json['domicile'] as String?,
         sosStrikeCount: json['sos_strike_count'] as int? ?? 0,
         isSosBanned: json['is_sos_banned'] as bool? ?? false,
         lastActiveAt: json['last_active_at'] != null
@@ -732,6 +732,8 @@ class BadgeModel {
     badgeName: json['badge_name'] as String? ?? '',
     description: json['description'] as String? ?? '',
     iconUrl: json['icon_url'] as String? ?? '',
-    createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '') ??
+        DateTime.now(),
   );
 }
