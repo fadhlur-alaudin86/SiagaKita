@@ -74,13 +74,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Colors.green,
   ][_passwordStrength];
 
-  String get _strengthLabel =>
-      ['', 'Lemah', 'Sedang', 'Kuat ✓'][_passwordStrength];
+  String get _strengthLabel => [
+    '',
+    'Lemah'.tr(context),
+    'Sedang'.tr(context),
+    'Kuat ✓'.tr(context),
+  ][_passwordStrength];
 
   // ─── Validators ────────────────────────────────────────────────────────────
 
   String? _validateName(String? v) => (v == null || v.trim().isEmpty)
-      ? 'Nama lengkap tidak boleh kosong'
+      ? 'Nama lengkap tidak boleh kosong'.tr(context)
       : null;
 
   String? _validateEmail(String? v) {
@@ -92,8 +96,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validatePassword(String? v) {
-    if (v == null || v.isEmpty) return 'Kata sandi tidak boleh kosong';
-    if (v.length < 8) return 'Minimal 8 karakter';
+    if (v == null || v.isEmpty) {
+      return 'Kata sandi tidak boleh kosong'.tr(context);
+    }
+    if (v.length < 8) return 'Minimal 8 karakter'.tr(context);
     if (!RegExp(r'[A-Z]').hasMatch(v)) return 'Harus mengandung huruf besar';
     if (!RegExp(r'[0-9]').hasMatch(v)) return 'Harus mengandung angka';
     if (!RegExp(r'[!@#\$&*~%^()_\-+=\[\]{};:"\\|,.<>/?]').hasMatch(v)) {
@@ -104,9 +110,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? _validateRepeat(String? v) {
     if (v == null || v.isEmpty) {
-      return 'Konfirmasi kata sandi tidak boleh kosong';
+      return 'Konfirmasi kata sandi tidak boleh kosong'.tr(context);
     }
-    if (v != _passwordController.text) return 'Kata sandi tidak cocok';
+    if (v != _passwordController.text) {
+      return 'Kata sandi tidak cocok'.tr(context);
+    }
     return null;
   }
 
@@ -297,7 +305,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Bergabung dengan jejaring keselamatan SiagaKita.',
+            'Bergabung dengan jejaring keselamatan SiagaKita.'.tr(context),
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.onSurface.withValues(alpha: 0.6),
@@ -311,7 +319,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             colors,
             primaryColor,
             controller: _nameController,
-            hint: 'Nama Lengkap',
+            hint: 'Nama Lengkap'.tr(context),
             icon: Icons.person_outline,
             validator: _validateName,
           ),
@@ -334,7 +342,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             colors,
             primaryColor,
             controller: _passwordController,
-            hint: 'Kata Sandi',
+            hint: 'Kata Sandi'.tr(context),
             icon: Icons.lock_outline,
             obscure: _obscurePassword,
             validator: _validatePassword,
@@ -391,7 +399,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             colors,
             primaryColor,
             controller: _repeatPasswordController,
-            hint: 'Ulangi Kata Sandi',
+            hint: 'Ulangi Kata Sandi'.tr(context),
             icon: Icons.lock_reset,
             obscure: _obscureRepeat,
             validator: _validateRepeat,
@@ -410,7 +418,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Sudah punya akun?',
+                'Sudah punya akun?'.tr(context),
                 style: TextStyle(
                   color: colors.onSurface.withValues(alpha: 0.6),
                 ),
@@ -418,7 +426,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
-                  'Masuk sekarang',
+                  'Masuk sekarang'.tr(context),
                   style: TextStyle(
                     color: primaryColor,
                     fontWeight: FontWeight.bold,
@@ -522,7 +530,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           onPressed: _isResendCooldown ? null : _resendOTP,
           child: Text(
             _isResendCooldown
-                ? 'Kirim ulang dalam ${_cooldownSeconds}s'
+                ? '${'Kirim ulang dalam'.tr(context)} ($_cooldownSeconds)'
                 : 'Kirim ulang kode OTP',
             style: TextStyle(
               color: _isResendCooldown

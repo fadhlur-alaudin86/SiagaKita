@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
 import 'reset_password_screen.dart';
+import '../../core/localization/app_localization.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -44,8 +45,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Terjadi kesalahan, coba lagi nanti'),
+        SnackBar(
+          content: Text('Terjadi kesalahan, coba lagi nanti'.tr(context)),
           backgroundColor: Colors.red,
         ),
       );
@@ -71,7 +72,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 Icon(Icons.lock_reset, size: 80, color: colors.primary),
                 const SizedBox(height: 24),
                 Text(
-                  'Masukkan email akun Anda. Kami akan mengirimkan kode OTP untuk mengatur ulang kata sandi.',
+                  'Masukkan email akun Anda. Kami akan mengirimkan kode OTP untuk mengatur ulang kata sandi.'
+                      .tr(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/location_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -11,7 +12,8 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
   // Mock states for settings toggles
   bool _pushNotifications = true;
   bool _smsAlerts = false;
@@ -83,9 +85,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Izin Diperlukan'.tr(context),
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Izin Diperlukan'.tr(context),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: Text(
             'Izin kamera atau galeri ditolak. Buka pengaturan perangkat untuk mengaktifkannya secara manual.'
                 .tr(context),
@@ -93,13 +99,16 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Batal'.tr(context),
-                  style: const TextStyle(color: Colors.grey)),
+              child: Text(
+                'Batal'.tr(context),
+                style: const TextStyle(color: Colors.grey),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white),
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () {
                 Navigator.pop(ctx);
                 openAppSettings();
@@ -121,8 +130,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           children: [
             const Icon(Icons.construction_outlined, color: Colors.orange),
             const SizedBox(width: 8),
-            Text('Segera Hadir'.tr(context),
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Segera Hadir'.tr(context),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Text(
@@ -131,7 +142,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange, foregroundColor: Colors.white),
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(ctx),
             child: Text('Mengerti'.tr(context)),
           ),
@@ -148,8 +161,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Cabut Izin Lokasi'.tr(context), style: const TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Cabut Izin Lokasi'.tr(context),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: Text(
             'Untuk mencabut izin lokasi, Anda perlu melakukannya secara manual melalui pengaturan OS perangkat Anda.'
                 .tr(context),
@@ -339,28 +357,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             ),
             child: Column(
               children: [
-                SwitchListTile(
-                  title: Text(
-                    'Mode Gelap (Dark Mode)'.tr(context),
-                    style: TextStyle(
-                      color: secondaryTextColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  activeThumbColor: Colors.orange,
-                  value: isDark,
-                  onChanged: (val) {
-                    SiagaKitaApp.themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
-                  },
-                ),
-                Divider(
-                  height: 1,
-                  indent: 16,
-                  endIndent: 16,
-                  color: isDark
-                      ? Colors.grey.withValues(alpha: 0.2)
-                      : Colors.grey.shade200,
-                ),
                 ListTile(
                   title: Text(
                     'Bahasa'.tr(context),
@@ -414,7 +410,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     ),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  onTap: () => _showComingSoonDialog('Ubah Kata Sandi'),
+                  onTap: () =>
+                      _showComingSoonDialog('Ubah Kata Sandi'.tr(context)),
                 ),
                 Divider(
                   height: 1,
@@ -444,7 +441,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onTap: () => _showComingSoonDialog('Autentikasi Dua Langkah (2FA)'),
+                  onTap: () =>
+                      _showComingSoonDialog('Autentikasi Dua Langkah (2FA)'),
                 ),
                 Divider(
                   height: 1,
@@ -551,12 +549,21 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     trailing: isSelected
                         ? const Icon(Icons.check_circle, color: Colors.orange)
                         : const Icon(Icons.circle_outlined, color: Colors.grey),
-                    onTap: () {
+                    onTap: () async {
                       setState(() => _language = language);
-                      SiagaKitaApp.localeNotifier.value = language == 'English'
+                      final locale = language == 'English'
                           ? AppLocalization.localeEn
                           : AppLocalization.localeId;
-                      Navigator.pop(sheetContext);
+                      SiagaKitaApp.localeNotifier.value = locale;
+
+                      // Simpan preferensi
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString(
+                        'language_code',
+                        locale.languageCode,
+                      );
+
+                      if (context.mounted) Navigator.pop(sheetContext);
                     },
                   );
                 }),

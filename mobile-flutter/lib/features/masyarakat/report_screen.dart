@@ -998,8 +998,8 @@ class _ReportScreenState extends State<ReportScreen> {
                           children: [
                             Text(
                               _isRecording
-                                  ? 'Merekam...'
-                                  : 'Tahan untuk rekam suara',
+                                  ? 'Merekam...'.tr(context)
+                                  : 'Tahan untuk rekam suara'.tr(context),
                               style: TextStyle(
                                 color: _isRecording
                                     ? Colors.red
@@ -1010,7 +1010,7 @@ class _ReportScreenState extends State<ReportScreen> {
                             ),
                             if (!_isRecording)
                               Text(
-                                '(Opsional, maks 1 menit)',
+                                '(Opsional, maksimal 1 menit)'.tr(context),
                                 style: TextStyle(
                                   color: colors.onSurface.withValues(
                                     alpha: 0.5,

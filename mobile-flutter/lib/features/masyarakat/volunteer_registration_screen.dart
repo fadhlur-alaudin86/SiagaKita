@@ -51,7 +51,8 @@ class _VolunteerRegistrationScreenState
     return user.placeOfBirth == null || user.placeOfBirth!.isEmpty;
   }
 
-  bool get _needsProfileData => _isNikEmpty || _isWaEmpty || _isPlaceOfBirthEmpty;
+  bool get _needsProfileData =>
+      _isNikEmpty || _isWaEmpty || _isPlaceOfBirthEmpty;
 
   @override
   void initState() {
@@ -89,8 +90,9 @@ class _VolunteerRegistrationScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Harap unggah sertifikat untuk setiap spesialisasi yang dipilih'
-                .tr(context),
+            'Harap unggah sertifikat untuk setiap spesialisasi yang dipilih'.tr(
+              context,
+            ),
           ),
         ),
       );
@@ -104,7 +106,8 @@ class _VolunteerRegistrationScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                'Harap lengkapi NIK, No WhatsApp, dan Tempat Lahir'.tr(context)),
+              'Harap lengkapi NIK, No WhatsApp, dan Tempat Lahir'.tr(context),
+            ),
           ),
         );
         return;
@@ -272,7 +275,9 @@ class _VolunteerRegistrationScreenState
                     Text(
                       '(Mendukung PDF, JPG, PNG maks 2MB)'.tr(context),
                       style: TextStyle(
-                        color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                        color: isDark
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade600,
                         fontSize: 11,
                       ),
                     ),
@@ -333,66 +338,6 @@ class _VolunteerRegistrationScreenState
               ),
               const SizedBox(height: 32),
 
-              Text(
-                'DATA IDENTITAS & KONTAK'.tr(context),
-                style: TextStyle(
-                  color: primaryTextColor,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (_isNikEmpty || !_isNikEmpty) ...[
-                TextFormField(
-                  controller: _nikCtrl,
-                  readOnly: !_isNikEmpty,
-                  keyboardType: TextInputType.number,
-                  style: TextStyle(
-                    color: !_isNikEmpty ? colors.onSurface.withValues(alpha: 0.5) : colors.onSurface,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'NIK KTP (16 Digit)'.tr(context),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: !_isNikEmpty,
-                    fillColor: !_isNikEmpty ? (isDark ? Colors.grey.shade900 : Colors.grey.shade100) : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (_isWaEmpty || !_isWaEmpty) ...[
-                TextFormField(
-                  controller: _waCtrl,
-                  readOnly: !_isWaEmpty,
-                  keyboardType: TextInputType.phone,
-                  style: TextStyle(
-                    color: !_isWaEmpty ? colors.onSurface.withValues(alpha: 0.5) : colors.onSurface,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'No WhatsApp Aktif'.tr(context),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: !_isWaEmpty,
-                    fillColor: !_isWaEmpty ? (isDark ? Colors.grey.shade900 : Colors.grey.shade100) : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (_isPlaceOfBirthEmpty) ...[
-                TextFormField(
-                  controller: _placeOfBirthCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Tempat Lahir'.tr(context),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -422,7 +367,7 @@ class _VolunteerRegistrationScreenState
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 32),
 
               Text(
@@ -434,13 +379,16 @@ class _VolunteerRegistrationScreenState
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               ..._availableSpecs.map((spec) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CheckboxListTile(
-                      title: Text(spec.tr(context), style: const TextStyle(fontWeight: FontWeight.w600)),
+                      title: Text(
+                        spec.tr(context),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       value: _selectedSpecs[spec],
                       activeColor: Colors.orange,
                       contentPadding: EdgeInsets.zero,

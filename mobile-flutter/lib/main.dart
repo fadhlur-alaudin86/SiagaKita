@@ -11,8 +11,18 @@ import 'core/services/background_service.dart';
 import 'features/auth/login_screen.dart';
 import 'features/masyarakat/main_screen.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Persistensi Bahasa & Tema
+  final prefs = await SharedPreferences.getInstance();
+  final savedLang = prefs.getString('language_code');
+  if (savedLang != null) {
+    SiagaKitaApp.localeNotifier.value = Locale(savedLang);
+  }
+  
   await ConnectivityService.instance.init();
   await AppBackgroundService.initialize();
   runApp(const SiagaKitaApp());
@@ -22,7 +32,7 @@ class SiagaKitaApp extends StatefulWidget {
   const SiagaKitaApp({super.key});
 
   static final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(
-    ThemeMode.dark,
+    ThemeMode.dark, // Paksa Dark Mode
   );
   static final ValueNotifier<Locale> localeNotifier = ValueNotifier(
     AppLocalization.localeId,
@@ -41,20 +51,42 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
     const Color darkBgColor = Color(0xFF0D1B3E); // Deep Royal Navy
     const Color darkCardColor = Color(0xFF162A5A); // Cobalt Blue
 
-    // Light Theme Colors
-    const Color lightBgColor = Color(0xFFF1F5F9); // Slate 100
-    const Color lightCardColor = Color(0xFFFFFFFF); // White
-
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: SiagaKitaApp.themeNotifier,
       builder: (_, ThemeMode currentMode, child) {
         return ValueListenableBuilder<Locale>(
           valueListenable: SiagaKitaApp.localeNotifier,
           builder: (_, Locale currentLocale, w) {
+            final darkTheme = ThemeData(
+              platform: TargetPlatform.android,
+              brightness: Brightness.dark,
+              primaryColor: primaryColor,
+              scaffoldBackgroundColor: darkBgColor,
+              colorScheme: const ColorScheme.dark(
+                primary: primaryColor,
+                secondary: Color(0xFF18A3FF),
+                surface: darkCardColor,
+                onSurface: Colors.white,
+              ),
+              textTheme: GoogleFonts.interTextTheme(
+                ThemeData.dark().textTheme,
+              ),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: darkBgColor,
+                elevation: 0,
+              ),
+              bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+                backgroundColor: Color(0xFF162A5A),
+                selectedItemColor: primaryColor,
+                unselectedItemColor: Colors.white54,
+                type: BottomNavigationBarType.fixed,
+              ),
+            );
+
             return MaterialApp(
               title: 'SiagaKita',
               debugShowCheckedModeBanner: false,
-              themeMode: currentMode,
+              themeMode: ThemeMode.dark, // Selalu Dark
               locale: currentLocale,
               supportedLocales: const [
                 AppLocalization.localeId,
@@ -65,60 +97,8 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
-              theme: ThemeData(
-                platform: TargetPlatform.android,
-                brightness: Brightness.light,
-                primaryColor: primaryColor,
-                scaffoldBackgroundColor: lightBgColor,
-                colorScheme: const ColorScheme.light(
-                  primary: primaryColor,
-                  secondary: Color(0xFF18A3FF),
-                  surface: lightCardColor,
-                  onSurface: Color(0xFF1E293B),
-                ),
-                textTheme: GoogleFonts.interTextTheme(),
-                appBarTheme: AppBarTheme(
-                  backgroundColor: lightBgColor,
-                  elevation: 0,
-                  iconTheme: const IconThemeData(color: Color(0xFF1E293B)),
-                  titleTextStyle: GoogleFonts.inter(
-                    color: const Color(0xFF1E293B),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-                  backgroundColor: lightCardColor,
-                  selectedItemColor: primaryColor,
-                  unselectedItemColor: Colors.black54,
-                  type: BottomNavigationBarType.fixed,
-                ),
-              ),
-              darkTheme: ThemeData(
-                platform: TargetPlatform.android,
-                brightness: Brightness.dark,
-                primaryColor: primaryColor,
-                scaffoldBackgroundColor: darkBgColor,
-                colorScheme: const ColorScheme.dark(
-                  primary: primaryColor,
-                  secondary: Color(0xFF18A3FF),
-                  surface: darkCardColor,
-                  onSurface: Colors.white,
-                ),
-                textTheme: GoogleFonts.interTextTheme(
-                  ThemeData.dark().textTheme,
-                ),
-                appBarTheme: const AppBarTheme(
-                  backgroundColor: darkBgColor,
-                  elevation: 0,
-                ),
-                bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-                  backgroundColor: Color(0xFF162A5A),
-                  selectedItemColor: primaryColor,
-                  unselectedItemColor: Colors.white54,
-                  type: BottomNavigationBarType.fixed,
-                ),
-              ),
+              theme: darkTheme,
+              darkTheme: darkTheme,
               home: const _AppStartup(),
             );
           },

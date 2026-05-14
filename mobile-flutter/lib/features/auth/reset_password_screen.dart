@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
 import 'login_screen.dart';
+import '../../core/localization/app_localization.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
@@ -62,7 +63,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kode OTP baru telah dikirim')),
+        SnackBar(content: Text('Kode OTP baru telah dikirim'.tr(context))),
       );
       _startCountdown();
     } on AuthException catch (e) {
@@ -87,8 +88,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password berhasil diubah. Silakan login kembali.'),
+        SnackBar(
+          content: Text(
+            'Password berhasil diubah. Silakan login kembali.'.tr(context),
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -105,8 +108,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Terjadi kesalahan, coba lagi nanti'),
+        SnackBar(
+          content: Text('Terjadi kesalahan, coba lagi nanti'.tr(context)),
           backgroundColor: Colors.red,
         ),
       );
@@ -130,7 +133,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Kode telah dikirim ke:\n${widget.email}',
+                  'Kode telah dikirim ke:\n'
+                  '${widget.email}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
@@ -147,8 +151,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     border: OutlineInputBorder(),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'OTP wajib diisi';
-                    if (v.length < 6) return 'OTP harus 6 digit';
+                    if (v == null || v.isEmpty) {
+                      return 'OTP wajib diisi'.tr(context);
+                    }
+                    if (v.length < 6) {
+                      return 'OTP harus 6 digit'.tr(context);
+                    }
                     return null;
                   },
                 ),
@@ -157,7 +165,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   controller: _passwordCtrl,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password Baru',
+                    labelText: 'Kata Sandi Baru'.tr(context),
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -171,8 +179,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     border: const OutlineInputBorder(),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password wajib diisi';
-                    if (v.length < 8) return 'Password minimal 8 karakter';
+                    if (v == null || v.isEmpty) {
+                      return 'Kata sandi tidak boleh kosong'.tr(context);
+                    }
+                    if (v.length < 8) {
+                      return 'Minimal 8 karakter'.tr(context);
+                    }
                     return null;
                   },
                 ),
@@ -190,9 +202,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text(
-                          'Simpan Password Baru',
-                          style: TextStyle(
+                      : Text(
+                          'Simpan Password Baru'.tr(context),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -203,7 +215,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Belum menerima kode?',
+                      'Belum menerima kode?'.tr(context),
                       style: TextStyle(
                         color: colors.onSurface.withValues(alpha: 0.6),
                       ),
@@ -220,8 +232,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             )
                           : Text(
                               _resendCountdown > 0
-                                  ? 'Kirim ulang ($_resendCountdown)'
-                                  : 'Kirim Ulang',
+                                  ? '${'Kirim ulang dalam'.tr(context)} ($_resendCountdown)'
+                                  : 'Kirim ulang kode OTP'.tr(context),
                             ),
                     ),
                   ],

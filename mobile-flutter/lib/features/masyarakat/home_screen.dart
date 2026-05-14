@@ -190,7 +190,9 @@ class _HomeScreenState extends State<HomeScreen>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Sesi Anda telah berakhir karena login di perangkat lain.'),
+        content: Text(
+          'Sesi Anda telah berakhir karena login di perangkat lain.',
+        ),
         backgroundColor: Colors.redAccent,
         duration: Duration(seconds: 4),
       ),
@@ -322,7 +324,10 @@ class _HomeScreenState extends State<HomeScreen>
     _startCountdownTimer();
 
     // Daftarkan GPS mode active dengan caller ID khusus SOS
-    LocationController.instance.requestMode('home_screen_sos', TrackingMode.active);
+    LocationController.instance.requestMode(
+      'home_screen_sos',
+      TrackingMode.active,
+    );
 
     // Beritahu background service untuk mulai mengirim lokasi (saat app di-background)
     final incidentId = _activeIncident?.incidentId ?? _pendingIncidentId ?? '';
@@ -702,7 +707,7 @@ class _HomeScreenState extends State<HomeScreen>
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
-              'BATAL'.tr(context),
+              'Batal'.tr(context),
               style: TextStyle(color: Colors.grey.shade600),
             ),
           ),

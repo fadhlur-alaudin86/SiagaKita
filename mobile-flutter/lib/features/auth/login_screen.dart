@@ -40,7 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String? _validatePassword(String? v) {
-    if (v == null || v.isEmpty) return 'Kata sandi tidak boleh kosong';
+    if (v == null || v.isEmpty) {
+      return 'Kata sandi tidak boleh kosong'.tr(context);
+    }
     return null;
   }
 
@@ -151,7 +153,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Masuk untuk mengakses sistem pelaporan darurat.',
+                  'Masuk untuk mengakses sistem pelaporan darurat SiagaKita.'
+                      .tr(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: colors.onSurface.withValues(alpha: 0.6),
@@ -173,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   colors: colors,
                   primaryColor: primaryColor,
                   controller: _passwordController,
-                  hint: 'Kata Sandi',
+                  hint: 'Kata Sandi'.tr(context),
                   icon: Icons.lock_outline,
                   obscure: _obscurePassword,
                   validator: _validatePassword,
@@ -244,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Belum punya akun?',
+                      'Belum punya akun?'.tr(context),
                       style: TextStyle(
                         color: colors.onSurface.withValues(alpha: 0.6),
                       ),

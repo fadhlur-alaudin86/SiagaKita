@@ -350,6 +350,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  // ─── Dialog Pembatasan Relawan ──────────────────────────────────────────
+  void _showRestrictedVolunteerDialog(UserModel user) {
+    final List<String> missing = [];
+    if (user.nikVerificationStatus != 'approved') {
+      missing.add('Verifikasi NIK (KYC)'.tr(context));
+    }
+    if (!user.isPhoneVerified) {
+      missing.add('Verifikasi Nomor WhatsApp'.tr(context));
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.lock_outline, color: Colors.orange),
+            const SizedBox(width: 8),
+            Text(
+              'Persyaratan Belum Lengkap'.tr(context),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Untuk mendaftar sebagai relawan, Anda wajib melengkapi verifikasi berikut:'
+                  .tr(context),
+              style: const TextStyle(height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            ...missing.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline,
+                        size: 18, color: Colors.red),
+                    const SizedBox(width: 8),
+                    Text(item,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Nanti Saja'.tr(context),
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (user.nikVerificationStatus != 'approved') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => KycScreen(accessToken: widget.accessToken),
+                  ),
+                );
+              } else if (!user.isPhoneVerified) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => WaVerificationScreen(
+                      accessToken: widget.accessToken,
+                      initialPhoneNumber: user.phoneNumber,
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Text('Lengkapi Sekarang'.tr(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1169,34 +1260,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // 5. Tombol Relawan CTA
                   if (user.volunteerStatus != 'approved' &&
-                      user.volunteerStatus != 'pending')
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: const Icon(Icons.medical_services, size: 20),
-                      label: Text(
-                        'DAFTAR MENJADI RELAWAN'.tr(context),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const VolunteerRegistrationScreen(),
+                      user.volunteerStatus != 'pending') ...[
+                    Builder(
+                      builder: (context) {
+                        final bool isVerified = user.isPhoneVerified &&
+                            user.nikVerificationStatus == 'approved';
+
+                        return ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                isVerified ? Colors.orange : Colors.grey,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            elevation: isVerified ? 4 : 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
+                          icon: const Icon(Icons.medical_services, size: 20),
+                          label: Text(
+                            'DAFTAR MENJADI RELAWAN'.tr(context),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          onPressed: () {
+                            if (isVerified) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const VolunteerRegistrationScreen(),
+                                ),
+                              );
+                            } else {
+                              _showRestrictedVolunteerDialog(user);
+                            }
+                          },
                         );
                       },
                     ),
+                  ],
 
                   // 5b. Reputasi Relawan (hanya tampil jika sudah approved)
                   if (user.volunteerStatus == 'approved') ...[

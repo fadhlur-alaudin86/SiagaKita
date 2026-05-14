@@ -266,63 +266,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                     children: [
                       TextField(
-                        controller: _fullNameCtrl,
-                        maxLength: 100,
-                        readOnly:
-                            UserModel.currentUser.value.nikVerificationStatus ==
-                            'approved',
-                        decoration: InputDecoration(
-                          labelText: 'Nama Lengkap'.tr(context),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _placeOfBirthCtrl,
-                        maxLength: 100,
-                        readOnly:
-                            UserModel.currentUser.value.nikVerificationStatus ==
-                            'approved',
-                        decoration: InputDecoration(
-                          labelText: 'Tempat Lahir'.tr(context),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      if (UserModel.currentUser.value.nikVerificationStatus !=
-                          'approved') ...[
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _nikCtrl,
-                          keyboardType: TextInputType.number,
-                          maxLength: 16,
-                          decoration: InputDecoration(
-                            labelText: 'NIK KTP (16 Digit)'.tr(context),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ],
-                      if (!UserModel.currentUser.value.isPhoneVerified) ...[
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _phoneCtrl,
-                          keyboardType: TextInputType.phone,
-                          maxLength: 20,
-                          decoration: InputDecoration(
-                            labelText: 'No WhatsApp aktif'.tr(context),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      TextField(
                         controller: _addressCtrl,
                         maxLines: 2,
                         maxLength: 255,
