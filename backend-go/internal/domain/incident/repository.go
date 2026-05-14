@@ -416,6 +416,14 @@ func (r *Repository) FindNearby(lat, lng, radiusKm float64, volunteerID string) 
 		FROM incidents
 		WHERE status NOT IN ('resolved', 'false_alarm', 'canceled')
 		  AND reporter_id != $4
+		  -- Relawan tidak melihat SOS yang sudah ia selesaikan (waiting_review/completed)
+		  -- tapi masih bisa accept SOS lain selama instansi belum resolve
+		  AND NOT EXISTS (
+			SELECT 1 FROM incident_responses ir2
+			WHERE ir2.incident_id = incidents.id
+			  AND ir2.responder_id = $4
+			  AND ir2.status IN ('waiting_review', 'completed', 'on_scene')
+		  )
 		  AND (
 			6371 * acos(
 				LEAST(1.0, cos(radians($1)) * cos(radians(latitude)) *
@@ -554,7 +562,7 @@ func (r *Repository) GetActiveResponse(volunteerID string) (*ActiveResponseDTO, 
 		FROM incident_responses ir
 		JOIN incidents i ON i.id = ir.incident_id
 		WHERE ir.responder_id = $1
-		  AND ir.status = 'on_scene'
+		  AND ir.status IN ('on_scene', 'waiting_review')
 		ORDER BY ir.accepted_at DESC
 		LIMIT 1
 	`, volunteerID).Scan(&result).Error

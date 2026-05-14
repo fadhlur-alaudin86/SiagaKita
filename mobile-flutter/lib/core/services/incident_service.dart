@@ -532,13 +532,20 @@ class ActiveIncident {
             ?.map((e) => e as String)
             .toList() ??
         [],
+    volunteerLocations:
+        (json['volunteer_locations'] as List<dynamic>?)
+            ?.map((e) => VolunteerLocation.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [],
   );
+
 
   /// Apakah instansi sedang aktif menangani SOS ini.
   bool get isHandledByAgency => agencyStatus == 'handling';
 
   /// Apakah relawan sedang aktif menangani SOS ini.
   bool get isHandledByVolunteer =>
+      volunteerResponseStatus == 'on_scene' ||
       volunteerResponseStatus == 'en_route' ||
       volunteerResponseStatus == 'waiting_review';
 

@@ -7,6 +7,7 @@ class CustomCameraView extends StatefulWidget {
   final CameraLensDirection lensDirection;
   final bool isOvalOverlay;
   final bool showOverlay;
+  final bool allowFlip; // Izinkan toggle depan/belakang
 
   const CustomCameraView({
     super.key,
@@ -15,6 +16,7 @@ class CustomCameraView extends StatefulWidget {
     this.lensDirection = CameraLensDirection.front,
     this.isOvalOverlay = true,
     this.showOverlay = true,
+    this.allowFlip = false,
   });
 
   @override
@@ -25,36 +27,61 @@ class _CustomCameraViewState extends State<CustomCameraView> {
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
   bool _isCameraInitialized = false;
+  late CameraLensDirection _currentDirection;
+  bool _isSwitching = false;
 
   @override
   void initState() {
     super.initState();
-    _initCamera();
+    _currentDirection = widget.lensDirection;
+    _initCamera(_currentDirection);
   }
 
-  Future<void> _initCamera() async {
+  Future<void> _initCamera(CameraLensDirection direction) async {
     try {
       _cameras = await availableCameras();
       if (_cameras.isEmpty) return;
 
       // Cari kamera sesuai arah yang diminta (depan/belakang)
       final targetCamera = _cameras.firstWhere(
-        (cam) => cam.lensDirection == widget.lensDirection,
+        (cam) => cam.lensDirection == direction,
         orElse: () => _cameras.first,
       );
 
-      _controller = CameraController(
+      final newController = CameraController(
         targetCamera,
         ResolutionPreset.medium, // Resolusi sedang agar tidak boros storage
         enableAudio: false,
       );
 
-      await _controller!.initialize();
+      await newController.initialize();
       if (!mounted) return;
-      setState(() => _isCameraInitialized = true);
+
+      // Dispose controller lama jika ada
+      await _controller?.dispose();
+
+      setState(() {
+        _controller = newController;
+        _currentDirection = direction;
+        _isCameraInitialized = true;
+        _isSwitching = false;
+      });
     } catch (e) {
       debugPrint('Error initializing camera: $e');
+      if (mounted) setState(() => _isSwitching = false);
     }
+  }
+
+  Future<void> _flipCamera() async {
+    if (_isSwitching || !widget.allowFlip) return;
+    setState(() {
+      _isCameraInitialized = false;
+      _isSwitching = true;
+    });
+    final newDirection = _currentDirection == CameraLensDirection.back
+        ? CameraLensDirection.front
+        : CameraLensDirection.back;
+    await _initCamera(newDirection);
   }
 
   Future<void> _takePicture() async {
@@ -95,6 +122,15 @@ class _CustomCameraViewState extends State<CustomCameraView> {
         title: Text(widget.title),
         iconTheme: const IconThemeData(color: Colors.white),
         titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18),
+        actions: [
+          // Tombol flip kamera (tampil jika allowFlip = true dan ada kamera depan & belakang)
+          if (widget.allowFlip && _cameras.length > 1)
+            IconButton(
+              icon: const Icon(Icons.flip_camera_ios, color: Colors.white),
+              onPressed: _isSwitching ? null : _flipCamera,
+              tooltip: 'Ganti Kamera',
+            ),
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: Column(
@@ -183,37 +219,76 @@ class _CustomCameraViewState extends State<CustomCameraView> {
             ),
           ),
 
-          // Tombol Capture
+          // Row tombol: flip + capture
           Padding(
-            padding: const EdgeInsets.only(top: 40),
-            child: Center(
-              child: GestureDetector(
-                onTap: _takePicture,
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
+            padding: const EdgeInsets.only(top: 32),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Tombol Capture (tengah)
+                GestureDetector(
+                  onTap: _takePicture,
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 4),
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+                // Tombol flip (kanan, hanya jika allowFlip=true)
+                if (widget.allowFlip && _cameras.length > 1)
+                  Positioned(
+                    right: 60,
+                    child: GestureDetector(
+                      onTap: _isSwitching ? null : _flipCamera,
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.2),
+                          border: Border.all(color: Colors.white38, width: 1),
+                        ),
+                        child: Icon(
+                          _currentDirection == CameraLensDirection.back
+                              ? Icons.camera_front
+                              : Icons.camera_rear,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
+
+          // Label kamera aktif
+          if (widget.allowFlip && _cameras.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _currentDirection == CameraLensDirection.back
+                    ? 'Kamera Belakang'
+                    : 'Kamera Depan',
+                style: const TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ),
         ],
       ),
     );
   }
 }
-

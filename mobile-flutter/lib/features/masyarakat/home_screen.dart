@@ -878,7 +878,24 @@ class _HomeScreenState extends State<HomeScreen>
                     primaryColor: primaryColor,
                   ),
 
-                  const Spacer(flex: 6),
+                  const Spacer(flex: 2),
+
+                  // ── Active SOS Banner (inline, bukan floating overlay) ────────
+                  if (isSOSActive &&
+                      !_isLoadingActiveIncident &&
+                      _activeIncident != null) ...[
+                    ActiveSOSBanner(
+                      activeIncident: _activeIncident!,
+                      sosTransmitting: _sosTransmitting,
+                      nextUpdateCountdown: _nextUpdateCountdown,
+                      lastLocationUpdate: _lastLocationUpdate,
+                      volunteerPosition: _volunteerPosition,
+                      uploadStatusBadgeBuilder: _buildUploadStatusBadge,
+                    ),
+                    SizedBox(height: 12.h(context)),
+                  ],
+
+                  const Spacer(flex: 2),
 
                   // ── SOS Button ────────────────────────────────────────────────
                   ValueListenableBuilder<UserModel>(
@@ -901,7 +918,7 @@ class _HomeScreenState extends State<HomeScreen>
                     },
                   ),
 
-                  const Spacer(flex: 4),
+                  const Spacer(flex: 3),
 
                   // ── Bottom Action Cards ────────────────────────────────────────
                   Row(
@@ -942,24 +959,6 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
-
-            // ── Active SOS status banner (Floating Overlay) ──────────────────
-            if (isSOSActive &&
-                !_isLoadingActiveIncident &&
-                _activeIncident != null)
-              Positioned(
-                top: 100.h(context), // Adjusted to be below the header area
-                left: 24.w(context),
-                right: 24.w(context),
-                child: ActiveSOSBanner(
-                  activeIncident: _activeIncident!,
-                  sosTransmitting: _sosTransmitting,
-                  nextUpdateCountdown: _nextUpdateCountdown,
-                  lastLocationUpdate: _lastLocationUpdate,
-                  volunteerPosition: _volunteerPosition,
-                  uploadStatusBadgeBuilder: _buildUploadStatusBadge,
-                ),
-              ),
 
             // Grace Period Overlay
             if (_sosPhase == 'gracePeriod') _buildGracePeriodOverlay(colors),

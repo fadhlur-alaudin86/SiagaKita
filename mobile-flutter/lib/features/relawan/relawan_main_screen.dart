@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
@@ -10,6 +12,7 @@ import '../../core/services/location_controller.dart';
 import '../../core/services/mobile_ws_service.dart';
 import '../../core/constants/api_config.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/widgets/custom_camera_view.dart';
 import 'relawan_history_screen.dart';
 
 import 'package:latlong2/latlong.dart';
@@ -277,83 +280,75 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     }
   }
 
-  // ─── Selesaikan Misi (upload foto bukti) ─────────────────────────────────
+  // ─── Selesaikan Misi (foto wajib oleh relawan) ───────────────────────────
+  /// Buka kamera → relawan ambil foto bukti → upload ke API
   Future<void> _completeMission() async {
     if (_activeMission == null) return;
-    File? photoFile;
-    // Ambil foto dari kamera
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) throw Exception('Kamera tidak tersedia');
-      final controller = CameraController(
-        cameras.first,
-        ResolutionPreset.medium,
-        enableAudio: false,
-      );
-      await controller.initialize();
-      final xFile = await controller.takePicture();
-      await controller.dispose();
-      photoFile = File(xFile.path);
-    } catch (_) {
-      // Jika kamera gagal, buat file dummy agar API tidak reject
-      try {
-        final dir = await getTemporaryDirectory();
-        final dummy = File('${dir.path}/dummy_proof.jpg');
-        if (!dummy.existsSync()) {
-          dummy.createSync();
-          dummy.writeAsBytesSync([
-            0xFF,
-            0xD8,
-            0xFF,
-            0xD9,
-          ]); // minimal valid JPEG
-        }
-        photoFile = dummy;
-      } catch (_) {}
-    }
-    if (photoFile == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengambil foto bukti'.tr(context)),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-    try {
-      await IncidentService.volunteerCompleteSOS(
-        accessToken: widget.accessToken,
-        incidentId: _activeMission!.incidentId,
-        photoFile: photoFile,
-      );
-      if (mounted) {
-        setState(() => _activeMission = null);
-        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
-          hasActiveMission: false,
-        );
-        _stopMissionLocationBroadcast();
-        _missionPollTimer?.cancel();
-        _loadHistory();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Bukti berhasil dikirim. Menunggu konfirmasi instansi.'.tr(
-                context,
-              ),
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } on IncidentException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
-        );
-      }
-    }
+
+    if (!mounted) return;
+    // Buka CustomCameraView — relawan harus foto sendiri (tidak bisa upload)
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomCameraView(
+          title: 'Foto Bukti Penyelesaian'.tr(context),
+          lensDirection: CameraLensDirection.back,
+          showOverlay: false,
+          allowFlip: true, // Boleh flip depan/belakang
+          onPictureTaken: (XFile xFile) async {
+            // Kompres foto
+            File? photoFile;
+            try {
+              final dir = await getTemporaryDirectory();
+              final outPath = p.join(
+                dir.path,
+                'mission_proof_${DateTime.now().millisecondsSinceEpoch}.jpg',
+              );
+              final compressed = await FlutterImageCompress.compressAndGetFile(
+                xFile.path,
+                outPath,
+                quality: 70,
+                minWidth: 1280,
+                minHeight: 960,
+              );
+              photoFile = compressed != null ? File(compressed.path) : File(xFile.path);
+            } catch (_) {
+              photoFile = File(xFile.path);
+            }
+
+            // Upload ke API
+            try {
+              await IncidentService.volunteerCompleteSOS(
+                accessToken: widget.accessToken,
+                incidentId: _activeMission!.incidentId,
+                photoFile: photoFile,
+              );
+              if (mounted) {
+                // Jangan langsung null-kan _activeMission,
+                // biarkan poll berikutnya mengambil status waiting_review
+                _checkActiveMission();
+                // Refresh nearby agar SOS yang sudah diselesaikan hilang
+                _fetchNearbySOS();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Bukti berhasil dikirim. Menunggu konfirmasi instansi.'.tr(context),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } on IncidentException catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+                );
+              }
+            }
+          },
+        ),
+      ),
+    );
   }
 
   void _showCompleteMissionDialog() {
@@ -362,7 +357,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
       builder: (_) => AlertDialog(
         title: Text('Selesaikan Misi?'.tr(context)),
         content: Text(
-          'Kamera akan mengambil foto sebagai bukti penyelesaian misi. Lanjutkan?'
+          'Ambil foto bukti penyelesaian misi menggunakan kamera. Foto wajib diambil langsung (tidak bisa dari galeri).'
               .tr(context),
         ),
         actions: [
@@ -379,8 +374,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
               _completeMission();
             },
             child: Text(
-              'Ya, Selesaikan'.tr(context),
-              style: TextStyle(color: Colors.white),
+              'Buka Kamera'.tr(context),
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -704,78 +699,113 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                     const SizedBox(height: 20),
                   ],
 
-                  // ─── Radar SOS ───────────────────────────────────────────────
-                  Row(
-                    children: [
-                      Text(
-                        'RADAR SOS AKTIF'.tr(context),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                          fontSize: 12,
-                          color: secondaryText,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (isOnDuty && !_loadingNearby)
+                  // ─── Radar SOS (disembunyikan saat misi aktif) ───────────────────────
+                  if (_activeMission == null) ...[
+                    Row(
+                      children: [
                         Text(
-                          '${_nearbySOS.length} ${'insiden'.tr(context)}',
+                          'RADAR SOS AKTIF'.tr(context),
                           style: TextStyle(
-                            color: _nearbySOS.isEmpty
-                                ? secondaryText
-                                : const Color(0xFFEF4444),
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
                             fontSize: 12,
+                            color: secondaryText,
                           ),
                         ),
-                      if (isOnDuty && _loadingNearby)
-                        const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                        const Spacer(),
+                        if (isOnDuty && !_loadingNearby)
+                          Text(
+                            '${_nearbySOS.length} ${'insiden'.tr(context)}',
+                            style: TextStyle(
+                              color: _nearbySOS.isEmpty
+                                  ? secondaryText
+                                  : const Color(0xFFEF4444),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (isOnDuty && _loadingNearby)
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    if (!isOnDuty)
+                      _emptyPlaceholder(
+                        Icons.radar_outlined,
+                        'Aktifkan ON DUTY'.tr(context),
+                        'Untuk melihat panggilan darurat di sekitarmu'.tr(
+                          context,
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
+                        isDark,
+                      )
+                    else if (_loadingNearby && _nearbySOS.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_nearbySOS.isEmpty)
+                      _emptyPlaceholder(
+                        Icons.check_circle_outline,
+                        'Tidak ada SOS aktif'.tr(context),
+                        'Belum ada panggilan darurat dalam radius 5 km'.tr(
+                          context,
+                        ),
+                        isDark,
+                      )
+                    else
+                      ...(_nearbySOS.map(
+                        (inc) => NearbyIncidentCard(
+                          inc: inc,
+                          isDark: isDark,
+                          primaryText: primaryText,
+                          secondaryText: secondaryText,
+                          onDetail: () => _showDetailSheet(inc),
+                          onAccept: () => _acceptSOS(inc),
+                        ),
+                      )),
 
-                  if (!isOnDuty)
-                    _emptyPlaceholder(
-                      Icons.radar_outlined,
-                      'Aktifkan ON DUTY'.tr(context),
-                      'Untuk melihat panggilan darurat di sekitarmu'.tr(
-                        context,
+                    const SizedBox(height: 28),
+                  ] else ...[
+                    // Info: radar disembunyikan saat misi aktif
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF065F46).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF22C55E).withValues(alpha: 0.3),
+                        ),
                       ),
-                      isDark,
-                    )
-                  else if (_loadingNearby && _nearbySOS.isEmpty)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: CircularProgressIndicator(),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.radar,
+                            color: Color(0xFF22C55E),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Radar SOS dinonaktifkan sementara selama misi berlangsung.'.tr(context),
+                              style: const TextStyle(
+                                color: Color(0xFF22C55E),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    )
-                  else if (_nearbySOS.isEmpty)
-                    _emptyPlaceholder(
-                      Icons.check_circle_outline,
-                      'Tidak ada SOS aktif'.tr(context),
-                      'Belum ada panggilan darurat dalam radius 5 km'.tr(
-                        context,
-                      ),
-                      isDark,
-                    )
-                  else
-                    ...(_nearbySOS.map(
-                      (inc) => NearbyIncidentCard(
-                        inc: inc,
-                        isDark: isDark,
-                        primaryText: primaryText,
-                        secondaryText: secondaryText,
-                        onDetail: () => _showDetailSheet(inc),
-                        onAccept: () => _acceptSOS(inc),
-                      ),
-                    )),
-
-                  const SizedBox(height: 28),
+                    ),
+                    const SizedBox(height: 28),
+                  ],
 
                   // ─── Riwayat Misi ──────────────────────────────────────────
                   Row(
