@@ -28,6 +28,11 @@ class AppLocalization {
         'Camera or gallery permission denied. Open device settings to enable it manually.',
     'Buka Pengaturan': 'Open Settings',
     'Mengerti': 'Understood',
+    'Izin Lokasi Diperlukan': 'Location Permission Required',
+    'SiagaKita membutuhkan akses lokasi agar bantuan dapat segera diarahkan ke tempat Anda secara akurat saat keadaan darurat.':
+        'SiagaKita needs location access so that help can be immediately directed to you accurately during an emergency.',
+    'Mohon aktifkan izin lokasi secara manual melalui pengaturan aplikasi.':
+        'Please enable location permission manually through app settings.',
     'TAMPILAN & AKSESIBILITAS': 'DISPLAY & ACCESSIBILITY',
     'Mode Gelap (Dark Mode)': 'Dark Mode',
     'Tema dikendalikan oleh sistem saat ini.':
@@ -428,6 +433,10 @@ class AppLocalization {
     'Gagal memuat alamat': 'Failed to load address',
     'Izin kamera ditolak. Buka pengaturan untuk mengizinkan.':
         'Camera permission denied. Open settings to allow.',
+    'Layanan GPS tidak aktif. Aktifkan GPS di pengaturan.':
+        'GPS service is inactive. Enable GPS in settings.',
+    'Izin GPS belum diberikan': 'GPS permission not granted',
+    'Gagal mengambil lokasi: ': 'Failed to get location: ',
     'Ambil Foto Keadaan Darurat': 'Take Emergency Photo',
     'Izin mikrofon ditolak.': 'Microphone permission denied.',
     'Pilih kategori darurat terlebih dahulu.':

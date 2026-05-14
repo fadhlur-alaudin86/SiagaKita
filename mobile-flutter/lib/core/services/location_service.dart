@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../localization/app_localization.dart';
 
 class AppLocationServiceDisabledException implements Exception {
   final String message;
@@ -73,21 +74,31 @@ class LocationService {
     return permission.isGranted;
   }
 
-  static Future<void> _showPermissionExplanationDialog(BuildContext context) async {
+  static Future<void> _showPermissionExplanationDialog(
+    BuildContext context,
+  ) async {
     await showDialog<void>(
       context: context,
       builder: (BuildContext ctx) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Izin Lokasi Diperlukan', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text(
-            'SiagaKita membutuhkan akses lokasi agar bantuan dapat segera diarahkan ke tempat Anda secara akurat saat keadaan darurat.\n\n'
-            'Mohon aktifkan izin lokasi secara manual melalui pengaturan aplikasi.',
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Izin Lokasi Diperlukan'.tr(context),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            '${'SiagaKita membutuhkan akses lokasi agar bantuan dapat segera diarahkan ke tempat Anda secara akurat saat keadaan darurat.'.tr(context)}\n\n'
+            '${'Mohon aktifkan izin lokasi secara manual melalui pengaturan aplikasi.'.tr(context)}',
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+              child: Text(
+                'Batal'.tr(context),
+                style: const TextStyle(color: Colors.grey),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -98,7 +109,7 @@ class LocationService {
                 Navigator.of(ctx).pop();
                 openAppSettings();
               },
-              child: const Text('Buka Pengaturan'),
+              child: Text('Buka Pengaturan'.tr(context)),
             ),
           ],
         );
@@ -116,7 +127,8 @@ class LocationService {
 
   /// Mengambil koordinat GPS saat ini.
   /// Melempar exception spesifik jika gagal.
-  static Future<({double latitude, double longitude})> getCurrentPosition() async {
+  static Future<({double latitude, double longitude})>
+  getCurrentPosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       throw const AppLocationServiceDisabledException(
@@ -143,7 +155,8 @@ class LocationService {
 
   /// Mengambil koordinat GPS dengan fallback ke null jika gagal.
   /// Digunakan untuk kasus non-critical seperti update periodik.
-  static Future<({double latitude, double longitude})?> getCurrentPositionOrNull() async {
+  static Future<({double latitude, double longitude})?>
+  getCurrentPositionOrNull() async {
     try {
       return await getCurrentPosition();
     } catch (_) {
