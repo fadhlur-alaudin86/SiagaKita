@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict O5ce5cszAAVzkhrH86p3rdRIwGyeubbtivGSL9blUZ7QD6jgzzy0OYh9dMGc83Z
+\restrict 8GdOoWpw9xcOeF6PZgauyU39gc8Ue0bK2Ut7KANK7v5o3gycTggTcAEUzlSTfES
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -124,6 +124,8 @@ CREATE TYPE public.incident_status AS ENUM (
     'handled',
     'resolved',
     'false_alarm',
+    'cancel',
+    'cancelled',
     'canceled'
 );
 
@@ -286,9 +288,9 @@ CREATE TABLE public.incident_reports (
     urgency_level smallint,
     latitude double precision NOT NULL,
     longitude double precision NOT NULL,
-    description text,
+    description character varying(1000),
     photo_paths text[] DEFAULT '{}'::text[],
-    audio_path text,
+    audio_path character varying(255),
     status character varying(20) DEFAULT 'sent'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
@@ -311,7 +313,7 @@ CREATE TABLE public.incident_responses (
     proof_photo_url character varying(255),
     latitude double precision,
     longitude double precision,
-    address_detail text
+    address_detail character varying(255)
 );
 
 
@@ -334,7 +336,7 @@ CREATE TABLE public.incidents (
     updated_at timestamp with time zone DEFAULT now(),
     completed_at timestamp with time zone,
     photo_paths text[] DEFAULT '{}'::text[],
-    audio_path text,
+    audio_path character varying(255),
     address_detail character varying(255),
     handled_by_agency_id uuid,
     agency_status character varying(20) DEFAULT 'pending'::character varying
@@ -350,7 +352,7 @@ ALTER TABLE public.incidents OWNER TO siagakita_admin;
 CREATE TABLE public.m_badges (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     badge_name character varying(50) NOT NULL,
-    description text,
+    description character varying(255),
     icon_url character varying(255)
 );
 
@@ -401,7 +403,7 @@ CREATE TABLE public.sos_strikes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid,
     incident_id uuid,
-    reason text,
+    reason character varying(500),
     marked_by uuid,
     created_at timestamp with time zone DEFAULT now()
 );
@@ -426,17 +428,18 @@ CREATE TABLE public.user_profiles (
     is_sos_banned boolean DEFAULT false,
     banned_until timestamp with time zone,
     blood_type public.blood_type_enum DEFAULT 'UNKNOWN'::public.blood_type_enum,
-    allergies text,
-    medical_conditions text,
+    allergies character varying(255),
+    medical_conditions character varying(255),
     height_cm integer,
     weight_kg integer,
-    domicile text,
+    domicile character varying(255),
     updated_at timestamp with time zone DEFAULT now(),
-    bio text,
-    kyc_ktp_url text,
+    bio character varying(255),
+    kyc_ktp_url character varying(255),
     nik_verification_status character varying(20) DEFAULT 'none'::character varying,
-    profile_photo_url text,
-    volunteer_experience text,
+    profile_photo_url character varying(255),
+    volunteer_experience character varying(1000),
+    place_of_birth character varying(100),
     CONSTRAINT chk_nik_status CHECK (((nik_verification_status)::text = ANY ((ARRAY['none'::character varying, 'pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[]))),
     CONSTRAINT user_profiles_height_cm_check CHECK ((height_cm > 0)),
     CONSTRAINT user_profiles_weight_kg_check CHECK ((weight_kg > 0))
@@ -974,5 +977,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict O5ce5cszAAVzkhrH86p3rdRIwGyeubbtivGSL9blUZ7QD6jgzzy0OYh9dMGc83Z
+\unrestrict 8GdOoWpw9xcOeF6PZgauyU39gc8Ue0bK2Ut7KANK7v5o3gycTggTcAEUzlSTfES
 

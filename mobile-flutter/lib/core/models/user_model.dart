@@ -17,6 +17,7 @@ class UserModel {
   final String? nik;
   final String? phoneNumber;
   final bool isPhoneVerified;
+  final String? placeOfBirth;
   final String? birthDate; // format: DD-MM-YYYY or YYYY-MM-DD
   final String? bio;
   final String? volunteerStatus; // 'none', 'pending', 'approved'
@@ -41,6 +42,7 @@ class UserModel {
     this.nik,
     this.phoneNumber,
     this.isPhoneVerified = false,
+    this.placeOfBirth,
     this.birthDate,
     this.bio,
     this.volunteerStatus,
@@ -70,6 +72,7 @@ class UserModel {
     String? nik,
     String? phoneNumber,
     bool? isPhoneVerified,
+    String? placeOfBirth,
     String? birthDate,
     String? bio,
     String? volunteerStatus,
@@ -93,6 +96,7 @@ class UserModel {
       nik: nik ?? this.nik,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
+      placeOfBirth: placeOfBirth ?? this.placeOfBirth,
       birthDate: birthDate ?? this.birthDate,
       bio: bio ?? this.bio,
       volunteerStatus: volunteerStatus ?? this.volunteerStatus,
@@ -186,6 +190,7 @@ class UserModel {
       nik: json['nik'],
       phoneNumber: json['phone_number'],
       isPhoneVerified: json['is_phone_verified'] ?? false,
+      placeOfBirth: json['place_of_birth'],
       birthDate: json['date_of_birth'],
       bio: json['bio'],
       volunteerStatus: json['volunteer_status'] as String?,
@@ -263,6 +268,7 @@ class UserModel {
       'email': email,
       'role': role.name,
       'phone_number': phoneNumber,
+      'place_of_birth': placeOfBirth,
       'birth_date': birthDate,
       'bio': bio,
       'volunteer_status': volunteerStatus,

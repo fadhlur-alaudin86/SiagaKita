@@ -26,9 +26,37 @@ class _BiodataScreenState extends State<BiodataScreen> {
   final _medicalHistoryController = TextEditingController();
   final _allergiesController = TextEditingController();
   final _addressController = TextEditingController();
+  final _nikController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _placeOfBirthController = TextEditingController();
 
   final _contacts = <Map<String, dynamic>>[];
   bool _isLoading = false;
+
+  Future<void> _handleRefresh() async {
+    await UserService.refreshCurrentUser(widget.accessToken);
+    if (!mounted) return;
+    
+    final user = UserModel.currentUser.value;
+    setState(() {
+      if (_nikController.text.isEmpty && user.nik != null) _nikController.text = user.nik!;
+      if (_phoneController.text.isEmpty && user.phoneNumber != null) _phoneController.text = user.phoneNumber!;
+      if (_placeOfBirthController.text.isEmpty && user.placeOfBirth != null) _placeOfBirthController.text = user.placeOfBirth!;
+      if (_birthDateController.text.isEmpty && user.birthDate != null) _birthDateController.text = user.birthDate!;
+      
+      final med = user.medicalData ?? {};
+      if (_bloodTypeController.text.isEmpty && med['blood_type'] != null) _bloodTypeController.text = med['blood_type'];
+      if (_weightController.text.isEmpty && med['weight'] != null) _weightController.text = med['weight'];
+      if (_heightController.text.isEmpty && med['height'] != null) _heightController.text = med['height'];
+      if (_medicalHistoryController.text.isEmpty && med['medical_history'] != null) _medicalHistoryController.text = med['medical_history'];
+      if (_allergiesController.text.isEmpty && med['allergies'] != null) _allergiesController.text = med['allergies'];
+      if (_addressController.text.isEmpty && med['address'] != null) _addressController.text = med['address'];
+      
+      if (_contacts.isEmpty && user.emergencyContacts != null) {
+        _contacts.addAll(user.emergencyContacts!);
+      }
+    });
+  }
 
   void _addContact() {
     setState(() {
@@ -106,12 +134,15 @@ class _BiodataScreenState extends State<BiodataScreen> {
       };
 
       final updatedUser = UserModel.currentUser.value.copyWith(
+        nik: _nikController.text.isEmpty ? null : _nikController.text,
+        phoneNumber: _phoneController.text.isEmpty ? null : _phoneController.text,
+        placeOfBirth: _placeOfBirthController.text.isEmpty ? null : _placeOfBirthController.text,
         birthDate: _birthDateController.text.isEmpty ? null : _birthDateController.text,
         medicalData: medData,
         emergencyContacts: _contacts.isEmpty ? null : _contacts,
       );
 
-      await UserService.updateProfile(widget.accessToken, updatedUser);
+      await UserService.saveBiodata(widget.accessToken, updatedUser);
 
       if (!mounted) return;
       _skipBiodata();
@@ -153,8 +184,11 @@ class _BiodataScreenState extends State<BiodataScreen> {
         iconTheme: IconThemeData(color: colors.onSurface),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+        child: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -179,6 +213,49 @@ class _BiodataScreenState extends State<BiodataScreen> {
                 ),
               ),
               const SizedBox(height: 32),
+
+              // Data Identitas & Kontak
+              Text(
+                'Data Identitas & Kontak'.tr(context),
+                style: TextStyle(
+                  color: colors.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Bisa diisi sekarang atau nanti di menu Profil. Berfungsi untuk keperluan verifikasi.'.tr(context),
+                style: TextStyle(
+                  color: colors.onSurface.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                _nikController,
+                'NIK KTP (16 Digit)'.tr(context),
+                Icons.badge_outlined,
+                colors,
+                inputType: TextInputType.number,
+                maxLength: 16,
+              ),
+              _buildTextField(
+                _phoneController,
+                'No WhatsApp aktif'.tr(context),
+                Icons.phone_android,
+                colors,
+                inputType: TextInputType.phone,
+                maxLength: 20,
+              ),
+              _buildTextField(
+                _placeOfBirthController,
+                'Tempat Lahir'.tr(context),
+                Icons.location_city,
+                colors,
+                maxLength: 100,
+              ),
+              const SizedBox(height: 24),
 
               // Fisik & Kesehatan
               Text(
@@ -216,20 +293,22 @@ class _BiodataScreenState extends State<BiodataScreen> {
                   Expanded(
                     child: _buildTextField(
                       _weightController,
-                      'Berat Badan (kg)'.tr(context),
+                      'Berat (kg)'.tr(context),
                       Icons.monitor_weight_outlined,
                       colors,
                       inputType: TextInputType.number,
+                      maxLength: 3,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildTextField(
                       _heightController,
-                      'Tinggi Badan (cm)'.tr(context),
+                      'Tinggi (cm)'.tr(context),
                       Icons.height,
                       colors,
                       inputType: TextInputType.number,
+                      maxLength: 3,
                     ),
                   ),
                 ],
@@ -258,15 +337,17 @@ class _BiodataScreenState extends State<BiodataScreen> {
               const SizedBox(height: 16),
               _buildTextField(
                 _medicalHistoryController,
-                'Riwayat Medis (Misal: Asma, Hipertensi)'.tr(context),
-                Icons.favorite_border,
+                'Contoh: Asma, Hipertensi'.tr(context),
+                Icons.medical_information_outlined,
                 colors,
+                maxLength: 255,
               ),
               _buildTextField(
                 _allergiesController,
-                'Alergi Utama (Misal: Kacang, Penisilin)'.tr(context),
+                'Contoh: Udang, Debu, Penisilin'.tr(context),
                 Icons.warning_amber_rounded,
                 colors,
+                maxLength: 255,
               ),
               const SizedBox(height: 8),
 
@@ -302,6 +383,7 @@ class _BiodataScreenState extends State<BiodataScreen> {
                 child: TextField(
                   controller: _addressController,
                   maxLines: 3,
+                  maxLength: 255,
                   style: TextStyle(color: colors.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Alamat lengkap sesuai domisili...'.tr(context),
@@ -504,6 +586,7 @@ class _BiodataScreenState extends State<BiodataScreen> {
               ),
               const SizedBox(height: 32),
             ],
+            ),
           ),
         ),
       ),
@@ -607,6 +690,7 @@ class _BiodataScreenState extends State<BiodataScreen> {
     IconData icon,
     ColorScheme colors, {
     TextInputType inputType = TextInputType.text,
+    int? maxLength,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -618,6 +702,8 @@ class _BiodataScreenState extends State<BiodataScreen> {
       child: TextField(
         controller: controller,
         keyboardType: inputType,
+        maxLength: maxLength,
+        buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
         style: TextStyle(color: colors.onSurface),
         decoration: InputDecoration(
           hintText: hint,

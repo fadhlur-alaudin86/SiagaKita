@@ -73,6 +73,9 @@ class UserService {
 
       final payload = <String, dynamic>{
         'full_name': updatedUser.name.isNotEmpty ? updatedUser.name : null,
+        'nik': updatedUser.nik,
+        'phone_number': updatedUser.phoneNumber,
+        'place_of_birth': updatedUser.placeOfBirth,
         'date_of_birth': updatedUser.birthDate,
         'blood_type': medData['blood_type'],
         'allergies': medData['allergies'],
@@ -106,6 +109,68 @@ class UserService {
       return UserModel.fromJson(body['data']);
     } catch (e) {
       throw Exception('Kesalahan memperbarui profil: $e');
+    }
+  }
+
+  // ─── Save Biodata (POST /users/biodata) ─────────────────────────────────────
+
+  static Future<void> saveBiodata(
+    String token,
+    UserModel updatedUser,
+  ) async {
+    try {
+      final contacts = updatedUser.emergencyContacts?.map((c) {
+        return {
+          'name': c['name'] ?? '',
+          'phone': c['phone'] ?? '',
+          'relation': c['relation'] ?? '',
+        };
+      }).toList();
+
+      final medData = updatedUser.medicalData ?? {};
+      int? heightCm, weightKg;
+      if (medData['height'] != null) {
+        heightCm = int.tryParse(medData['height'].toString());
+      }
+      if (medData['weight'] != null) {
+        weightKg = int.tryParse(medData['weight'].toString());
+      }
+
+      final payload = <String, dynamic>{
+        'nik': updatedUser.nik,
+        'place_of_birth': updatedUser.placeOfBirth,
+        'date_of_birth': updatedUser.birthDate,
+        'blood_type': medData['blood_type'],
+        'allergies': medData['allergies'],
+        'medical_conditions': medData['medical_history'],
+        'height_cm': heightCm,
+        'weight_kg': weightKg,
+        'domicile': medData['address'],
+        'emergency_contact_name': contacts != null && contacts.isNotEmpty ? contacts[0]['name'] : null,
+        'emergency_contact_phone': contacts != null && contacts.isNotEmpty ? contacts[0]['phone'] : null,
+        'emergency_relation': contacts != null && contacts.isNotEmpty ? contacts[0]['relation'] : null,
+      };
+
+      payload.removeWhere((k, v) => v == null || v == '');
+
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/users/biodata'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(_timeout);
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(body['message'] ?? 'Gagal menyimpan biodata');
+      }
+    } catch (e) {
+      throw Exception('Kesalahan menyimpan biodata: $e');
     }
   }
 

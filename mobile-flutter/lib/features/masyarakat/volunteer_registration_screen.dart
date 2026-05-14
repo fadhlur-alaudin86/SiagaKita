@@ -18,6 +18,9 @@ class _VolunteerRegistrationScreenState
     extends State<VolunteerRegistrationScreen> {
   final _expCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _nikCtrl = TextEditingController();
+  final _waCtrl = TextEditingController();
+  final _placeOfBirthCtrl = TextEditingController();
 
   final List<String> _availableSpecs = [
     'Medis & First Aid',
@@ -30,7 +33,25 @@ class _VolunteerRegistrationScreenState
   final Map<String, String?> _uploadedCerts = {};
 
   bool _acceptedTerms = false;
+  bool _waCheckbox = false;
   bool _isLoading = false;
+
+  bool get _isNikEmpty {
+    final user = UserModel.currentUser.value;
+    return user.nik == null || user.nik!.isEmpty;
+  }
+
+  bool get _isWaEmpty {
+    final user = UserModel.currentUser.value;
+    return user.phoneNumber == null || user.phoneNumber!.isEmpty;
+  }
+
+  bool get _isPlaceOfBirthEmpty {
+    final user = UserModel.currentUser.value;
+    return user.placeOfBirth == null || user.placeOfBirth!.isEmpty;
+  }
+
+  bool get _needsProfileData => _isNikEmpty || _isWaEmpty || _isPlaceOfBirthEmpty;
 
   @override
   void initState() {
@@ -40,47 +61,10 @@ class _VolunteerRegistrationScreenState
       _uploadedCerts[spec] = null;
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkPrerequisites();
-    });
-  }
-
-  void _checkPrerequisites() {
     final user = UserModel.currentUser.value;
-    List<String> missing = [];
-
-    if (user.nikVerificationStatus != 'approved') {
-      missing.add('Verifikasi NIK (KYC)'.tr(context));
-    }
-    if (user.name.trim().isEmpty) missing.add('Nama Lengkap'.tr(context));
-    if (user.birthDate == null || user.birthDate!.isEmpty) {
-      missing.add('Tanggal Lahir'.tr(context));
-    }
-    if (user.phoneNumber == null || user.phoneNumber!.isEmpty) {
-      missing.add('Nomor Telepon'.tr(context));
-    }
-
-    if (missing.isNotEmpty) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-          title: Text('Persyaratan Belum Lengkap'.tr(context)),
-          content: Text(
-            '${'Untuk mendaftar sebagai relawan, lengkapi data profil berikut:\n\n'.tr(context)}${missing.map((e) => '• $e').join('\n')}',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pop(context); // Kembali ke profil
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
+    if (!_isNikEmpty) _nikCtrl.text = user.nik!;
+    if (!_isWaEmpty) _waCtrl.text = user.phoneNumber!;
+    if (!_isPlaceOfBirthEmpty) _placeOfBirthCtrl.text = user.placeOfBirth!;
   }
 
   Future<void> _submit() async {
@@ -107,6 +91,31 @@ class _VolunteerRegistrationScreenState
           content: Text(
             'Harap unggah sertifikat untuk setiap spesialisasi yang dipilih'
                 .tr(context),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_needsProfileData) {
+      if ((_isNikEmpty && _nikCtrl.text.isEmpty) ||
+          (_isWaEmpty && _waCtrl.text.isEmpty) ||
+          (_isPlaceOfBirthEmpty && _placeOfBirthCtrl.text.isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Harap lengkapi NIK, No WhatsApp, dan Tempat Lahir'.tr(context)),
+          ),
+        );
+        return;
+      }
+    }
+
+    if (!_waCheckbox) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Harap centang penggunaan WhatsApp di nomor tersebut.'.tr(context),
           ),
         ),
       );
@@ -140,6 +149,16 @@ class _VolunteerRegistrationScreenState
     final token = session?.token ?? '';
 
     try {
+      if (_needsProfileData) {
+        final updatedUser = UserModel.currentUser.value.copyWith(
+          nik: _isNikEmpty ? _nikCtrl.text : null,
+          phoneNumber: _isWaEmpty ? _waCtrl.text : null,
+          placeOfBirth: _isPlaceOfBirthEmpty ? _placeOfBirthCtrl.text : null,
+        );
+        await UserService.saveBiodata(token, updatedUser);
+        // Refresh to fetch the latest values just in case
+        await UserService.refreshCurrentUser(token);
+      }
       await UserService.submitVolunteerRegistration(
         accessToken: token,
         experience: _expCtrl.text,
@@ -312,6 +331,98 @@ class _VolunteerRegistrationScreenState
                   height: 1.5,
                 ),
               ),
+              const SizedBox(height: 32),
+
+              Text(
+                'DATA IDENTITAS & KONTAK'.tr(context),
+                style: TextStyle(
+                  color: primaryTextColor,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_isNikEmpty || !_isNikEmpty) ...[
+                TextFormField(
+                  controller: _nikCtrl,
+                  readOnly: !_isNikEmpty,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    color: !_isNikEmpty ? colors.onSurface.withValues(alpha: 0.5) : colors.onSurface,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'NIK KTP (16 Digit)'.tr(context),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: !_isNikEmpty,
+                    fillColor: !_isNikEmpty ? (isDark ? Colors.grey.shade900 : Colors.grey.shade100) : null,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (_isWaEmpty || !_isWaEmpty) ...[
+                TextFormField(
+                  controller: _waCtrl,
+                  readOnly: !_isWaEmpty,
+                  keyboardType: TextInputType.phone,
+                  style: TextStyle(
+                    color: !_isWaEmpty ? colors.onSurface.withValues(alpha: 0.5) : colors.onSurface,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'No WhatsApp Aktif'.tr(context),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: !_isWaEmpty,
+                    fillColor: !_isWaEmpty ? (isDark ? Colors.grey.shade900 : Colors.grey.shade100) : null,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (_isPlaceOfBirthEmpty) ...[
+                TextFormField(
+                  controller: _placeOfBirthCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Tempat Lahir'.tr(context),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: Checkbox(
+                      value: _waCheckbox,
+                      activeColor: Colors.orange,
+                      onChanged: (val) {
+                        setState(() => _waCheckbox = val ?? false);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Saya menggunakan WhatsApp di nomor di atas'.tr(context),
+                      style: TextStyle(
+                        color: isDark
+                            ? Colors.white70
+                            : colors.onSurface.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
               const SizedBox(height: 32),
 
               Text(

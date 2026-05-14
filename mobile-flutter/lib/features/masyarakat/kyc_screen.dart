@@ -7,6 +7,7 @@ import 'package:camera/camera.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/kyc_service.dart';
 import '../../core/services/user_service.dart';
+import '../../core/models/user_model.dart';
 import '../../core/widgets/custom_camera_view.dart';
 import '../../core/utils/responsive.dart';
 
@@ -27,6 +28,8 @@ class _KycScreenState extends State<KycScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nikCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  final _placeOfBirthCtrl = TextEditingController();
+  final _birthDateCtrl = TextEditingController();
 
   File? _ktpPhoto;
   File? _selfiePhoto;
@@ -48,10 +51,18 @@ class _KycScreenState extends State<KycScreen> {
   void dispose() {
     _nikCtrl.dispose();
     _nameCtrl.dispose();
+    _placeOfBirthCtrl.dispose();
+    _birthDateCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _loadStatus() async {
+    final user = UserModel.currentUser.value;
+    if (user.nik != null) _nikCtrl.text = user.nik!;
+    if (user.name.isNotEmpty) _nameCtrl.text = user.name;
+    if (user.placeOfBirth != null) _placeOfBirthCtrl.text = user.placeOfBirth!;
+    if (user.birthDate != null) _birthDateCtrl.text = user.birthDate!;
+
     try {
       final data = await KycService.getStatus(accessToken: widget.accessToken);
       if (mounted) {
@@ -120,6 +131,8 @@ class _KycScreenState extends State<KycScreen> {
         accessToken: widget.accessToken,
         nik: _nikCtrl.text.trim(),
         fullName: _nameCtrl.text.trim(),
+        placeOfBirth: _placeOfBirthCtrl.text.trim(),
+        dateOfBirth: _birthDateCtrl.text.trim(),
         ktpPhoto: _ktpPhoto!,
         selfiePhoto: _selfiePhoto!,
       );
@@ -131,8 +144,8 @@ class _KycScreenState extends State<KycScreen> {
         setState(() {
           _submitted = true;
           _kycStatus = 'pending';
-          _kycMessage =
-              'Pengajuan sedang diproses oleh admin (1-3 hari kerja).'.tr(context);
+          _kycMessage = 'Pengajuan sedang diproses oleh admin (1-3 hari kerja).'
+              .tr(context);
         });
       }
     } catch (e) {
@@ -319,8 +332,9 @@ class _KycScreenState extends State<KycScreen> {
           SizedBox(height: 8.h(context)),
           Text(
             '• Data diproses dalam 1-3 hari kerja\n'
-            '• Wajah harus terlihat jelas tanpa aksesoris penutup\n'
-            '• NIK terenkripsi dan aman'.tr(context),
+                    '• Wajah harus terlihat jelas tanpa aksesoris penutup\n'
+                    '• NIK terenkripsi dan aman'
+                .tr(context),
             style: TextStyle(
               color: textColor.withValues(alpha: 0.6),
               fontSize: 12.sp(context),
@@ -354,6 +368,7 @@ class _KycScreenState extends State<KycScreen> {
           SizedBox(height: 8.h(context)),
           TextFormField(
             controller: _nikCtrl,
+            maxLength: 16,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
@@ -385,6 +400,7 @@ class _KycScreenState extends State<KycScreen> {
           SizedBox(height: 8.h(context)),
           TextFormField(
             controller: _nameCtrl,
+            maxLength: 100,
             textCapitalization: TextCapitalization.words,
             style: TextStyle(color: textColor, fontSize: 14.sp(context)),
             decoration: _inputDecoration(
@@ -393,8 +409,98 @@ class _KycScreenState extends State<KycScreen> {
               context,
             ),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Nama wajib diisi'.tr(context);
+              if (v == null || v.trim().isEmpty) {
+                return 'Nama wajib diisi'.tr(context);
+              }
               if (v.trim().length < 3) return 'Nama terlalu pendek'.tr(context);
+              return null;
+            },
+          ),
+          SizedBox(height: 16.h(context)),
+
+          // Tempat Lahir
+          Text(
+            'Tempat Lahir'.tr(context),
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14.sp(context),
+            ),
+          ),
+          SizedBox(height: 8.h(context)),
+          TextFormField(
+            controller: _placeOfBirthCtrl,
+            maxLength: 100,
+            textCapitalization: TextCapitalization.words,
+            style: TextStyle(color: textColor, fontSize: 14.sp(context)),
+            decoration: _inputDecoration(
+              'Sesuai KTP'.tr(context),
+              isDark,
+              context,
+            ),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                return 'Tempat lahir wajib diisi'.tr(context);
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 16.h(context)),
+
+          // Tanggal Lahir
+          Text(
+            'Tanggal Lahir (DD-MM-YYYY)'.tr(context),
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14.sp(context),
+            ),
+          ),
+          SizedBox(height: 8.h(context)),
+          TextFormField(
+            controller: _birthDateCtrl,
+            readOnly: true,
+            onTap: () async {
+              DateTime initialDate = DateTime(2000, 1, 1);
+              if (_birthDateCtrl.text.isNotEmpty) {
+                try {
+                  final parts = _birthDateCtrl.text.split('-');
+                  if (parts.length == 3) {
+                    if (parts[0].length == 4) {
+                      initialDate = DateTime.parse(_birthDateCtrl.text);
+                    } else {
+                      initialDate = DateTime(
+                        int.parse(parts[2]),
+                        int.parse(parts[1]),
+                        int.parse(parts[0]),
+                      );
+                    }
+                  }
+                } catch (_) {}
+              }
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: initialDate,
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) {
+                setState(() {
+                  _birthDateCtrl.text =
+                      "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}";
+                });
+              }
+            },
+            style: TextStyle(color: textColor, fontSize: 14.sp(context)),
+            decoration: _inputDecoration(
+              'Sesuai KTP'.tr(context),
+              isDark,
+              context,
+            ).copyWith(suffixIcon: Icon(Icons.calendar_today, color: primary)),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                return 'Tanggal lahir wajib diisi'.tr(context);
+              }
               return null;
             },
           ),

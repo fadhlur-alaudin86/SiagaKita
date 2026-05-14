@@ -228,6 +228,18 @@ func (s *Service) ConfirmPhoneOTP(ctx context.Context, userID, phone, code strin
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
 func (s *Service) SaveBiodata(userID string, req *BiodataRequest) error {
+	if req.PlaceOfBirth != nil && len(*req.PlaceOfBirth) > 100 {
+		return errors.New("tempat lahir maksimal 100 karakter")
+	}
+	if req.Allergies != nil && len(*req.Allergies) > 255 {
+		return errors.New("alergi maksimal 255 karakter")
+	}
+	if req.MedicalConditions != nil && len(*req.MedicalConditions) > 255 {
+		return errors.New("kondisi medis maksimal 255 karakter")
+	}
+	if req.Domicile != nil && len(*req.Domicile) > 255 {
+		return errors.New("domisili maksimal 255 karakter")
+	}
 	return s.repo.SaveBiodata(userID, req)
 }
 
@@ -236,6 +248,24 @@ func (s *Service) GetProfile(userID string) (*ProfileResponse, error) {
 }
 
 func (s *Service) UpdateProfile(userID string, req *UpdateProfileRequest) error {
+	if req.FullName != nil && len(*req.FullName) > 100 {
+		return errors.New("nama lengkap maksimal 100 karakter")
+	}
+	if req.PlaceOfBirth != nil && len(*req.PlaceOfBirth) > 100 {
+		return errors.New("tempat lahir maksimal 100 karakter")
+	}
+	if req.Bio != nil && len(*req.Bio) > 255 {
+		return errors.New("bio maksimal 255 karakter")
+	}
+	if req.Allergies != nil && len(*req.Allergies) > 255 {
+		return errors.New("alergi maksimal 255 karakter")
+	}
+	if req.MedicalConditions != nil && len(*req.MedicalConditions) > 255 {
+		return errors.New("kondisi medis maksimal 255 karakter")
+	}
+	if req.Domicile != nil && len(*req.Domicile) > 255 {
+		return errors.New("domisili maksimal 255 karakter")
+	}
 	return s.repo.UpdateProfile(userID, req)
 }
 
@@ -291,6 +321,10 @@ func (s *Service) SubmitVolunteerRegistration(c *fiber.Ctx, userID string, exper
 	if len(specializations) > 0 {
 		specsStr := strings.Join(specializations, ", ")
 		experience = "Spesialisasi: " + specsStr + "\nPengalaman: " + experience
+	}
+	
+	if len(experience) > 1000 {
+		return errors.New("pengalaman dan spesialisasi terlalu panjang (maksimal 1000 karakter)")
 	}
 
 	return s.repo.SubmitVolunteerRegistration(userID, experience, certs)
@@ -370,7 +404,7 @@ func (s *Service) ResendOTP(ctx context.Context, email, otpContext string) error
 
 // SubmitKYC memproses pengajuan verifikasi NIK warga.
 // Warga perlu mengirimkan foto KTP dan selfie (sebagai foto profil).
-func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
+func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName, placeOfBirth, dateOfBirth string) error {
 	// Gunakan path absolut agar file disimpan di lokasi yang benar di VPS.
 	saveDir := s.cfg.UploadDir + "/kyc"
 	if err := os.MkdirAll(saveDir, os.ModePerm); err != nil {
@@ -402,7 +436,7 @@ func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName string) error {
 	}
 	selfiePublicURL := s.cfg.UploadBaseURL + "/kyc/" + userID + "_selfie" + selfieExt
 
-	err = s.repo.SubmitKYC(userID, nik, fullName, ktpPublicURL, selfiePublicURL)
+	err = s.repo.SubmitKYC(userID, nik, fullName, placeOfBirth, dateOfBirth, ktpPublicURL, selfiePublicURL)
 	if err != nil {
 		if err.Error() == "NIK_ALREADY_USED" {
 			return errors.New("NIK ini sudah terdaftar pada akun lain. Pastikan NIK yang Anda masukkan benar")

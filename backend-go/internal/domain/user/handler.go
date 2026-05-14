@@ -233,14 +233,22 @@ func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
 
 	nik := c.FormValue("nik")
 	fullName := c.FormValue("full_name")
+	placeOfBirth := c.FormValue("place_of_birth")
+	dateOfBirth := c.FormValue("date_of_birth")
 	if nik == "" || fullName == "" {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "nik dan full_name wajib diisi")
 	}
 	if len(nik) != 16 {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "NIK harus 16 digit")
 	}
+	if len(fullName) > 100 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Nama lengkap maksimal 100 karakter")
+	}
+	if len(placeOfBirth) > 100 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Tempat lahir maksimal 100 karakter")
+	}
 
-	if err := h.svc.SubmitKYC(c, userID, nik, fullName); err != nil {
+	if err := h.svc.SubmitKYC(c, userID, nik, fullName, placeOfBirth, dateOfBirth); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{

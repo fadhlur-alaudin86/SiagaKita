@@ -34,6 +34,8 @@ class KycService {
     required String accessToken,
     required String nik,
     required String fullName,
+    required String placeOfBirth,
+    required String dateOfBirth,
     required File ktpPhoto,
     required File selfiePhoto,
   }) async {
@@ -42,6 +44,8 @@ class KycService {
       ..headers['Authorization'] = 'Bearer $accessToken'
       ..fields['nik'] = nik
       ..fields['full_name'] = fullName
+      ..fields['place_of_birth'] = placeOfBirth
+      ..fields['date_of_birth'] = dateOfBirth
       ..files.add(
         await http.MultipartFile.fromPath('ktp', ktpPhoto.path),
       )

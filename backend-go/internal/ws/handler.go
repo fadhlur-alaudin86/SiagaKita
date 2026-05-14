@@ -160,7 +160,8 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 	var role string
 	h.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
 
-	if role == "masyarakat" {
+	switch role {
+	case "masyarakat":
 		// Cari SOS aktif milik user ini
 		inc, _ := h.incRepo.FindActiveByReporter(userID)
 		if inc != nil {
@@ -190,7 +191,7 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 			h.hub.BroadcastToRole("admin", msg)
 			h.hub.BroadcastToRole("superadmin", msg)
 		}
-	} else if role == "relawan" {
+	case "relawan":
 		// Cari misi aktif milik relawan ini
 		resp, _ := h.incRepo.GetActiveResponse(userID)
 		if resp != nil {

@@ -109,8 +109,18 @@ func (r *Repository) UpdateProfile(userID string, req *UpdateProfileRequest) err
 		if req.FullName != nil {
 			profileMap["full_name"] = *req.FullName
 		}
+		if req.NIK != nil {
+			profileMap["nik"] = *req.NIK
+		}
+		if req.PhoneNumber != nil {
+			profileMap["phone_number"] = *req.PhoneNumber
+			profileMap["is_phone_verified"] = false
+		}
 		if req.BloodType != nil {
 			profileMap["blood_type"] = *req.BloodType
+		}
+		if req.PlaceOfBirth != nil {
+			profileMap["place_of_birth"] = *req.PlaceOfBirth
 		}
 		if req.Allergies != nil {
 			profileMap["allergies"] = *req.Allergies
@@ -173,6 +183,7 @@ func (r *Repository) SaveBiodata(userID string, req *BiodataRequest) error {
 		profile := UserProfile{
 			UserID:            userID,
 			BloodType:         req.BloodType,
+			PlaceOfBirth:      req.PlaceOfBirth,
 			Allergies:         req.Allergies,
 			MedicalConditions: req.MedicalConditions,
 			HeightCm:          req.HeightCm,
@@ -184,6 +195,7 @@ func (r *Repository) SaveBiodata(userID string, req *BiodataRequest) error {
 		// NIK dan tanggal lahir hanya di-update jika disertakan
 		profileMap := map[string]interface{}{
 			"blood_type":         req.BloodType,
+			"place_of_birth":     req.PlaceOfBirth,
 			"allergies":          req.Allergies,
 			"medical_conditions": req.MedicalConditions,
 			"height_cm":          req.HeightCm,
@@ -261,6 +273,7 @@ func (r *Repository) GetProfile(userID string) (*ProfileResponse, error) {
 		resp.IsSOSBanned = profile.IsSOSBanned
 		resp.BloodType = profile.BloodType
 		resp.Allergies = profile.Allergies
+		resp.PlaceOfBirth = profile.PlaceOfBirth
 		resp.MedicalConditions = profile.MedicalConditions
 		resp.HeightCm = profile.HeightCm
 		resp.WeightKg = profile.WeightKg
@@ -326,7 +339,7 @@ func (r *Repository) FindPersonnelByAgencyID(agencyID string) ([]AgencyPersonnel
 // ─── KYC Warga ────────────────────────────────────────────────────────────────
 
 // SubmitKYC menyimpan pengajuan verifikasi NIK & selfie (foto profil) warga.
-func (r *Repository) SubmitKYC(userID, nik, fullName, ktpURL, photoURL string) error {
+func (r *Repository) SubmitKYC(userID, nik, fullName, placeOfBirth, dateOfBirthStr, ktpURL, photoURL string) error {
 	// Cek apakah NIK sudah digunakan oleh akun lain.
 	var count int64
 	if err := r.db.Model(&UserProfile{}).
@@ -341,11 +354,21 @@ func (r *Repository) SubmitKYC(userID, nik, fullName, ktpURL, photoURL string) e
 	updates := map[string]interface{}{
 		"nik":                      nik,
 		"full_name":                fullName,
+		"place_of_birth":           placeOfBirth,
 		"kyc_ktp_url":              ktpURL,
 		"profile_photo_url":        photoURL,
 		"nik_verification_status":  "pending",
 		"updated_at":               time.Now(),
 	}
+
+	if dateOfBirthStr != "" {
+		parsed, err := time.Parse("02-01-2006", dateOfBirthStr)
+		if err != nil {
+			return fmt.Errorf("format date_of_birth tidak valid: %w", err)
+		}
+		updates["date_of_birth"] = parsed
+	}
+
 	return r.db.Model(&UserProfile{}).Where("user_id = ?", userID).Updates(updates).Error
 }
 

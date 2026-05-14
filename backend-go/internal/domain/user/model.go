@@ -24,6 +24,7 @@ type UserProfile struct {
 	UserID                string     `gorm:"type:uuid;primaryKey" json:"user_id"`
 	FullName              *string    `json:"full_name,omitempty"`
 	NIK                   *string    `gorm:"uniqueIndex" json:"nik,omitempty"`
+	PlaceOfBirth          *string    `json:"place_of_birth,omitempty"`
 	DateOfBirth           *time.Time `json:"date_of_birth,omitempty"`
 	PhoneNumber           *string    `gorm:"uniqueIndex" json:"phone_number,omitempty"`
 	IsEmailVerified       bool       `gorm:"default:false" json:"is_email_verified"`
@@ -155,6 +156,7 @@ type CreatePersonnelRequest struct {
 // BiodataRequest untuk update profil civilian/volunteer.
 type BiodataRequest struct {
 	NIK                   *string `json:"nik"`
+	PlaceOfBirth          *string `json:"place_of_birth"`
 	DateOfBirth           *string `json:"date_of_birth"` // Format: DD-MM-YYYY
 	BloodType             *string `json:"blood_type"`
 	Allergies             *string `json:"allergies"`
@@ -205,6 +207,7 @@ type ProfileResponse struct {
 	Role                string               `json:"role"`
 	FullName            *string              `json:"full_name,omitempty"`
 	NIK                 *string              `json:"nik,omitempty"`
+	PlaceOfBirth        *string              `json:"place_of_birth,omitempty"`
 	DateOfBirth         *string              `json:"date_of_birth,omitempty"`
 	PhoneNumber         *string              `json:"phone_number,omitempty"`
 	IsEmailVerified       bool                 `json:"is_email_verified"`
@@ -229,6 +232,9 @@ type ProfileResponse struct {
 // UpdateProfileRequest untuk PUT /users/profile (civilian/volunteer).
 type UpdateProfileRequest struct {
 	FullName             *string `json:"full_name"`
+	NIK                  *string `json:"nik"`
+	PhoneNumber          *string `json:"phone_number"`
+	PlaceOfBirth         *string `json:"place_of_birth"`
 	DateOfBirth          *string `json:"date_of_birth"` // Format: DD-MM-YYYY
 	BloodType            *string `json:"blood_type"`
 	Allergies            *string `json:"allergies"`
@@ -281,8 +287,10 @@ const (
 // Diterima sebagai multipart/form-data karena menyertakan foto KTP dan selfie warga.
 // Selfie digunakan sekaligus sebagai foto profil di halaman profil warga.
 type SubmitKYCRequest struct {
-	NIK      string `form:"nik"` // 16 digit NIK KTP
-	FullName string `form:"full_name"`
+	NIK          string `form:"nik"` // 16 digit NIK KTP
+	FullName     string `form:"full_name"`
+	PlaceOfBirth string `form:"place_of_birth"`
+	DateOfBirth  string `form:"date_of_birth"`
 }
 
 // KYCStatusResponse adalah respons GET /users/kyc/status.

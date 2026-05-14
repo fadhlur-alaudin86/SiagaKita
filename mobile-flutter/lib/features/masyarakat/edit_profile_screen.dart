@@ -14,7 +14,10 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isSaving = false;
   // Informasi Pribadi
-  final _birthDateCtrl = TextEditingController();
+  final _fullNameCtrl = TextEditingController();
+  final _nikCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _placeOfBirthCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
 
@@ -33,7 +36,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     final user = UserModel.currentUser.value;
 
-    _birthDateCtrl.text = user.birthDate ?? '';
+    _fullNameCtrl.text = user.name;
+    _nikCtrl.text = user.nik ?? '';
+    _phoneCtrl.text = user.phoneNumber ?? '';
+    _placeOfBirthCtrl.text = user.placeOfBirth ?? '';
     _bioCtrl.text = user.bio ?? '';
 
     final medData = user.medicalData ?? {};
@@ -54,7 +60,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   void dispose() {
-    _birthDateCtrl.dispose();
+    _fullNameCtrl.dispose();
+    _nikCtrl.dispose();
+    _phoneCtrl.dispose();
+    _placeOfBirthCtrl.dispose();
     _bioCtrl.dispose();
     _addressCtrl.dispose();
     _bloodTypeCtrl.dispose();
@@ -77,59 +86,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    DateTime initialDate = DateTime(2000, 1, 1);
-    if (_birthDateCtrl.text.isNotEmpty) {
-      try {
-        final parts = _birthDateCtrl.text.split('-');
-        if (parts.length == 3) {
-          if (parts[0].length == 4) {
-            initialDate = DateTime.parse(_birthDateCtrl.text);
-          } else {
-            initialDate = DateTime(
-              int.parse(parts[2]),
-              int.parse(parts[1]),
-              int.parse(parts[0]),
-            );
-          }
-        }
-      } catch (e) {
-        debugPrint('Date parse error: $e');
-      }
-    }
+  Future<void> _handleRefresh() async {
+    await UserService.refreshCurrentUser(widget.accessToken);
+    if (!mounted) return;
 
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).brightness == Brightness.dark
-                ? const ColorScheme.dark(
-                    primary: Colors.orange,
-                    onPrimary: Colors.white,
-                    surface: Color(0xFF162A5A),
-                    onSurface: Colors.white,
-                  )
-                : const ColorScheme.light(
-                    primary: Colors.orange,
-                    onPrimary: Colors.white,
-                    surface: Colors.white,
-                    onSurface: Colors.black,
-                  ),
-          ),
-          child: child!,
+    final user = UserModel.currentUser.value;
+    setState(() {
+      _fullNameCtrl.text = user.name;
+      _nikCtrl.text = user.nik ?? '';
+      _phoneCtrl.text = user.phoneNumber ?? '';
+      _placeOfBirthCtrl.text = user.placeOfBirth ?? '';
+      _bioCtrl.text = user.bio ?? '';
+
+      final medData = user.medicalData ?? {};
+      _addressCtrl.text = medData['address'] ?? '';
+      _bloodTypeCtrl.text = medData['blood_type'] ?? '';
+      _weightCtrl.text = medData['weight']?.toString() ?? '';
+      _heightCtrl.text = medData['height']?.toString() ?? '';
+      _allergiesCtrl.text = medData['allergies'] ?? '';
+      _medicalHistoryCtrl.text = medData['medical_history'] ?? '';
+
+      if (user.emergencyContacts != null) {
+        _contacts = List<Map<String, dynamic>>.from(
+          user.emergencyContacts!.map((e) => Map<String, dynamic>.from(e)),
         );
-      },
-    );
-    if (picked != null) {
-      setState(() {
-        _birthDateCtrl.text =
-            "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}";
-      });
-    }
+      }
+    });
   }
 
   Future<void> _saveData() async {
@@ -184,7 +166,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       updatedMedData['medical_history'] = _medicalHistoryCtrl.text;
 
       final updatedUser = user.copyWith(
-        birthDate: _birthDateCtrl.text.isEmpty ? null : _birthDateCtrl.text,
+        name: _fullNameCtrl.text,
+        nik: _nikCtrl.text.isEmpty ? null : _nikCtrl.text,
+        phoneNumber: _phoneCtrl.text.isEmpty ? null : _phoneCtrl.text,
+        placeOfBirth: _placeOfBirthCtrl.text.isEmpty
+            ? null
+            : _placeOfBirthCtrl.text,
         bio: _bioCtrl.text,
         medicalData: updatedMedData,
         emergencyContacts: _contacts.isEmpty ? null : _contacts,
@@ -249,344 +236,401 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         iconTheme: IconThemeData(color: primaryTextColor),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. INFORMASI PRIBADI & DOMISILI
-            Text(
-              'INFORMASI PRIBADI'.tr(context),
-              style: TextStyle(
-                color: primaryTextColor,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              color: cardColor,
-              elevation: isDark ? 0 : 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: borderColor),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _birthDateCtrl,
-                      readOnly: true,
-                      onTap: () => _selectDate(context),
-                      decoration: InputDecoration(
-                        labelText: 'Tanggal Lahir (DD-MM-YYYY)'.tr(context),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        suffixIcon: const Icon(Icons.calendar_today, size: 18),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _addressCtrl,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        labelText: 'Domisili Lengkap'.tr(context),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _bioCtrl,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Bio Singkat'.tr(context),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
+      body: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. INFORMASI PRIBADI & DOMISILI
+              Text(
+                'INFORMASI PRIBADI'.tr(context),
+                style: TextStyle(
+                  color: primaryTextColor,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
                 ),
               ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // 2. DATA MEDIS & KEAMANAN
-            Text(
-              'DATA MEDIS & KEAMANAN'.tr(context),
-              style: TextStyle(
-                color: isDark ? Colors.red.shade300 : Colors.red,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              color: isDark
-                  ? Colors.red.withValues(alpha: 0.1)
-                  : Colors.red.shade50,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: isDark
-                      ? Colors.red.withValues(alpha: 0.3)
-                      : Colors.red.shade100,
+              const SizedBox(height: 16),
+              Card(
+                color: cardColor,
+                elevation: isDark ? 0 : 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: borderColor),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    DropdownButtonFormField<String>(
-                      initialValue:
-                          [
-                            'A+',
-                            'A-',
-                            'B+',
-                            'B-',
-                            'AB+',
-                            'AB-',
-                            'O+',
-                            'O-',
-                            'Belum Tahu',
-                          ].contains(_bloodTypeCtrl.text)
-                          ? _bloodTypeCtrl.text
-                          : null,
-                      decoration: InputDecoration(
-                        labelText: 'Golongan Darah'.tr(context),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      items:
-                          [
-                                'A+',
-                                'A-',
-                                'B+',
-                                'B-',
-                                'AB+',
-                                'AB-',
-                                'O+',
-                                'O-',
-                                'Belum Tahu'.tr(context),
-                              ]
-                              .map(
-                                (val) => DropdownMenuItem(
-                                  value: val,
-                                  child: Text(val),
-                                ),
-                              )
-                              .toList(),
-                      onChanged: (val) {
-                        if (val != null) _bloodTypeCtrl.text = val;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _weightCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Berat (kg)'.tr(context),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _fullNameCtrl,
+                        maxLength: 100,
+                        readOnly:
+                            UserModel.currentUser.value.nikVerificationStatus ==
+                            'approved',
+                        decoration: InputDecoration(
+                          labelText: 'Nama Lengkap'.tr(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextField(
-                            controller: _heightCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Tinggi (cm)'.tr(context),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _placeOfBirthCtrl,
+                        maxLength: 100,
+                        readOnly:
+                            UserModel.currentUser.value.nikVerificationStatus ==
+                            'approved',
+                        decoration: InputDecoration(
+                          labelText: 'Tempat Lahir'.tr(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _allergiesCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'Alergi Utama'.tr(context),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _medicalHistoryCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'Riwayat Penyakit (Opsional)'.tr(context),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // 3. KONTAK DARURAT
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'KONTAK DARURAT'.tr(context),
-                  style: TextStyle(
-                    color: primaryTextColor,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _addContact,
-                  icon: const Icon(Icons.add, color: Colors.orange, size: 18),
-                  label: Text(
-                    'Tambah'.tr(context),
-                    style: const TextStyle(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (_contacts.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text(
-                  'Belum ada kontak darurat.'.tr(context),
-                  style: TextStyle(
-                    color: colors.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-              )
-            else
-              ...List.generate(_contacts.length, (index) {
-                return Card(
-                  color: cardColor,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  elevation: isDark ? 0 : 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: borderColor),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${'Kontak Darurat'.tr(context)} #${index + 1}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: primaryTextColor,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => _removeContact(index),
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.red,
-                              ),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          initialValue: _contacts[index]['name'],
-                          onChanged: (val) => _contacts[index]['name'] = val,
+                      if (UserModel.currentUser.value.nikVerificationStatus !=
+                          'approved') ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _nikCtrl,
+                          keyboardType: TextInputType.number,
+                          maxLength: 16,
                           decoration: InputDecoration(
-                            labelText: 'Nama Lengkap'.tr(context),
-                            isDense: true,
+                            labelText: 'NIK KTP (16 Digit)'.tr(context),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                initialValue: _contacts[index]['relation'],
-                                onChanged: (val) =>
-                                    _contacts[index]['relation'] = val,
-                                decoration: InputDecoration(
-                                  labelText: 'Hubungan'.tr(context),
-                                  isDense: true,
-                                ),
-                              ),
+                      ],
+                      if (!UserModel.currentUser.value.isPhoneVerified) ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _phoneCtrl,
+                          keyboardType: TextInputType.phone,
+                          maxLength: 20,
+                          decoration: InputDecoration(
+                            labelText: 'No WhatsApp aktif'.tr(context),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
-                              child: TextFormField(
-                                initialValue: _contacts[index]['phone'],
-                                onChanged: (val) =>
-                                    _contacts[index]['phone'] = val,
-                                keyboardType: TextInputType.phone,
-                                decoration: InputDecoration(
-                                  labelText: 'No Hp'.tr(context),
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
-                    ),
-                  ),
-                );
-              }),
-
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 5,
-                ),
-                onPressed: _isSaving ? null : _saveData,
-                child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        'Simpan Perubahan'.tr(context),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _addressCtrl,
+                        maxLines: 2,
+                        maxLength: 255,
+                        decoration: InputDecoration(
+                          labelText: 'Domisili Lengkap'.tr(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _bioCtrl,
+                        maxLines: 3,
+                        maxLength: 255,
+                        decoration: InputDecoration(
+                          labelText: 'Bio Singkat'.tr(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 48),
-          ],
+
+              const SizedBox(height: 32),
+
+              // 2. DATA MEDIS & KEAMANAN
+              Text(
+                'DATA MEDIS & KEAMANAN'.tr(context),
+                style: TextStyle(
+                  color: isDark ? Colors.red.shade300 : Colors.red,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                color: isDark
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : Colors.red.shade50,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: isDark
+                        ? Colors.red.withValues(alpha: 0.3)
+                        : Colors.red.shade100,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        initialValue:
+                            [
+                              'A+',
+                              'A-',
+                              'B+',
+                              'B-',
+                              'AB+',
+                              'AB-',
+                              'O+',
+                              'O-',
+                              'Belum Tahu',
+                            ].contains(_bloodTypeCtrl.text)
+                            ? _bloodTypeCtrl.text
+                            : null,
+                        decoration: InputDecoration(
+                          labelText: 'Golongan Darah'.tr(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        items:
+                            [
+                                  'A+',
+                                  'A-',
+                                  'B+',
+                                  'B-',
+                                  'AB+',
+                                  'AB-',
+                                  'O+',
+                                  'O-',
+                                  'Belum Tahu'.tr(context),
+                                ]
+                                .map(
+                                  (val) => DropdownMenuItem(
+                                    value: val,
+                                    child: Text(val),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (val) {
+                          if (val != null) _bloodTypeCtrl.text = val;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _weightCtrl,
+                              keyboardType: TextInputType.number,
+                              maxLength: 3,
+                              decoration: InputDecoration(
+                                labelText: 'Berat (kg)'.tr(context),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _heightCtrl,
+                              keyboardType: TextInputType.number,
+                              maxLength: 3,
+                              decoration: InputDecoration(
+                                labelText: 'Tinggi (cm)'.tr(context),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _allergiesCtrl,
+                        maxLength: 255,
+                        decoration: InputDecoration(
+                          labelText: 'Alergi Utama'.tr(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _medicalHistoryCtrl,
+                        maxLength: 255,
+                        decoration: InputDecoration(
+                          labelText: 'Riwayat Penyakit (Opsional)'.tr(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // 3. KONTAK DARURAT
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'KONTAK DARURAT'.tr(context),
+                    style: TextStyle(
+                      color: primaryTextColor,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _addContact,
+                    icon: const Icon(Icons.add, color: Colors.orange, size: 18),
+                    label: Text(
+                      'Tambah'.tr(context),
+                      style: const TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_contacts.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text(
+                    'Belum ada kontak darurat.'.tr(context),
+                    style: TextStyle(
+                      color: colors.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                )
+              else
+                ...List.generate(_contacts.length, (index) {
+                  return Card(
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    elevation: isDark ? 0 : 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: borderColor),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${'Kontak Darurat'.tr(context)} #${index + 1}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryTextColor,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => _removeContact(index),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            initialValue: _contacts[index]['name'],
+                            onChanged: (val) => _contacts[index]['name'] = val,
+                            maxLength: 100,
+                            decoration: InputDecoration(
+                              labelText: 'Nama Lengkap'.tr(context),
+                              isDense: true,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: _contacts[index]['relation'],
+                                  onChanged: (val) =>
+                                      _contacts[index]['relation'] = val,
+                                  maxLength: 50,
+                                  decoration: InputDecoration(
+                                    labelText: 'Hubungan'.tr(context),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: TextFormField(
+                                  initialValue: _contacts[index]['phone'],
+                                  onChanged: (val) =>
+                                      _contacts[index]['phone'] = val,
+                                  keyboardType: TextInputType.phone,
+                                  maxLength: 20,
+                                  decoration: InputDecoration(
+                                    labelText: 'No Hp'.tr(context),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 5,
+                  ),
+                  onPressed: _isSaving ? null : _saveData,
+                  child: _isSaving
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          'Simpan Perubahan'.tr(context),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 48),
+            ],
+          ),
         ),
       ),
     );
