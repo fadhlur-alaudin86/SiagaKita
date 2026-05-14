@@ -47,7 +47,7 @@ func TouchLastActive(db *gorm.DB, rdb *redis.Client) fiber.Handler {
 
 
 // Auth validates JWT from the Authorization header.
-// On success, injects "userID" and "userRole" into c.Locals.
+// On success, injects "userID", "userRole", and "userJTI" into c.Locals.
 func Auth(cfg *config.Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -61,9 +61,11 @@ func Auth(cfg *config.Config) fiber.Handler {
 		}
 		c.Locals("userID", claims.UserID)
 		c.Locals("userRole", claims.Role)
+		c.Locals("userJTI", claims.JTI) // Dibutuhkan oleh SessionGuard
 		return c.Next()
 	}
 }
+
 
 // APIKeyGateway validates a static API key header (SMS fallback endpoint).
 func APIKeyGateway(cfg *config.Config) fiber.Handler {

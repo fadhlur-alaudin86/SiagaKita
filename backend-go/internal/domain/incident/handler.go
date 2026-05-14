@@ -624,10 +624,22 @@ func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
 			Event:   "SOS_STATUS_UPDATE",
 			Payload: map[string]interface{}{"incident_id": incidentID},
 		})
+		h.hub.BroadcastToRole("agency", hub.Message{
+			Event: "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
+		})
+		h.hub.BroadcastToRole("admin", hub.Message{
+			Event: "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
+		})
+		h.hub.BroadcastToRole("superadmin", hub.Message{
+			Event: "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
+		})
 		// Notify reporter bahwa instansi sudah handle
 		h.notifyReporter(incidentID, "AGENCY_HANDLING", map[string]interface{}{
-			"incident_id":      incidentID,
-			"agency_status":    "handling",
+			"incident_id":   incidentID,
+			"agency_status": "handling",
 		})
 	}()
 
@@ -670,12 +682,24 @@ func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
-	go h.broadcastEventToAgencies(hub.Message{
-		Event: "SOS_STATUS_UPDATE",
-		Payload: map[string]interface{}{
-			"incident_id": incidentID,
-		},
-	})
+	go func() {
+		h.broadcastEventToAgencies(hub.Message{
+			Event:   "SOS_STATUS_UPDATE",
+			Payload: map[string]interface{}{"incident_id": incidentID},
+		})
+		h.hub.BroadcastToRole("agency", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "volunteer_complete"},
+		})
+		h.hub.BroadcastToRole("admin", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "volunteer_complete"},
+		})
+		h.hub.BroadcastToRole("superadmin", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "volunteer_complete"},
+		})
+	}()
 
 	return utils.SuccessResponse(c, fiber.Map{"message": "Bukti berhasil diunggah. Menunggu review instansi."})
 }
@@ -697,12 +721,24 @@ func (h *Handler) AgencyReviewVolunteer(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	go h.broadcastEventToAgencies(hub.Message{
-		Event: "SOS_STATUS_UPDATE",
-		Payload: map[string]interface{}{
-			"incident_id": incidentID,
-		},
-	})
+	go func() {
+		h.broadcastEventToAgencies(hub.Message{
+			Event:   "SOS_STATUS_UPDATE",
+			Payload: map[string]interface{}{"incident_id": incidentID},
+		})
+		h.hub.BroadcastToRole("agency", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_review"},
+		})
+		h.hub.BroadcastToRole("admin", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_review"},
+		})
+		h.hub.BroadcastToRole("superadmin", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_review"},
+		})
+	}()
 
 	return utils.SuccessResponse(c, resp)
 }
@@ -715,12 +751,24 @@ func (h *Handler) AgencyResolveSOS(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	go h.broadcastEventToAgencies(hub.Message{
-		Event: "SOS_STATUS_UPDATE",
-		Payload: map[string]interface{}{
-			"incident_id": incidentID,
-		},
-	})
+	go func() {
+		h.broadcastEventToAgencies(hub.Message{
+			Event:   "SOS_STATUS_UPDATE",
+			Payload: map[string]interface{}{"incident_id": incidentID},
+		})
+		h.hub.BroadcastToRole("agency", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "resolved"},
+		})
+		h.hub.BroadcastToRole("admin", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "resolved"},
+		})
+		h.hub.BroadcastToRole("superadmin", hub.Message{
+			Event:   "INCIDENT_UPDATED",
+			Payload: map[string]interface{}{"incident_id": incidentID, "action": "resolved"},
+		})
+	}()
 
 	return utils.SuccessResponse(c, resp)
 }

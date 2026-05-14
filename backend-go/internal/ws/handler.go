@@ -86,8 +86,12 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := claims.UserID
-	h.hub.Register(userID, claims.Role, conn)
-	defer h.hub.Unregister(userID)
+	// ConnID unik per koneksi WS — dibutuhkan untuk Unregister yang tepat
+	// pada Hub multi-conn (console roles bisa punya banyak koneksi aktif).
+	connID := fmt.Sprintf("%s-%s", userID, claims.JTI)
+
+	h.hub.Register(userID, claims.Role, connID, conn)
+	defer h.hub.Unregister(userID, connID)
 
 	// Send welcome message
 	_ = h.hub.SendToUser(userID, hub.Message{
@@ -97,6 +101,7 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 	h.readLoop(userID, conn)
 }
+
 
 // readLoop blocks and reads incoming messages from the client connection.
 func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
@@ -455,3 +460,30 @@ func toMap(v interface{}) map[string]interface{} {
 	}
 	return map[string]interface{}{}
 }
+
+// BroadcastIncidentUpdated mengirim event INCIDENT_UPDATED ke semua koneksi
+// console (agency, admin, superadmin) yang sedang online.
+// Dipanggil setelah setiap aksi yang mengubah status insiden:
+// AcceptSOS, AgencyHandle, AgencyReview, AgencyResolve, VolunteerComplete.
+func (h *Handler) BroadcastIncidentUpdated(incidentID, action string) {
+	msg := hub.Message{
+		Event: "INCIDENT_UPDATED",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+			"action":      action, // e.g. "agency_handle", "resolved", "volunteer_complete"
+		},
+	}
+
+	sentAgency := h.hub.BroadcastToRole("agency", msg)
+	sentAdmin := h.hub.BroadcastToRole("admin", msg)
+	sentSuperadmin := h.hub.BroadcastToRole("superadmin", msg)
+
+	utils.Info().
+		Str("incident_id", incidentID).
+		Str("action", action).
+		Int("sent_agency", sentAgency).
+		Int("sent_admin", sentAdmin).
+		Int("sent_superadmin", sentSuperadmin).
+		Msg("[WS] INCIDENT_UPDATED broadcasted")
+}
+

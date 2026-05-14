@@ -69,6 +69,9 @@ dependencies:
   file_picker: ^11.0.2
   google_fonts: ^8.1.0
 
+  # UUID generator (untuk X-Idempotency-Key header di aksi kritis console)
+  uuid: ^4.5.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,9 +1,20 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 
 import '../constants/api_constants.dart';
 import '../models/models.dart';
 import 'auth_service.dart';
+
+/// Helper untuk generate idempotency key unik per aksi
+String _newIdempotencyKey() => const Uuid().v4();
+
+/// Header standar dengan idempotency key (untuk aksi yang mengubah state)
+Map<String, String> _headersWithIdempotency(String token) => {
+  ...AuthService.headers(token),
+  'X-Idempotency-Key': _newIdempotencyKey(),
+};
+
 
 class IncidentApiService {
   // ─── List semua SOS aktif (instansi view) ─────────────────────────────────
@@ -55,7 +66,7 @@ class IncidentApiService {
   ) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.incidentMarkFalseAlarm(id)),
-      headers: AuthService.headers(token),
+      headers: _headersWithIdempotency(token),
       body: jsonEncode({'reason': reason}),
     );
     return resp.statusCode == 200;
@@ -66,7 +77,7 @@ class IncidentApiService {
   static Future<bool> agencyHandle(String token, String id) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.incidentAgencyHandle(id)),
-      headers: AuthService.headers(token),
+      headers: _headersWithIdempotency(token),
     );
     return resp.statusCode == 200;
   }
@@ -74,7 +85,7 @@ class IncidentApiService {
   static Future<bool> resolve(String token, String id) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.incidentResolve(id)),
-      headers: AuthService.headers(token),
+      headers: _headersWithIdempotency(token),
     );
     return resp.statusCode == 200;
   }
@@ -109,7 +120,7 @@ class IncidentApiService {
     }
     final resp = await http.patch(
       Uri.parse(ApiConstants.reportStatus(id)),
-      headers: AuthService.headers(token),
+      headers: _headersWithIdempotency(token),
       body: jsonEncode(bodyData),
     );
     return resp.statusCode == 200;
@@ -139,7 +150,7 @@ class AdminApiService {
   static Future<bool> approveVolunteer(String token, String id) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.adminVolunteerApprove(id)),
-      headers: AuthService.headers(token),
+      headers: _headersWithIdempotency(token),
     );
     return resp.statusCode == 200;
   }
@@ -151,7 +162,7 @@ class AdminApiService {
   ) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.adminVolunteerReject(id)),
-      headers: AuthService.headers(token),
+      headers: _headersWithIdempotency(token),
       body: jsonEncode({'reason': reason}),
     );
     return resp.statusCode == 200;

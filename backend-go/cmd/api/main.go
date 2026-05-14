@@ -65,7 +65,7 @@ func main() {
 
 	// User domain
 	userRepo := userDomain.NewRepository(db)
-	userSvc := userDomain.NewService(userRepo, cfg, otpSvc)
+	userSvc := userDomain.NewService(userRepo, cfg, otpSvc, rdb, wsHub)
 	userHandler := userDomain.NewHandler(userSvc)
 
 	// Incident domain
@@ -98,8 +98,9 @@ func main() {
 	}))
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-Gateway-Secret",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-Gateway-Secret, X-Idempotency-Key",
 		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+		ExposeHeaders: "X-Idempotency-Cached",
 	}))
 
 	// Health check
@@ -118,6 +119,8 @@ func main() {
 	// ── API v1 Routes ──────────────────────────────────────────────────────────
 	v1 := app.Group("/api/v1")
 	authMw := middleware.Auth(cfg)
+	sessionMw := middleware.SessionGuard(rdb)    // Single-session untuk civilian/volunteer
+	idempotencyMw := middleware.Idempotency(rdb) // Deduplicate aksi console
 
 	// ── Auth (public) ──────────────────────────────────────────────────────────
 	auth := v1.Group("/auth")
@@ -144,7 +147,7 @@ func main() {
 	auth.Post("/verify-otp", otpHandler.VerifyOTP)
 
 	// ── Users (protected - civilian/volunteer only) ────────────────────────────
-	users := v1.Group("/users", authMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db, rdb))
+	users := v1.Group("/users", authMw, sessionMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db, rdb))
 	users.Post("/biodata", userHandler.SaveBiodata)
 	users.Get("/profile", userHandler.GetProfile)
 	users.Put("/profile", userHandler.UpdateProfile)
@@ -162,27 +165,29 @@ func main() {
 
 	// ── Incidents (protected - semua role yang sudah login) ───────────────────
 	incidents := v1.Group("/incidents", authMw)
-	incidents.Get("/active", incidentHandler.GetActive)
-	incidents.Get("/my-history", middleware.VolunteerOnly(), incidentHandler.GetMissionHistory)
-	incidents.Get("/reporter-history", incidentHandler.GetHistory)
+	// Mobile routes: tambah sessionMw
+	incidents.Get("/active", sessionMw, incidentHandler.GetActive)
+	incidents.Get("/my-history", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetMissionHistory)
+	incidents.Get("/reporter-history", sessionMw, incidentHandler.GetHistory)
+	incidents.Get("/nearby", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetNearby)
+	incidents.Post("/trigger", sessionMw, middleware.BanCheck(db), incidentHandler.TriggerSOS)
+	incidents.Patch("/:id/type", sessionMw, incidentHandler.UpdateType)
+	incidents.Post("/:id/broadcast", sessionMw, incidentHandler.Broadcast)
+	incidents.Post("/:id/canceled", sessionMw, incidentHandler.CancelSOS)
+	incidents.Post("/:id/evidence", sessionMw, incidentHandler.UploadEvidence)
+	incidents.Put("/:id/location", sessionMw, incidentHandler.UpdateLocation)
+	incidents.Post("/:id/accept", sessionMw, middleware.VolunteerOnly(), incidentHandler.AcceptSOS)
+	incidents.Post("/:id/volunteer-complete", sessionMw, middleware.VolunteerOnly(), incidentHandler.VolunteerCompleteSOS)
+	incidents.Get("/my-active-response", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetMyActiveResponse)
+	incidents.Put("/:id/response-location", sessionMw, middleware.VolunteerOnly(), incidentHandler.UpdateResponseLocation)
+	// Console routes: tambah idempotencyMw untuk aksi yang mengubah state
 	incidents.Get("/all-active", middleware.ConsoleOnly(), incidentHandler.GetAllActive)
-	incidents.Get("/nearby", middleware.VolunteerOnly(), incidentHandler.GetNearby)
 	incidents.Get("/agency/history", middleware.ConsoleOnly(), incidentHandler.GetAgencyHistory)
-	incidents.Post("/:id/handle", middleware.AgencyOnly(), incidentHandler.AgencyHandleSOS)
-	incidents.Post("/trigger", middleware.BanCheck(db), incidentHandler.TriggerSOS)
-	incidents.Patch("/:id/type", incidentHandler.UpdateType)
-	incidents.Post("/:id/broadcast", incidentHandler.Broadcast)
-	incidents.Post("/:id/canceled", incidentHandler.CancelSOS)
-	incidents.Post("/:id/evidence", incidentHandler.UploadEvidence)
-	incidents.Put("/:id/location", incidentHandler.UpdateLocation)
-	incidents.Post("/:id/accept", middleware.VolunteerOnly(), incidentHandler.AcceptSOS)
-	incidents.Post("/:id/volunteer-complete", middleware.VolunteerOnly(), incidentHandler.VolunteerCompleteSOS)
-	incidents.Post("/:id/agency-handle", middleware.ConsoleOnly(), incidentHandler.AgencyHandleSOS)
-	incidents.Post("/:id/agency-review", middleware.ConsoleOnly(), incidentHandler.AgencyReviewVolunteer)
-	incidents.Post("/:id/agency-resolve", middleware.ConsoleOnly(), incidentHandler.AgencyResolveSOS)
-	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), incidentHandler.MarkFalseAlarm)
-	incidents.Get("/my-active-response", middleware.VolunteerOnly(), incidentHandler.GetMyActiveResponse)
-	incidents.Put("/:id/response-location", middleware.VolunteerOnly(), incidentHandler.UpdateResponseLocation)
+	incidents.Post("/:id/handle", middleware.AgencyOnly(), idempotencyMw, incidentHandler.AgencyHandleSOS)
+	incidents.Post("/:id/agency-handle", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyHandleSOS)
+	incidents.Post("/:id/agency-review", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyReviewVolunteer)
+	incidents.Post("/:id/agency-resolve", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyResolveSOS)
+	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.MarkFalseAlarm)
 	// endpoint lama: incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve) // bisa tetap ada atau diganti, kita pakai agency-resolve sekarang
 
 

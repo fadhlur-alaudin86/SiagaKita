@@ -43,6 +43,7 @@ class _InstansiShellState extends State<InstansiShell> {
   };
 
   StreamSubscription<WsMessage>? _wsSub;
+  Timer? _pollingTimer;
   int _unreadCount = 0;
   final Set<String> _readSosIds = {};
 
@@ -52,13 +53,48 @@ class _InstansiShellState extends State<InstansiShell> {
     _fetchUnread();
     _wsSub = widget.ws.eventStream.listen((msg) {
       if (!mounted) return;
-      if (msg.event == WsEvent.incomingEmergency) {
-        AudioService.playAlarm();
-        _fetchUnread();
-      } else if (msg.event == WsEvent.sosCancelled ||
-          msg.event == WsEvent.rescueAccepted ||
-          msg.event == WsEvent.sosStatusUpdate ||
-          msg.event == WsEvent.connected) {
+
+      switch (msg.event) {
+        case WsEvent.incomingEmergency:
+          AudioService.playAlarm();
+          _fetchUnread();
+
+        // Auto-refresh: ada perubahan status insiden dari perangkat lain
+        case WsEvent.incidentUpdated:
+        case WsEvent.sosCancelled:
+        case WsEvent.rescueAccepted:
+        case WsEvent.sosStatusUpdate:
+        case WsEvent.connected:
+          _fetchUnread();
+
+        // FORCE_LOGOUT: redirect ke halaman login
+        case WsEvent.forceLogout:
+          _pollingTimer?.cancel();
+          _wsSub?.cancel();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Sesi Anda telah berakhir karena login di perangkat lain.'),
+                backgroundColor: Colors.redAccent,
+                duration: Duration(seconds: 4),
+              ),
+            );
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+
+        default:
+          break;
+      }
+    });
+
+    // Polling fallback: refresh setiap 30 detik jika WS sedang offline/reconecting
+    _pollingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      if (!widget.ws.isConnected) {
         _fetchUnread();
       }
     });
@@ -67,6 +103,7 @@ class _InstansiShellState extends State<InstansiShell> {
   @override
   void dispose() {
     _wsSub?.cancel();
+    _pollingTimer?.cancel();
     super.dispose();
   }
 

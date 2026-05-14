@@ -17,7 +17,9 @@ enum WsEvent {
   locationUpdate,
   volunteerLocationUpdate,
   sosStatusUpdate,
-  connected, // New event for reconnection
+  incidentUpdated,  // INCIDENT_UPDATED — trigger auto-refresh di console
+  forceLogout,      // FORCE_LOGOUT — sesi digantikan (tidak relevan untuk console, tapi disiapkan)
+  connected,
   unknown,
 }
 
@@ -30,13 +32,15 @@ class WsMessage {
   factory WsMessage.fromRaw(Map<String, dynamic> json) {
     final eventStr = json['event'] as String? ?? '';
     final event = switch (eventStr) {
-      'INCOMING_EMERGENCY' => WsEvent.incomingEmergency,
-      'SOS_CANCELLED' => WsEvent.sosCancelled,
-      'RESCUE_ACCEPTED' => WsEvent.rescueAccepted,
-      'LOCATION_UPDATE' => WsEvent.locationUpdate,
-      'VOLUNTEER_LOCATION_UPDATE' => WsEvent.volunteerLocationUpdate,
-      'SOS_STATUS_UPDATE' => WsEvent.sosStatusUpdate,
-      _ => WsEvent.unknown,
+      'INCOMING_EMERGENCY'      => WsEvent.incomingEmergency,
+      'SOS_CANCELLED'           => WsEvent.sosCancelled,
+      'RESCUE_ACCEPTED'         => WsEvent.rescueAccepted,
+      'LOCATION_UPDATE'         => WsEvent.locationUpdate,
+      'VOLUNTEER_LOCATION_UPDATE'=> WsEvent.volunteerLocationUpdate,
+      'SOS_STATUS_UPDATE'       => WsEvent.sosStatusUpdate,
+      'INCIDENT_UPDATED'        => WsEvent.incidentUpdated,
+      'FORCE_LOGOUT'            => WsEvent.forceLogout,
+      _                         => WsEvent.unknown,
     };
     return WsMessage(
       event: event,
@@ -65,10 +69,14 @@ class WsService extends ChangeNotifier {
   List<IncidentModel> get liveIncidents => List.unmodifiable(_liveIncidents);
   Stream<WsMessage> get eventStream => _controller.stream;
 
+  /// True jika sesi ini dihentikan paksa karena FORCE_LOGOUT.
+  bool get isForceLoggedOut => _forceLoggedOut;
+  bool _forceLoggedOut = false;
+
   // ─── Connect ────────────────────────────────────────────────────────────────
 
   Future<void> connect(String token) async {
-    if (_connected || _isReconnecting) return;
+    if (_connected || _isReconnecting || _forceLoggedOut) return;
     _token = token;
 
     final uri = Uri.parse('${ApiConstants.wsUrl}?token=$token');
@@ -112,6 +120,23 @@ class WsService extends ChangeNotifier {
           _liveIncidents.removeWhere((e) => e.id == id);
           notifyListeners();
 
+        // INCIDENT_UPDATED: notifikasi ke subscriber agar halaman auto-refresh
+        case WsEvent.incidentUpdated:
+          notifyListeners();
+
+        // FORCE_LOGOUT: hentikan reconnect, biarkan app handle redirect
+        case WsEvent.forceLogout:
+          debugPrint('[WS] FORCE_LOGOUT received');
+          _forceLoggedOut = true;
+          _heartbeatTimer?.cancel();
+          _sub?.cancel();
+          _channel?.sink.close();
+          _connected = false;
+          _isReconnecting = false;
+          _controller.add(msg);
+          notifyListeners();
+          return;
+
         case WsEvent.rescueAccepted:
         case WsEvent.locationUpdate:
         case WsEvent.volunteerLocationUpdate:
@@ -142,7 +167,7 @@ class WsService extends ChangeNotifier {
   }
 
   void _reconnect() {
-    if (_isReconnecting) return;
+    if (_isReconnecting || _forceLoggedOut) return;
     _isReconnecting = true;
     _connected = false;
     _heartbeatTimer?.cancel();
@@ -152,7 +177,7 @@ class WsService extends ChangeNotifier {
     _channel = null;
     Future.delayed(const Duration(seconds: 5), () {
       _isReconnecting = false;
-      if (_token != null) connect(_token!);
+      if (_token != null && !_forceLoggedOut) connect(_token!);
     });
   }
 

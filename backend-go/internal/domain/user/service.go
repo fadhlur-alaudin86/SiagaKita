@@ -7,13 +7,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/domain/otp"
+	"siagakita-backend/internal/hub"
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -23,12 +26,15 @@ type Service struct {
 	repo   *Repository
 	cfg    *config.Config
 	otpSvc otp.Service
+	rdb    *redis.Client
+	hub    *hub.Hub
 }
 
 // NewService creates a new user Service.
-func NewService(repo *Repository, cfg *config.Config, otpSvc otp.Service) *Service {
-	return &Service{repo: repo, cfg: cfg, otpSvc: otpSvc}
+func NewService(repo *Repository, cfg *config.Config, otpSvc otp.Service, rdb *redis.Client, h *hub.Hub) *Service {
+	return &Service{repo: repo, cfg: cfg, otpSvc: otpSvc, rdb: rdb, hub: h}
 }
+
 
 // ─── Register (civilian/volunteer via mobile) ─────────────────────────────────
 
@@ -343,13 +349,37 @@ func (s *Service) buildAuthResponse(user *User, profile *UserProfile) (*AuthResp
 }
 
 func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*AuthResponse, error) {
-	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTAccessTTL)
+	accessToken, jti, err := utils.GenerateAccessToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTAccessTTL)
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTRefreshTTL)
+	refreshToken, _, err := utils.GenerateRefreshToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTRefreshTTL)
 	if err != nil {
 		return nil, err
+	}
+
+	// ── Single-session enforcement untuk civilian & volunteer ──────────────────
+	// Hanya mobile roles yang dibatasi 1 sesi. Console roles (agency/admin/superadmin)
+	// boleh login di lebih dari 1 perangkat.
+	if (user.Role == "civilian" || user.Role == "volunteer") && s.rdb != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		sessionKey := "session:" + user.ID
+
+		// Kirim FORCE_LOGOUT ke koneksi WS lama (jika masih online)
+		if s.hub != nil && s.hub.IsOnline(user.ID) {
+			_ = s.hub.SendToUser(user.ID, hub.Message{
+				Event: "FORCE_LOGOUT",
+				Payload: map[string]string{
+					"reason":  "session_replaced",
+					"message": "Akun ini telah login di perangkat lain. Anda telah dikeluarkan.",
+				},
+			})
+		}
+
+		// Simpan JTI baru ke Redis (menggantikan session lama)
+		_ = s.rdb.Set(ctx, sessionKey, jti, s.cfg.JWTAccessTTL)
 	}
 
 	return &AuthResponse{
@@ -363,6 +393,7 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 		},
 	}, nil
 }
+
 
 // ─── Forgot Password & Resend OTP ─────────────────────────────────────────────
 

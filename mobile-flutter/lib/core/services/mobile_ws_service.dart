@@ -6,12 +6,13 @@ import '../constants/api_config.dart';
 
 /// Event type dari WebSocket untuk user masyarakat (reporter SOS).
 enum MobileWsEvent {
-  agencyHandling, // AGENCY_HANDLING
-  volunteerHandling, // VOLUNTEER_HANDLING
+  agencyHandling,         // AGENCY_HANDLING
+  volunteerHandling,      // VOLUNTEER_HANDLING
   volunteerLocationUpdate, // VOLUNTEER_LOCATION_UPDATE
   reporterLocationUpdate, // REPORTER_LOCATION_UPDATE
-  sosCancelled, // SOS_CANCELLED
-  sosResolved, // SOS_RESOLVED
+  sosCancelled,           // SOS_CANCELLED
+  sosResolved,            // SOS_RESOLVED
+  forceLogout,            // FORCE_LOGOUT — sesi digantikan perangkat lain
   connected,
   unknown,
 }
@@ -25,13 +26,14 @@ class MobileWsMessage {
   factory MobileWsMessage.fromRaw(Map<String, dynamic> json) {
     final eventStr = json['event'] as String? ?? '';
     final event = switch (eventStr) {
-      'AGENCY_HANDLING' => MobileWsEvent.agencyHandling,
-      'VOLUNTEER_HANDLING' => MobileWsEvent.volunteerHandling,
-      'VOLUNTEER_LOCATION_UPDATE' => MobileWsEvent.volunteerLocationUpdate,
+      'AGENCY_HANDLING'          => MobileWsEvent.agencyHandling,
+      'VOLUNTEER_HANDLING'       => MobileWsEvent.volunteerHandling,
+      'VOLUNTEER_LOCATION_UPDATE'=> MobileWsEvent.volunteerLocationUpdate,
       'REPORTER_LOCATION_UPDATE' => MobileWsEvent.reporterLocationUpdate,
-      'SOS_CANCELLED' => MobileWsEvent.sosCancelled,
-      'SOS_RESOLVED' => MobileWsEvent.sosResolved,
-      _ => MobileWsEvent.unknown,
+      'SOS_CANCELLED'            => MobileWsEvent.sosCancelled,
+      'SOS_RESOLVED'             => MobileWsEvent.sosResolved,
+      'FORCE_LOGOUT'             => MobileWsEvent.forceLogout,
+      _                          => MobileWsEvent.unknown,
     };
     return MobileWsMessage(
       event: event,
@@ -53,14 +55,19 @@ class MobileWsService extends ChangeNotifier {
   final _controller = StreamController<MobileWsMessage>.broadcast();
   bool _connected = false;
   bool _disposed = false;
+  /// Jika true, sesi ini sudah dihentikan paksa. JANGAN reconnect.
+  bool _forceLoggedOut = false;
   Timer? _reconnectTimer;
 
   Stream<MobileWsMessage> get eventStream => _controller.stream;
   bool get isConnected => _connected;
 
+  /// True jika sesi ini dihentikan paksa karena login di perangkat lain.
+  bool get isForceLoggedOut => _forceLoggedOut;
+
   /// Mulai koneksi WebSocket.
   void connect() {
-    if (_disposed) return;
+    if (_disposed || _forceLoggedOut) return;
     _doConnect();
   }
 
@@ -75,7 +82,9 @@ class MobileWsService extends ChangeNotifier {
       );
       _connected = true;
       debugPrint('[MobileWS] Connected');
-      _controller.add(const MobileWsMessage(event: MobileWsEvent.connected, payload: {}));
+      _controller.add(
+        const MobileWsMessage(event: MobileWsEvent.connected, payload: {}),
+      );
       notifyListeners();
     } catch (e) {
       debugPrint('[MobileWS] Connect error: $e');
@@ -87,6 +96,20 @@ class MobileWsService extends ChangeNotifier {
     try {
       final json = jsonDecode(raw as String) as Map<String, dynamic>;
       final msg = MobileWsMessage.fromRaw(json);
+
+      // ── FORCE_LOGOUT: hentikan reconnect, emit event, biarkan screen handle ─
+      if (msg.event == MobileWsEvent.forceLogout) {
+        debugPrint('[MobileWS] FORCE_LOGOUT received — stopping reconnect');
+        _forceLoggedOut = true;
+        _reconnectTimer?.cancel();
+        _connected = false;
+        _sub?.cancel();
+        _channel?.sink.close();
+        _controller.add(msg); // Listener di screen akan handle logout UI
+        notifyListeners();
+        return;
+      }
+
       _controller.add(msg);
     } catch (e) {
       debugPrint('[MobileWS] Parse error: $e');
@@ -108,25 +131,21 @@ class MobileWsService extends ChangeNotifier {
   }
 
   void _scheduleReconnect() {
-    if (_disposed) return;
+    // Jangan reconnect jika sesi sudah di-force logout atau di-dispose
+    if (_disposed || _forceLoggedOut) return;
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(const Duration(seconds: 5), () {
-      if (!_disposed) _doConnect();
+      if (!_disposed && !_forceLoggedOut) _doConnect();
     });
   }
 
   /// Mengirim koordinat lokasi via WebSocket (real-time).
   void sendLocation(double lat, double lng) {
     if (!_connected || _channel == null) return;
-
-    final msg = {
+    _channel!.sink.add(jsonEncode({
       'event': 'UPDATE_LOCATION',
-      'payload': {
-        'latitude': lat,
-        'longitude': lng,
-      },
-    };
-    _channel!.sink.add(jsonEncode(msg));
+      'payload': {'latitude': lat, 'longitude': lng},
+    }));
   }
 
   void disconnect() {

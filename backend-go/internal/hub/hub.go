@@ -14,60 +14,92 @@ type Message struct {
 	Payload interface{} `json:"payload"`
 }
 
-type Client struct {
-	Conn *websocket.Conn
-	Role string
+// consoleRoles adalah role yang boleh punya lebih dari 1 koneksi WS aktif.
+var consoleRoles = map[string]bool{
+	"agency":     true,
+	"admin":      true,
+	"superadmin": true,
 }
 
-// Hub maintains the map of active WebSocket connections keyed by userID.
+type Client struct {
+	Conn   *websocket.Conn
+	Role   string
+	ConnID string // UUID unik per koneksi (untuk Unregister tepat sasaran)
+}
+
+// Hub maintains the map of active WebSocket connections.
+//
+//   - Mobile roles (civilian, volunteer): 1 koneksi per userID (lama di-replace)
+//   - Console roles (agency, admin, superadmin): multiple koneksi per userID
+//
 // All public methods are safe for concurrent use.
 type Hub struct {
 	mu      sync.RWMutex
-	clients map[string]*Client
+	clients map[string][]*Client // userID → slice of Clients
 }
 
 // New creates a new Hub instance.
 func New() *Hub {
 	return &Hub{
-		clients: make(map[string]*Client),
+		clients: make(map[string][]*Client),
 	}
 }
 
-// Register adds or replaces a connection for the given userID and role.
-func (h *Hub) Register(userID, role string, conn *websocket.Conn) {
+// Register adds a connection for the given userID and role.
+// For mobile roles: replaces any existing connection (single-session).
+// For console roles: appends to the existing list (multi-session).
+func (h *Hub) Register(userID, role, connID string, conn *websocket.Conn) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	// Close existing connection if already present
-	if existing, ok := h.clients[userID]; ok {
-		_ = existing.Conn.Close()
+	newClient := &Client{Conn: conn, Role: role, ConnID: connID}
+
+	if consoleRoles[role] {
+		// Console: tambah ke slice (multi-device)
+		h.clients[userID] = append(h.clients[userID], newClient)
+	} else {
+		// Mobile: tutup koneksi lama, replace dengan yang baru
+		for _, existing := range h.clients[userID] {
+			_ = existing.Conn.Close()
+		}
+		h.clients[userID] = []*Client{newClient}
 	}
-	h.clients[userID] = &Client{Conn: conn, Role: role}
-	utils.Info().Str("user_id", userID).Str("role", role).Int("total_clients", len(h.clients)).Msg("[Hub] User connected")
+
+	utils.Info().
+		Str("user_id", userID).
+		Str("role", role).
+		Str("conn_id", connID).
+		Int("total_clients", len(h.clients)).
+		Msg("[Hub] User connected")
 }
 
-// Unregister closes and removes the connection for the given userID.
-func (h *Hub) Unregister(userID string) {
+// Unregister removes the specific connection (by connID) for the given userID.
+func (h *Hub) Unregister(userID, connID string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if client, ok := h.clients[userID]; ok {
-		_ = client.Conn.Close()
+	existing := h.clients[userID]
+	updated := existing[:0]
+	for _, c := range existing {
+		if c.ConnID == connID {
+			_ = c.Conn.Close()
+		} else {
+			updated = append(updated, c)
+		}
+	}
+
+	if len(updated) == 0 {
 		delete(h.clients, userID)
-		utils.Info().Str("user_id", userID).Int("total_clients", len(h.clients)).Msg("[Hub] User disconnected")
+		utils.Info().Str("user_id", userID).Str("conn_id", connID).Int("total_clients", len(h.clients)).Msg("[Hub] User disconnected (all conns gone)")
+	} else {
+		h.clients[userID] = updated
+		utils.Info().Str("user_id", userID).Str("conn_id", connID).Int("remaining_conns", len(updated)).Msg("[Hub] User connection removed (other conns remain)")
 	}
 }
 
-// SendToUser sends a Message to a specific user. Returns nil if user is offline.
+// SendToUser sends a Message to ALL connections of a specific user.
+// Returns nil if user is offline. Silently skips failed sends.
 func (h *Hub) SendToUser(userID string, msg Message) error {
-	h.mu.RLock()
-	client, ok := h.clients[userID]
-	h.mu.RUnlock()
-
-	if !ok {
-		return nil // user offline — silently skip
-	}
-
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -75,15 +107,24 @@ func (h *Hub) SendToUser(userID string, msg Message) error {
 
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	return client.Conn.WriteMessage(websocket.TextMessage, data)
+
+	clients, ok := h.clients[userID]
+	if !ok || len(clients) == 0 {
+		return nil // user offline
+	}
+
+	for _, c := range clients {
+		_ = c.Conn.WriteMessage(websocket.TextMessage, data)
+	}
+	return nil
 }
 
-// IsOnline reports whether the given userID has an active connection.
+// IsOnline reports whether the given userID has at least one active connection.
 func (h *Hub) IsOnline(userID string) bool {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	_, ok := h.clients[userID]
-	return ok
+	conns, ok := h.clients[userID]
+	return ok && len(conns) > 0
 }
 
 // OnlineUsers returns a snapshot of all currently connected user IDs.
@@ -92,13 +133,15 @@ func (h *Hub) OnlineUsers() []string {
 	defer h.mu.RUnlock()
 
 	ids := make([]string, 0, len(h.clients))
-	for id := range h.clients {
-		ids = append(ids, id)
+	for id, conns := range h.clients {
+		if len(conns) > 0 {
+			ids = append(ids, id)
+		}
 	}
 	return ids
 }
 
-// BroadcastToRole sends a Message to all connected clients that have the specified role.
+// BroadcastToRole sends a Message to all connected clients with the specified role.
 // Returns the number of successful sends.
 func (h *Hub) BroadcastToRole(role string, msg Message) int {
 	data, err := json.Marshal(msg)
@@ -108,9 +151,11 @@ func (h *Hub) BroadcastToRole(role string, msg Message) int {
 
 	h.mu.RLock()
 	var targets []*websocket.Conn
-	for _, client := range h.clients {
-		if client.Role == role {
-			targets = append(targets, client.Conn)
+	for _, conns := range h.clients {
+		for _, c := range conns {
+			if c.Role == role {
+				targets = append(targets, c.Conn)
+			}
 		}
 	}
 	h.mu.RUnlock()
