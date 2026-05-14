@@ -138,7 +138,7 @@ func (s *Service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 
 	// Tolak login jika email belum diverifikasi (mencegah ghost account login)
 	if profile != nil && !profile.IsEmailVerified {
-		return nil, errors.New("email belum diverifikasi, silakan daftar ulang")
+		return nil, errors.New("email atau password salah")
 	}
 
 	return s.buildAuthResponse(user, profile)

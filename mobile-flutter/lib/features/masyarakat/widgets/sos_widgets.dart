@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/localization/app_localization.dart';
 
 class SOSButton extends StatelessWidget {
   final String phase; // 'idle' | 'gracePeriod' | 'broadcasting'
@@ -102,7 +103,7 @@ class SOSButton extends StatelessWidget {
                     ),
                     SizedBox(height: 8.h(context)),
                     Text(
-                      'SOS AKTIF',
+                      'SOS AKTIF'.tr(context),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -110,7 +111,7 @@ class SOSButton extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Mencari Bantuan...',
+                      'Mencari Bantuan...'.tr(context),
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12.sp(context),

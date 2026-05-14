@@ -352,13 +352,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ─── Dialog Pembatasan Relawan ──────────────────────────────────────────
   void _showRestrictedVolunteerDialog(UserModel user) {
-    final List<String> missing = [];
-    if (user.nikVerificationStatus != 'approved') {
-      missing.add('Verifikasi NIK (KYC)'.tr(context));
-    }
-    if (!user.isPhoneVerified) {
-      missing.add('Verifikasi Nomor WhatsApp'.tr(context));
-    }
+    final List<Map<String, dynamic>> requirements = [
+      {
+        'title': 'Verifikasi NIK (KYC)'.tr(context),
+        'isVerified': user.nikVerificationStatus == 'approved',
+      },
+      {
+        'title': 'Verifikasi Nomor WhatsApp'.tr(context),
+        'isVerified': user.isPhoneVerified,
+      },
+    ];
 
     showDialog(
       context: context,
@@ -368,9 +371,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const Icon(Icons.lock_outline, color: Colors.orange),
             const SizedBox(width: 8),
-            Text(
-              'Persyaratan Belum Lengkap'.tr(context),
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            Expanded(
+              child: Text(
+                'Persyaratan Belum Lengkap'.tr(context),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.visible,
+              ),
             ),
           ],
         ),
@@ -384,59 +394,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: const TextStyle(height: 1.5),
             ),
             const SizedBox(height: 16),
-            ...missing.map(
-              (item) => Padding(
+            ...requirements.map(
+              (req) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_outline,
-                        size: 18, color: Colors.red),
+                    Icon(
+                      req['isVerified'] ? Icons.check_circle : Icons.cancel,
+                      size: 20,
+                      color: req['isVerified'] ? Colors.green : Colors.red,
+                    ),
                     const SizedBox(width: 8),
-                    Text(item,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Expanded(
+                      child: Text(
+                        req['title'] as String,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Nanti Saja'.tr(context),
-              style: const TextStyle(color: Colors.grey),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              if (user.nikVerificationStatus != 'approved') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => KycScreen(accessToken: widget.accessToken),
-                  ),
-                );
-              } else if (!user.isPhoneVerified) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => WaVerificationScreen(
-                      accessToken: widget.accessToken,
-                      initialPhoneNumber: user.phoneNumber,
-                    ),
-                  ),
-                );
-              }
-            },
-            child: Text('Lengkapi Sekarang'.tr(context)),
-          ),
-        ],
       ),
     );
   }
@@ -559,12 +539,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (user.name.isNotEmpty
-                                      ? user.name
-                                      : 'Pengguna'.tr(context)) +
-                                  (user.age != null
-                                      ? ' (${user.age} ${'Tahun'.tr(context)})'
-                                      : ''),
+                              user.name.isNotEmpty
+                                  ? user.name
+                                  : 'Pengguna'.tr(context),
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -814,7 +791,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ListTile(
                           leading: Icon(Icons.cake, color: primaryTextColor),
                           title: Text(
-                            'Tempat, Tanggal Lahir / Umur'.tr(context),
+                            'Tempat, Tanggal Lahir (Umur)'.tr(context),
                             style: TextStyle(fontSize: 12, color: hintColor),
                           ),
                           subtitle: Text(
@@ -1263,13 +1240,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       user.volunteerStatus != 'pending') ...[
                     Builder(
                       builder: (context) {
-                        final bool isVerified = user.isPhoneVerified &&
+                        final bool isVerified =
+                            user.isPhoneVerified &&
                             user.nikVerificationStatus == 'approved';
 
                         return ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isVerified ? Colors.orange : Colors.grey,
+                            backgroundColor: isVerified
+                                ? Colors.orange
+                                : Colors.grey,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             elevation: isVerified ? 4 : 0,

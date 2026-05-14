@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/location_service.dart';
+import '../../core/services/auth_service.dart';
+import '../../core/models/user_model.dart';
+import '../auth/reset_password_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 
@@ -410,8 +413,42 @@ class _SettingsScreenState extends State<SettingsScreen>
                     ),
                   ),
                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  onTap: () =>
-                      _showComingSoonDialog('Ubah Kata Sandi'.tr(context)),
+                  onTap: () async {
+                    final email = UserModel.currentUser.value.email;
+                    if (email.isEmpty) return;
+
+                    final navigator = Navigator.of(context);
+                    final messenger = ScaffoldMessenger.of(context);
+
+                    // Tampilkan loading dialog
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (ctx) =>
+                          const Center(child: CircularProgressIndicator()),
+                    );
+
+                    try {
+                      await AuthService.forgotPassword(email);
+                      if (!mounted) return;
+                      navigator.pop(); // Tutup loading
+
+                      navigator.push(
+                        MaterialPageRoute(
+                          builder: (_) => ResetPasswordScreen(email: email),
+                        ),
+                      );
+                    } catch (e) {
+                      if (!mounted) return;
+                      navigator.pop(); // Tutup loading
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(e.toString()),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
                 ),
                 Divider(
                   height: 1,

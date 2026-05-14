@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
@@ -33,9 +34,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _isResendCooldown = false;
   int _cooldownSeconds = 0;
+  Timer? _cooldownTimer;
 
   @override
   void dispose() {
+    _cooldownTimer?.cancel();
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -100,10 +103,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return 'Kata sandi tidak boleh kosong'.tr(context);
     }
     if (v.length < 8) return 'Minimal 8 karakter'.tr(context);
-    if (!RegExp(r'[A-Z]').hasMatch(v)) return 'Harus mengandung huruf besar';
-    if (!RegExp(r'[0-9]').hasMatch(v)) return 'Harus mengandung angka';
+    if (!RegExp(r'[A-Z]').hasMatch(v)) {
+      return 'Harus mengandung huruf besar'.tr(context);
+    }
+    if (!RegExp(r'[0-9]').hasMatch(v)) {
+      return 'Harus mengandung angka'.tr(context);
+    }
     if (!RegExp(r'[!@#\$&*~%^()_\-+=\[\]{};:"\\|,.<>/?]').hasMatch(v)) {
-      return 'Harus mengandung simbol';
+      return 'Harus mengandung simbol'.tr(context);
     }
     return null;
   }
@@ -123,6 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   /// Step 0 → buat akun dan kirim OTP ke email
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isLoading = true);
     try {
       await AuthService.register(
@@ -141,20 +149,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError(e.message);
+      _showError(messenger, e.message);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError('Gagal menghubungi server. Periksa koneksi.');
+      _showError(messenger, 'Gagal terhubung ke server. Periksa koneksi.');
     }
   }
 
   /// Step 1 → verifikasi OTP email → JWT → biodata screen
   Future<void> _verifyOTP() async {
+    final messenger = ScaffoldMessenger.of(context);
     if (_otpController.text.trim().length < 6) {
-      _showError('Masukkan kode OTP 6 digit');
+      _showError(messenger, 'Masukkan kode OTP 6 digit'.tr(context));
       return;
     }
+    final navigator = Navigator.of(context);
     setState(() => _isLoading = true);
     try {
       final result = await AuthService.verifyRegisterOTP(
@@ -164,10 +174,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       // simpan token ke secure storage
-      debugPrint('[Auth] Register berhasil: ${result.user.email}');
+      debugPrint('${'Registrasi berhasil'.tr(context)}: ${result.user.email}');
 
       // Minta izin GPS setelah registrasi berhasil (poin 4)
-      if (!mounted) return;
       await LocationService.requestPermission(context);
       if (!mounted) return;
 
@@ -181,7 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             : UserRole.masyarakat,
       );
 
-      Navigator.of(context).pushReplacement(
+      navigator.pushReplacement(
         MaterialPageRoute(
           builder: (_) => BiodataScreen(
             accessToken: result.accessToken,
@@ -192,34 +201,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError(e.message);
+      _showError(messenger, e.message);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError('Gagal menghubungi server. Periksa koneksi.');
+      _showError(
+        messenger,
+        'Gagal terhubung ke server. Periksa koneksi.'.tr(context),
+      );
     }
   }
 
   void _startCooldown() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
-      setState(() => _cooldownSeconds--);
-      if (_cooldownSeconds <= 0) {
-        setState(() => _isResendCooldown = false);
-        return false;
+    setState(() {
+      _isResendCooldown = true;
+      _cooldownSeconds = 60;
+    });
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
       }
-      return true;
+      setState(() {
+        if (_cooldownSeconds > 0) {
+          _cooldownSeconds--;
+        } else {
+          _isResendCooldown = false;
+          timer.cancel();
+        }
+      });
     });
   }
 
   Future<void> _resendOTP() async {
     if (_isResendCooldown) return;
-    await _submitForm();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _isLoading = true);
+    try {
+      await AuthService.resendOTP(
+        email: _emailController.text.trim(),
+        context: 'register',
+      );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _startCooldown();
+      messenger.showSnackBar(
+        SnackBar(content: Text('Kode OTP baru telah dikirim'.tr(context))),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError(messenger, e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError(
+        messenger,
+        'Gagal mengirim ulang OTP. Periksa koneksi.'.tr(context),
+      );
+    }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+  void _showError(ScaffoldMessengerState messenger, String message) {
+    messenger.showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red.shade700),
     );
   }
@@ -480,7 +525,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Kami telah mengirimkan kode OTP ke:\n${_emailController.text.trim()}\nKode berlaku 3 menit.',
+          '${'Kami telah mengirimkan kode OTP ke'.tr(context)}:\n${_emailController.text.trim()}\n${'Kode berlaku 3 menit.'.tr(context)}',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: colors.onSurface.withValues(alpha: 0.6),
@@ -531,7 +576,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Text(
             _isResendCooldown
                 ? '${'Kirim ulang dalam'.tr(context)} ($_cooldownSeconds)'
-                : 'Kirim ulang kode OTP',
+                : 'Kirim ulang kode OTP'.tr(context),
             style: TextStyle(
               color: _isResendCooldown
                   ? colors.onSurface.withValues(alpha: 0.4)

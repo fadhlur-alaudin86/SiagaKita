@@ -64,6 +64,8 @@ class AppLocalization {
     'Password berhasil diubah. Silakan login kembali.':
         'Password changed successfully. Please log in again.',
     'Kode OTP baru telah dikirim': 'New OTP code has been sent',
+    'Gagal mengirim ulang OTP. Periksa koneksi.':
+        'Failed to resend OTP. Please check your connection.',
     'Simpan Password Baru': 'Save New Password',
     'Belum menerima kode?': 'Didn\'t receive a code?',
     'Kirim ulang dalam': 'Resend in',
@@ -83,6 +85,7 @@ class AppLocalization {
     'Login sebagai': 'Login as',
     'Dasbor sedang dalam pengembangan':
         'Dashboard is currently under development',
+    'Tempat, Tanggal Lahir (Umur)': 'Place, Date of Birth (Age)',
     'Beranda': 'Home',
     'Panduan': 'Guide',
     'Operasi': 'Operations',
@@ -107,8 +110,17 @@ class AppLocalization {
     'Lanjut Isi Biodata': 'Continue to Biodata',
     'Lanjut': 'Continue',
     'Sudah punya akun?': 'Already have an account?',
+    'Verifikasi Email': 'Verify Email',
+    'Kirim Kode OTP': 'Send OTP Code',
+    'Harus mengandung huruf besar': 'Must contain uppercase letter',
+    'Harus mengandung angka': 'Must contain number',
+    'Harus mengandung simbol': 'Must contain symbol',
+    'Kami telah mengirimkan kode OTP ke': 'We have sent the OTP code to',
+    'Kode berlaku 3 menit.': 'Code valid for 3 minutes.',
+    'Verifikasi & Masuk': 'Verify & Login',
     'Masuk sekarang': 'Log in now',
     'Verifikasi Nomor': 'Verify Number',
+    'Verifikasi Nomor WhatsApp': 'Verify Number WhatsApp',
     'nomor telepon Anda': 'your phone number',
     'Kode OTP': 'OTP Code',
     'Kirim ulang kode OTP': 'Resend OTP code',
@@ -240,9 +252,6 @@ class AppLocalization {
     'Relawan': 'Volunteer',
     'Titik Kumpul': 'Assembly Point',
     'Klinik': 'Clinic',
-    'SOS AKTIF — Lokasi diperbarui tiap 10 detik':
-        'SOS ACTIVE — Location updated every 10 seconds',
-    'SOS AKTIF — Ketuk 3× untuk batalkan': 'SOS ACTIVE — Tap 3× to cancel',
     'KETUK 3× BATALKAN': 'TAP 3× CANCEL',
     'Riwayat Laporan': 'Report History',
     'LOKASI ANDA': 'YOUR LOCATION',
@@ -383,8 +392,8 @@ class AppLocalization {
     'Gagal membatalkan SOS. Coba lagi.': 'Failed to cancel SOS. Try again.',
     'Akses Ditolak': 'Access Denied',
     'Persyaratan Belum Lengkap': 'Prerequisites Incomplete',
-    'Untuk mendaftar sebagai relawan, lengkapi data profil berikut:\n\n':
-        'To register as a volunteer, complete the following profile data:\n\n',
+    'Untuk mendaftar sebagai relawan, Anda wajib melengkapi verifikasi berikut:':
+        'To register as a volunteer, you must complete the following verifications:',
     'Verifikasi NIK (KYC)': 'NIK Verification (KYC)',
     'Tanggal Lahir': 'Date of Birth',
     'Pilih minimal satu spesialisasi': 'Select at least one specialization',
@@ -445,6 +454,9 @@ class AppLocalization {
     'Masukkan email akun Anda. Kami akan mengirimkan kode OTP untuk mengatur ulang kata sandi.':
         'Enter your account email. We will send an OTP code to reset your password.',
     'Kata sandi tidak cocok': 'Password does not match',
+    'Gagal terhubung ke server. Periksa koneksi.':
+        'Failed to connect to server. Check connection.',
+    'Registrasi berhasil': 'Registration successful',
     'Ulangi Kata Sandi': 'Repeat Password',
     'Masukkan 16 digit NIK KTP': 'Enter 16-digit ID number',
     'NIK KTP (16 Digit)': 'ID Number (16 Digits)',
@@ -611,6 +623,7 @@ class AppLocalization {
     'Panggilan darurat\nbebas pulsa': 'Toll-free\nemergency call',
     'Kirim bukti & titik\\nlokasi': 'Send proof &\\nlocation',
     'SOS AKTIF': 'SOS ACTIVE',
+    'Mencari Bantuan...': 'Searching for Help...',
     'Lokasi diperbarui tiap 10 detik': 'Location updated every 10s',
     'Terkirim ✓': 'Sent ✓',
     'Gagal menelpon 112:': 'Failed to call 112:',

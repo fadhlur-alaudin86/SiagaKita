@@ -109,11 +109,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text(
-                          'Kirim Kode OTP',
+                      : Text(
+                          'Kirim Kode OTP'.tr(context),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                 ),

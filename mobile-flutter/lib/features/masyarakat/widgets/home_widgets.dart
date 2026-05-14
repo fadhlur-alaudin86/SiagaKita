@@ -86,7 +86,7 @@ class HomeHeader extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     isSOSActive
-                        ? 'SOS AKTIF - Ketuk 3× untuk batalkan'.tr(context)
+                        ? 'Ketuk 3× untuk batalkan'.tr(context)
                         : 'Ketuk 3× untuk mengirim SOS'.tr(context),
                     style: TextStyle(
                       color: isSOSActive

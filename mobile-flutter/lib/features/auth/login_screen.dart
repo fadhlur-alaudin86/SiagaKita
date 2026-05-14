@@ -255,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextButton(
                       onPressed: _goToRegister,
                       child: Text(
-                        'Daftar di sini',
+                        'Daftar di sini'.tr(context),
                         style: TextStyle(
                           color: primaryColor,
                           fontWeight: FontWeight.bold,

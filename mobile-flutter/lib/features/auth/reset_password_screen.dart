@@ -55,6 +55,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   Future<void> _resendOTP() async {
     if (_resendCountdown > 0) return;
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isResending = true);
     try {
       await AuthService.resendOTP(
@@ -62,13 +63,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         context: 'forgot_password',
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('Kode OTP baru telah dikirim'.tr(context))),
       );
       _startCountdown();
     } on AuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text(e.message), backgroundColor: Colors.red),
       );
     } finally {
@@ -78,6 +79,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     setState(() => _isLoading = true);
 
     try {
@@ -87,7 +90,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         newPassword: _passwordCtrl.text,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             'Password berhasil diubah. Silakan login kembali.'.tr(context),
@@ -95,19 +98,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pushAndRemoveUntil(
-        context,
+      navigator.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,
       );
     } on AuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text(e.message), backgroundColor: Colors.red),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Terjadi kesalahan, coba lagi nanti'.tr(context)),
           backgroundColor: Colors.red,
@@ -133,8 +135,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Kode telah dikirim ke:\n'
-                  '${widget.email}',
+                  'Kode telah dikirim ke:\n'.tr(context) + widget.email,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
@@ -207,6 +208,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                 ),
