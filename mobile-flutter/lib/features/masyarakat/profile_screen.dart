@@ -444,9 +444,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: colors.surface,
       appBar: AppBar(
         title: Text(
-          'Profil Pengguna'.tr(context),
+          'PROFIL PENGGUNA'.tr(context),
           style: TextStyle(
             color: primaryTextColor,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),

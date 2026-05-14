@@ -15,11 +15,13 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _otpCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _passwordConfirmCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
   bool _isResending = false;
   bool _obscurePassword = true;
+  bool _obscurePasswordConfirm = true;
   int _resendCountdown = 60;
   Timer? _countdownTimer;
 
@@ -34,6 +36,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     _countdownTimer?.cancel();
     _otpCtrl.dispose();
     _passwordCtrl.dispose();
+    _passwordConfirmCtrl.dispose();
     super.dispose();
   }
 
@@ -185,6 +188,34 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     }
                     if (v.length < 8) {
                       return 'Minimal 8 karakter'.tr(context);
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: _passwordConfirmCtrl,
+                  obscureText: _obscurePasswordConfirm,
+                  decoration: InputDecoration(
+                    labelText: 'Konfirmasi Kata Sandi Baru'.tr(context),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePasswordConfirm
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () => setState(
+                          () => _obscurePasswordConfirm = !_obscurePasswordConfirm),
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return 'Konfirmasi kata sandi wajib diisi'.tr(context);
+                    }
+                    if (v != _passwordCtrl.text) {
+                      return 'Kata sandi tidak cocok'.tr(context);
                     }
                     return null;
                   },

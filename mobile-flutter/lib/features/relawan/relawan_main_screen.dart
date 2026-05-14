@@ -97,7 +97,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Sesi Anda telah berakhir karena login di perangkat lain.'),
+        content: Text(
+          'Sesi Anda telah berakhir karena login di perangkat lain.',
+        ),
         backgroundColor: Colors.redAccent,
         duration: Duration(seconds: 4),
       ),
@@ -105,7 +107,6 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     // Logout dan redirect ke login
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
-
 
   @override
   void dispose() {
@@ -256,7 +257,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
   // ─── Broadcast Lokasi Relawan ke Backend (Real-time) ───────────────────
   void _startMissionLocationBroadcast() {
     // Daftarkan GPS mode active dengan caller ID khusus misi relawan
-    LocationController.instance.requestMode('relawan_mission', TrackingMode.active);
+    LocationController.instance.requestMode(
+      'relawan_mission',
+      TrackingMode.active,
+    );
   }
 
   void _stopMissionLocationBroadcast() {
@@ -328,7 +332,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                 minWidth: 1280,
                 minHeight: 960,
               );
-              photoFile = compressed != null ? File(compressed.path) : File(xFile.path);
+              photoFile = compressed != null
+                  ? File(compressed.path)
+                  : File(xFile.path);
             } catch (_) {
               photoFile = File(xFile.path);
             }
@@ -349,7 +355,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Bukti berhasil dikirim. Menunggu konfirmasi instansi.'.tr(context),
+                      'Bukti berhasil dikirim. Menunggu konfirmasi instansi.'
+                          .tr(context),
                     ),
                     backgroundColor: Colors.green,
                   ),
@@ -358,7 +365,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             } on IncidentException catch (e) {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+                  SnackBar(
+                    content: Text(e.message),
+                    backgroundColor: Colors.red,
+                  ),
                 );
               }
             }
@@ -792,7 +802,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   ] else ...[
                     // Info: radar disembunyikan saat misi aktif
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF065F46).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -810,7 +823,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Radar SOS dinonaktifkan sementara selama misi berlangsung.'.tr(context),
+                              'Radar SOS dinonaktifkan sementara selama misi berlangsung.'
+                                  .tr(context),
                               style: const TextStyle(
                                 color: Color(0xFF22C55E),
                                 fontSize: 12,

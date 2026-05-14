@@ -79,7 +79,7 @@ class ReportModel {
       case 'failed':
         return 'Gagal'.tr(context);
       case 'canceled':
-        return 'Batal'.tr(context);
+        return 'Dibatalkan'.tr(context);
       case 'rejected':
         return 'Ditolak'.tr(context);
       default:

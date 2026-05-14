@@ -54,7 +54,10 @@ class _MapScreenState extends State<MapScreen>
     );
     // Daftarkan GPS hanya jika tab map sedang aktif
     if (widget.isActive) {
-      LocationController.instance.requestMode('map_screen', TrackingMode.passive);
+      LocationController.instance.requestMode(
+        'map_screen',
+        TrackingMode.passive,
+      );
     }
     _initLocation();
     LocationController.instance.addListener(_onLocationChanged);
@@ -113,7 +116,10 @@ class _MapScreenState extends State<MapScreen>
     if (widget.isActive != oldWidget.isActive) {
       if (widget.isActive) {
         // Tab map aktif: nyalakan GPS passive (jika tidak ada SOS yang pakai active)
-        LocationController.instance.requestMode('map_screen', TrackingMode.passive);
+        LocationController.instance.requestMode(
+          'map_screen',
+          TrackingMode.passive,
+        );
       } else {
         // Tab map tidak aktif: lepaskan GPS dari map screen
         LocationController.instance.releaseMode('map_screen');
@@ -254,7 +260,7 @@ class _MapScreenState extends State<MapScreen>
         user.role == UserRole.relawan || user.volunteerStatus == 'approved';
     final isOnDuty = user.isAvailableForMission;
 
-    if (!isOnline) return '📵 Offline - Peta mungkin tidak tersedia'.tr(context);
+    if (!isOnline) return 'Offline - Peta mungkin tidak tersedia'.tr(context);
     if (isRelawan && isOnDuty && _nearbySOS.isNotEmpty) {
       return '${'DALAM TUGAS - Memantau'.tr(context)} ${_nearbySOS.length} ${'SOS dalam 5KM'.tr(context)}';
     }
@@ -264,12 +270,14 @@ class _MapScreenState extends State<MapScreen>
     if (isRelawan && !isOnDuty) {
       return 'DI LUAR TUGAS - Aktifkan di tab Operasi'.tr(context);
     }
-    if (_accuracy > 50) return '${'⚠️ Akurasi rendah: ±'.tr(context)}${_accuracy.round()}m';
+    if (_accuracy > 50) {
+      return '${'Akurasi rendah: ±'.tr(context)}${_accuracy.round()}m';
+    }
     if (_addressLabel != null) return _addressLabel!;
     if (_userLocation != null) {
       return '${_userLocation!.latitude.toStringAsFixed(5)}, ${_userLocation!.longitude.toStringAsFixed(5)}';
     }
-    return 'Mendeteksi lokasi...';
+    return 'Mendeteksi lokasi...'.tr(context);
   }
 
   Color _buildStatusColor(UserModel user) {
@@ -282,7 +290,7 @@ class _MapScreenState extends State<MapScreen>
     if (isRelawan && isOnDuty) return const Color(0xFF22C55E);
     if (isRelawan && !isOnDuty) return Colors.grey;
     if (_accuracy > 50) return Colors.orange;
-    return const Color(0xFF3B82F6);
+    return const Color(0xFF22C55E);
   }
 
   @override
@@ -399,7 +407,7 @@ class _MapScreenState extends State<MapScreen>
                         'RADAR SIAGA & EVAKUASI'.tr(context),
                         style: TextStyle(
                           color: colors.onSurface,
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -429,7 +437,7 @@ class _MapScreenState extends State<MapScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Radius 5KM'.tr(context),
+                    'Radius 5 KM'.tr(context),
                     style: TextStyle(
                       color: colors.onSurface.withValues(alpha: 0.6),
                       fontSize: 12,

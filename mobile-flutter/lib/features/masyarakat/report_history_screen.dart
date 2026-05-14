@@ -462,11 +462,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             Row(
               children: [
                 // 1. Chip Urgensi (Selalu tampil, '-' jika null)
-                _chip(
-                  report.getUrgencyLabel(context),
-                  urgencyColor,
-                  width: 75,
-                ),
+                _chip(report.getUrgencyLabel(context), urgencyColor, width: 75),
                 const SizedBox(width: 8),
 
                 // 2. Chip Foto (Selalu tampil, '-' jika kosong)
@@ -644,7 +640,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
         : Colors.green;
     final statusLabel = isFalseAlarm
         ? 'Palsu'.tr(context)
-        : (isCanceled ? 'Batal'.tr(context) : 'Selesai'.tr(context));
+        : (isCanceled ? 'Dibatalkan'.tr(context) : 'Selesai'.tr(context));
 
     // Asumsikan darurat selalu tinggi
     const urgencyColor = Colors.red;
@@ -753,10 +749,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     );
 
     if (width != null) {
-      return SizedBox(
-        width: width,
-        child: content,
-      );
+      return SizedBox(width: width, child: content);
     }
     return content;
   }

@@ -121,10 +121,10 @@ class _GuideScreenState extends State<GuideScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Panduan Darurat'.tr(context),
+                            'PANDUAN DARURAT'.tr(context),
                             style: TextStyle(
                               color: colors.onSurface,
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
