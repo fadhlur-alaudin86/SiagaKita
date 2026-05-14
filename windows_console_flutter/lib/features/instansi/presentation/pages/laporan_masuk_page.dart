@@ -222,7 +222,7 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                         )
                       : ListView.separated(
                           itemCount: _reports.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (context, index) =>
                               const Divider(color: Colors.white10, height: 1),
                           itemBuilder: (context, i) {
                             final r = _reports[i];
@@ -402,6 +402,15 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
     super.dispose();
   }
 
+  String _fmtLocal(DateTime dt) {
+    final l = dt.toLocal();
+    return '${l.day.toString().padLeft(2, '0')}/'
+        '${l.month.toString().padLeft(2, '0')}/'
+        '${l.year}  '
+        '${l.hour.toString().padLeft(2, '0')}:'
+        '${l.minute.toString().padLeft(2, '0')}';
+  }
+
   IconData _incidentIcon(String type) {
     return switch (type) {
       'fire' => Icons.local_fire_department,
@@ -519,8 +528,22 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
             const SizedBox(height: 16),
 
             // ── Info ─────────────────────────────────────────────────────────
-            _InfoRow(icon: Icons.person_outline, label: 'Pelapor', value: r.reporterName),
-            _InfoRow(icon: Icons.bar_chart, label: 'Urgensi', value: r.urgencyLabel),
+            _InfoRow(
+              icon: Icons.person_outline,
+              label: 'Pelapor',
+              value: r.reporterName,
+            ),
+            _InfoRow(
+              icon: Icons.access_time,
+              label: 'Waktu Masuk',
+              value: _fmtLocal(r.createdAt),
+            ),
+            if (r.urgency != 'none')
+              _InfoRow(
+                icon: Icons.bar_chart,
+                label: 'Urgensi',
+                value: r.urgencyLabel,
+              ),
             if (r.description != null && r.description!.isNotEmpty)
               _InfoRow(
                 icon: Icons.notes_outlined,
@@ -555,7 +578,7 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                         width: 100,
                         height: 100,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (context, error, stackTrace) => Container(
                           width: 100,
                           height: 100,
                           color: Colors.white10,

@@ -176,14 +176,16 @@ class ReportModel {
   final String reporterId;
   final String reporterName;
   final String incidentType;
-  final String urgency; // 'low' | 'medium' | 'high'
+  final String urgency; // 'low' | 'medium' | 'high' (string dari backend)
+  final int? urgencyLevel; // 0=low, 1=medium, 2=high (int dari backend)
   final double latitude;
   final double longitude;
   final String? description;
   final List<String> photoPaths;
   final String? audioPath;
-  final String status; // 'pending' | 'reviewed' | 'actioned'
+  final String status; // 'sent' | 'handled' | 'resolved' | 'rejected'
   final DateTime createdAt;
+  final DateTime? completedAt;
 
   const ReportModel({
     required this.id,
@@ -191,6 +193,7 @@ class ReportModel {
     required this.reporterName,
     required this.incidentType,
     required this.urgency,
+    this.urgencyLevel,
     required this.latitude,
     required this.longitude,
     this.description,
@@ -198,34 +201,68 @@ class ReportModel {
     this.audioPath,
     required this.status,
     required this.createdAt,
+    this.completedAt,
   });
 
-  factory ReportModel.fromJson(Map<String, dynamic> json) => ReportModel(
-    id: json['id'] as String,
-    reporterId: json['reporter_id'] as String? ?? '',
-    reporterName: json['reporter_name'] as String? ?? 'Anonim',
-    incidentType: json['incident_type'] as String? ?? 'general',
-    urgency: json['urgency'] as String? ?? 'low',
-    latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
-    longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-    description: json['description'] as String?,
-    photoPaths:
-        (json['photo_paths'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [],
-    audioPath: json['audio_path'] as String?,
-    status: json['status'] as String? ?? 'pending',
-    createdAt:
-        DateTime.tryParse(json['created_at'] as String? ?? '') ??
-        DateTime.now(),
-  );
+  factory ReportModel.fromJson(Map<String, dynamic> json) {
+    // urgency_level bisa berupa int (dari backend baru)
+    // atau 'urgency' string 'low'/'medium'/'high' (dari backend lama)
+    final rawLevel = json['urgency_level'];
+    int? urgencyLevel;
+    if (rawLevel is int) {
+      urgencyLevel = rawLevel;
+    }
+    // derive string urgency from level or field
+    final rawUrgency = json['urgency'] as String?;
+    String urgency;
+    if (urgencyLevel != null) {
+      urgency = urgencyLevel == 2
+          ? 'high'
+          : urgencyLevel == 1
+          ? 'medium'
+          : 'low';
+    } else {
+      urgency = rawUrgency ?? 'none';
+    }
 
-  String get urgencyLabel => switch (urgency) {
-    'high' => '🔴 Tinggi',
-    'medium' => '🟡 Sedang',
-    _ => '🟢 Rendah',
-  };
+    return ReportModel(
+      id: json['id'] as String,
+      reporterId: json['reporter_id'] as String? ?? '',
+      reporterName: json['reporter_name'] as String? ?? 'Anonim',
+      incidentType: json['incident_type'] as String? ?? 'general',
+      urgency: urgency,
+      urgencyLevel: urgencyLevel,
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      description: json['description'] as String?,
+      photoPaths:
+          (json['photo_paths'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      audioPath: json['audio_path'] as String?,
+      status: json['status'] as String? ?? 'sent',
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      completedAt: json['completed_at'] != null
+          ? DateTime.tryParse(json['completed_at'] as String)
+          : null,
+    );
+  }
+
+  // Urgensi hanya bermakna jika sudah diset (bukan 'none')
+  bool get hasUrgency => (urgency != 'none' && urgency != 'low') || urgencyLevel != null;
+
+  String get urgencyLabel {
+    if (urgencyLevel == null && urgency == 'none') return 'Belum diset';
+    return switch (urgency) {
+      'high' => 'Tinggi',
+      'medium' => 'Sedang',
+      'low' => 'Rendah',
+      _ => 'Belum diset',
+    };
+  }
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────────

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 import '../../../../core/models/models.dart';
@@ -339,15 +338,22 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                   itemBuilder: (context, index) {
                     final inc = _filteredIncidents[index];
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
+                      margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.all(20),
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                          radius: 24,
-                          child: const Icon(
-                            Icons.warning_amber_rounded,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _incidentIcon(inc.incidentType),
                             color: Colors.orangeAccent,
+                            size: 20,
                           ),
                         ),
                         title: Row(
@@ -356,7 +362,7 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                               inc.typeLabel,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                               ),
                             ),
                             const Spacer(),
@@ -364,34 +370,28 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                           ],
                         ),
                         subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Row(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(
-                                Icons.person_outline,
-                                size: 14,
-                                color: Colors.white54,
+                              Row(
+                                children: [
+                                  const Icon(Icons.person_outline, size: 12, color: Colors.white54),
+                                  const SizedBox(width: 4),
+                                  Text(inc.reporterName, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                                ],
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                inc.reporterName,
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                              const SizedBox(width: 16),
-                              const Icon(
-                                Icons.access_time,
-                                size: 14,
-                                color: Colors.white54,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                DateFormat(
-                                  'dd MMM yyyy, HH:mm',
-                                ).format(inc.createdAt),
-                                style: const TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
-                                ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.access_time, size: 12, color: Colors.white54),
+                                  const SizedBox(width: 4),
+                                  Text(_fmtLocal(inc.createdAt), style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                  if (inc.completedAt != null) ...[
+                                    const Text(' → ', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                                    Text(_fmtLocal(inc.completedAt!), style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                  ],
+                                ],
                               ),
                             ],
                           ),
@@ -403,6 +403,24 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
         ),
       ],
     );
+  }
+
+  IconData _incidentIcon(String type) => switch (type) {
+    'fire' => Icons.local_fire_department,
+    'accident' => Icons.car_crash,
+    'disaster' => Icons.water_damage,
+    'crime' => Icons.warning_rounded,
+    'medical' => Icons.medical_services,
+    _ => Icons.report_outlined,
+  };
+
+  String _fmtLocal(DateTime dt) {
+    final l = dt.toLocal();
+    final d = l.day.toString().padLeft(2, '0');
+    final mo = l.month.toString().padLeft(2, '0');
+    final h = l.hour.toString().padLeft(2, '0');
+    final mi = l.minute.toString().padLeft(2, '0');
+    return '$d/$mo/${l.year} $h:$mi';
   }
 }
 
@@ -526,6 +544,17 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
 
       _filteredReports = filtered;
     });
+  }
+
+
+
+  String _fmtLocal(DateTime dt) {
+    final l = dt.toLocal();
+    final d = l.day.toString().padLeft(2, '0');
+    final mo = l.month.toString().padLeft(2, '0');
+    final h = l.hour.toString().padLeft(2, '0');
+    final mi = l.minute.toString().padLeft(2, '0');
+    return '$d/$mo/${l.year} $h:$mi';
   }
 
   Widget _buildDropdown<T>({
@@ -732,11 +761,22 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
                           children: [
                             const SizedBox(height: 4),
                             Text(
-                              'Pelapor: ${r.reporterName} • Urgensi: ${r.urgencyLabel}',
+                              'Pelapor: ${r.reporterName}${r.urgency != 'none' ? ' • Urgensi: ${r.urgencyLabel}' : ''}',
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
                               ),
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.access_time, size: 11, color: Colors.white38),
+                                const SizedBox(width: 3),
+                                Text(_fmtLocal(r.createdAt), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                                if (r.completedAt != null) ...[
+                                  const Text(' → ', style: TextStyle(color: Colors.white24, fontSize: 11)),
+                                  Text(_fmtLocal(r.completedAt!), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                                ],
+                              ],
                             ),
                             if (r.description != null &&
                                 r.description!.isNotEmpty)
@@ -864,6 +904,35 @@ class _ReportHistoryDetailDialogState
     super.dispose();
   }
 
+  String _fmtLocal(DateTime dt) {
+    final l = dt.toLocal();
+    final d = l.day.toString().padLeft(2, '0');
+    final mo = l.month.toString().padLeft(2, '0');
+    final h = l.hour.toString().padLeft(2, '0');
+    final mi = l.minute.toString().padLeft(2, '0');
+    return '$d/$mo/${l.year} $h:$mi';
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: Colors.white38),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 100,
+            child: Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 13)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAudioPlayer() {
     if (widget.report.audioPath == null) return const SizedBox.shrink();
     return Container(
@@ -955,23 +1024,15 @@ class _ReportHistoryDetailDialogState
               ),
               const Divider(color: Colors.white24),
               const SizedBox(height: 8),
-              Text(
-                'Kategori: ${r.incidentType.toUpperCase()}',
-                style: const TextStyle(color: Colors.white),
-              ),
-              Text(
-                'Urgensi: ${r.urgencyLabel}',
-                style: const TextStyle(color: Colors.white),
-              ),
-              Text(
-                'Pelapor: ${r.reporterName}',
-                style: const TextStyle(color: Colors.white),
-              ),
-              Text(
-                'Status: ${r.status.toUpperCase()}',
-                style: const TextStyle(color: Colors.white),
-              ),
-              if (r.description != null) ...[
+              _infoRow(Icons.local_fire_department, 'Kategori', r.incidentType.toUpperCase()),
+              if (r.urgency != 'none')
+                _infoRow(Icons.bar_chart, 'Urgensi', r.urgencyLabel),
+              _infoRow(Icons.person_outline, 'Pelapor', r.reporterName),
+              _infoRow(Icons.flag_outlined, 'Status', r.status.toUpperCase()),
+              _infoRow(Icons.access_time, 'Waktu Masuk', _fmtLocal(r.createdAt)),
+              if (r.completedAt != null)
+                _infoRow(Icons.check_circle_outline, 'Waktu Selesai', _fmtLocal(r.completedAt!)),
+              if (r.description != null && r.description!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 const Text(
                   'Deskripsi:',
