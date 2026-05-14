@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_config.dart';
 
 /// IncidentService menangani API calls untuk SOS incidents (Jalur A)
@@ -9,9 +10,9 @@ import '../constants/api_config.dart';
 class IncidentService {
   static const String _baseUrl = ApiConfig.baseUrl;
 
-  // Timeout: SOS-critical calls pakai 10 detik, regular calls 15 detik
-  static const _sosTimeout = Duration(seconds: 10);
-  static const _defaultTimeout = Duration(seconds: 15);
+  // Timeout: SOS-critical calls pakai 5 detik, regular calls 5 detik
+  static const _sosTimeout = Duration(seconds: 5);
+  static const _defaultTimeout = Duration(seconds: 5);
 
   // ─── Helper: request dengan timeout ──────────────────────────────────────
 
@@ -22,14 +23,14 @@ class IncidentService {
     try {
       return await call().timeout(
         timeout ?? _defaultTimeout,
-        onTimeout: () => throw IncidentException('Request timeout. Coba lagi.'),
+        onTimeout: () => throw IncidentException('Gagal menghubungi server. Periksa koneksi internet.'),
       );
     } on IncidentException {
       rethrow;
     } on SOSBannedException {
       rethrow;
     } catch (_) {
-      throw IncidentException('Gagal menghubungi server. Periksa koneksi.');
+      throw IncidentException('Gagal menghubungi server. Periksa koneksi internet.');
     }
   }
 
@@ -225,24 +226,43 @@ class IncidentService {
   static Future<List<MissionHistory>> getMyHistory({
     required String accessToken,
   }) async {
-    final response = await _req(
-      () => http.get(
-        Uri.parse('$_baseUrl/incidents/my-history'),
-        headers: {'Authorization': 'Bearer $accessToken'},
-      ),
-    );
-    if (response.statusCode != 200) {
-      final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
-      throw IncidentException(
-        body['message'] as String? ?? 'Gagal memuat riwayat SOS',
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final response = await _req(
+        () => http.get(
+          Uri.parse('$_baseUrl/incidents/my-history'),
+          headers: {'Authorization': 'Bearer $accessToken'},
+        ),
       );
+      if (response.statusCode != 200) {
+        final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
+        throw IncidentException(
+          body['message'] as String? ?? 'Gagal memuat riwayat SOS',
+        );
+      }
+      final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
+      final data = body['data'] as List?;
+      if (data == null) return [];
+      
+      await prefs.setString('cached_my_history', jsonEncode(data));
+      
+      return data
+          .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      final cachedStr = prefs.getString('cached_my_history');
+      if (cachedStr != null) {
+        try {
+          final data = jsonDecode(cachedStr) as List?;
+          if (data != null) {
+            return data
+                .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
+                .toList();
+          }
+        } catch (_) {}
+      }
+      throw IncidentException('Periksa koneksi internet. Gagal memuat riwayat: $e');
     }
-    final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
-    final data = body['data'] as List?;
-    if (data == null) return [];
-    return data
-        .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
-        .toList();
   }
 
   // ─── Get Reporter History ─────────────────────────────────────────────────
@@ -250,24 +270,43 @@ class IncidentService {
   static Future<List<ActiveIncident>> getReporterHistory({
     required String accessToken,
   }) async {
-    final response = await _req(
-      () => http.get(
-        Uri.parse('$_baseUrl/incidents/reporter-history'),
-        headers: {'Authorization': 'Bearer $accessToken'},
-      ),
-    );
-    if (response.statusCode != 200) {
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw IncidentException(
-        body['message'] as String? ?? 'Gagal memuat riwayat SOS',
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final response = await _req(
+        () => http.get(
+          Uri.parse('$_baseUrl/incidents/reporter-history'),
+          headers: {'Authorization': 'Bearer $accessToken'},
+        ),
       );
+      if (response.statusCode != 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        throw IncidentException(
+          body['message'] as String? ?? 'Gagal memuat riwayat SOS',
+        );
+      }
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = body['data'] as List?;
+      if (data == null) return [];
+      
+      await prefs.setString('cached_reporter_history', jsonEncode(data));
+
+      return data
+          .map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      final cachedStr = prefs.getString('cached_reporter_history');
+      if (cachedStr != null) {
+        try {
+          final data = jsonDecode(cachedStr) as List?;
+          if (data != null) {
+            return data
+                .map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>))
+                .toList();
+          }
+        } catch (_) {}
+      }
+      throw IncidentException('Periksa koneksi internet. Gagal memuat riwayat: $e');
     }
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final data = body['data'] as List?;
-    if (data == null) return [];
-    return data
-        .map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>))
-        .toList();
   }
 
   // ─── Get Nearby SOS (untuk Relawan) ──────────────────────────────────────

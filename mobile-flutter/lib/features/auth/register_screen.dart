@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/services/location_service.dart';
+import '../../core/services/permission_service.dart';
 import 'biodata_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -177,7 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       debugPrint('${'Registrasi berhasil'.tr(context)}: ${result.user.email}');
 
       // Minta izin GPS setelah registrasi berhasil (poin 4)
-      await LocationService.requestPermission(context);
+      await PermissionService.requestAllPermissions(context);
       if (!mounted) return;
 
       // Set global user state agar BiodataScreen bisa menggunakannya

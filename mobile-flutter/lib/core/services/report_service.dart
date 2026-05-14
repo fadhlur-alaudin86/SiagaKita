@@ -96,7 +96,7 @@ class ReportModel {
 
 class ReportService {
   static const String _baseUrl = ApiConfig.baseUrl;
-  static const _timeout = Duration(seconds: 60);
+  static const _timeout = Duration(seconds: 5);
 
   // ─── Submit Report with optional media ───────────────────────────────────────
   static Future<void> submitReport({
@@ -172,7 +172,7 @@ class ReportService {
         audio: audio,
       );
       throw ReportException(
-        'Gagal terhubung ke server, laporan disimpan offline.',
+        'Periksa koneksi internet. Laporan disimpan offline.',
       );
     }
   }
@@ -258,12 +258,25 @@ class ReportService {
           .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
           .toList();
 
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_my_reports', jsonEncode(data));
+
       final offlineReports = await getFailedReports();
       return [...offlineReports, ...serverReports];
-    } on ReportException {
-      rethrow;
     } catch (e) {
-      throw ReportException('Gagal menghubungi server: $e');
+      final prefs = await SharedPreferences.getInstance();
+      final cachedStr = prefs.getString('cached_my_reports');
+      if (cachedStr != null) {
+        try {
+          final data = jsonDecode(cachedStr) as List<dynamic>? ?? [];
+          final serverReports = data
+              .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+          final offlineReports = await getFailedReports();
+          return [...offlineReports, ...serverReports];
+        } catch (_) {}
+      }
+      throw ReportException('Periksa koneksi internet. Gagal memuat laporan: $e');
     }
   }
 

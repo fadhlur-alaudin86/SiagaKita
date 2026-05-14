@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_config.dart';
 import '../models/user_model.dart';
 
 class UserService {
   static const String _baseUrl = ApiConfig.baseUrl;
-  static const _timeout = Duration(seconds: 30);
+  static const _timeout = Duration(seconds: 5);
 
   // ─── Ambil Profil ────────────────────────────────────────────────────────────
 
   static Future<UserModel> getProfile(String token) async {
+    final prefs = await SharedPreferences.getInstance();
     try {
       final response = await http
           .get(
@@ -28,9 +30,19 @@ class UserService {
         throw Exception(body['message'] ?? 'Gagal mengambil data profil');
       }
 
+      // Cache profile data
+      await prefs.setString('cached_profile', jsonEncode(body['data']));
+
       return UserModel.fromJson(body['data']);
     } catch (e) {
-      throw Exception('Kesalahan memuat profil: $e');
+      // Try to load from cache
+      final cachedStr = prefs.getString('cached_profile');
+      if (cachedStr != null) {
+        try {
+          return UserModel.fromJson(jsonDecode(cachedStr));
+        } catch (_) {}
+      }
+      throw Exception('Periksa koneksi internet. Kesalahan memuat profil: $e');
     }
   }
 

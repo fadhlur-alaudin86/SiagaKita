@@ -221,6 +221,7 @@ class ActiveSOSBanner extends StatelessWidget {
   final ({double lat, double lng, String? address, String? updatedAt})?
   volunteerPosition;
   final Widget Function() uploadStatusBadgeBuilder;
+  final String uploadStatus;
 
   const ActiveSOSBanner({
     super.key,
@@ -230,6 +231,7 @@ class ActiveSOSBanner extends StatelessWidget {
     this.lastLocationUpdate,
     this.volunteerPosition,
     required this.uploadStatusBadgeBuilder,
+    required this.uploadStatus,
   });
 
   @override
@@ -304,9 +306,13 @@ class ActiveSOSBanner extends StatelessWidget {
                 ),
                 SizedBox(width: 4.w(context)),
                 Text(
-                  'Streaming Real-time'.tr(context),
+                  uploadStatus == 'sending'
+                      ? 'Mencoba mengirim ulang...'.tr(context)
+                      : 'Streaming Real-time'.tr(context),
                   style: TextStyle(
-                    color: Colors.greenAccent,
+                    color: uploadStatus == 'sending'
+                        ? Colors.orangeAccent
+                        : Colors.greenAccent,
                     fontSize: 10.csp(context, min: 9, max: 11),
                     fontWeight: FontWeight.bold,
                   ),

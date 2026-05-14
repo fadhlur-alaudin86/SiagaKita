@@ -9,6 +9,7 @@ import '../../core/models/user_model.dart';
 import '../../core/services/incident_service.dart';
 import '../../core/services/location_controller.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/widgets/cached_tile_provider.dart' as import_cached_tile;
 
 class MapScreen extends StatefulWidget {
   final String? accessToken;
@@ -485,6 +486,7 @@ class _MapScreenState extends State<MapScreen>
                           urlTemplate:
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                           userAgentPackageName: 'com.superbypass.siagakita',
+                          tileProvider: import_cached_tile.CachedTileProvider(),
                         ),
                         if (_activeSOS != null &&
                             (_activeSOS!.status == 'broadcasting' ||

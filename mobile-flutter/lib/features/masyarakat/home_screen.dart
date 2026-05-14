@@ -21,6 +21,7 @@ import '../../core/services/location_controller.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/mobile_ws_service.dart';
 import '../../core/services/user_service.dart';
+import '../../core/services/offline_service.dart';
 import 'report_screen.dart';
 import 'widgets/home_widgets.dart';
 import 'widgets/sos_active_widgets.dart';
@@ -298,6 +299,38 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _checkActiveIncident() async {
     setState(() => _isLoadingActiveIncident = true);
+
+    // Cek apakah ada SOS pending di offline cache (sebelum hit API)
+    final pendingSos = await OfflineService.getPendingSOS();
+    if (pendingSos != null) {
+      final localId = pendingSos['local_id'] as String;
+      final lat = pendingSos['latitude'] as double;
+      final lng = pendingSos['longitude'] as double;
+      final address = pendingSos['address_detail'] as String?;
+
+      setState(() {
+        _pendingIncidentId = localId;
+        _sosPhase =
+            'gracePeriod'; // Atau broadcasting tergantung waktu, tapi untuk simplifikasi kita mulai ulang proses upload
+        _sosUploadStatus = 'sending';
+      });
+
+      // Lanjutkan background upload
+      _attemptSOSUpload(
+        lat: lat,
+        lng: lng,
+        addressDetail: address,
+        triggeredBy: 'user',
+        localId: localId,
+      );
+    }
+
+    // Cek apakah ada cancel SOS pending
+    final pendingCancel = await OfflineService.getPendingCancelSOS();
+    if (pendingCancel != null) {
+      _attemptSOSCancelBackground(pendingCancel);
+    }
+
     try {
       final active = await IncidentService.getActive(
         accessToken: widget.accessToken,
@@ -306,6 +339,12 @@ class _HomeScreenState extends State<HomeScreen>
         setState(() {
           _activeIncident = active;
           _isLoadingActiveIncident = false;
+          // Jika ada active dari server, berari pending offline sudah sinkron atau tidak relevan
+          if (active != null && pendingSos != null) {
+            OfflineService.clearPendingSOS();
+            _pendingIncidentId = null;
+            _sosPhase = 'idle'; // Nanti ditimpa kalau server bilang dia aktif
+          }
         });
         if (active != null) {
           _startLocationUpdates();
@@ -540,7 +579,6 @@ class _HomeScreenState extends State<HomeScreen>
             backgroundColor: Colors.red.shade700,
           ),
         );
-        LocationService.requestPermission(context);
       }
       if (mounted) setState(() => _isTriggeringSOS = false);
       return;
@@ -561,6 +599,14 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) setState(() => _isTriggeringSOS = false);
       return;
     }
+
+    // Simpan status pending SOS ke SharedPreferences
+    OfflineService.savePendingSOS(
+      localId: localId,
+      lat: lat,
+      lng: lng,
+      addressDetail: address,
+    );
 
     // Upload SOS di background - retry tiap 5 detik jika gagal
     _attemptSOSUpload(
@@ -635,14 +681,25 @@ class _HomeScreenState extends State<HomeScreen>
         }
       });
 
+      // Bersihkan pending SOS karena berhasil masuk ke server
+      OfflineService.clearPendingSOS();
+
       if (wasCancelled) {
         IncidentService.cancelSOS(
-          accessToken: widget.accessToken,
-          incidentId: result.incidentId,
-        ).catchError((_) {}); // silent background cancel
+              accessToken: widget.accessToken,
+              incidentId: result.incidentId,
+            )
+            .then((_) {
+              OfflineService.clearPendingCancelSOS();
+            })
+            .catchError((_) {
+              // Jika gagal cancel, simpan ke pending cancel
+              OfflineService.savePendingCancelSOS(result.incidentId);
+            });
         _cancelledLocalId = null;
       }
     } on SOSBannedException catch (e) {
+      OfflineService.clearPendingSOS();
       if (!mounted) return;
       // SOS banned → batalkan grace period
       _cancelGracePeriodLocally();
@@ -913,6 +970,7 @@ class _HomeScreenState extends State<HomeScreen>
                       lastLocationUpdate: _lastLocationUpdate,
                       volunteerPosition: _volunteerPosition,
                       uploadStatusBadgeBuilder: _buildUploadStatusBadge,
+                      uploadStatus: _sosUploadStatus,
                     ),
                     SizedBox(height: 12.h(context)),
                   ],
@@ -1269,13 +1327,49 @@ class _HomeScreenState extends State<HomeScreen>
         );
       }
     } catch (_) {
+      // Jika offline/gagal, simpan lokal untuk di-retry
+      OfflineService.savePendingCancelSOS(incidentId);
+      _attemptSOSCancelBackground(incidentId);
+
+      _stopVibration();
+      _stopLocationUpdates();
+
       if (mounted) {
+        setState(() {
+          _activeIncident = null;
+          _sosPhase = 'idle';
+          _sosUploadStatus = 'idle';
+          _tapCount = 0;
+          _volunteerPosition = null;
+        });
+        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+          isSOSActive: false,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal membatalkan SOS. Coba lagi.'.tr(context)),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Panggilan SOS dibatalkan (Menunggu koneksi)...'.tr(context),
+            ),
+            backgroundColor: Colors.orange,
           ),
         );
+      }
+    }
+  }
+
+  void _attemptSOSCancelBackground(String incidentId) async {
+    bool isCanceled = false;
+    while (!isCanceled) {
+      await Future.delayed(const Duration(seconds: 5));
+      try {
+        await IncidentService.cancelSOS(
+          accessToken: widget.accessToken,
+          incidentId: incidentId,
+        );
+        await OfflineService.clearPendingCancelSOS();
+        isCanceled = true;
+      } catch (_) {
+        // Abaikan, loop terus tiap 5 detik
       }
     }
   }

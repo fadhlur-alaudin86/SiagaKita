@@ -16,6 +16,7 @@ import '../../core/services/location_service.dart';
 import '../../core/services/report_service.dart';
 import 'package:camera/camera.dart';
 import '../../core/widgets/custom_camera_view.dart';
+import '../../core/widgets/cached_tile_provider.dart' as import_cached_tile;
 import 'report_history_screen.dart' as import_report_history;
 
 class ReportScreen extends StatefulWidget {
@@ -158,7 +159,7 @@ class _ReportScreenState extends State<ReportScreen> {
   Future<void> _openCamera() async {
     if (_photos.length >= 3) return;
 
-    final status = await Permission.camera.request();
+    final status = await Permission.camera.status;
     if (!status.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -210,7 +211,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   Future<void> _startRecording() async {
     if (_isRecording) return; // Cegah timer ganda
-    final status = await Permission.microphone.request();
+    final status = await Permission.microphone.status;
     if (!status.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -439,6 +440,16 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _submitReport() async {
+    if (_currentLatLng == null || (_currentLatLng!.latitude == 0 && _currentLatLng!.longitude == 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lokasi belum terdeteksi. Pastikan GPS aktif.'.tr(context)),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
     try {
       await ReportService.submitReport(
@@ -658,6 +669,7 @@ class _ReportScreenState extends State<ReportScreen> {
                           urlTemplate:
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                           userAgentPackageName: 'com.siagakita.mobile',
+                          tileProvider: import_cached_tile.CachedTileProvider(),
                         ),
                         MarkerLayer(
                           markers: [

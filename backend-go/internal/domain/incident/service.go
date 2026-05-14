@@ -281,6 +281,9 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, phot
 	if !validIncidentTypes[req.IncidentType] {
 		return nil, fmt.Errorf("tipe insiden tidak valid: %s", req.IncidentType)
 	}
+	if req.Latitude == 0 && req.Longitude == 0 {
+		return nil, errors.New("lokasi harus diisi (latitude dan longitude tidak boleh 0)")
+	}
 
 	rep := &IncidentReport{
 		ReporterID:   reporterID,

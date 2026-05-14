@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/services/location_service.dart';
+import '../../core/services/permission_service.dart';
 import '../../core/services/session_service.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
@@ -79,9 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
             : UserRole.masyarakat,
       );
 
-      // Minta izin GPS setelah auth berhasil
+      // Minta semua izin (GPS, Camera, Mic) setelah auth berhasil
       if (!mounted) return;
-      await LocationService.requestPermission(context);
+      await PermissionService.requestAllPermissions(context);
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(

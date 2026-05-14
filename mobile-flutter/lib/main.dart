@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'core/localization/app_localization.dart';
 import 'core/models/user_model.dart';
 import 'core/services/connectivity_service.dart';
-import 'core/services/location_service.dart';
+import 'core/services/permission_service.dart';
 import 'core/services/session_service.dart';
 import 'core/services/user_service.dart';
 import 'core/services/background_service.dart';
@@ -143,7 +143,7 @@ class _AppStartupState extends State<_AppStartup> {
 
       // Minta izin GPS jika online, abaikan jika offline
       if (ConnectivityService.isOnline.value) {
-        await LocationService.requestPermission(context);
+        await PermissionService.requestAllPermissions(context);
         if (!mounted) return;
       }
 
