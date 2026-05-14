@@ -126,8 +126,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 size: 22,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'REPUTASI RELAWAN',
+              Text(
+                'REPUTASI RELAWAN'.tr(context),
                 style: TextStyle(
                   color: Color(0xFF22C55E),
                   fontWeight: FontWeight.bold,
@@ -142,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Expanded(
                 child: _reputationStat(
-                  'XP',
+                  'XP'.tr(context),
                   '$xp',
                   Icons.star_outline,
                   const Color(0xFFFBBF24),
@@ -152,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _reputationStat(
-                  'Level',
+                  'Level'.tr(context),
                   level,
                   Icons.shield_outlined,
                   const Color(0xFF22C55E),
@@ -166,8 +166,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 nextThreshold == 9999
-                    ? 'Level Maksimal'
-                    : 'Menuju $nextThreshold XP',
+                    ? 'Level Maksimal'.tr(context)
+                    : '${'Menuju '.tr(context)}$nextThreshold XP',
                 style: TextStyle(fontSize: 11, color: hintColor),
               ),
               const Spacer(),
@@ -258,8 +258,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
         content: Text(
-          'Perubahan NIK membutuhkan verifikasi ulang oleh admin (1-3 hari kerja). '
-          'Status verifikasi saat ini akan direset ke "Menunggu Verifikasi".\n\nApakah Anda ingin melanjutkan?',
+          'Perubahan NIK membutuhkan verifikasi ulang oleh admin (1-3 hari kerja). Status verifikasi saat ini akan direset ke "Menunggu Verifikasi".\n\nApakah Anda ingin melanjutkan?'
+              .tr(context),
           style: const TextStyle(height: 1.5),
         ),
         actions: [
@@ -312,9 +312,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
         content: Text(
-          'Pengubahan nomor WhatsApp memerlukan verifikasi ulang melalui OTP. '
-          'Tingkat kepercayaan laporan Anda akan berkurang jika nomor belum diverifikasi.'
-          '\n\nApakah Anda ingin melanjutkan?',
+          'Pengubahan nomor WhatsApp memerlukan verifikasi ulang melalui OTP. Tingkat kepercayaan laporan Anda akan berkurang jika nomor belum diverifikasi.\n\nApakah Anda ingin melanjutkan?'
+              .tr(context),
           style: const TextStyle(height: 1.5),
         ),
         actions: [
@@ -404,7 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal mengirim OTP: $e'),
+            content: Text('${'Gagal mengirim OTP: '.tr(context)}$e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -418,13 +417,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('Verifikasi WhatsApp'),
+        title: Text('Verifikasi WhatsApp'.tr(context)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Kode OTP telah dikirim ke WhatsApp:\n$phoneNumber\nBerlaku 3 menit.',
+              '${'Kode OTP telah dikirim ke WhatsApp:\n'.tr(context)}$phoneNumber\n${'Berlaku 3 menit.'.tr(context)}',
             ),
             const SizedBox(height: 16),
             TextField(
@@ -444,7 +443,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -464,8 +466,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text(
-              'Verifikasi',
+            child: Text(
+              'Verifikasi'.tr(context),
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -485,8 +487,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Nomor WhatsApp berhasil diubah dan diverifikasi'),
+          SnackBar(
+            content: Text(
+              'Nomor WhatsApp berhasil diubah dan diverifikasi'.tr(context),
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -494,7 +498,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menyimpan profil: $e'),
+            content: Text('${'Gagal menyimpan profil: '.tr(context)}$e'),
             backgroundColor: Colors.red,
           ),
         );

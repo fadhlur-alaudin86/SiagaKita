@@ -126,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ],
         ),
         content: Text(
-          '$featureName sedang dalam tahap pengembangan dan akan segera tersedia.',
+          '$featureName ${'sedang dalam tahap pengembangan dan akan segera tersedia.'.tr(context)}',
         ),
         actions: [
           ElevatedButton(
@@ -149,9 +149,10 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Cabut Izin Lokasi', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text(
-            'Untuk mencabut izin lokasi, Anda perlu melakukannya secara manual melalui pengaturan OS perangkat Anda.',
+          title: Text('Cabut Izin Lokasi'.tr(context), style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(
+            'Untuk mencabut izin lokasi, Anda perlu melakukannya secara manual melalui pengaturan OS perangkat Anda.'
+                .tr(context),
           ),
           actions: [
             TextButton(
@@ -167,7 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 Navigator.of(ctx).pop();
                 openAppSettings();
               },
-              child: const Text('Buka Pengaturan'),
+              child: Text('Buka Pengaturan'.tr(context)),
             ),
           ],
         ),

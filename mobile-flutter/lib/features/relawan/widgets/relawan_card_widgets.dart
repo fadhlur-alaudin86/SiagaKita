@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localization.dart';
 import '../../../core/services/incident_service.dart';
 
 class NearbyIncidentCard extends StatelessWidget {
@@ -52,7 +53,7 @@ class NearbyIncidentCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      inc.typeLabel,
+                      inc.typeLabel.tr(context),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: primaryText,
@@ -73,7 +74,7 @@ class NearbyIncidentCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    inc.distanceLabel,
+                    inc.distanceLabel.tr(context),
                     style: const TextStyle(
                       color: Color(0xFFEF4444),
                       fontWeight: FontWeight.bold,
@@ -81,7 +82,7 @@ class NearbyIncidentCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    inc.timeAgo,
+                    inc.timeAgo.tr(context),
                     style: TextStyle(color: secondaryText, fontSize: 11),
                   ),
                 ],
@@ -103,7 +104,7 @@ class NearbyIncidentCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                   icon: const Icon(Icons.info_outline, size: 16),
-                  label: const Text('Detail', style: TextStyle(fontSize: 13)),
+                  label: Text('Detail'.tr(context), style: const TextStyle(fontSize: 13)),
                   onPressed: onDetail,
                 ),
               ),
@@ -120,9 +121,9 @@ class NearbyIncidentCard extends StatelessWidget {
                     elevation: 0,
                   ),
                   icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text(
-                    'TERIMA',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  label: Text(
+                    'TERIMA'.tr(context),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   onPressed: onAccept,
                 ),
@@ -159,10 +160,10 @@ class MissionHistoryCard extends StatelessWidget {
       _ => const Color(0xFF3B82F6),
     };
     final statusLabel = switch (inc.responseStatus) {
-      'completed' => 'Selesai (+${inc.xpEarned} XP)',
-      'rejected' => 'Ditolak',
-      'waiting_review' => 'Menunggu Review',
-      'canceled' => 'Dibatalkan',
+      'completed' => '${'Selesai (+'.tr(context)}${inc.xpEarned}${' XP)'.tr(context)}',
+      'rejected' => 'Ditolak'.tr(context),
+      'waiting_review' => 'Menunggu Review'.tr(context),
+      'canceled' => 'Dibatalkan'.tr(context),
       _ => inc.responseStatus,
     };
 
@@ -195,7 +196,7 @@ class MissionHistoryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  inc.incidentType,
+                  inc.incidentType.toUpperCase().tr(context),
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: primaryText,

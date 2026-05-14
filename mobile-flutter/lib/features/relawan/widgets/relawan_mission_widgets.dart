@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/localization/app_localization.dart';
 import '../../../core/services/incident_service.dart';
 import '../../masyarakat/map_screen.dart';
 
@@ -26,10 +27,10 @@ class DutyStatusToggle extends StatelessWidget {
     final backgroundColor = isDisabled
         ? (isDark ? Colors.white10 : Colors.grey.shade200)
         : (effectiveIsOnDuty
-            ? null
-            : (isDark
-                ? const Color(0xFF1E293B)
-                : colors.surfaceContainerHighest));
+              ? null
+              : (isDark
+                    ? const Color(0xFF1E293B)
+                    : colors.surfaceContainerHighest));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -57,7 +58,9 @@ class DutyStatusToggle extends StatelessWidget {
             isDisabled
                 ? Icons.lock_outline
                 : (effectiveIsOnDuty ? Icons.radar : Icons.radar_outlined),
-            color: (effectiveIsOnDuty && !isDisabled) ? Colors.white : secondaryText,
+            color: (effectiveIsOnDuty && !isDisabled)
+                ? Colors.white
+                : secondaryText,
             size: 26,
           ),
           const SizedBox(width: 12),
@@ -67,22 +70,26 @@ class DutyStatusToggle extends StatelessWidget {
               children: [
                 Text(
                   isDisabled
-                      ? 'FITUR TERKUNCI'
+                      ? 'FITUR TERKUNCI'.tr(context)
                       : (effectiveIsOnDuty
-                          ? 'ON DUTY - Siap Bertugas'
-                          : 'OFF DUTY - Istirahat'),
+                            ? 'DALAM TUGAS'.tr(context)
+                            : 'DI LUAR TUGAS'.tr(context)),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: (effectiveIsOnDuty && !isDisabled) ? Colors.white : primaryText,
+                    color: (effectiveIsOnDuty && !isDisabled)
+                        ? Colors.white
+                        : primaryText,
                     fontSize: 15,
                   ),
                 ),
                 Text(
                   isDisabled
-                      ? 'Dinonaktifkan saat SOS sedang aktif'
+                      ? 'Dinonaktifkan saat SOS sedang aktif'.tr(context)
                       : (effectiveIsOnDuty
-                          ? 'Memantau SOS dalam radius 5 km'
-                          : 'Aktifkan untuk menerima panggilan darurat'),
+                            ? 'Memantau SOS dalam radius 5 km'.tr(context)
+                            : 'Aktifkan untuk menerima panggilan darurat'.tr(
+                                context,
+                              )),
                   style: TextStyle(
                     color: (effectiveIsOnDuty && !isDisabled)
                         ? Colors.white70
@@ -138,12 +145,12 @@ class MissionActiveCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.crisis_alert, color: Colors.white, size: 20),
               SizedBox(width: 8),
               Text(
-                'MISI SEDANG BERJALAN',
+                'MISI SEDANG BERJALAN'.tr(context),
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -155,7 +162,7 @@ class MissionActiveCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            mission.typeLabel,
+            mission.typeLabel.tr(context),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 17,
@@ -177,8 +184,7 @@ class MissionActiveCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Lokasi korban: ${mission.reporterLatitude.toStringAsFixed(5)}, '
-                  '${mission.reporterLongitude.toStringAsFixed(5)}',
+                  '${'Lokasi korban: '.tr(context)}${mission.reporterLatitude.toStringAsFixed(5)}, ${mission.reporterLongitude.toStringAsFixed(5)}',
                   style: const TextStyle(color: Colors.white54, fontSize: 11),
                 ),
               ),
@@ -194,7 +200,7 @@ class MissionActiveCard extends StatelessWidget {
                     );
                     onNavigateToMap!();
                   },
-                  tooltip: 'Lihat di Peta',
+                  tooltip: 'Lihat di Peta'.tr(context),
                 ),
             ],
           ),
@@ -212,8 +218,8 @@ class MissionActiveCard extends StatelessWidget {
                 elevation: 0,
               ),
               icon: const Icon(Icons.check_circle, size: 18),
-              label: const Text(
-                'SELESAIKAN MISI',
+              label: Text(
+                'SELESAIKAN MISI'.tr(context),
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               onPressed: onComplete,

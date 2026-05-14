@@ -50,14 +50,14 @@ class _VolunteerRegistrationScreenState
     List<String> missing = [];
 
     if (user.nikVerificationStatus != 'approved') {
-      missing.add('Verifikasi NIK (KYC)');
+      missing.add('Verifikasi NIK (KYC)'.tr(context));
     }
-    if (user.name.trim().isEmpty) missing.add('Nama Lengkap');
+    if (user.name.trim().isEmpty) missing.add('Nama Lengkap'.tr(context));
     if (user.birthDate == null || user.birthDate!.isEmpty) {
-      missing.add('Tanggal Lahir');
+      missing.add('Tanggal Lahir'.tr(context));
     }
     if (user.phoneNumber == null || user.phoneNumber!.isEmpty) {
-      missing.add('Nomor Telepon');
+      missing.add('Nomor Telepon'.tr(context));
     }
 
     if (missing.isNotEmpty) {
@@ -67,9 +67,7 @@ class _VolunteerRegistrationScreenState
         builder: (ctx) => AlertDialog(
           title: Text('Persyaratan Belum Lengkap'.tr(context)),
           content: Text(
-            'Untuk mendaftar sebagai relawan, lengkapi data profil berikut:\n\n'
-                    .tr(context) +
-                missing.map((e) => '• $e').join('\n'),
+            '${'Untuk mendaftar sebagai relawan, lengkapi data profil berikut:\n\n'.tr(context)}${missing.map((e) => '• $e').join('\n')}',
           ),
           actions: [
             TextButton(
@@ -174,7 +172,7 @@ class _VolunteerRegistrationScreenState
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal mengirim pendaftaran: $e'),
+            content: Text('${'Gagal mengirim pendaftaran: '.tr(context)}$e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -241,7 +239,7 @@ class _VolunteerRegistrationScreenState
                 children: [
                   Text(
                     isUploaded
-                        ? 'Sertifikat ${'Tersimpan'.tr(context)}'
+                        ? '${'Sertifikat '.tr(context)}${'Tersimpan'.tr(context)}'
                         : '${'Unggah Sertifikat'.tr(context)} $title',
                     style: TextStyle(
                       color: isUploaded
@@ -331,7 +329,7 @@ class _VolunteerRegistrationScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CheckboxListTile(
-                      title: Text(spec, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      title: Text(spec.tr(context), style: const TextStyle(fontWeight: FontWeight.w600)),
                       value: _selectedSpecs[spec],
                       activeColor: Colors.orange,
                       contentPadding: EdgeInsets.zero,

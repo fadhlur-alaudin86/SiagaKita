@@ -29,39 +29,39 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   // ─── Location ────────────────────────────────────────────────────────────────
   LatLng? _currentLatLng;
-  String _addressLabel = 'Memuat lokasi...';
+  String _addressLabel = '';
   bool _isLoadingLocation = true;
 
   // ─── Category ────────────────────────────────────────────────────────────────
   final ScrollController _categoryScrollCtrl = ScrollController();
   int _selectedCategoryIndex = -1;
-  final List<Map<String, dynamic>> _categories = [
+  List<Map<String, dynamic>> get _categories => [
     {
-      'title': 'Kebakaran',
+      'title': 'Kebakaran'.tr(context),
       'icon': Icons.local_fire_department,
       'color': Colors.orange,
       'value': 'fire',
     },
     {
-      'title': 'Kecelakaan',
+      'title': 'Kecelakaan'.tr(context),
       'icon': Icons.car_crash,
       'color': Colors.red,
       'value': 'accident',
     },
     {
-      'title': 'Bencana Alam',
+      'title': 'Bencana Alam'.tr(context),
       'icon': Icons.water_damage,
       'color': Colors.blue,
       'value': 'disaster',
     },
     {
-      'title': 'Kriminalitas',
+      'title': 'Kriminalitas'.tr(context),
       'icon': Icons.warning_rounded,
       'color': Colors.purple,
       'value': 'crime',
     },
     {
-      'title': 'Medis',
+      'title': 'Medis'.tr(context),
       'icon': Icons.medical_services,
       'color': Colors.green,
       'value': 'medical',
@@ -88,6 +88,7 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   void initState() {
     super.initState();
+    _addressLabel = 'Memuat lokasi...'.tr(context);
     _loadLocation();
   }
 
@@ -111,7 +112,7 @@ class _ReportScreenState extends State<ReportScreen> {
       await _reverseGeocode(pos.latitude, pos.longitude);
     } else {
       setState(() {
-        _addressLabel = 'Lokasi tidak tersedia';
+        _addressLabel = 'Lokasi tidak tersedia'.tr(context);
         _isLoadingLocation = false;
       });
     }
@@ -145,7 +146,7 @@ class _ReportScreenState extends State<ReportScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _addressLabel = 'Gagal memuat alamat';
+          _addressLabel = 'Gagal memuat alamat'.tr(context);
           _isLoadingLocation = false;
         });
       }
@@ -161,9 +162,11 @@ class _ReportScreenState extends State<ReportScreen> {
     if (!status.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Izin kamera ditolak. Buka pengaturan untuk mengizinkan.',
+              'Izin kamera ditolak. Buka pengaturan untuk mengizinkan.'.tr(
+                context,
+              ),
             ),
           ),
         );
@@ -176,7 +179,7 @@ class _ReportScreenState extends State<ReportScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => CustomCameraView(
-          title: 'Ambil Foto Keadaan Darurat',
+          title: 'Ambil Foto Keadaan Darurat'.tr(context),
           lensDirection: CameraLensDirection.back,
           showOverlay: false,
           onPictureTaken: (XFile file) async {
@@ -210,9 +213,9 @@ class _ReportScreenState extends State<ReportScreen> {
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Izin mikrofon ditolak.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Izin mikrofon ditolak.'.tr(context))),
+        );
       }
       return;
     }
@@ -278,16 +281,16 @@ class _ReportScreenState extends State<ReportScreen> {
   void _showConfirmSheet() {
     if (_selectedCategoryIndex < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih kategori darurat terlebih dahulu.'),
+        SnackBar(
+          content: Text('Pilih kategori darurat terlebih dahulu.'.tr(context)),
         ),
       );
       return;
     }
     if (_photos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Foto bukti wajib dilampirkan.'),
+        SnackBar(
+          content: Text('Foto bukti wajib dilampirkan.'.tr(context)),
           backgroundColor: Colors.orange,
         ),
       );
@@ -321,7 +324,7 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Konfirmasi Laporan',
+              'Konfirmasi Laporan'.tr(context),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -331,28 +334,28 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 16),
             _confirmRow(
               Icons.category_outlined,
-              'Kategori',
+              'Kategori'.tr(context),
               cat['title'].toString(),
               colors,
             ),
             _confirmRow(
               Icons.location_on_outlined,
-              'Lokasi',
+              'Lokasi'.tr(context),
               _addressLabel,
               colors,
             ),
             if (_photos.isNotEmpty)
               _confirmRow(
                 Icons.image_outlined,
-                'Foto',
-                '${_photos.length} foto terlampir',
+                'Foto'.tr(context),
+                '${_photos.length} ${'foto terlampir'.tr(context)}',
                 colors,
               ),
             if (_audioFile != null)
               _confirmRow(
                 Icons.mic_outlined,
-                'Audio',
-                'Rekaman ${_formatDuration(_recordSeconds)}',
+                'Audio'.tr(context),
+                '${'Rekaman'.tr(context)} ${_formatDuration(_recordSeconds)}',
                 colors,
               ),
             const SizedBox(height: 24),
@@ -367,7 +370,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text('Batal'),
+                    child: Text('Batal'.tr(context)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -385,8 +388,8 @@ class _ReportScreenState extends State<ReportScreen> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'Kirim Sekarang',
+                    child: Text(
+                      'Kirim Sekarang'.tr(context),
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -475,11 +478,9 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Map
           _buildMapCard(colors, primaryColor, isDark),
           const SizedBox(height: 24),
 
-          // 2. Kategori
           Text(
             'Kategori Darurat'.tr(context),
             style: TextStyle(
@@ -492,7 +493,6 @@ class _ReportScreenState extends State<ReportScreen> {
           _buildCategoryRow(colors, primaryColor, isDark),
           const SizedBox(height: 24),
 
-          // 3. Foto
           Text(
             'Lampiran Foto & Audio'.tr(context),
             style: TextStyle(
@@ -505,7 +505,6 @@ class _ReportScreenState extends State<ReportScreen> {
           _buildPhotoSection(colors, isDark),
           const SizedBox(height: 16),
 
-          // 4. Audio
           _buildAudioSection(colors, isDark),
           const SizedBox(height: 24),
 
@@ -691,8 +690,8 @@ class _ReportScreenState extends State<ReportScreen> {
                     children: [
                       Text(
                         _isLoadingLocation
-                            ? 'Mendeteksi lokasi...'
-                            : 'Lokasi Otomatis Ditemukan',
+                            ? 'Mendeteksi lokasi...'.tr(context)
+                            : 'Lokasi Otomatis Ditemukan'.tr(context),
                         style: TextStyle(
                           color: colors.onSurface,
                           fontWeight: FontWeight.bold,
@@ -713,7 +712,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   onTap: () {
                     setState(() {
                       _isLoadingLocation = true;
-                      _addressLabel = 'Memuat ulang...';
+                      _addressLabel = 'Memuat ulang...'.tr(context);
                     });
                     _loadLocation();
                   },
@@ -758,9 +757,7 @@ class _ReportScreenState extends State<ReportScreen> {
           thickness: 6,
           radius: const Radius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.only(
-              bottom: 4,
-            ),
+            padding: const EdgeInsets.only(bottom: 4),
             child: ListView.builder(
               controller: _categoryScrollCtrl,
               scrollDirection: Axis.horizontal,
@@ -990,7 +987,9 @@ class _ReportScreenState extends State<ReportScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _isRecording ? 'Merekam...' : 'Tahan untuk rekam suara',
+                              _isRecording
+                                  ? 'Merekam...'
+                                  : 'Tahan untuk rekam suara',
                               style: TextStyle(
                                 color: _isRecording
                                     ? Colors.red
@@ -1003,7 +1002,9 @@ class _ReportScreenState extends State<ReportScreen> {
                               Text(
                                 '(Opsional, maks 1 menit)',
                                 style: TextStyle(
-                                  color: colors.onSurface.withValues(alpha: 0.5),
+                                  color: colors.onSurface.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   fontSize: 12,
                                 ),
                               ),

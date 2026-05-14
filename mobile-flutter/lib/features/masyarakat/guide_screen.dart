@@ -60,57 +60,16 @@ class _GuideScreenState extends State<GuideScreen> {
   ];
 
   List<Map<String, dynamic>> _localizedGuides(BuildContext context) {
-    if (Localizations.localeOf(context).languageCode !=
-        AppLocalization.localeEn.languageCode) {
-      return _guides;
-    }
-
-    return [
-      {
-        'id': 1,
-        'title': 'Severe Bleeding',
-        'type': 'MEDICAL',
-        'steps': [
-          'Apply firm pressure on the wound with a clean cloth.',
-          'Raise the injured area above heart level if possible.',
-          'Do not remove the first cloth if soaked; add another on top.',
-          'Seek emergency help immediately.',
-        ],
-      },
-      {
-        'id': 2,
-        'title': 'Burn Injury',
-        'type': 'MEDICAL',
-        'steps': [
-          'Cool the burn under running water (not ice) for 15-20 minutes.',
-          'Remove clothing or jewelry around the area before swelling.',
-          'Cover loosely with plastic wrap or a clean cloth.',
-          'Do not pop blisters.',
-        ],
-      },
-      {
-        'id': 3,
-        'title': 'Choking (Adult)',
-        'type': 'MEDICAL',
-        'steps': [
-          'Stand behind the victim and wrap your arms around the waist.',
-          'Make a fist slightly above the navel.',
-          'Grab your fist with the other hand and thrust inward and upward (Heimlich maneuver).',
-          'Repeat until the object is expelled.',
-        ],
-      },
-      {
-        'id': 4,
-        'title': 'Earthquake',
-        'type': 'DISASTER',
-        'steps': [
-          'Drop, Cover, and Hold On.',
-          'Stay away from windows, glass, and heavy furniture.',
-          'If outdoors, move to an open area away from buildings, trees, and power lines.',
-          'Do not use elevators during evacuation.',
-        ],
-      },
-    ];
+    return _guides.map((g) {
+      return {
+        ...g,
+        'title': g['title'].toString().tr(context),
+        'type': g['type'].toString().tr(context),
+        'steps': (g['steps'] as List<String>)
+            .map((s) => s.tr(context))
+            .toList(),
+      };
+    }).toList();
   }
 
   @override

@@ -362,8 +362,10 @@ class _HomeScreenState extends State<HomeScreen>
     if (widget.isSOSBanned) {
       HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Akun Anda diblokir dari fitur SOS. Hubungi admin.'),
+        SnackBar(
+          content: Text(
+            'Akun Anda diblokir dari fitur SOS. Hubungi admin.'.tr(context),
+          ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 4),
         ),
@@ -876,7 +878,9 @@ class _HomeScreenState extends State<HomeScreen>
                         onTap: isSOSActive ? _onCancelTap : _onSOSTap,
                         isDisabled: missionLocked,
                         disabledReason: missionLocked
-                            ? 'Selesaikan/batalkan misi yang sedang aktif'
+                            ? 'Selesaikan/batalkan misi yang sedang aktif'.tr(
+                                context,
+                              )
                             : null,
                       );
                     },

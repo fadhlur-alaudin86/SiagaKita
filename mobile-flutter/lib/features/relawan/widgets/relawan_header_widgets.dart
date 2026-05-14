@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localization.dart';
 import '../../../core/models/user_model.dart';
 
 class HeaderProfile extends StatelessWidget {
@@ -38,7 +39,7 @@ class HeaderProfile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Halo, ${user.name.split(' ').first}',
+                  'Halo, '.tr(context) + user.name.split(' ').first,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -121,7 +122,7 @@ class XPBar extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Progress Level',
+                'Progress Level'.tr(context),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: primaryText,
@@ -131,7 +132,7 @@ class XPBar extends StatelessWidget {
               const Spacer(),
               Text(
                 nextThreshold == 9999
-                    ? 'Level Maksimal'
+                    ? 'Level Maksimal'.tr(context)
                     : '$xp / $nextThreshold XP',
                 style: TextStyle(color: secondaryText, fontSize: 12),
               ),
@@ -150,8 +151,8 @@ class XPBar extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             nextThreshold == 9999
-                ? 'Kamu sudah mencapai level tertinggi!'
-                : 'Selesaikan ${nextThreshold - xp} XP lagi untuk naik ke level berikutnya',
+                ? 'Kamu sudah mencapai level tertinggi!'.tr(context)
+                : '${'Selesaikan '.tr(context)}${nextThreshold - xp}${' XP lagi untuk naik ke level berikutnya'.tr(context)}',
             style: TextStyle(color: secondaryText, fontSize: 11),
           ),
         ],

@@ -6,7 +6,11 @@ import '../../core/services/incident_service.dart';
 class ReportHistoryScreen extends StatefulWidget {
   final String accessToken;
   final bool isNested;
-  const ReportHistoryScreen({super.key, required this.accessToken, this.isNested = false});
+  const ReportHistoryScreen({
+    super.key,
+    required this.accessToken,
+    this.isNested = false,
+  });
 
   @override
   State<ReportHistoryScreen> createState() => _ReportHistoryScreenState();
@@ -53,7 +57,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorReports = 'Gagal memuat riwayat laporan.';
+          _errorReports = 'Gagal memuat riwayat laporan.'.tr(context);
           _isLoadingReports = false;
         });
       }
@@ -71,11 +75,14 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       );
       if (mounted) {
         setState(() {
-          _sosHistory = history.where((s) => 
-            s.status != 'grace_period' && 
-            s.status != 'broadcasting' && 
-            s.status != 'handled'
-          ).toList();
+          _sosHistory = history
+              .where(
+                (s) =>
+                    s.status != 'grace_period' &&
+                    s.status != 'broadcasting' &&
+                    s.status != 'handled',
+              )
+              .toList();
           _isLoadingSOS = false;
         });
       }
@@ -89,7 +96,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorSOS = 'Gagal memuat riwayat SOS.';
+          _errorSOS = 'Gagal memuat riwayat SOS.'.tr(context);
           _isLoadingSOS = false;
         });
       }
@@ -166,9 +173,9 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
               labelColor: colors.primary,
               unselectedLabelColor: colors.onSurface.withValues(alpha: 0.5),
               indicatorColor: colors.primary,
-              tabs: const [
-                Tab(text: 'Laporan'),
-                Tab(text: 'SOS Darurat'),
+              tabs: <Widget>[
+                Tab(text: 'Laporan'.tr(context)),
+                Tab(text: 'SOS Darurat'.tr(context)),
               ],
             ),
             Expanded(child: body),
@@ -196,9 +203,9 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             labelColor: colors.primary,
             unselectedLabelColor: colors.onSurface.withValues(alpha: 0.5),
             indicatorColor: colors.primary,
-            tabs: const [
-              Tab(text: 'Laporan'),
-              Tab(text: 'SOS Darurat'),
+            tabs: <Widget>[
+              Tab(text: 'Laporan'.tr(context)),
+              Tab(text: 'SOS Darurat'.tr(context)),
             ],
           ),
           actions: [
@@ -258,7 +265,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Belum ada laporan',
+              'Belum ada laporan'.tr(context),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -267,7 +274,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Laporan yang Anda kirim akan muncul di sini.',
+              'Laporan yang Anda kirim akan muncul di sini.'.tr(context),
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.3),
                 fontSize: 13,
@@ -329,7 +336,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Belum ada riwayat SOS',
+              'Belum ada riwayat SOS'.tr(context),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -457,10 +464,13 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                   _chip(report.urgencyLabel, urgencyColor),
                 if (report.urgencyLevel != null) const SizedBox(width: 8),
                 if (report.photoPaths.isNotEmpty)
-                  _chip('${report.photoPaths.length} foto', Colors.blue),
+                  _chip(
+                    '${report.photoPaths.length} ${'foto'.tr(context)}',
+                    Colors.blue,
+                  ),
                 if (report.audioPath != null) ...[
                   const SizedBox(width: 8),
-                  _chip('audio', Colors.purple),
+                  _chip('audio'.tr(context), Colors.purple),
                 ],
                 const Spacer(),
                 if (report.status == 'sent' || report.status == 'pending')
@@ -475,7 +485,13 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: Text('Batalkan'.tr(context), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Batalkan'.tr(context),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 if (report.status == 'failed')
@@ -490,7 +506,13 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: Text('Kirim Ulang'.tr(context), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Kirim Ulang'.tr(context),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -506,18 +528,27 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Batalkan Laporan?'.tr(context)),
-        content: Text('Apakah Anda yakin ingin membatalkan laporan ini? Laporan yang dibatalkan tidak dapat dikembalikan.'.tr(context)),
+        content: Text(
+          'Apakah Anda yakin ingin membatalkan laporan ini? Laporan yang dibatalkan tidak dapat dikembalikan.'
+              .tr(context),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Tidak'.tr(context), style: const TextStyle(color: Colors.grey)),
+            child: Text(
+              'Tidak'.tr(context),
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               _cancelReport(reportId);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             child: Text('Ya, Batalkan'.tr(context)),
           ),
         ],
@@ -532,18 +563,27 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
         barrierDismissible: false,
         builder: (_) => const Center(child: CircularProgressIndicator()),
       );
-      await ReportService.cancelReport(accessToken: widget.accessToken, reportId: reportId);
+      await ReportService.cancelReport(
+        accessToken: widget.accessToken,
+        reportId: reportId,
+      );
       if (!mounted) return;
       Navigator.pop(context); // close loading
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Laporan berhasil dibatalkan.'.tr(context)), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text('Laporan berhasil dibatalkan.'.tr(context)),
+          backgroundColor: Colors.green,
+        ),
       );
       _loadReports();
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // close loading
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal membatalkan laporan: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Gagal membatalkan laporan: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -555,18 +595,27 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
         barrierDismissible: false,
         builder: (_) => const Center(child: CircularProgressIndicator()),
       );
-      await ReportService.resendFailedReport(accessToken: widget.accessToken, failedReport: report);
+      await ReportService.resendFailedReport(
+        accessToken: widget.accessToken,
+        failedReport: report,
+      );
       if (!mounted) return;
       Navigator.pop(context); // close loading
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Laporan berhasil dikirim ulang.'.tr(context)), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text('Laporan berhasil dikirim ulang.'.tr(context)),
+          backgroundColor: Colors.green,
+        ),
       );
       _loadReports();
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // close loading
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengirim ulang: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Gagal mengirim ulang: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -576,7 +625,9 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     final isFalseAlarm = sos.status == 'false_alarm';
     final isCanceled = sos.status == 'canceled';
     final statusColor = isFalseAlarm || isCanceled ? Colors.red : Colors.green;
-    final statusLabel = isFalseAlarm ? 'Palsu' : (isCanceled ? 'Batal' : 'Selesai');
+    final statusLabel = isFalseAlarm
+        ? 'Palsu'.tr(context)
+        : (isCanceled ? 'Batal'.tr(context) : 'Selesai'.tr(context));
 
     // Asumsikan darurat selalu tinggi
     const urgencyColor = Colors.red;
@@ -680,12 +731,12 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   }
 
   String _incidentLabel(String type) {
-    const m = {
-      'fire': 'Kebakaran',
-      'accident': 'Kecelakaan',
-      'disaster': 'Bencana Alam',
-      'crime': 'Kriminalitas',
-      'medical': 'Medis',
+    final m = {
+      'fire': 'Kebakaran'.tr(context),
+      'accident': 'Kecelakaan'.tr(context),
+      'disaster': 'Bencana Alam'.tr(context),
+      'crime': 'Kriminalitas'.tr(context),
+      'medical': 'Medis'.tr(context),
     };
     return m[type] ?? type;
   }

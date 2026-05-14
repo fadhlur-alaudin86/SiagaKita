@@ -216,22 +216,22 @@ class _MapScreenState extends State<MapScreen>
         user.role == UserRole.relawan || user.volunteerStatus == 'approved';
     final isOnDuty = user.isAvailableForMission;
 
-    if (!isOnline) return '📵 Offline - Peta mungkin tidak tersedia';
+    if (!isOnline) return '📵 Offline - Peta mungkin tidak tersedia'.tr(context);
     if (isRelawan && isOnDuty && _nearbySOS.isNotEmpty) {
-      return '🟢 ON DUTY - Memantau ${_nearbySOS.length} SOS dalam 5KM';
+      return '${'DALAM TUGAS - Memantau'.tr(context)} ${_nearbySOS.length} ${'SOS dalam 5KM'.tr(context)}';
     }
     if (isRelawan && isOnDuty) {
-      return '🟢 ON DUTY - Tidak ada SOS aktif dalam 5KM';
+      return 'DALAM TUGAS - Tidak ada SOS aktif dalam 5KM'.tr(context);
     }
     if (isRelawan && !isOnDuty) {
-      return '⭕ OFF DUTY - Aktifkan di tab Operasi';
+      return 'DI LUAR TUGAS - Aktifkan di tab Operasi'.tr(context);
     }
-    if (_accuracy > 50) return '⚠️ Akurasi rendah: ±${_accuracy.round()}m';
+    if (_accuracy > 50) return '${'⚠️ Akurasi rendah: ±'.tr(context)}${_accuracy.round()}m';
     if (_addressLabel != null) return _addressLabel!;
     if (_userLocation != null) {
       return '${_userLocation!.latitude.toStringAsFixed(5)}, ${_userLocation!.longitude.toStringAsFixed(5)}';
     }
-    return '📡 Mendeteksi lokasi...';
+    return 'Mendeteksi lokasi...';
   }
 
   Color _buildStatusColor(UserModel user) {
@@ -734,7 +734,7 @@ class _MapScreenState extends State<MapScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${inc.typeEmoji} ${inc.typeLabel} - ${inc.distanceLabel} - Buka tab Operasi untuk terima misi',
+          '${inc.typeEmoji} ${inc.typeLabel.tr(context)} - ${inc.distanceLabel.tr(context)} - ${'Buka tab Operasi untuk terima misi'.tr(context)}',
         ),
         action: SnackBarAction(label: 'OK', onPressed: () {}),
         duration: const Duration(seconds: 4),

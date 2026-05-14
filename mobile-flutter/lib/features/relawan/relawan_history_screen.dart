@@ -78,8 +78,8 @@ class _RelawanHistoryScreenState extends State<RelawanHistoryScreen> {
     if (_missionHistory.isEmpty) {
       return _emptyPlaceholder(
         Icons.history,
-        'Belum ada riwayat misi',
-        'Riwayat SOS yang kamu tangani akan muncul di sini',
+        'Belum ada riwayat misi'.tr(context),
+        'Riwayat SOS yang kamu tangani akan muncul di sini'.tr(context),
         isDark,
       );
     }

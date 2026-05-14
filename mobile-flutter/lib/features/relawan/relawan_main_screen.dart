@@ -9,6 +9,7 @@ import '../../core/services/location_service.dart';
 import '../../core/services/location_controller.dart';
 import '../../core/services/mobile_ws_service.dart';
 import '../../core/constants/api_config.dart';
+import '../../core/localization/app_localization.dart';
 import 'relawan_history_screen.dart';
 
 import 'package:latlong2/latlong.dart';
@@ -52,7 +53,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     _loadHistory();
     _initLocation();
     _checkActiveMission();
-    
+
     // WebSocket real-time
     _ws = MobileWsService(token: widget.accessToken);
     _ws!.connect();
@@ -67,7 +68,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
       case MobileWsEvent.reporterLocationUpdate:
         // Update posisi korban jika sedang dalam misi
         final p = msg.payload;
-        if (_activeMission != null && p['sos_id'] == _activeMission!.incidentId) {
+        if (_activeMission != null &&
+            p['sos_id'] == _activeMission!.incidentId) {
           // Note: UI update for victim position on map handled via shared state or passing data
           // For now, we can update _activeMission or a separate state if needed.
         }
@@ -173,7 +175,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Misi diterima! Segera menuju ${inc.addressDetail ?? 'lokasi korban'}.',
+              '${'Misi diterima! Segera menuju '.tr(context)}${inc.addressDetail ?? 'lokasi korban'.tr(context)}.',
             ),
             backgroundColor: Colors.green,
           ),
@@ -310,8 +312,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     if (photoFile == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal mengambil foto bukti'),
+          SnackBar(
+            content: Text('Gagal mengambil foto bukti'.tr(context)),
             backgroundColor: Colors.red,
           ),
         );
@@ -333,9 +335,11 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
         _missionPollTimer?.cancel();
         _loadHistory();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Bukti berhasil dikirim. Menunggu konfirmasi instansi.',
+              'Bukti berhasil dikirim. Menunggu konfirmasi instansi.'.tr(
+                context,
+              ),
             ),
             backgroundColor: Colors.green,
           ),
@@ -354,14 +358,15 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Selesaikan Misi?'),
-        content: const Text(
-          'Kamera akan mengambil foto sebagai bukti penyelesaian misi. Lanjutkan?',
+        title: Text('Selesaikan Misi?'.tr(context)),
+        content: Text(
+          'Kamera akan mengambil foto sebagai bukti penyelesaian misi. Lanjutkan?'
+              .tr(context),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: Text('Batal'.tr(context)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -371,8 +376,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
               Navigator.pop(context);
               _completeMission();
             },
-            child: const Text(
-              'Ya, Selesaikan',
+            child: Text(
+              'Ya, Selesaikan'.tr(context),
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -459,7 +464,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             const Divider(height: 32),
             _detailRow(
               Icons.location_on_outlined,
-              'Koordinat',
+              'Koordinat'.tr(context),
               '${inc.latitude.toStringAsFixed(5)}, ${inc.longitude.toStringAsFixed(5)}',
               primaryText,
               secondaryText,
@@ -477,22 +482,24 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             if (inc.addressDetail != null)
               _detailRow(
                 Icons.home_outlined,
-                'Lokasi',
+                'Lokasi'.tr(context),
                 inc.addressDetail!,
                 primaryText,
                 secondaryText,
               ),
             _detailRow(
               Icons.timer_outlined,
-              'Dilaporkan',
+              'Dilaporkan'.tr(context),
               inc.timeAgo,
               primaryText,
               secondaryText,
             ),
             _detailRow(
               Icons.shield_outlined,
-              'Kepercayaan',
-              inc.trustLabel == 'verified' ? '✓ Terverifikasi' : 'Standard',
+              'Kepercayaan'.tr(context),
+              inc.trustLabel == 'verified'
+                  ? '✓ Terverifikasi'.tr(context)
+                  : 'Standard'.tr(context),
               primaryText,
               secondaryText,
             ),
@@ -500,7 +507,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             if (inc.photoPaths.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Foto Bukti',
+                'Foto Bukti'.tr(context),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: primaryText,
@@ -555,9 +562,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   children: [
                     const Icon(Icons.audiotrack, color: Colors.orange),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Rekaman Audio Darurat Tersedia',
+                        'Rekaman Audio Darurat Tersedia'.tr(context),
                         style: TextStyle(
                           color: Colors.orange,
                           fontWeight: FontWeight.bold,
@@ -583,8 +590,8 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.check_circle_outline),
-                label: const Text(
-                  'TERIMA MISI',
+                label: Text(
+                  'TERIMA MISI'.tr(context),
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                 ),
                 onPressed: () {
@@ -634,7 +641,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             IconButton(
               icon: const Icon(Icons.map, color: Color(0xFF22C55E)),
               onPressed: onTapMap,
-              tooltip: 'Lihat di Peta',
+              tooltip: 'Lihat di Peta'.tr(context),
             ),
         ],
       ),
@@ -699,7 +706,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   Row(
                     children: [
                       Text(
-                        '📡 RADAR SOS AKTIF',
+                        'RADAR SOS AKTIF'.tr(context),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
@@ -710,7 +717,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                       const Spacer(),
                       if (isOnDuty && !_loadingNearby)
                         Text(
-                          '${_nearbySOS.length} insiden',
+                          '${_nearbySOS.length} ${'insiden'.tr(context)}',
                           style: TextStyle(
                             color: _nearbySOS.isEmpty
                                 ? secondaryText
@@ -732,8 +739,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   if (!isOnDuty)
                     _emptyPlaceholder(
                       Icons.radar_outlined,
-                      'Aktifkan ON DUTY',
-                      'Untuk melihat panggilan darurat di sekitarmu',
+                      'Aktifkan ON DUTY'.tr(context),
+                      'Untuk melihat panggilan darurat di sekitarmu'.tr(
+                        context,
+                      ),
                       isDark,
                     )
                   else if (_loadingNearby && _nearbySOS.isEmpty)
@@ -746,8 +755,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   else if (_nearbySOS.isEmpty)
                     _emptyPlaceholder(
                       Icons.check_circle_outline,
-                      'Tidak ada SOS aktif',
-                      'Belum ada panggilan darurat dalam radius 5 km',
+                      'Tidak ada SOS aktif'.tr(context),
+                      'Belum ada panggilan darurat dalam radius 5 km'.tr(
+                        context,
+                      ),
                       isDark,
                     )
                   else
@@ -768,7 +779,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   Row(
                     children: [
                       Text(
-                        '🏁 RIWAYAT MISI',
+                        'RIWAYAT MISI'.tr(context),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
@@ -790,8 +801,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                   else if (_missionHistory.isEmpty)
                     _emptyPlaceholder(
                       Icons.history,
-                      'Belum ada riwayat misi',
-                      'Riwayat SOS yang kamu tangani akan muncul di sini',
+                      'Belum ada riwayat misi'.tr(context),
+                      'Riwayat SOS yang kamu tangani akan muncul di sini'.tr(
+                        context,
+                      ),
                       isDark,
                     )
                   else
@@ -818,7 +831,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                           ),
                         );
                       },
-                      child: const Text('Lihat semua riwayat →'),
+                      child: Text('Lihat semua riwayat →'.tr(context)),
                     ),
 
                   const SizedBox(height: 40),

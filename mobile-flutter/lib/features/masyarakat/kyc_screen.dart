@@ -132,7 +132,7 @@ class _KycScreenState extends State<KycScreen> {
           _submitted = true;
           _kycStatus = 'pending';
           _kycMessage =
-              'Pengajuan sedang diproses oleh admin (1-3 hari kerja).';
+              'Pengajuan sedang diproses oleh admin (1-3 hari kerja).'.tr(context);
         });
       }
     } catch (e) {
@@ -257,7 +257,7 @@ class _KycScreenState extends State<KycScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Status: ${config.label}'.tr(context),
+                  'Status: '.tr(context) + config.label.tr(context),
                   style: TextStyle(
                     color: config.color,
                     fontWeight: FontWeight.bold,
@@ -309,8 +309,8 @@ class _KycScreenState extends State<KycScreen> {
           ),
           SizedBox(height: 8.h(context)),
           Text(
-            'Verifikasi NIK dan wajah meningkatkan kepercayaan responden terhadap laporan darurat Anda '
-            'dan akan digunakan sebagai foto profil resmi Anda di aplikasi.',
+            'Verifikasi NIK dan wajah meningkatkan kepercayaan responden terhadap laporan darurat Anda dan akan digunakan sebagai foto profil resmi Anda di aplikasi.'
+                .tr(context),
             style: TextStyle(
               color: textColor.withValues(alpha: 0.7),
               fontSize: 13.sp(context),
@@ -320,7 +320,7 @@ class _KycScreenState extends State<KycScreen> {
           Text(
             '• Data diproses dalam 1-3 hari kerja\n'
             '• Wajah harus terlihat jelas tanpa aksesoris penutup\n'
-            '• NIK terenkripsi dan aman',
+            '• NIK terenkripsi dan aman'.tr(context),
             style: TextStyle(
               color: textColor.withValues(alpha: 0.6),
               fontSize: 12.sp(context),
@@ -361,13 +361,13 @@ class _KycScreenState extends State<KycScreen> {
             ],
             style: TextStyle(color: textColor),
             decoration: _inputDecoration(
-              'Masukkan 16 digit NIK KTP',
+              'Masukkan 16 digit NIK KTP'.tr(context),
               isDark,
               context,
             ),
             validator: (v) {
-              if (v == null || v.isEmpty) return 'NIK wajib diisi';
-              if (v.length != 16) return 'NIK harus tepat 16 digit';
+              if (v == null || v.isEmpty) return 'NIK wajib diisi'.tr(context);
+              if (v.length != 16) return 'NIK harus tepat 16 digit'.tr(context);
               return null;
             },
           ),
@@ -388,13 +388,13 @@ class _KycScreenState extends State<KycScreen> {
             textCapitalization: TextCapitalization.words,
             style: TextStyle(color: textColor, fontSize: 14.sp(context)),
             decoration: _inputDecoration(
-              'Masukkan nama sesuai KTP',
+              'Masukkan nama sesuai KTP'.tr(context),
               isDark,
               context,
             ),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Nama wajib diisi';
-              if (v.trim().length < 3) return 'Nama terlalu pendek';
+              if (v == null || v.trim().isEmpty) return 'Nama wajib diisi'.tr(context);
+              if (v.trim().length < 3) return 'Nama terlalu pendek'.tr(context);
               return null;
             },
           ),
@@ -549,7 +549,7 @@ class _KycScreenState extends State<KycScreen> {
                   onPressed: onCamera,
                   icon: Icon(Icons.camera_alt_outlined, size: 16.w(context)),
                   label: Text(
-                    photo == null ? 'Kamera' : 'Ulang',
+                    photo == null ? 'Kamera'.tr(context) : 'Ulang'.tr(context),
                     style: TextStyle(fontSize: 12.sp(context)),
                   ),
                   style: ElevatedButton.styleFrom(
