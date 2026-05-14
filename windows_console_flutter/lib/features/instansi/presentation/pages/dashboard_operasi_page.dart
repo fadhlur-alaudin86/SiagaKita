@@ -107,7 +107,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                     color: Colors.blueAccent,
                   ),
                   _KpiCard(
-                    label: 'FALSE ALARM RATE',
+                    label: 'TINGKAT ALARM PALSU',
                     value: '${_stats.falseAlarmRate.toStringAsFixed(1)}%',
                     icon: Icons.warning_amber_rounded,
                     color: Colors.orangeAccent,
@@ -197,7 +197,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                                       ),
                                     ),
                                     title: Text(
-                                      inc.typeLabel,
+                                      inc.typeLabelId,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -230,15 +230,22 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.pie_chart, color: Colors.orangeAccent, size: 18),
+                            const Icon(
+                              Icons.pie_chart,
+                              color: Colors.orangeAccent,
+                              size: 18,
+                            ),
                             const SizedBox(width: 8),
-                            Text('Distribusi Tipe SOS', style: textTheme.titleMedium),
+                            Text(
+                              'Distribusi Tipe SOS',
+                              style: textTheme.titleMedium,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 24),
                         _stats.byType.isEmpty
                             ? SizedBox(
-                                height: 220,
+                                height: 400,
                                 child: Center(
                                   child: Text(
                                     'Belum ada data statistik',
@@ -246,20 +253,20 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                                   ),
                                 ),
                               )
-                            : AspectRatio(
-                                aspectRatio: 1,
+                            : SizedBox(
+                                height: 400,
                                 child: PieChart(
                                   PieChartData(
                                     sectionsSpace: 2,
-                                    centerSpaceRadius: 0,
+                                    centerSpaceRadius: 40,
                                     startDegreeOffset: -90,
                                     sections: _buildSections(),
                                     pieTouchData: PieTouchData(
                                       touchCallback: (event, response) {},
                                     ),
                                   ),
-                                  swapAnimationDuration: const Duration(milliseconds: 600),
-                                  swapAnimationCurve: Curves.easeInOutCubic,
+                                  duration: const Duration(milliseconds: 600),
+                                  curve: Curves.easeInOutCubic,
                                 ),
                               ),
                         const SizedBox(height: 20),
@@ -311,16 +318,14 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
         value: e.value.value.toDouble(),
         color: color,
         title: '${pct.toStringAsFixed(0)}%',
-        radius: 110,
+        radius: 140,
         titleStyle: TextStyle(
           fontSize: pct < 8 ? 0 : 13, // sembunyi label kalau irisan kecil
           color: Colors.white,
           fontWeight: FontWeight.bold,
           shadows: const [Shadow(color: Colors.black38, blurRadius: 4)],
         ),
-        badgeWidget: pct < 8
-            ? null
-            : null, // bisa pakai badge kalau mau
+        badgeWidget: pct < 8 ? null : null, // bisa pakai badge kalau mau
       );
     }).toList();
   }

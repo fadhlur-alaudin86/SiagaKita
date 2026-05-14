@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../core/services/ws_service.dart';
 import 'pages/dashboard_operasi_page.dart';
@@ -33,6 +34,7 @@ class InstansiShell extends StatefulWidget {
 
 class _InstansiShellState extends State<InstansiShell> {
   InstansiMenu _activeMenu = InstansiMenu.dashboard;
+  LatLng? _mapTarget;
 
   static const Map<InstansiMenu, String> _titles = {
     InstansiMenu.dashboard: 'Dashboard Operasi',
@@ -134,16 +136,34 @@ class _InstansiShellState extends State<InstansiShell> {
     });
   }
 
+  void _navigateToMap(double lat, double lng) {
+    setState(() {
+      _mapTarget = LatLng(lat, lng);
+      _activeMenu = InstansiMenu.petaOperasional;
+    });
+  }
+
   Widget _resolvePage() {
     switch (_activeMenu) {
       case InstansiMenu.dashboard:
         return DashboardOperasiPage(token: widget.token, ws: widget.ws);
       case InstansiMenu.sosAktif:
-        return SosAktifPage(token: widget.token, ws: widget.ws);
+        return SosAktifPage(
+          token: widget.token,
+          ws: widget.ws,
+          onOpenMap: _navigateToMap,
+        );
       case InstansiMenu.laporanMasuk:
-        return LaporanMasukPage(token: widget.token);
+        return LaporanMasukPage(
+          token: widget.token,
+          onOpenMap: _navigateToMap,
+        );
       case InstansiMenu.petaOperasional:
-        return PetaOperasionalPage(token: widget.token, ws: widget.ws);
+        return PetaOperasionalPage(
+          token: widget.token,
+          ws: widget.ws,
+          targetLocation: _mapTarget,
+        );
       case InstansiMenu.riwayat:
         return RiwayatPage(token: widget.token);
     }
@@ -161,7 +181,12 @@ class _InstansiShellState extends State<InstansiShell> {
               activeMenu: _activeMenu,
               unreadSosCount: _unreadCount,
               onSelected: (menu) {
-                setState(() => _activeMenu = menu);
+                setState(() {
+                  _activeMenu = menu;
+                  if (menu != InstansiMenu.petaOperasional) {
+                    _mapTarget = null;
+                  }
+                });
                 if (menu == InstansiMenu.sosAktif) {
                   _markAllAsRead();
                 }

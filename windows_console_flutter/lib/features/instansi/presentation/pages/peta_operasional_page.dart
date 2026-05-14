@@ -12,7 +12,13 @@ import '../../../../core/services/ws_service.dart';
 class PetaOperasionalPage extends StatefulWidget {
   final String token;
   final WsService ws;
-  const PetaOperasionalPage({super.key, required this.token, required this.ws});
+  final LatLng? targetLocation;
+  const PetaOperasionalPage({
+    super.key,
+    required this.token,
+    required this.ws,
+    this.targetLocation,
+  });
 
   @override
   State<PetaOperasionalPage> createState() => _PetaOperasionalPageState();
@@ -51,6 +57,21 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
         }
       }
     });
+
+    if (widget.targetLocation != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mapController.move(widget.targetLocation!, 16.0);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(PetaOperasionalPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.targetLocation != oldWidget.targetLocation &&
+        widget.targetLocation != null) {
+      _mapController.move(widget.targetLocation!, 16.0);
+    }
   }
 
   Future<void> _loadAgencyProfile() async {
@@ -61,9 +82,13 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
       if (lat != null && lng != null) {
         setState(() {
           _agencyLocation = LatLng(lat.toDouble(), lng.toDouble());
-          _defaultCenter = _agencyLocation!;
+          if (widget.targetLocation == null) {
+            _defaultCenter = _agencyLocation!;
+          }
         });
-        _mapController.move(_defaultCenter, 13.0);
+        if (widget.targetLocation == null) {
+          _mapController.move(_defaultCenter, 13.0);
+        }
       }
     }
   }
@@ -227,6 +252,18 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                         child: const _AnimatedVolunteerMarker(),
                       );
                     }),
+                    // Target Location Marker (jika ada)
+                    if (widget.targetLocation != null)
+                      Marker(
+                        point: widget.targetLocation!,
+                        width: 50,
+                        height: 50,
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.blueAccent,
+                          size: 40,
+                        ),
+                      ),
                   ],
                 ),
               ],

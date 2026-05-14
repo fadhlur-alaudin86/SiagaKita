@@ -287,6 +287,7 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, phot
 		IncidentType: req.IncidentType,
 		Latitude:     req.Latitude,
 		Longitude:    req.Longitude,
+		AddressDetail: &req.AddressDetail,
 		Status:       "sent",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -305,11 +306,11 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, phot
 	return rep, nil
 }
 
-func (s *Service) GetReports(status string) ([]IncidentReport, error) {
+func (s *Service) GetReports(status string) ([]IncidentReportResponse, error) {
 	return s.repo.FindReports(status)
 }
 
-func (s *Service) GetReportsByUser(userID string) ([]IncidentReport, error) {
+func (s *Service) GetReportsByUser(userID string) ([]IncidentReportResponse, error) {
 	return s.repo.FindReportsByUser(userID)
 }
 

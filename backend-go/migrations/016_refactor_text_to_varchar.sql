@@ -11,6 +11,7 @@ ALTER TABLE public.user_profiles ALTER COLUMN volunteer_experience TYPE VARCHAR(
 
 -- incidents
 ALTER TABLE public.incidents ALTER COLUMN audio_path TYPE VARCHAR(255);
+ALTER TABLE public.incidents ALTER COLUMN address_detail TYPE VARCHAR(500);
 
 -- incident_reports
 ALTER TABLE public.incident_reports ALTER COLUMN description TYPE VARCHAR(1000);

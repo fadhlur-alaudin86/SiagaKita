@@ -362,14 +362,14 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                         title: Row(
                           children: [
                             Text(
-                              inc.typeLabel,
+                              inc.typeLabelId,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
                             ),
                             const Spacer(),
-                            _StatusBadge(status: inc.status),
+                            _StatusBadge(status: inc.status, label: inc.statusLabelId),
                           ],
                         ),
                         subtitle: Padding(
@@ -759,7 +759,7 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
                                 fontSize: 14,
                               ),
                             ),
-                            _StatusBadge(status: r.status),
+                            _StatusBadge(status: r.status, label: r.statusLabelId),
                           ],
                         ),
                         subtitle: Column(
@@ -813,7 +813,8 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
 
 class _StatusBadge extends StatelessWidget {
   final String status;
-  const _StatusBadge({required this.status});
+  final String label;
+  const _StatusBadge({required this.status, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -825,7 +826,7 @@ class _StatusBadge extends StatelessWidget {
         border: Border.all(color: _getColor(status).withValues(alpha: 0.3)),
       ),
       child: Text(
-        _getText(status),
+        label.toUpperCase(),
         style: TextStyle(
           color: _getColor(status),
           fontSize: 10,
@@ -842,16 +843,6 @@ class _StatusBadge extends StatelessWidget {
       'false_alarm' => Colors.orangeAccent,
       'cancelled' || 'canceled' || 'rejected' => Colors.redAccent,
       _ => Colors.grey,
-    };
-  }
-
-  String _getText(String status) {
-    return switch (status) {
-      'resolved' => 'SELESAI',
-      'false_alarm' => 'FALSE ALARM',
-      'cancelled' || 'canceled' => 'DIBATALKAN',
-      'rejected' => 'DITOLAK',
-      _ => status.toUpperCase(),
     };
   }
 }
@@ -1030,14 +1021,16 @@ class _ReportHistoryDetailDialogState
               ),
               const Divider(color: Colors.white24),
               const SizedBox(height: 8),
-              _infoRow(Icons.local_fire_department, 'Kategori', r.incidentType.toUpperCase()),
+              _infoRow(Icons.local_fire_department, 'Kategori', r.typeLabelId.toUpperCase()),
               if (r.urgency != 'none')
                 _infoRow(Icons.bar_chart, 'Urgensi', r.urgencyLabel),
               _infoRow(Icons.person_outline, 'Pelapor', r.reporterName),
-              _infoRow(Icons.flag_outlined, 'Status', r.status.toUpperCase()),
+              _infoRow(Icons.flag_outlined, 'Status', r.statusLabelId.toUpperCase()),
               _infoRow(Icons.access_time, 'Waktu Masuk', _fmtLocal(r.createdAt)),
               if (r.completedAt != null)
                 _infoRow(Icons.check_circle_outline, 'Waktu Selesai', _fmtLocal(r.completedAt!)),
+              if (r.addressDetail != null && r.addressDetail!.isNotEmpty)
+                _infoRow(Icons.location_on_outlined, 'Lokasi', r.addressDetail!),
               if (r.description != null && r.description!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 const Text(

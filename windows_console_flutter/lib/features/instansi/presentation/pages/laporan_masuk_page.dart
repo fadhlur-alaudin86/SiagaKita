@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
@@ -9,7 +10,8 @@ import '../../../../core/services/api_services.dart';
 
 class LaporanMasukPage extends StatefulWidget {
   final String token;
-  const LaporanMasukPage({super.key, required this.token});
+  final void Function(double lat, double lng)? onOpenMap;
+  const LaporanMasukPage({super.key, required this.token, this.onOpenMap});
 
   @override
   State<LaporanMasukPage> createState() => _LaporanMasukPageState();
@@ -261,7 +263,7 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              r.incidentType.toUpperCase(),
+                                              r.typeLabelId.toUpperCase(),
                                               style: const TextStyle(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.w600,
@@ -339,6 +341,7 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                   onUpdateStatus: (status, [urgency]) {
                     _updateStatus(_selected!.id, status, urgency);
                   },
+                  onOpenMap: widget.onOpenMap,
                 ),
         ),
       ],
@@ -351,11 +354,13 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
 class _ReportDetailPanel extends StatefulWidget {
   final ReportModel report;
   final void Function(String, [int?]) onUpdateStatus;
+  final void Function(double lat, double lng)? onOpenMap;
 
   const _ReportDetailPanel({
     super.key,
     required this.report,
     required this.onUpdateStatus,
+    this.onOpenMap,
   });
 
   @override
@@ -479,7 +484,7 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        r.incidentType.toUpperCase(),
+                        r.typeLabelId.toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -487,7 +492,7 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                         ),
                       ),
                       Text(
-                        'Laporan • ${r.status.toUpperCase()}',
+                        'Laporan • ${r.statusLabelId.toUpperCase()}',
                         style: const TextStyle(
                           color: Colors.white38,
                           fontSize: 12,
@@ -544,6 +549,55 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                 label: 'Urgensi',
                 value: r.urgencyLabel,
               ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 16, color: Colors.white38),
+                  const SizedBox(width: 10),
+                  const SizedBox(
+                    width: 90,
+                    child: Text(
+                      'Titik Lokasi',
+                      style: TextStyle(color: Colors.white54, fontSize: 13),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${r.latitude}, ${r.longitude}',
+                          style: const TextStyle(color: Colors.white, fontSize: 13),
+                        ),
+                        if (r.addressDetail != null && r.addressDetail!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              r.addressDetail!,
+                              style: const TextStyle(color: Colors.white54, fontSize: 12),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.map, color: Colors.orange, size: 20),
+                    onPressed: () async {
+                      if (widget.onOpenMap != null) {
+                        widget.onOpenMap!(r.latitude, r.longitude);
+                      } else {
+                        final uri = Uri.parse('https://maps.google.com/?q=${r.latitude},${r.longitude}');
+                        if (await canLaunchUrl(uri)) launchUrl(uri);
+                      }
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
             if (r.description != null && r.description!.isNotEmpty)
               _InfoRow(
                 icon: Icons.notes_outlined,

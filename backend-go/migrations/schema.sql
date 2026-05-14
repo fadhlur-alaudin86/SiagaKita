@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8GdOoWpw9xcOeF6PZgauyU39gc8Ue0bK2Ut7KANK7v5o3gycTggTcAEUzlSTfES
+\restrict Ombp9W7I5OsvfDrKJGARUQUhMYTDQzOezmKDKV90A8tquTk7wM1gbQwZFRrHHpW
 
 -- Dumped from database version 15.17
 -- Dumped by pg_dump version 15.17
@@ -149,6 +149,19 @@ CREATE TYPE public.response_status AS ENUM (
 ALTER TYPE public.response_status OWNER TO siagakita_admin;
 
 --
+-- Name: urgency_level; Type: TYPE; Schema: public; Owner: siagakita_admin
+--
+
+CREATE TYPE public.urgency_level AS ENUM (
+    'low',
+    'medium',
+    'high'
+);
+
+
+ALTER TYPE public.urgency_level OWNER TO siagakita_admin;
+
+--
 -- Name: user_role; Type: TYPE; Schema: public; Owner: siagakita_admin
 --
 
@@ -293,11 +306,34 @@ CREATE TABLE public.incident_reports (
     audio_path character varying(255),
     status character varying(20) DEFAULT 'sent'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    completed_at timestamp with time zone,
+    address_detail character varying(500)
 );
 
 
 ALTER TABLE public.incident_reports OWNER TO siagakita_admin;
+
+--
+-- Name: incident_reports_old; Type: TABLE; Schema: public; Owner: siagakita_admin
+--
+
+CREATE TABLE public.incident_reports_old (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    reporter_id uuid,
+    incident_type public.incident_category DEFAULT 'general'::public.incident_category NOT NULL,
+    urgency_level smallint,
+    latitude numeric(10,8) NOT NULL,
+    longitude numeric(11,8) NOT NULL,
+    description text,
+    photo_url character varying(255),
+    audio_url character varying(255),
+    status character varying(20) DEFAULT 'pending'::character varying,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.incident_reports_old OWNER TO siagakita_admin;
 
 --
 -- Name: incident_responses; Type: TABLE; Schema: public; Owner: siagakita_admin
@@ -332,12 +368,12 @@ CREATE TABLE public.incidents (
     status public.incident_status DEFAULT 'grace_period'::public.incident_status,
     urgency_level character varying(10) DEFAULT 'unknown'::character varying,
     reporter_trust_label character varying(20) DEFAULT 'standard'::character varying,
+    address_detail character varying(500),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now(),
     completed_at timestamp with time zone,
     photo_paths text[] DEFAULT '{}'::text[],
     audio_path character varying(255),
-    address_detail character varying(255),
     handled_by_agency_id uuid,
     agency_status character varying(20) DEFAULT 'pending'::character varying
 );
@@ -432,13 +468,13 @@ CREATE TABLE public.user_profiles (
     medical_conditions character varying(255),
     height_cm integer,
     weight_kg integer,
-    domicile character varying(255),
     updated_at timestamp with time zone DEFAULT now(),
     bio character varying(255),
     kyc_ktp_url character varying(255),
-    nik_verification_status character varying(20) DEFAULT 'none'::character varying,
     profile_photo_url character varying(255),
+    nik_verification_status character varying(20) DEFAULT 'none'::character varying,
     volunteer_experience character varying(1000),
+    domicile character varying(255),
     place_of_birth character varying(100),
     CONSTRAINT chk_nik_status CHECK (((nik_verification_status)::text = ANY ((ARRAY['none'::character varying, 'pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[]))),
     CONSTRAINT user_profiles_height_cm_check CHECK ((height_cm > 0)),
@@ -565,6 +601,14 @@ ALTER TABLE ONLY public.agency_personnels
 
 ALTER TABLE ONLY public.emergency_contacts
     ADD CONSTRAINT emergency_contacts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: incident_reports_old incident_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: siagakita_admin
+--
+
+ALTER TABLE ONLY public.incident_reports_old
+    ADD CONSTRAINT incident_reports_pkey PRIMARY KEY (id);
 
 
 --
@@ -854,6 +898,14 @@ ALTER TABLE ONLY public.emergency_contacts
 
 
 --
+-- Name: incident_reports_old incident_reports_reporter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: siagakita_admin
+--
+
+ALTER TABLE ONLY public.incident_reports_old
+    ADD CONSTRAINT incident_reports_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.users(id);
+
+
+--
 -- Name: incident_reports incident_reports_v2_reporter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: siagakita_admin
 --
 
@@ -977,5 +1029,5 @@ ALTER TABLE ONLY public.volunteer_reputation
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8GdOoWpw9xcOeF6PZgauyU39gc8Ue0bK2Ut7KANK7v5o3gycTggTcAEUzlSTfES
+\unrestrict Ombp9W7I5OsvfDrKJGARUQUhMYTDQzOezmKDKV90A8tquTk7wM1gbQwZFRrHHpW
 

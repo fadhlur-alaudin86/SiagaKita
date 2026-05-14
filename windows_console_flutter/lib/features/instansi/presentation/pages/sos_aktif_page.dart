@@ -12,7 +12,7 @@ import '../../../../core/constants/api_constants.dart';
 class SosAktifPage extends StatefulWidget {
   final String token;
   final WsService ws;
-  final VoidCallback? onOpenMap;
+  final void Function(double lat, double lng)? onOpenMap;
   const SosAktifPage({
     super.key,
     required this.token,
@@ -396,7 +396,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                inc.typeLabel,
+                                                inc.typeLabelId,
                                                 style: const TextStyle(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.w600,
@@ -509,7 +509,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        inc.typeLabel,
+                        inc.typeLabelId,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -560,23 +560,54 @@ class _SosAktifPageState extends State<SosAktifPage> {
               value: inc.formattedTime,
             ),
             _InfoRow(icon: Icons.timelapse, label: 'Sejak', value: inc.timeAgo),
-            _InfoRow(
-              icon: Icons.location_on_outlined,
-              label: 'Koordinat',
-              value: inc.addressDetail != null
-                  ? '${inc.addressDetail}\n(${inc.latitude.toStringAsFixed(5)}, ${inc.longitude.toStringAsFixed(5)})'
-                  : '${inc.latitude.toStringAsFixed(5)}, ${inc.longitude.toStringAsFixed(5)}',
-              actionIcon: Icons.open_in_new,
-              onAction: () async {
-                if (widget.onOpenMap != null) {
-                  widget.onOpenMap!();
-                } else {
-                  final uri = Uri.parse(
-                    'https://maps.google.com/?q=${inc.latitude},${inc.longitude}',
-                  );
-                  if (await canLaunchUrl(uri)) launchUrl(uri);
-                }
-              },
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 16, color: Colors.white38),
+                  const SizedBox(width: 10),
+                  const SizedBox(
+                    width: 90,
+                    child: Text(
+                      'Koordinat',
+                      style: TextStyle(color: Colors.white54, fontSize: 13),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${inc.latitude.toStringAsFixed(5)}, ${inc.longitude.toStringAsFixed(5)}',
+                          style: const TextStyle(color: Colors.white, fontSize: 13),
+                        ),
+                        if (inc.addressDetail != null && inc.addressDetail!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              inc.addressDetail!,
+                              style: const TextStyle(color: Colors.white54, fontSize: 12),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.map, color: Colors.red, size: 20),
+                    onPressed: () async {
+                      if (widget.onOpenMap != null) {
+                        widget.onOpenMap!(inc.latitude, inc.longitude);
+                      } else {
+                        final uri = Uri.parse('https://maps.google.com/?q=${inc.latitude},${inc.longitude}');
+                        if (await canLaunchUrl(uri)) launchUrl(uri);
+                      }
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
             ),
 
             // ── Telemetri Korban ─────────────────────────────────────────────

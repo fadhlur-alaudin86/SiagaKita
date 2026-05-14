@@ -217,13 +217,24 @@ func (r *Repository) CreateReport(rep *IncidentReport) error {
 	return r.db.Create(rep).Error
 }
 
-func (r *Repository) FindReports(status string) ([]IncidentReport, error) {
-	var reps []IncidentReport
-	q := r.db.Order("created_at DESC")
+func (r *Repository) FindReports(status string) ([]IncidentReportResponse, error) {
+	var reps []IncidentReportResponse
+	query := `
+		SELECT
+			ir.*,
+			COALESCE(up.full_name, u.email, 'Anonim') AS reporter_name,
+			up.phone_number AS reporter_phone
+		FROM incident_reports ir
+		LEFT JOIN users u ON u.id = ir.reporter_id
+		LEFT JOIN user_profiles up ON up.user_id = ir.reporter_id
+	`
+	args := []interface{}{}
 	if status != "" {
-		q = q.Where("status = ?", status)
+		query += " WHERE ir.status = ?"
+		args = append(args, status)
 	}
-	return reps, q.Find(&reps).Error
+	query += " ORDER BY ir.created_at DESC"
+	return reps, r.db.Raw(query, args...).Scan(&reps).Error
 }
 
 func (r *Repository) UpdateReportStatus(id, status string, urgency *int) error {
@@ -233,12 +244,26 @@ func (r *Repository) UpdateReportStatus(id, status string, urgency *int) error {
 	} else if status == "rejected" {
 		updates["urgency_level"] = gorm.Expr("NULL")
 	}
+	if status == "resolved" || status == "rejected" || status == "canceled" {
+		updates["completed_at"] = time.Now()
+	}
 	return r.db.Model(&IncidentReport{}).Where("id = ?", id).Updates(updates).Error
 }
 
-func (r *Repository) FindReportsByUser(userID string) ([]IncidentReport, error) {
-	var reps []IncidentReport
-	return reps, r.db.Where("reporter_id = ?", userID).Order("created_at DESC").Find(&reps).Error
+func (r *Repository) FindReportsByUser(userID string) ([]IncidentReportResponse, error) {
+	var reps []IncidentReportResponse
+	query := `
+		SELECT
+			ir.*,
+			COALESCE(up.full_name, u.email, 'Anonim') AS reporter_name,
+			up.phone_number AS reporter_phone
+		FROM incident_reports ir
+		LEFT JOIN users u ON u.id = ir.reporter_id
+		LEFT JOIN user_profiles up ON up.user_id = ir.reporter_id
+		WHERE ir.reporter_id = ?
+		ORDER BY ir.created_at DESC
+	`
+	return reps, r.db.Raw(query, userID).Scan(&reps).Error
 }
 
 func (r *Repository) CancelReport(reportID, reporterID string) error {
@@ -250,7 +275,7 @@ func (r *Repository) CancelReport(reportID, reporterID string) error {
 		return errors.New("hanya laporan dengan status 'sent' atau 'pending' yang dapat dibatalkan")
 	}
 	return r.db.Model(&IncidentReport{}).Where("id = ?", reportID).
-		Updates(map[string]interface{}{"status": "canceled", "updated_at": time.Now()}).Error
+		Updates(map[string]interface{}{"status": "canceled", "updated_at": time.Now(), "completed_at": time.Now()}).Error
 }
 
 // ─── Strike & Ban ─────────────────────────────────────────────────────────────

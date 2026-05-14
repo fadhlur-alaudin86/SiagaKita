@@ -446,6 +446,7 @@ class _ReportScreenState extends State<ReportScreen> {
         incidentType: _categories[_selectedCategoryIndex]['value'].toString(),
         latitude: _currentLatLng?.latitude ?? 0,
         longitude: _currentLatLng?.longitude ?? 0,
+        addressDetail: _addressLabel,
         description: _descCtrl.text,
         photos: _photos,
         audio: _audioFile,

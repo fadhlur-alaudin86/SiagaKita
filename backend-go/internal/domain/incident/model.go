@@ -39,12 +39,14 @@ type IncidentReport struct {
 	UrgencyLevel *int           `gorm:"default:1" json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
 	Latitude     float64        `gorm:"not null" json:"latitude"`
 	Longitude    float64        `gorm:"not null" json:"longitude"`
+	AddressDetail *string       `json:"address_detail,omitempty"`
 	Description  *string        `json:"description,omitempty"`
 	PhotoPaths   pq.StringArray `gorm:"type:text[]" json:"photo_paths"`
 	AudioPath    *string        `json:"audio_path,omitempty"`
 	Status       string         `gorm:"default:'sent'" json:"status"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
+	CompletedAt  *time.Time     `json:"completed_at,omitempty"`
 }
 
 // SOSStrike adalah audit log setiap kali admin menandai false alarm.
@@ -144,6 +146,7 @@ type CreateReportRequest struct {
 	IncidentType string  `form:"incident_type"` // wajib
 	Latitude     float64 `form:"latitude"`
 	Longitude    float64 `form:"longitude"`
+	AddressDetail string `form:"address_detail"`
 	Description  string  `form:"description"`
 }
 
@@ -262,4 +265,24 @@ type MissionHistoryResponse struct {
 	AddressDetail *string `json:"address_detail,omitempty"`
 	AcceptedAt    string  `json:"accepted_at"`
 	XPEarned      int     `json:"xp_earned,omitempty"` // Jika ada XP historis
+}
+
+// IncidentReportResponse - data lengkap laporan (Jalur B) dengan nama pelapor.
+type IncidentReportResponse struct {
+	ID            string         `json:"id"`
+	ReporterID    string         `json:"reporter_id"`
+	ReporterName  string         `json:"reporter_name"`
+	ReporterPhone *string        `json:"reporter_phone,omitempty"`
+	IncidentType  string         `json:"incident_type"`
+	UrgencyLevel  *int           `json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
+	Latitude      float64        `json:"latitude"`
+	Longitude     float64        `json:"longitude"`
+	AddressDetail *string        `json:"address_detail,omitempty"`
+	Description   *string        `json:"description,omitempty"`
+	PhotoPaths    pq.StringArray `json:"photo_paths"`
+	AudioPath     *string        `json:"audio_path,omitempty"`
+	Status        string         `json:"status"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	CompletedAt   *time.Time     `json:"completed_at,omitempty"`
 }

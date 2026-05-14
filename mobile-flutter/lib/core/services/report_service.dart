@@ -21,8 +21,10 @@ class ReportModel {
   final int? urgencyLevel; // nullable — ditentukan agensi, bukan warga
   final double latitude;
   final double longitude;
+  final String? addressDetail;
   final String status;
   final DateTime createdAt;
+  final DateTime? completedAt;
   final List<String> photoPaths;
   final String? audioPath;
 
@@ -33,8 +35,10 @@ class ReportModel {
     this.urgencyLevel,
     required this.latitude,
     required this.longitude,
+    this.addressDetail,
     required this.status,
     required this.createdAt,
+    this.completedAt,
     this.photoPaths = const [],
     this.audioPath,
   });
@@ -47,8 +51,10 @@ class ReportModel {
       urgencyLevel: json['urgency_level'] as int?,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
+      addressDetail: json['address_detail'],
       status: json['status'] ?? 'sent',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+      completedAt: json['completed_at'] != null ? DateTime.tryParse(json['completed_at']) : null,
       photoPaths:
           (json['photo_paths'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -98,6 +104,7 @@ class ReportService {
     required String incidentType,
     required double latitude,
     required double longitude,
+    required String addressDetail,
     String? description,
     List<File> photos = const [],
     File? audio,
@@ -114,6 +121,7 @@ class ReportService {
       request.fields['incident_type'] = incidentType;
       request.fields['latitude'] = latitude.toString();
       request.fields['longitude'] = longitude.toString();
+      request.fields['address_detail'] = addressDetail;
       if (description != null && description.isNotEmpty) {
         request.fields['description'] = description;
       }
@@ -158,6 +166,7 @@ class ReportService {
         incidentType: incidentType,
         latitude: latitude,
         longitude: longitude,
+        addressDetail: addressDetail,
         description: description,
         photos: photos,
         audio: audio,
@@ -175,6 +184,7 @@ class ReportService {
     required String incidentType,
     required double latitude,
     required double longitude,
+    required String addressDetail,
     String? description,
     List<File> photos = const [],
     File? audio,
@@ -188,6 +198,7 @@ class ReportService {
       'incident_type': incidentType,
       'latitude': latitude,
       'longitude': longitude,
+      'address_detail': addressDetail,
       'description': description,
       'status': 'failed',
       'created_at': DateTime.now().toIso8601String(),
@@ -274,6 +285,7 @@ class ReportService {
         incidentType: failedReport.incidentType,
         latitude: failedReport.latitude,
         longitude: failedReport.longitude,
+        addressDetail: failedReport.addressDetail ?? '',
         description: failedReport.description,
         photos: photos,
         audio: audio,

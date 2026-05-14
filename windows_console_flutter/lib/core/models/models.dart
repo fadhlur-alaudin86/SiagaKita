@@ -121,18 +121,45 @@ class IncidentModel {
   String get formattedTime => DateFormat('HH:mm').format(createdAt.toLocal());
 
   String get typeLabel => switch (incidentType) {
-    'fire' => '🔥 Kebakaran',
-    'medical' => '🚑 Medis',
-    'crime' => '🔪 Kriminal',
-    'rescue' => '💥 Kecelakaan',
-    'general' => '📋 Umum',
-    _ => '❓ Tidak diketahui',
+    'fire' => 'Kebakaran',
+    'medical' => 'Medis',
+    'crime' => 'Kriminalitas',
+    'rescue' => 'Penyelamatan',
+    'accident' => 'Kecelakaan',
+    'disaster' => 'Bencana Alam',
+    'general' => 'Umum',
+    _ => 'Tidak diketahui',
   };
 
   bool get isActive =>
       status == 'broadcasting' ||
       status == 'grace_period' ||
       status == 'active';
+
+  String get typeLabelId {
+    return switch (incidentType) {
+      'medical' => 'Medis',
+      'fire' => 'Kebakaran',
+      'rescue' => 'Penyelamatan',
+      'crime' => 'Kriminalitas',
+      'accident' => 'Kecelakaan',
+      'disaster' => 'Bencana Alam',
+      'general' => 'Umum',
+      _ => 'Lainnya',
+    };
+  }
+
+  String get statusLabelId {
+    return switch (status) {
+      'grace_period' => 'Masa Tenggang',
+      'broadcasting' => 'Disiarkan',
+      'handled' => 'Ditangani',
+      'resolved' => 'Selesai',
+      'false_alarm' => 'Alarm Palsu',
+      'canceled' => 'Dibatalkan',
+      _ => status,
+    };
+  }
 
   IncidentModel copyWith({
     double? latitude,
@@ -180,6 +207,7 @@ class ReportModel {
   final int? urgencyLevel; // 0=low, 1=medium, 2=high (int dari backend)
   final double latitude;
   final double longitude;
+  final String? addressDetail;
   final String? description;
   final List<String> photoPaths;
   final String? audioPath;
@@ -196,6 +224,7 @@ class ReportModel {
     this.urgencyLevel,
     required this.latitude,
     required this.longitude,
+    this.addressDetail,
     this.description,
     this.photoPaths = const [],
     this.audioPath,
@@ -234,6 +263,7 @@ class ReportModel {
       urgencyLevel: urgencyLevel,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      addressDetail: json['address_detail'] as String?,
       description: json['description'] as String?,
       photoPaths:
           (json['photo_paths'] as List<dynamic>?)
@@ -252,7 +282,8 @@ class ReportModel {
   }
 
   // Urgensi hanya bermakna jika sudah diset (bukan 'none')
-  bool get hasUrgency => (urgency != 'none' && urgency != 'low') || urgencyLevel != null;
+  bool get hasUrgency =>
+      (urgency != 'none' && urgency != 'low') || urgencyLevel != null;
 
   String get urgencyLabel {
     if (urgencyLevel == null && urgency == 'none') return 'Belum diset';
@@ -261,6 +292,30 @@ class ReportModel {
       'medium' => 'Sedang',
       'low' => 'Rendah',
       _ => 'Belum diset',
+    };
+  }
+
+  String get typeLabelId {
+    return switch (incidentType) {
+      'medical' => 'Medis',
+      'fire' => 'Kebakaran',
+      'crime' => 'Kriminalitas',
+      'accident' => 'Kecelakaan',
+      'disaster' => 'Bencana Alam',
+      'general' => 'Umum',
+      _ => 'Lainnya',
+    };
+  }
+
+  String get statusLabelId {
+    return switch (status) {
+      'sent' => 'Terkirim',
+      'pending' => 'Menunggu',
+      'handled' => 'Ditangani',
+      'resolved' => 'Selesai',
+      'rejected' => 'Ditolak',
+      'canceled' => 'Dibatalkan',
+      _ => status,
     };
   }
 }
