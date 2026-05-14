@@ -81,6 +81,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
       case MobileWsEvent.sosCancelled:
         _checkActiveMission(); // refresh to clear mission
         break;
+      case MobileWsEvent.forceLogout:
+        _handleForceLogout();
+        break;
       case MobileWsEvent.agencyHandling:
       case MobileWsEvent.volunteerHandling:
       case MobileWsEvent.volunteerLocationUpdate:
@@ -89,6 +92,20 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
         break;
     }
   }
+
+  void _handleForceLogout() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sesi Anda telah berakhir karena login di perangkat lain.'),
+        backgroundColor: Colors.redAccent,
+        duration: Duration(seconds: 4),
+      ),
+    );
+    // Logout dan redirect ke login
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+
 
   @override
   void dispose() {

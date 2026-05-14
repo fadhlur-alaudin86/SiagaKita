@@ -171,15 +171,32 @@ class _HomeScreenState extends State<HomeScreen>
           );
         }
         break;
+      case MobileWsEvent.forceLogout:
+        _handleForceLogout();
+        break;
       case MobileWsEvent.sosCancelled:
       case MobileWsEvent.connected:
       case MobileWsEvent.unknown:
         break;
     }
+
     // Refresh status dari server setelah event WS
     if (_activeIncident != null) {
       _checkHandlerStatus();
     }
+  }
+
+  void _handleForceLogout() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sesi Anda telah berakhir karena login di perangkat lain.'),
+        backgroundColor: Colors.redAccent,
+        duration: Duration(seconds: 4),
+      ),
+    );
+    // Logout dan redirect ke login
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
 
   /// Dipanggil saat ada instansi atau relawan yang mulai handle.
