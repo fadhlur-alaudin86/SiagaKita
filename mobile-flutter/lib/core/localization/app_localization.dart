@@ -169,6 +169,7 @@ class AppLocalization {
     'Berat (kg)': 'Weight (kg)',
     'Tinggi (cm)': 'Height (cm)',
     'Riwayat Penyakit (Opsional)': 'Medical History (Optional)',
+    'Alergi Utama (Opsional)': 'Main Allergy (Optional)',
     'Tambah': 'Add',
     'Belum ada kontak darurat.': 'No emergency contacts yet.',
     'Kontak Darurat': 'Emergency Contact',

@@ -305,22 +305,6 @@ class ActiveSOSBanner extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (lastLocationUpdate != null) ...[
-                  SizedBox(width: 12.w(context)),
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 12.w(context),
-                    color: Colors.red,
-                  ),
-                  SizedBox(width: 4.w(context)),
-                  Text(
-                    'Last: ${lastLocationUpdate!.hour.toString().padLeft(2, '0')}:${lastLocationUpdate!.minute.toString().padLeft(2, '0')}:${lastLocationUpdate!.second.toString().padLeft(2, '0')}',
-                    style: TextStyle(
-                      color: Colors.red.withValues(alpha: 0.8),
-                      fontSize: 10.sp(context),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),

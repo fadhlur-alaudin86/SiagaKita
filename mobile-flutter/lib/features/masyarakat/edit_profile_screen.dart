@@ -460,7 +460,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         controller: _allergiesCtrl,
                         maxLength: 255,
                         decoration: InputDecoration(
-                          labelText: 'Alergi Utama'.tr(context),
+                          labelText: 'Alergi Utama (Opsional)'.tr(context),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
