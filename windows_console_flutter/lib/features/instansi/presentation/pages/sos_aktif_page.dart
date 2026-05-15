@@ -126,12 +126,12 @@ class _SosAktifPageState extends State<SosAktifPage> {
 
   List<IncidentModel> get _filteredIncidents {
     return switch (_filterStatus) {
-      'masuk' => _incidents
-          .where(
-            (i) =>
-                i.status == 'grace_period' || i.status == 'broadcasting',
-          )
-          .toList(),
+      'masuk' =>
+        _incidents
+            .where(
+              (i) => i.status == 'grace_period' || i.status == 'broadcasting',
+            )
+            .toList(),
       'ditangani' => _incidents.where((i) => i.status == 'handled').toList(),
       _ => _incidents, // 'semua'
     };
@@ -183,7 +183,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
     );
     if (ok && mounted) {
       _showSnack(
-        'Ditandai sebagai false alarm. Strike diberikan.',
+        'Ditandai sebagai alarm palsu. Strike diberikan.',
         Colors.orange,
       );
       setState(() => _selected = null);
@@ -299,9 +299,8 @@ class _SosAktifPageState extends State<SosAktifPage> {
                           child: ChoiceChip(
                             label: Text(entry.$2),
                             selected: _filterStatus == entry.$1,
-                            onSelected: (_) => setState(
-                              () => _filterStatus = entry.$1,
-                            ),
+                            onSelected: (_) =>
+                                setState(() => _filterStatus = entry.$1),
                             selectedColor: Colors.red,
                             labelStyle: TextStyle(
                               color: _filterStatus == entry.$1
@@ -380,8 +379,12 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                         Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: BoxDecoration(
-                                            color: Colors.red.withValues(alpha: 0.15),
-                                            borderRadius: BorderRadius.circular(6),
+                                            color: Colors.red.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                           ),
                                           child: Icon(
                                             _incidentIcon(inc.incidentType),
@@ -565,7 +568,11 @@ class _SosAktifPageState extends State<SosAktifPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 16, color: Colors.white38),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: Colors.white38,
+                  ),
                   const SizedBox(width: 10),
                   const SizedBox(
                     width: 90,
@@ -580,14 +587,21 @@ class _SosAktifPageState extends State<SosAktifPage> {
                       children: [
                         Text(
                           '${inc.latitude.toStringAsFixed(5)}, ${inc.longitude.toStringAsFixed(5)}',
-                          style: const TextStyle(color: Colors.white, fontSize: 13),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
                         ),
-                        if (inc.addressDetail != null && inc.addressDetail!.isNotEmpty)
+                        if (inc.addressDetail != null &&
+                            inc.addressDetail!.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               inc.addressDetail!,
-                              style: const TextStyle(color: Colors.white54, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                       ],
@@ -599,7 +613,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
                       if (widget.onOpenMap != null) {
                         widget.onOpenMap!(inc.latitude, inc.longitude);
                       } else {
-                        final uri = Uri.parse('https://maps.google.com/?q=${inc.latitude},${inc.longitude}');
+                        final uri = Uri.parse(
+                          'https://maps.google.com/?q=${inc.latitude},${inc.longitude}',
+                        );
                         if (await canLaunchUrl(uri)) launchUrl(uri);
                       }
                     },
@@ -923,7 +939,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         Icons.report_gmailerrorred_outlined,
                         size: 18,
                       ),
-                      label: const Text('False Alarm'),
+                      label: const Text('Alarm Palsu'),
                       onPressed: _markFalseAlarm,
                     ),
                   ),

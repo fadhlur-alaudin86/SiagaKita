@@ -121,7 +121,7 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                     inc.status == 'resolved' && inc.handledByAgencyId == null,
               )
               .toList();
-        } else if (_filterStatus == 'False Alarm') {
+        } else if (_filterStatus == 'Alarm Palsu') {
           filtered = filtered
               .where((inc) => inc.status == 'false_alarm')
               .toList();
@@ -211,20 +211,25 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
             initialValue: value,
             color: const Color(0xFF1E2537),
             offset: const Offset(0, 48),
-            constraints: const BoxConstraints(minWidth: boxWidth, maxWidth: boxWidth),
+            constraints: const BoxConstraints(
+              minWidth: boxWidth,
+              maxWidth: boxWidth,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: colors.outline),
             ),
             onSelected: onChanged,
             itemBuilder: (ctx) => items
-                .map((e) => PopupMenuItem<T>(
-                      value: e,
-                      child: Text(
-                        e.toString(),
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ))
+                .map(
+                  (e) => PopupMenuItem<T>(
+                    value: e,
+                    child: Text(
+                      e.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                )
                 .toList(),
             child: Container(
               width: boxWidth,
@@ -244,7 +249,11 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.white54, size: 20),
+                  const Icon(
+                    Icons.arrow_drop_down,
+                    color: Colors.white54,
+                    size: 20,
+                  ),
                 ],
               ),
             ),
@@ -274,7 +283,7 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                 'Selesai (Kami)',
                 'Selesai (Instansi Lain)',
                 'Selesai (Relawan)',
-                'False Alarm',
+                'Alarm Palsu',
                 'Dibatalkan',
               ],
               onChanged: (v) {
@@ -369,7 +378,10 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                               ),
                             ),
                             const Spacer(),
-                            _StatusBadge(status: inc.status, label: inc.statusLabelId),
+                            _StatusBadge(
+                              status: inc.status,
+                              label: inc.statusLabelId,
+                            ),
                           ],
                         ),
                         subtitle: Padding(
@@ -379,20 +391,52 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.person_outline, size: 12, color: Colors.white54),
+                                  const Icon(
+                                    Icons.person_outline,
+                                    size: 12,
+                                    color: Colors.white54,
+                                  ),
                                   const SizedBox(width: 4),
-                                  Text(inc.reporterName, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                                  Text(
+                                    inc.reporterName,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 2),
                               Row(
                                 children: [
-                                  const Icon(Icons.access_time, size: 12, color: Colors.white54),
+                                  const Icon(
+                                    Icons.access_time,
+                                    size: 12,
+                                    color: Colors.white54,
+                                  ),
                                   const SizedBox(width: 4),
-                                  Text(_fmtLocal(inc.createdAt), style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                  Text(
+                                    _fmtLocal(inc.createdAt),
+                                    style: const TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                   if (inc.completedAt != null) ...[
-                                    const Text(' → ', style: TextStyle(color: Colors.white38, fontSize: 11)),
-                                    Text(_fmtLocal(inc.completedAt!), style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                    const Text(
+                                      ' → ',
+                                      style: TextStyle(
+                                        color: Colors.white38,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    Text(
+                                      _fmtLocal(inc.completedAt!),
+                                      style: const TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 11,
+                                      ),
+                                    ),
                                   ],
                                 ],
                               ),
@@ -549,8 +593,6 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
     });
   }
 
-
-
   String _fmtLocal(DateTime dt) {
     final l = dt.toLocal();
     final d = l.day.toString().padLeft(2, '0');
@@ -588,20 +630,25 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
             initialValue: value,
             color: const Color(0xFF1E2537),
             offset: const Offset(0, 48),
-            constraints: const BoxConstraints(minWidth: boxWidth, maxWidth: boxWidth),
+            constraints: const BoxConstraints(
+              minWidth: boxWidth,
+              maxWidth: boxWidth,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: colors.outline),
             ),
             onSelected: onChanged,
             itemBuilder: (ctx) => items
-                .map((e) => PopupMenuItem<T>(
-                      value: e,
-                      child: Text(
-                        e.toString(),
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ))
+                .map(
+                  (e) => PopupMenuItem<T>(
+                    value: e,
+                    child: Text(
+                      e.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                )
                 .toList(),
             child: Container(
               width: boxWidth,
@@ -621,7 +668,11 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.white54, size: 20),
+                  const Icon(
+                    Icons.arrow_drop_down,
+                    color: Colors.white54,
+                    size: 20,
+                  ),
                 ],
               ),
             ),
@@ -759,7 +810,10 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
                                 fontSize: 14,
                               ),
                             ),
-                            _StatusBadge(status: r.status, label: r.statusLabelId),
+                            _StatusBadge(
+                              status: r.status,
+                              label: r.statusLabelId,
+                            ),
                           ],
                         ),
                         subtitle: Column(
@@ -775,12 +829,34 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
                             ),
                             Row(
                               children: [
-                                const Icon(Icons.access_time, size: 11, color: Colors.white38),
+                                const Icon(
+                                  Icons.access_time,
+                                  size: 11,
+                                  color: Colors.white38,
+                                ),
                                 const SizedBox(width: 3),
-                                Text(_fmtLocal(r.createdAt), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                                Text(
+                                  _fmtLocal(r.createdAt),
+                                  style: const TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 11,
+                                  ),
+                                ),
                                 if (r.completedAt != null) ...[
-                                  const Text(' → ', style: TextStyle(color: Colors.white24, fontSize: 11)),
-                                  Text(_fmtLocal(r.completedAt!), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                                  const Text(
+                                    ' → ',
+                                    style: TextStyle(
+                                      color: Colors.white24,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  Text(
+                                    _fmtLocal(r.completedAt!),
+                                    style: const TextStyle(
+                                      color: Colors.white38,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ],
                               ],
                             ),
@@ -920,10 +996,16 @@ class _ReportHistoryDetailDialogState
           const SizedBox(width: 8),
           SizedBox(
             width: 100,
-            child: Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white54, fontSize: 13),
+            ),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 13)),
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+            ),
           ),
         ],
       ),
@@ -1021,16 +1103,36 @@ class _ReportHistoryDetailDialogState
               ),
               const Divider(color: Colors.white24),
               const SizedBox(height: 8),
-              _infoRow(Icons.local_fire_department, 'Kategori', r.typeLabelId.toUpperCase()),
+              _infoRow(
+                Icons.local_fire_department,
+                'Kategori',
+                r.typeLabelId.toUpperCase(),
+              ),
               if (r.urgency != 'none')
                 _infoRow(Icons.bar_chart, 'Urgensi', r.urgencyLabel),
               _infoRow(Icons.person_outline, 'Pelapor', r.reporterName),
-              _infoRow(Icons.flag_outlined, 'Status', r.statusLabelId.toUpperCase()),
-              _infoRow(Icons.access_time, 'Waktu Masuk', _fmtLocal(r.createdAt)),
+              _infoRow(
+                Icons.flag_outlined,
+                'Status',
+                r.statusLabelId.toUpperCase(),
+              ),
+              _infoRow(
+                Icons.access_time,
+                'Waktu Masuk',
+                _fmtLocal(r.createdAt),
+              ),
               if (r.completedAt != null)
-                _infoRow(Icons.check_circle_outline, 'Waktu Selesai', _fmtLocal(r.completedAt!)),
+                _infoRow(
+                  Icons.check_circle_outline,
+                  'Waktu Selesai',
+                  _fmtLocal(r.completedAt!),
+                ),
               if (r.addressDetail != null && r.addressDetail!.isNotEmpty)
-                _infoRow(Icons.location_on_outlined, 'Lokasi', r.addressDetail!),
+                _infoRow(
+                  Icons.location_on_outlined,
+                  'Lokasi',
+                  r.addressDetail!,
+                ),
               if (r.description != null && r.description!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 const Text(
