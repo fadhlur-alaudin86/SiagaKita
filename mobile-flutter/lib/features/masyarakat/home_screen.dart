@@ -22,6 +22,7 @@ import '../../core/services/location_service.dart';
 import '../../core/services/mobile_ws_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/services/offline_service.dart';
+import '../../core/services/connectivity_service.dart';
 import 'report_screen.dart';
 import 'widgets/home_widgets.dart';
 import 'widgets/sos_active_widgets.dart';
@@ -407,10 +408,16 @@ class _HomeScreenState extends State<HomeScreen>
             _lastLocationUpdate = now;
             _sosTransmitting = true;
             _nextUpdateCountdown = 3;
+            _sosUploadStatus = 'sent';
           });
         }
       } catch (_) {
-        if (mounted) setState(() => _sosTransmitting = false);
+        if (mounted) {
+          setState(() {
+            _sosTransmitting = false;
+            _sosUploadStatus = 'sending';
+          });
+        }
       }
     }
   }
@@ -782,26 +789,34 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (confirm == true) {
       if (_pendingIncidentId == null) return;
+      final incidentId = _pendingIncidentId!;
+      _transitionToBroadcasting();
+
       try {
         await IncidentService.updateType(
           accessToken: widget.accessToken,
-          incidentId: _pendingIncidentId!,
+          incidentId: incidentId,
           incidentType: type,
         );
       } catch (_) {
         /* silent */
       }
-      _transitionToBroadcasting();
     }
   }
 
   Future<void> _onGraceTimeout() async {
     if (_pendingIncidentId == null) return;
-    await IncidentService.broadcast(
-      accessToken: widget.accessToken,
-      incidentId: _pendingIncidentId!,
-    );
+    final incidentId = _pendingIncidentId!;
     _transitionToBroadcasting();
+
+    try {
+      await IncidentService.broadcast(
+        accessToken: widget.accessToken,
+        incidentId: incidentId,
+      );
+    } catch (_) {
+      /* silent */
+    }
   }
 
   void _transitionToBroadcasting() {
@@ -924,9 +939,15 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             );
           }
+        } else {
+          setState(() {
+            _sosUploadStatus = 'sent';
+            _activeIncident = active;
+          });
         }
       } catch (_) {
-        // Jika error jaringan, biarkan (jangan reset UI)
+        // Jika error jaringan, biarkan (jangan reset UI), tapi ubah status upload
+        if (mounted) setState(() => _sosUploadStatus = 'sending');
       }
     });
   }
@@ -1294,66 +1315,52 @@ class _HomeScreenState extends State<HomeScreen>
     final incidentId = _activeIncident?.incidentId ?? _pendingIncidentId;
     if (incidentId == null) return;
 
-    try {
-      if (_sosUploadStatus == 'sending') {
-        _cancelledLocalId = _pendingIncidentId;
-      }
+    if (_sosUploadStatus == 'sending') {
+      _cancelledLocalId = _pendingIncidentId;
+    }
 
+    final isOnline = ConnectivityService.isOnline.value;
+
+    _stopVibration();
+    _stopLocationUpdates();
+
+    if (mounted) {
+      setState(() {
+        _activeIncident = null;
+        _sosPhase = 'idle';
+        _sosUploadStatus = 'idle';
+        _tapCount = 0;
+        _volunteerPosition = null;
+      });
+      UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+        isSOSActive: false,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isOnline
+                ? 'Panggilan SOS telah dibatalkan.'.tr(context)
+                : 'Panggilan SOS dibatalkan (Menunggu koneksi)...'.tr(context),
+          ),
+          backgroundColor: isOnline ? Colors.green : Colors.orange,
+        ),
+      );
+    }
+
+    if (!isOnline) {
+      OfflineService.savePendingCancelSOS(incidentId);
+      _attemptSOSCancelBackground(incidentId);
+      return;
+    }
+
+    try {
       await IncidentService.cancelSOS(
         accessToken: widget.accessToken,
         incidentId: incidentId,
       );
-
-      _stopVibration();
-      _stopLocationUpdates();
-
-      if (mounted) {
-        setState(() {
-          _activeIncident = null;
-          _sosPhase = 'idle';
-          _sosUploadStatus = 'idle';
-          _tapCount = 0;
-          _volunteerPosition = null;
-        });
-        // Sync ke global state
-        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
-          isSOSActive: false,
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Panggilan SOS telah dibatalkan.'.tr(context)),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     } catch (_) {
-      // Jika offline/gagal, simpan lokal untuk di-retry
       OfflineService.savePendingCancelSOS(incidentId);
       _attemptSOSCancelBackground(incidentId);
-
-      _stopVibration();
-      _stopLocationUpdates();
-
-      if (mounted) {
-        setState(() {
-          _activeIncident = null;
-          _sosPhase = 'idle';
-          _sosUploadStatus = 'idle';
-          _tapCount = 0;
-          _volunteerPosition = null;
-        });
-        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
-          isSOSActive: false,
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Panggilan SOS dibatalkan (Menunggu koneksi)...'.tr(context),
-            ),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
     }
   }
 

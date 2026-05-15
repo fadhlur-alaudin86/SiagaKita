@@ -321,6 +321,8 @@ class AppLocalization {
     ' XP)': ' XP)',
     'Ditolak': 'Rejected',
     'Ditangani': 'Handled',
+    'Mengirim ulang...': 'Retrying...',
+    'Streaming Real-time': 'Real-time Streaming',
     'Menunggu Review': 'Waiting Review',
     'Dibatalkan': 'Canceled',
     'Menu': 'Menu',

@@ -191,8 +191,12 @@ class SOSActionButton extends StatelessWidget {
             return AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: EdgeInsets.symmetric(horizontal: 5.w(context)),
-              width: filled ? 14.cw(context, min: 10, max: 14) : 10.cw(context, min: 7, max: 10),
-              height: filled ? 14.cw(context, min: 10, max: 14) : 10.cw(context, min: 7, max: 10),
+              width: filled
+                  ? 14.cw(context, min: 10, max: 14)
+                  : 10.cw(context, min: 7, max: 10),
+              height: filled
+                  ? 14.cw(context, min: 10, max: 14)
+                  : 10.cw(context, min: 7, max: 10),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: filled ? dotColor : Colors.grey.withValues(alpha: 0.2),
@@ -302,12 +306,14 @@ class ActiveSOSBanner extends StatelessWidget {
                 Icon(
                   Icons.stream,
                   size: 12.cw(context, min: 10, max: 12),
-                  color: Colors.greenAccent,
+                  color: uploadStatus == 'sending'
+                      ? Colors.orangeAccent
+                      : Colors.greenAccent,
                 ),
                 SizedBox(width: 4.w(context)),
                 Text(
                   uploadStatus == 'sending'
-                      ? 'Mencoba mengirim ulang...'.tr(context)
+                      ? 'Mengirim ulang...'.tr(context)
                       : 'Streaming Real-time'.tr(context),
                   style: TextStyle(
                     color: uploadStatus == 'sending'
