@@ -96,7 +96,7 @@ class ReportModel {
 
 class ReportService {
   static const String _baseUrl = ApiConfig.baseUrl;
-  static const _timeout = Duration(seconds: 5);
+  static const _timeout = Duration(seconds: 60); // Upload foto butuh waktu lebih panjang (maks 3×2MB)
 
   // ─── Submit Report with optional media ───────────────────────────────────────
   static Future<void> submitReport({

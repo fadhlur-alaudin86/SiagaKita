@@ -405,27 +405,34 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
   @override
   void initState() {
     super.initState();
-    if (widget.report.audioPath != null) {
-      _audioPlayer.setSourceUrl(widget.report.audioPath!);
-      _audioPlayer.onDurationChanged.listen(
-        (d) => setState(() => _duration = d),
-      );
-      _audioPlayer.onPositionChanged.listen(
-        (p) => setState(() => _position = p),
-      );
-      _audioPlayer.onPlayerStateChanged.listen((s) {
-        if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
-      });
-      _audioPlayer.onPlayerComplete.listen((_) {
-        if (mounted) {
-          setState(() {
-            _isPlaying = false;
-            _position = Duration.zero;
-          });
-          _audioPlayer.seek(Duration.zero);
-          _audioPlayer.pause();
-        }
-      });
+    // Daftarkan semua listener terlepas dari ada tidaknya audio
+    _audioPlayer.onDurationChanged.listen(
+      (d) { if (mounted) setState(() => _duration = d); },
+    );
+    _audioPlayer.onPositionChanged.listen(
+      (p) { if (mounted) setState(() => _position = p); },
+    );
+    _audioPlayer.onPlayerStateChanged.listen((s) {
+      if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
+    });
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _position = Duration.zero;
+        });
+        _audioPlayer.seek(Duration.zero);
+        _audioPlayer.pause();
+      }
+    });
+
+    // Set source audio dengan URL lengkap (path relatif harus di-build dulu)
+    final rawAudio = widget.report.audioPath;
+    if (rawAudio != null) {
+      final audioUrl = rawAudio.startsWith('http')
+          ? rawAudio
+          : '${ApiConstants.baseUrl.replaceAll('/api/v1', '')}$rawAudio';
+      _audioPlayer.setSourceUrl(audioUrl);
     }
   }
 
@@ -465,7 +472,25 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
         child: Stack(
           children: [
             InteractiveViewer(
-              child: Center(child: Image.network(fullUrl, fit: BoxFit.contain)),
+              child: Center(
+                child: Image.network(
+                  fullUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  },
+                  errorBuilder: (ctx, err, _) => const Center(
+                    child: Icon(
+                      Icons.broken_image,
+                      color: Colors.white54,
+                      size: 64,
+                    ),
+                  ),
+                ),
+              ),
             ),
             Positioned(
               top: 16,
@@ -641,26 +666,31 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
               ),
 
             // ── Foto ─────────────────────────────────────────────────────────
-            if (r.photoPaths.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              const Divider(color: Colors.white12),
-              const SizedBox(height: 16),
-              const Text(
-                '📸 LAMPIRAN FOTO',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
+            const SizedBox(height: 20),
+            const Divider(color: Colors.white12),
+            const SizedBox(height: 16),
+            const Text(
+              '📸 LAMPIRAN FOTO',
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
               ),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 12),
+            if (r.photoPaths.isEmpty)
+              const Text(
+                'Tidak ada foto terlampir',
+                style: TextStyle(color: Colors.white38, fontSize: 13),
+              )
+            else
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: r.photoPaths.map((url) {
                   final fullUrl = _buildPhotoUrl(url);
                   return GestureDetector(
-                    onTap: () => _openImagePreview(url),
+                    onTap: () => _openImagePreview(fullUrl),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
@@ -668,6 +698,24 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                         width: 100,
                         height: 100,
                         fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return Container(
+                            width: 100,
+                            height: 100,
+                            color: Colors.white10,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                         errorBuilder: (context, error, stackTrace) => Container(
                           width: 100,
                           height: 100,
@@ -682,7 +730,6 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                   );
                 }).toList(),
               ),
-            ],
 
             // ── Audio ─────────────────────────────────────────────────────────
             if (widget.report.audioPath != null) ...[

@@ -497,6 +497,59 @@ class _SosAktifPageState extends State<SosAktifPage> {
     );
   }
 
+  /// Membangun URL lengkap foto dari path yang disimpan di DB.
+  /// Backend sudah menyimpan URL penuh (http://...), tapi tetap ada fallback
+  /// untuk path relatif (/uploads/...) dari data lama.
+  String _buildPhotoUrl(String url) {
+    if (url.startsWith('http')) return url;
+    final base = ApiConstants.baseUrl.replaceAll('/api/v1', '');
+    return url.startsWith('/') ? '$base$url' : '$base/$url';
+  }
+
+  /// Membuka dialog fullscreen untuk preview foto dengan InteractiveViewer.
+  void _openPhotoPreview(String fullUrl) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              child: Center(
+                child: Image.network(
+                  fullUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  },
+                  errorBuilder: (ctx, err, _) => const Center(
+                    child: Icon(
+                      Icons.broken_image,
+                      color: Colors.white54,
+                      size: 64,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDetailPanel(IncidentModel inc) {
     final trustColor = switch (inc.trustLabel) {
       'verified' => Colors.green,
@@ -786,59 +839,31 @@ class _SosAktifPageState extends State<SosAktifPage> {
               value: inc.allergies ?? '- Tidak ada catatan',
             ),
 
-            if (inc.photoPaths.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              const Divider(color: Colors.white12),
-              const SizedBox(height: 16),
-              const Text(
-                '📸 BUKTI FOTO',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
+            const SizedBox(height: 20),
+            const Divider(color: Colors.white12),
+            const SizedBox(height: 16),
+            const Text(
+              '📸 BUKTI FOTO',
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
               ),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 12),
+            if (inc.photoPaths.isEmpty)
+              const Text(
+                'Tidak ada foto terlampir',
+                style: TextStyle(color: Colors.white38, fontSize: 13),
+              )
+            else
               Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: inc.photoPaths.map((url) {
-                  final fullUrl = url.startsWith('/uploads')
-                      ? ApiConstants.baseUrl.replaceAll('/api/v1', '') + url
-                      : url;
+                  final fullUrl = _buildPhotoUrl(url);
                   return GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => Dialog(
-                          backgroundColor: Colors.black,
-                          insetPadding: EdgeInsets.zero,
-                          child: Stack(
-                            children: [
-                              InteractiveViewer(
-                                child: Center(
-                                  child: Image.network(
-                                    fullUrl,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 16,
-                                right: 16,
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                    onTap: () => _openPhotoPreview(fullUrl),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
@@ -846,6 +871,24 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         width: 100,
                         height: 100,
                         fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return Container(
+                            width: 100,
+                            height: 100,
+                            color: Colors.white10,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                         errorBuilder: (ctx, err, _) => Container(
                           width: 100,
                           height: 100,
@@ -860,7 +903,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
                   );
                 }).toList(),
               ),
-            ],
+
             if (inc.audioPath != null) ...[
               const SizedBox(height: 20),
               const Divider(color: Colors.white12),
