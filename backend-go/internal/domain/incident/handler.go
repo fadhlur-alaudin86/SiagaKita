@@ -292,10 +292,11 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 
 	// Parse form fields (works for both multipart and url-encoded)
 	req := CreateReportRequest{
-		IncidentType: c.FormValue("incident_type"),
-		Description:  c.FormValue("description"),
-		Latitude:     parseFloat(c.FormValue("latitude")),
-		Longitude:    parseFloat(c.FormValue("longitude")),
+		IncidentType:  c.FormValue("incident_type"),
+		Description:   c.FormValue("description"),
+		Latitude:      parseFloat(c.FormValue("latitude")),
+		Longitude:     parseFloat(c.FormValue("longitude")),
+		AddressDetail: c.FormValue("address_detail"),
 	}
 
 	if req.IncidentType == "" || req.IncidentType == "unknown" {

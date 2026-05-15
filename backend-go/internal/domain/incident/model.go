@@ -36,7 +36,7 @@ type IncidentReport struct {
 	ID           string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	ReporterID   string         `gorm:"type:uuid;not null" json:"reporter_id"`
 	IncidentType string         `gorm:"not null" json:"incident_type"`
-	UrgencyLevel *int           `gorm:"default:1" json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
+	UrgencyLevel *int           `json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
 	Latitude     float64        `gorm:"not null" json:"latitude"`
 	Longitude    float64        `gorm:"not null" json:"longitude"`
 	AddressDetail *string       `json:"address_detail,omitempty"`

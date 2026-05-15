@@ -14,8 +14,7 @@ import 'dart:convert';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/report_service.dart';
-import 'package:camera/camera.dart';
-import '../../core/widgets/custom_camera_view.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/widgets/cached_tile_provider.dart' as import_cached_tile;
 import 'report_history_screen.dart' as import_report_history;
 
@@ -70,6 +69,7 @@ class _ReportScreenState extends State<ReportScreen> {
   ];
 
   // ─── Photos ──────────────────────────────────────────────────────────────────
+  final ImagePicker _picker = ImagePicker();
   final List<File> _photos = [];
 
   // ─── Audio ───────────────────────────────────────────────────────────────────
@@ -156,18 +156,19 @@ class _ReportScreenState extends State<ReportScreen> {
 
   // ─── Photos ──────────────────────────────────────────────────────────────────
 
-  Future<void> _openCamera() async {
+  Future<void> _pickPhoto(ImageSource source) async {
     if (_photos.length >= 3) return;
 
-    final status = await Permission.camera.status;
+    final status = source == ImageSource.camera
+        ? await Permission.camera.request()
+        : await Permission.photos.request();
+        
     if (!status.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Izin kamera ditolak. Buka pengaturan untuk mengizinkan.'.tr(
-                context,
-              ),
+              'Izin ditolak. Buka pengaturan untuk mengizinkan.'.tr(context),
             ),
           ),
         );
@@ -175,37 +176,57 @@ class _ReportScreenState extends State<ReportScreen> {
       return;
     }
 
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CustomCameraView(
-          title: 'Ambil Foto Keadaan Darurat'.tr(context),
-          lensDirection: CameraLensDirection.back,
-          showOverlay: false,
-          onPictureTaken: (XFile file) async {
-            final dir = await getTemporaryDirectory();
-            final outPath = p.join(
-              dir.path,
-              'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
-            );
-            final compressed = await FlutterImageCompress.compressAndGetFile(
-              file.path,
-              outPath,
-              quality: 70,
-              minWidth: 1280,
-              minHeight: 960,
-            );
-            if (compressed != null && mounted) {
-              setState(() => _photos.add(File(compressed.path)));
-            }
-          },
+    final picked = await _picker.pickImage(source: source, imageQuality: 85);
+    if (picked == null || !mounted) return;
+
+    final dir = await getTemporaryDirectory();
+    final outPath = p.join(
+      dir.path,
+      'photo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+    final compressed = await FlutterImageCompress.compressAndGetFile(
+      picked.path,
+      outPath,
+      quality: 70,
+      minWidth: 1280,
+      minHeight: 960,
+    );
+    if (compressed != null && mounted) {
+      setState(() => _photos.add(File(compressed.path)));
+    }
+  }
+
+  void _showPhotoSource() {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: Text('Ambil Foto'.tr(context)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: Text('Pilih dari Galeri'.tr(context)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+          ],
         ),
       ),
     );
   }
-
-  // Removed _showPhotoSource, direct camera instead
 
   // ─── Audio ───────────────────────────────────────────────────────────────────
 
@@ -884,7 +905,7 @@ class _ReportScreenState extends State<ReportScreen> {
         }),
         if (_photos.length < 3)
           GestureDetector(
-            onTap: _openCamera,
+            onTap: _showPhotoSource,
             child: Container(
               width: 100,
               height: 100,

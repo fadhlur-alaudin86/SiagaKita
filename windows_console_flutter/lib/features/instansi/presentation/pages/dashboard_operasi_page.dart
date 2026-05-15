@@ -254,7 +254,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                                 ),
                               )
                             : SizedBox(
-                                height: 400,
+                                height: 320,
                                 child: PieChart(
                                   PieChartData(
                                     sectionsSpace: 2,
@@ -318,14 +318,14 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
         value: e.value.value.toDouble(),
         color: color,
         title: '${pct.toStringAsFixed(0)}%',
-        radius: 140,
+        radius: 110,
         titleStyle: TextStyle(
-          fontSize: pct < 8 ? 0 : 13, // sembunyi label kalau irisan kecil
+          fontSize: pct < 1 ? 0 : 12, // Tampilkan persen bahkan jika irisan kecil (misal tipe Bencana)
           color: Colors.white,
           fontWeight: FontWeight.bold,
           shadows: const [Shadow(color: Colors.black38, blurRadius: 4)],
         ),
-        badgeWidget: pct < 8 ? null : null, // bisa pakai badge kalau mau
+        badgeWidget: null, // bisa pakai badge kalau mau
       );
     }).toList();
   }
