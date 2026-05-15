@@ -13,11 +13,16 @@ class SosAktifPage extends StatefulWidget {
   final String token;
   final WsService ws;
   final void Function(double lat, double lng)? onOpenMap;
+  final Set<String>? readIds;
+  final void Function(String id)? onSosViewed;
+
   const SosAktifPage({
     super.key,
     required this.token,
     required this.ws,
     this.onOpenMap,
+    this.readIds,
+    this.onSosViewed,
   });
 
   @override
@@ -355,6 +360,8 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                 child: InkWell(
                                   onTap: () {
                                     setState(() => _selected = inc);
+                                    // Tandai SOS ini sudah dilihat detail-nya
+                                    widget.onSosViewed?.call(inc.id);
                                     if (inc.audioPath != null) {
                                       final url =
                                           inc.audioPath!.startsWith('/uploads')
@@ -416,6 +423,20 @@ class _SosAktifPageState extends State<SosAktifPage> {
                                             ],
                                           ),
                                         ),
+                                        // Indikator belum dilihat (unread red dot)
+                                        if (widget.readIds != null &&
+                                            !widget.readIds!.contains(inc.id))
+                                          Container(
+                                            width: 9,
+                                            height: 9,
+                                            margin: const EdgeInsets.only(
+                                              right: 4,
+                                            ),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.redAccent,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
                                         // Indikator Online/Offline korban
                                         Container(
                                           width: 8,

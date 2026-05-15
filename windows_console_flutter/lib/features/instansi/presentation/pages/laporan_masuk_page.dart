@@ -5,13 +5,23 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
+import '../../../../core/constants/api_constants.dart';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 class LaporanMasukPage extends StatefulWidget {
   final String token;
   final void Function(double lat, double lng)? onOpenMap;
-  const LaporanMasukPage({super.key, required this.token, this.onOpenMap});
+  final Set<String>? readIds;
+  final void Function(String id)? onReportViewed;
+
+  const LaporanMasukPage({
+    super.key,
+    required this.token,
+    this.onOpenMap,
+    this.readIds,
+    this.onReportViewed,
+  });
 
   @override
   State<LaporanMasukPage> createState() => _LaporanMasukPageState();
@@ -234,7 +244,11 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                                   ? Colors.orange.withValues(alpha: 0.1)
                                   : Colors.transparent,
                               child: InkWell(
-                                onTap: () => setState(() => _selected = r),
+                                onTap: () {
+                                  setState(() => _selected = r);
+                                  // Tandai laporan ini sudah dilihat
+                                  widget.onReportViewed?.call(r.id);
+                                },
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
@@ -282,6 +296,20 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                                           ],
                                         ),
                                       ),
+                                      // Unread dot
+                                      if (widget.readIds != null &&
+                                          !widget.readIds!.contains(r.id))
+                                        Container(
+                                          width: 9,
+                                          height: 9,
+                                          margin: const EdgeInsets.only(
+                                            right: 4,
+                                          ),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.orange,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
                                       // Status dot
                                       Container(
                                         width: 8,
@@ -428,6 +456,7 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
   }
 
   void _openImagePreview(String url) {
+    final fullUrl = _buildPhotoUrl(url);
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -436,7 +465,7 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
         child: Stack(
           children: [
             InteractiveViewer(
-              child: Center(child: Image.network(url, fit: BoxFit.contain)),
+              child: Center(child: Image.network(fullUrl, fit: BoxFit.contain)),
             ),
             Positioned(
               top: 16,
@@ -450,6 +479,12 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
         ),
       ),
     );
+  }
+
+  String _buildPhotoUrl(String url) {
+    if (url.startsWith('http')) return url;
+    final base = ApiConstants.baseUrl.replaceAll('/api/v1', '');
+    return url.startsWith('/') ? '$base$url' : '$base/$url';
   }
 
   @override
@@ -623,12 +658,13 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                 spacing: 8,
                 runSpacing: 8,
                 children: r.photoPaths.map((url) {
+                  final fullUrl = _buildPhotoUrl(url);
                   return GestureDetector(
                     onTap: () => _openImagePreview(url),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
-                        url,
+                        fullUrl,
                         width: 100,
                         height: 100,
                         fit: BoxFit.cover,

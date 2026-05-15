@@ -221,8 +221,12 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
               const SizedBox(width: 24),
 
               Expanded(
-                flex: 4,
+                flex: 5,
                 child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: Colors.white10),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(

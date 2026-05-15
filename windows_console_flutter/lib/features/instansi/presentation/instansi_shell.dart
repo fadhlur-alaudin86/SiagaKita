@@ -46,8 +46,10 @@ class _InstansiShellState extends State<InstansiShell> {
 
   StreamSubscription<WsMessage>? _wsSub;
   Timer? _pollingTimer;
-  int _unreadCount = 0;
+  int _unreadSosCount = 0;
+  int _unreadReportCount = 0;
   final Set<String> _readSosIds = {};
+  final Set<String> _readReportIds = {};
 
   @override
   void initState() {
@@ -58,7 +60,7 @@ class _InstansiShellState extends State<InstansiShell> {
 
       switch (msg.event) {
         case WsEvent.incomingEmergency:
-          AudioService.playAlarm();
+          if (!AudioService.isPlaying) AudioService.playAlarm();
           _fetchUnread();
 
         // Auto-refresh: ada perubahan status insiden dari perangkat lain
@@ -113,26 +115,38 @@ class _InstansiShellState extends State<InstansiShell> {
 
   Future<void> _fetchUnread() async {
     final incidents = await IncidentApiService.getActiveIncidents(widget.token);
+    final reports = await IncidentApiService.getReports(widget.token);
     if (!mounted) return;
     setState(() {
-      _unreadCount = incidents
+      _unreadSosCount = incidents
           .where((inc) => !_readSosIds.contains(inc.id))
           .length;
-      if (_unreadCount == 0) {
-        AudioService.stop();
-      }
+      _unreadReportCount = reports
+          .where((r) =>
+              (r.status == 'sent' || r.status == 'handled') &&
+              !_readReportIds.contains(r.id))
+          .length;
+      // Alarm hanya berhenti bila semua SOS aktif sudah dibuka detail-nya
+      if (_unreadSosCount == 0) AudioService.stop();
     });
   }
 
-  void _markAllAsRead() async {
-    final incidents = await IncidentApiService.getActiveIncidents(widget.token);
-    if (!mounted) return;
+  /// Dipanggil saat user membuka detail sebuah SOS.
+  void _onSosViewed(String id) {
+    if (_readSosIds.contains(id)) return;
     setState(() {
-      for (var inc in incidents) {
-        _readSosIds.add(inc.id);
-      }
-      _unreadCount = 0;
-      AudioService.stop();
+      _readSosIds.add(id);
+      _unreadSosCount = (_unreadSosCount - 1).clamp(0, 9999);
+      if (_unreadSosCount == 0) AudioService.stop();
+    });
+  }
+
+  /// Dipanggil saat user membuka detail sebuah laporan.
+  void _onReportViewed(String id) {
+    if (_readReportIds.contains(id)) return;
+    setState(() {
+      _readReportIds.add(id);
+      _unreadReportCount = (_unreadReportCount - 1).clamp(0, 9999);
     });
   }
 
@@ -152,11 +166,15 @@ class _InstansiShellState extends State<InstansiShell> {
           token: widget.token,
           ws: widget.ws,
           onOpenMap: _navigateToMap,
+          readIds: _readSosIds,
+          onSosViewed: _onSosViewed,
         );
       case InstansiMenu.laporanMasuk:
         return LaporanMasukPage(
           token: widget.token,
           onOpenMap: _navigateToMap,
+          readIds: _readReportIds,
+          onReportViewed: _onReportViewed,
         );
       case InstansiMenu.petaOperasional:
         return PetaOperasionalPage(
@@ -179,7 +197,8 @@ class _InstansiShellState extends State<InstansiShell> {
           children: [
             _SideNavigation(
               activeMenu: _activeMenu,
-              unreadSosCount: _unreadCount,
+              unreadSosCount: _unreadSosCount,
+              unreadReportCount: _unreadReportCount,
               onSelected: (menu) {
                 setState(() {
                   _activeMenu = menu;
@@ -187,9 +206,7 @@ class _InstansiShellState extends State<InstansiShell> {
                     _mapTarget = null;
                   }
                 });
-                if (menu == InstansiMenu.sosAktif) {
-                  _markAllAsRead();
-                }
+                // Alarm hanya berhenti bila semua SOS aktif dibuka detail-nya
               },
               ws: widget.ws,
             ),
@@ -222,12 +239,14 @@ class _SideNavigation extends StatelessWidget {
     required this.onSelected,
     required this.ws,
     required this.unreadSosCount,
+    required this.unreadReportCount,
   });
 
   final InstansiMenu activeMenu;
   final ValueChanged<InstansiMenu> onSelected;
   final WsService ws;
   final int unreadSosCount;
+  final int unreadReportCount;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +289,7 @@ class _SideNavigation extends StatelessWidget {
                 label: 'Laporan Aktif',
                 icon: Icons.inbox_outlined,
                 selected: activeMenu == InstansiMenu.laporanMasuk,
+                badgeCount: unreadReportCount,
                 onTap: () => onSelected(InstansiMenu.laporanMasuk),
               ),
 
