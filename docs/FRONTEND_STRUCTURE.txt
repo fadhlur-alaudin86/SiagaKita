@@ -1,7 +1,7 @@
 ===========================================================================
   SIAGAKITA - DOKUMENTASI STRUKTUR FRONTEND (Flutter Mobile - Citizen/Volunteer)
   Untuk referensi tim Backend & anggota baru
-  Diperbarui: 4 Mei 2026
+  Diperbarui: 15 Mei 2026
 ===========================================================================
 
 CATATAN PENTING:
@@ -9,7 +9,13 @@ CATATAN PENTING:
   Modul lain (Biodata, Map, Relawan) masih menggunakan data MOCK.
   Dokumentasi ini menjelaskan state terkini dan kebutuhan integrasi berikutnya.
 
-  PERUBAHAN TERBARU (13 Mei 2026 - UI Normalization & Scaling):
+  PERUBAHAN TERBARU (15 Mei 2026 - Operational UX Refinement):
+  - Rework Alarm Logic: Alarm SOS di console kini hanya berhenti jika seluruh insiden aktif dibuka detailnya secara individual.
+  - Unread Indicators: Penambahan indikator titik merah (unread dot) pada list SOS dan Laporan Masuk, serta badge angka pada sidebar navigasi.
+  - Image Preview: Implementasi fullscreen image viewer pada detail laporan dan SOS untuk verifikasi bukti lapangan yang lebih jelas.
+  - Dashboard Visuals: Penyesuaian lebar kotak statistik (Equal Flex) dan penambahan border tipis untuk estetika dashboard premium.
+
+  PERUBAHAN SEBELUMNYA (13 Mei 2026 - UI Normalization & Scaling):
   - Responsive Scaling Utility: Implementasi lib/core/utils/responsive.dart untuk normalisasi UI.
   - Normalisasi Komponen: HomeHeader, SOSButton, ActionCard, dan KycScreen kini adaptif terhadap resolusi layar.
   - Desktop Optimization: Perbaikan overflow pada RiwayatPage dan dialog detail laporan di console admin.
@@ -461,5 +467,5 @@ CATATAN: Role instansi & admin ada di windows_console_flutter/ (Flutter Desktop)
   Dibuat oleh: Tim Frontend SiagaKita
   Branch: frontend / main
   Repo:   https://github.com/SuperBypassUdinnn/SIAGAKITA
-  Diperbarui: 13 Mei 2026
+  Diperbarui: 15 Mei 2026
 ===========================================================================

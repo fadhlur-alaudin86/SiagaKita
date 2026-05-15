@@ -1,6 +1,6 @@
 # 📋 SiagaKita - Laporan Kemajuan Pengembangan
 
-> **Terakhir diperbarui:** 13 Mei 2026
+> **Terakhir diperbarui:** 15 Mei 2026
 > **Branch aktif:** `main`
 > **Status keseluruhan:** 🟢 Stabil & Dioptimasi Performa
 
@@ -114,6 +114,25 @@
 ---
 
 ## 3. Changelog Per Sprint
+
+---
+
+### 🔖 Patch 1.0.22 - 15 Mei 2026 (Operational UI Refinement & Alarm Logic)
+
+#### 🛡️ Backend - Go Fiber
+- **Optional Urgency**: Menghapus `default:1` pada `UrgencyLevel` di `IncidentReport` agar laporan warga tidak otomatis dianggap "Sedang" oleh sistem.
+- **Address Detail Capture**: Backend kini menangkap data `address_detail` yang dikirim dari mobile untuk memperkaya metadata lokasi laporan.
+
+#### 📱 Mobile Flutter (Citizen/Volunteer)
+- **Image Picker Restoration**: Mengaktifkan kembali `ImagePicker` (Kamera/Gallery) pada layar pelaporan warga untuk kemudahan lampiran bukti.
+- **Geocoding Capture**: Menambahkan pengiriman `address_detail` hasil reverse geocoding Nominatim ke dalam payload laporan.
+
+#### 🖥️ Desktop Console (Admin/Instansi)
+- **Rework Alarm Logic**: Alarm SOS kini hanya berhenti jika **seluruh** insiden SOS aktif telah dibuka detailnya secara individual, mencegah pengabaian insiden yang menumpuk.
+- **Unread Indicators**: Penambahan indikator titik merah (unread dot) pada list SOS dan Laporan Masuk sebagai penanda visual insiden yang belum ditinjau oleh operator.
+- **Report Badge Tracking**: Menampilkan badge angka jumlah laporan yang belum dilihat pada sidebar navigasi untuk memantau beban kerja secara real-time.
+- **Image Preview**: Implementasi fullscreen image viewer pada detail laporan dan SOS untuk verifikasi visual bukti lapangan yang lebih jelas.
+- **UI Consistency**: Menyamakan lebar kotak statistik dengan panel SOS Terbaru dan menambahkan border tipis untuk estetika dashboard yang lebih premium.
 
 ---
 

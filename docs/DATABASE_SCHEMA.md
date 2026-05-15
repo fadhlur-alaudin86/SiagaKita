@@ -458,6 +458,7 @@ Untuk audit trail — jika ada laporan penyalahgunaan, data historis bisa dipuli
 | v9 (`009_kyc_warga.sql`) | 7 Mei 2026 | KYC Warga (NIK, Selfie) |
 | v10 & v11 | Mei 2026 | Drop phone unique constraint dan perbaikan minor |
 | **v12** (`012_separate_handling.sql`) | **10 Mei 2026** | **Separate handling (agency_status, proof_photo_url) dan gamifikasi Badges (m_badges, volunteer_badges_acquired)** |
+| v13 (`017_incident_reports...`) | 15 Mei 2026 | + `address_detail`, `completed_at` di `incident_reports`, drop default `urgency_level` |
 
 ---
 
@@ -470,15 +471,17 @@ CREATE TABLE incident_reports (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     reporter_id   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     incident_type VARCHAR(50) NOT NULL,
-    urgency_level SMALLINT NOT NULL DEFAULT 1,  -- 0=ringan, 1=sedang, 2=kritis
+    urgency_level SMALLINT,                      -- 0=ringan, 1=sedang, 2=kritis (nullable)
     latitude      DOUBLE PRECISION NOT NULL,
     longitude     DOUBLE PRECISION NOT NULL,
     description   TEXT,
+    address_detail VARCHAR(500),                 -- Detail alamat (Nominatim)
     photo_paths   TEXT[] DEFAULT '{}',          -- array URL publik foto (max 3)
     audio_path    TEXT,                         -- URL publik audio (nullable)
     status        VARCHAR(20) NOT NULL DEFAULT 'sent', -- sent|processing|resolved|canceled|rejected|failed
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at  TIMESTAMPTZ                  -- Timestamp saat insiden diselesaikan
 );
 ```
 
