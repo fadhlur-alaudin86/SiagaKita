@@ -123,8 +123,8 @@ func (s *Service) DeleteRank(id int) error {
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
-func (s *Service) GetStats() (*StatsResponse, error) {
-	return s.repo.GetStats()
+func (s *Service) GetStats(period string) (*StatsResponse, error) {
+	return s.repo.GetStats(period)
 }
 
 // ─── Badges (Peringkat Relawan) ────────────────────────────────────────────────

@@ -259,9 +259,10 @@ func (h *Handler) DeleteRank(c *fiber.Ctx) error {
 
 // ─── Statistics ───────────────────────────────────────────────────────────────
 
-// GET /api/v1/admin/stats  [ConsoleOnly]
+// GET /api/v1/admin/stats?period=monthly  [ConsoleOnly]
 func (h *Handler) GetStats(c *fiber.Ctx) error {
-	stats, err := h.svc.GetStats()
+	period := c.Query("period", "monthly") // weekly | monthly | yearly
+	stats, err := h.svc.GetStats(period)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}

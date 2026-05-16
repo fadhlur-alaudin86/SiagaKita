@@ -398,9 +398,12 @@ class AdminApiService {
 
   // ─── Stats ────────────────────────────────────────────────────────────────
 
-  static Future<StatsModel> getStats(String token) async {
+  static Future<StatsModel> getStats(String token, {String period = 'monthly'}) async {
+    final uri = Uri.parse(ApiConstants.adminStats).replace(
+      queryParameters: {'period': period},
+    );
     final resp = await http.get(
-      Uri.parse(ApiConstants.adminStats),
+      uri,
       headers: AuthService.headers(token),
     );
     if (resp.statusCode != 200) return StatsModel.empty();

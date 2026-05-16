@@ -233,10 +233,12 @@ class UserModel {
   }
 
   /// Derivasi level badge dari jumlah XP.
+  /// Tier: Pemula(0+) → Menengah(100+) → Profesional(500+) → Veteran(2000+) → Ahli(5000+)
   static String _levelFromExp(int xp) {
-    if (xp >= 1500) return 'Ahli';
-    if (xp >= 500) return 'Mahir';
-    if (xp >= 100) return 'Pejuang';
+    if (xp >= 5000) return 'Ahli';
+    if (xp >= 2000) return 'Veteran';
+    if (xp >= 500) return 'Profesional';
+    if (xp >= 100) return 'Menengah';
     return 'Pemula';
   }
 

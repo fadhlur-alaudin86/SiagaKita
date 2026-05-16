@@ -15,6 +15,13 @@ class StatistikPage extends StatefulWidget {
 class _StatistikPageState extends State<StatistikPage> {
   StatsModel _stats = StatsModel.empty();
   bool _loading = true;
+  String _selectedPeriod = 'monthly'; // weekly | monthly | yearly
+
+  static const _periodLabels = {
+    'weekly': 'Perminggu',
+    'monthly': 'Perbulan',
+    'yearly': 'Pertahun',
+  };
 
   @override
   void initState() {
@@ -24,7 +31,7 @@ class _StatistikPageState extends State<StatistikPage> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final data = await AdminApiService.getStats(widget.token);
+    final data = await AdminApiService.getStats(widget.token, period: _selectedPeriod);
     if (mounted) {
       setState(() {
         _stats = data;
@@ -86,11 +93,36 @@ class _StatistikPageState extends State<StatistikPage> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Tren SOS per Bulan (Line Chart)
+              // Tren SOS (Line Chart) with period selector
               Expanded(
                 flex: 6,
                 child: _ChartCard(
-                  title: 'Tren SOS per Bulan',
+                  title: 'Tren SOS ${_periodLabels[_selectedPeriod] ?? 'Perbulan'}',
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F1629),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedPeriod,
+                        dropdownColor: const Color(0xFF1E2537),
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white54, size: 18),
+                        items: _periodLabels.entries.map((e) {
+                          return DropdownMenuItem(value: e.key, child: Text(e.value));
+                        }).toList(),
+                        onChanged: (v) {
+                          if (v != null && v != _selectedPeriod) {
+                            _selectedPeriod = v;
+                            _load();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
                   child: _stats.monthly.isEmpty
                       ? const Center(
                           child: Text(
@@ -295,9 +327,10 @@ class _KpiCard extends StatelessWidget {
 }
 
 class _ChartCard extends StatelessWidget {
-  const _ChartCard({required this.title, required this.child});
+  const _ChartCard({required this.title, required this.child, this.trailing});
   final String title;
   final Widget child;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -311,13 +344,19 @@ class _ChartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+          Row(
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const Spacer(),
+              if (trailing != null) trailing!,
+            ],
           ),
           const SizedBox(height: 16),
           Expanded(child: child),

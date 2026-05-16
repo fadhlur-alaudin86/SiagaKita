@@ -63,6 +63,17 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
   bool _loading = true;
   String? _currentAgencyId;
 
+  // Map label Indonesia → key backend untuk filter kategori
+  static const _typeLabelToKey = {
+    'Kebakaran': 'fire',
+    'Medis': 'medical',
+    'Kriminalitas': 'crime',
+    'Bencana': 'disaster',
+    'Kecelakaan': 'accident',
+    'Penyelamatan': 'rescue',
+    'Umum': 'general',
+  };
+
   String _filterStatus = 'Semua';
   String _filterType = 'Semua';
   String _filterTime = 'Semua Waktu';
@@ -132,12 +143,12 @@ class _SosHistoryTabState extends State<_SosHistoryTab> {
 
       // Filter Tipe Insiden
       if (_filterType != 'Semua') {
-        filtered = filtered
-            .where(
-              (inc) =>
-                  inc.incidentType.toLowerCase() == _filterType.toLowerCase(),
-            )
-            .toList();
+        final typeKey = _typeLabelToKey[_filterType];
+        if (typeKey != null) {
+          filtered = filtered
+              .where((inc) => inc.incidentType == typeKey)
+              .toList();
+        }
       }
 
       // Filter Rentang Waktu
@@ -487,6 +498,17 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
   List<ReportModel> _filteredReports = [];
   bool _loading = true;
 
+  // Map label Indonesia → key backend untuk filter kategori
+  static const _typeLabelToKey = {
+    'Kebakaran': 'fire',
+    'Medis': 'medical',
+    'Kriminalitas': 'crime',
+    'Bencana': 'disaster',
+    'Kecelakaan': 'accident',
+    'Penyelamatan': 'rescue',
+    'Umum': 'general',
+  };
+
   String _filterStatus = 'Semua';
   String _filterType = 'Semua';
   String _filterUrgency = 'Semua';
@@ -533,11 +555,12 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
 
       // Filter Tipe Insiden
       if (_filterType != 'Semua') {
-        filtered = filtered
-            .where(
-              (r) => r.incidentType.toLowerCase() == _filterType.toLowerCase(),
-            )
-            .toList();
+        final typeKey = _typeLabelToKey[_filterType];
+        if (typeKey != null) {
+          filtered = filtered
+              .where((r) => r.incidentType == typeKey)
+              .toList();
+        }
       }
 
       // Filter Urgensi

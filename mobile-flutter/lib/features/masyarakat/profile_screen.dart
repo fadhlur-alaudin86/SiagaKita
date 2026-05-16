@@ -83,37 +83,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ) {
     final xp = user.volunteerPoints;
     final level = user.volunteerLevel;
+
+    // 5-tier thresholds
     final nextThreshold = xp < 100
         ? 100
         : xp < 500
         ? 500
-        : xp < 1500
-        ? 1500
-        : 9999;
+        : xp < 2000
+        ? 2000
+        : xp < 5000
+        ? 5000
+        : 99999;
     final prevThreshold = xp < 100
         ? 0
         : xp < 500
         ? 100
-        : xp < 1500
+        : xp < 2000
         ? 500
-        : 1500;
-    final progress = nextThreshold == 9999
+        : xp < 5000
+        ? 2000
+        : 5000;
+    final progress = nextThreshold == 99999
         ? 1.0
         : (xp - prevThreshold) / (nextThreshold - prevThreshold);
+
+    // Warna berdasarkan rank tier
+    final Color rankColor;
+    final List<Color> gradientDark;
+    final List<Color> gradientLight;
+    if (xp >= 5000) {
+      // Ahli: merah premium
+      rankColor = const Color(0xFFDC2626);
+      gradientDark = [const Color(0xFF2F1A1A), const Color(0xFF2B1414)];
+      gradientLight = [const Color(0xFFFEF2F2), const Color(0xFFFEE2E2)];
+    } else if (xp >= 2000) {
+      // Veteran: emas
+      rankColor = const Color(0xFFF59E0B);
+      gradientDark = [const Color(0xFF2F2A1A), const Color(0xFF2B2214)];
+      gradientLight = [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)];
+    } else if (xp >= 500) {
+      // Profesional: ungu
+      rankColor = const Color(0xFF8B5CF6);
+      gradientDark = [const Color(0xFF1F1A2F), const Color(0xFF1A142B)];
+      gradientLight = [const Color(0xFFF5F3FF), const Color(0xFFEDE9FE)];
+    } else if (xp >= 100) {
+      // Menengah: biru
+      rankColor = const Color(0xFF3B82F6);
+      gradientDark = [const Color(0xFF1A1F2F), const Color(0xFF14192B)];
+      gradientLight = [const Color(0xFFEFF6FF), const Color(0xFFDBEAFE)];
+    } else {
+      // Pemula: hijau (default)
+      rankColor = const Color(0xFF22C55E);
+      gradientDark = [const Color(0xFF1A2F1A), const Color(0xFF142B22)];
+      gradientLight = [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)];
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1A2F1A), const Color(0xFF142B22)]
-              : [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)],
+          colors: isDark ? gradientDark : gradientLight,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF22C55E).withValues(alpha: 0.3),
+          color: rankColor.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -121,16 +156,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.military_tech,
-                color: Color(0xFFFBBF24),
+                color: rankColor,
                 size: 22,
               ),
               const SizedBox(width: 8),
               Text(
                 'REPUTASI RELAWAN'.tr(context),
                 style: TextStyle(
-                  color: Color(0xFF22C55E),
+                  color: rankColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                   letterSpacing: 1,
@@ -146,7 +181,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'XP'.tr(context),
                   '$xp',
                   Icons.star_outline,
-                  const Color(0xFFFBBF24),
+                  rankColor,
                   isDark,
                 ),
               ),
@@ -156,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Level'.tr(context),
                   level,
                   Icons.shield_outlined,
-                  const Color(0xFF22C55E),
+                  rankColor,
                   isDark,
                 ),
               ),
@@ -166,17 +201,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Text(
-                nextThreshold == 9999
+                nextThreshold == 99999
                     ? 'Level Maksimal'.tr(context)
                     : '${'Menuju '.tr(context)}$nextThreshold XP',
                 style: TextStyle(fontSize: 11, color: hintColor),
               ),
               const Spacer(),
               Text(
-                nextThreshold == 9999 ? '100%' : '${(progress * 100).round()}%',
-                style: const TextStyle(
+                nextThreshold == 99999 ? '100%' : '${(progress * 100).round()}%',
+                style: TextStyle(
                   fontSize: 11,
-                  color: Color(0xFF22C55E),
+                  color: rankColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -188,8 +223,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: LinearProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               minHeight: 8,
-              backgroundColor: isDark ? Colors.white12 : Colors.green.shade100,
-              color: const Color(0xFF22C55E),
+              backgroundColor: isDark ? Colors.white12 : rankColor.withValues(alpha: 0.15),
+              color: rankColor,
             ),
           ),
         ],

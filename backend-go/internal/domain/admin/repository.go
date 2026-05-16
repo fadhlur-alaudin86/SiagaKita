@@ -490,7 +490,7 @@ func (r *Repository) DeleteRank(id int) error {
 
 // ─── Statistics ───────────────────────────────────────────────────────────────
 
-func (r *Repository) GetStats() (*StatsResponse, error) {
+func (r *Repository) GetStats(period string) (*StatsResponse, error) {
 	stats := &StatsResponse{
 		ByType:   make(map[string]int64),
 		ByStatus: make(map[string]int64),
@@ -537,18 +537,31 @@ func (r *Repository) GetStats() (*StatsResponse, error) {
 		stats.ByStatus[v.Key] = v.Count
 	}
 
-	// Monthly SOS (last 12 months)
+	// Trend SOS berdasarkan period
+	var dateFormat, interval string
+	switch period {
+	case "weekly":
+		dateFormat = "IYYY-\"W\"IW" // e.g. 2026-W20
+		interval = "12 weeks"
+	case "yearly":
+		dateFormat = "YYYY" // e.g. 2026
+		interval = "5 years"
+	default: // monthly
+		dateFormat = "YYYY-MM" // e.g. 2026-05
+		interval = "12 months"
+	}
+
 	var monthly []struct {
 		Month string `gorm:"column:month"`
 		Count int64  `gorm:"column:count"`
 	}
 	r.db.Raw(`
-		SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, COUNT(*) AS count
+		SELECT TO_CHAR(created_at, ?) AS month, COUNT(*) AS count
 		FROM incidents
-		WHERE created_at >= NOW() - INTERVAL '12 months'
+		WHERE created_at >= NOW() - CAST(? AS INTERVAL)
 		GROUP BY month
 		ORDER BY month ASC
-	`).Scan(&monthly)
+	`, dateFormat, interval).Scan(&monthly)
 	for _, m := range monthly {
 		stats.Monthly = append(stats.Monthly, MonthlyCount{Month: m.Month, Count: m.Count})
 	}

@@ -78,7 +78,8 @@ class _HomeScreenState extends State<HomeScreen>
       3; // hitung mundur update lokasi berikutnya (detik)
 
   DateTime? _lastLocationUpdate; // timestamp lokasi terakhir berhasil diupdate
-  bool _sosTransmitting = false; // apakah koneksi SOS dalam keadaan baik (mulai false sampai ada HTTP sukses)
+  bool _sosTransmitting =
+      false; // apakah koneksi SOS dalam keadaan baik (mulai false sampai ada HTTP sukses)
   Timer? _countdownTimer; // hitung mundur 1 detik
 
   // Untuk menyimpan ID insiden lokal jika user membatalkan saat proses upload masih berlangsung
@@ -657,7 +658,9 @@ class _HomeScreenState extends State<HomeScreen>
     // Cek apakah masih relevan: pendingId harus match ATAU activeIncident sudah punya server ID
     if (_pendingIncidentId != null &&
         _pendingIncidentId != localId &&
-        _activeIncident?.incidentId != localId) return;
+        _activeIncident?.incidentId != localId) {
+      return;
+    }
 
     try {
       final result = await IncidentService.triggerSOS(

@@ -226,12 +226,14 @@ class _AdminSideNav extends StatelessWidget {
                   ),
                 ),
               ),
-              _AdminNavItem(
-                label: 'Gamifikasi',
-                icon: Icons.emoji_events_outlined,
-                selected: activeMenu == AdminMenu.gamifikasi,
-                onTap: () => onSelected(AdminMenu.gamifikasi),
-              ),
+              // Gamifikasi nav disembunyikan untuk role admin & superadmin
+              // Source code GamifikasiPage tetap utuh di pages/gamifikasi_page.dart
+              // _AdminNavItem(
+              //   label: 'Gamifikasi',
+              //   icon: Icons.emoji_events_outlined,
+              //   selected: activeMenu == AdminMenu.gamifikasi,
+              //   onTap: () => onSelected(AdminMenu.gamifikasi),
+              // ),
               _AdminNavItem(
                 label: 'Statistik & Analitik',
                 icon: Icons.analytics_outlined,

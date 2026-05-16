@@ -43,7 +43,8 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       );
       if (mounted) {
         setState(() {
-          _reports = reports;
+          _reports = reports
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           _isLoadingReports = false;
         });
       }
@@ -82,7 +83,8 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                     s.status != 'broadcasting' &&
                     s.status != 'handled',
               )
-              .toList();
+              .toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           _isLoadingSOS = false;
         });
       }
