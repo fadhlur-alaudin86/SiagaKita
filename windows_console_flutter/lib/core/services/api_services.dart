@@ -398,7 +398,7 @@ class AdminApiService {
 
   // ─── Stats ────────────────────────────────────────────────────────────────
 
-  static Future<StatsModel> getStats(String token, {String period = 'monthly'}) async {
+  static Future<StatsModel> getStats(String token, {String period = 'month'}) async {
     final uri = Uri.parse(ApiConstants.adminStats).replace(
       queryParameters: {'period': period},
     );

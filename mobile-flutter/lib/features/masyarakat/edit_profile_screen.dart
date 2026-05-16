@@ -225,7 +225,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: colors.surface,
       appBar: AppBar(
         title: Text(
-          'Edit Profil'.tr(context),
+          'EDIT PROFIL'.tr(context),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,

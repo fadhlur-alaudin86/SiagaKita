@@ -15,7 +15,7 @@ class StatistikPage extends StatefulWidget {
 class _StatistikPageState extends State<StatistikPage> {
   StatsModel _stats = StatsModel.empty();
   bool _loading = true;
-  String _selectedPeriod = 'monthly'; // daily | weekly | monthly | yearly
+  String _selectedPeriod = 'month'; // week | month | year
 
   // ─── Warna pie chart FIXED per tipe — konsisten di semua period ──────────
   // Setiap tipe insiden selalu mendapat warna yang sama, berapapun jumlah
@@ -45,10 +45,9 @@ class _StatistikPageState extends State<StatistikPage> {
   };
 
   static const _periodLabels = {
-    'daily': 'Perhari',
-    'weekly': 'Perminggu',
-    'monthly': 'Perbulan',
-    'yearly': 'Pertahun',
+    'week': '1 Minggu',
+    'month': '1 Bulan',
+    'year': '1 Tahun',
   };
 
   @override
@@ -75,7 +74,7 @@ class _StatistikPageState extends State<StatistikPage> {
   Widget _buildPeriodDropdown() {
     final colors = Theme.of(context).colorScheme;
     const boxWidth = 140.0;
-    final currentLabel = _periodLabels[_selectedPeriod] ?? 'Perbulan';
+    final currentLabel = _periodLabels[_selectedPeriod] ?? '1 Bulan';
 
     return PopupMenuButton<String>(
       initialValue: _selectedPeriod,
@@ -133,6 +132,21 @@ class _StatistikPageState extends State<StatistikPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Period selector + title ──────────────────────────────────────
+          Row(
+            children: [
+              Text(
+                'Statistik ${_periodLabels[_selectedPeriod] ?? ''} Terakhir',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              _buildPeriodDropdown(),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           // ── KPI Cards ─────────────────────────────────────────────────────
           IntrinsicHeight(
             child: Row(
@@ -219,11 +233,9 @@ class _StatistikPageState extends State<StatistikPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Tren SOS ${_periodLabels[_selectedPeriod] ?? 'Perbulan'}',
+                              'Tren SOS (${_periodLabels[_selectedPeriod] ?? ''})',
                               style: textTheme.titleMedium,
                             ),
-                            const Spacer(),
-                            _buildPeriodDropdown(),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -327,7 +339,7 @@ class _StatistikPageState extends State<StatistikPage> {
       return FlSpot(e.key.toDouble(), count);
     }).toList();
 
-    // Hitung maxY dengan margin atas 20%
+    // Hitung maxY dengan margin atas 30%
     final rawMax = spots.isEmpty
         ? 10.0
         : spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
@@ -377,12 +389,12 @@ class _StatistikPageState extends State<StatistikPage> {
                 }
                 final label = _stats.monthly[idx]['month'] as String? ?? '';
                 String short = label;
-                if (_selectedPeriod == 'daily' && label.length == 10) {
-                  short = label.substring(5); // MM-DD
-                } else if (_selectedPeriod == 'weekly' && label.length >= 8) {
-                  short = label; // 2026-W20
-                } else if (_selectedPeriod == 'monthly' && label.length >= 7) {
-                  short = label; // 2026-05
+                if (_selectedPeriod == 'year' && label.length >= 7) {
+                  // YYYY-MM → tampilkan bulan saja
+                  short = label.substring(5); // MM
+                } else if (label.length == 10) {
+                  // YYYY-MM-DD → tampilkan DD/MM
+                  short = '${label.substring(8)}/${label.substring(5, 7)}';
                 }
                 if (short.length > 10) {
                   short = short.substring(0, 10);

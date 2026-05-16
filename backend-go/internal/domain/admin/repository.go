@@ -496,24 +496,43 @@ func (r *Repository) GetStats(period string) (*StatsResponse, error) {
 		ByStatus: make(map[string]int64),
 	}
 
-	// Total counts
-	r.db.Raw(`SELECT COUNT(*) FROM incidents`).Scan(&stats.TotalSOS)
-	r.db.Raw(`SELECT COUNT(*) FROM incidents WHERE status = 'resolved'`).Scan(&stats.TotalResolved)
-	r.db.Raw(`SELECT COUNT(*) FROM incidents WHERE status = 'false_alarm'`).Scan(&stats.TotalFalseAlarm)
+	// Tentukan rentang waktu berdasarkan period
+	var dateFormat, interval string
+	switch period {
+	case "week":
+		dateFormat = "YYYY-MM-DD" // daily dots for 7 days
+		interval = "7 days"
+	case "year":
+		dateFormat = "YYYY-MM" // monthly dots for 12 months
+		interval = "12 months"
+	default: // month (default)
+		dateFormat = "YYYY-MM-DD" // daily dots for 30 days
+		interval = "30 days"
+	}
+
+	// Semua query di bawah di-filter oleh rentang waktu yang dipilih
+	const dateFilter = "created_at >= NOW() - CAST(? AS INTERVAL)"
+
+	// Total counts (filtered by period)
+	r.db.Raw(`SELECT COUNT(*) FROM incidents WHERE `+dateFilter, interval).Scan(&stats.TotalSOS)
+	r.db.Raw(`SELECT COUNT(*) FROM incidents WHERE status = 'resolved' AND `+dateFilter, interval).Scan(&stats.TotalResolved)
+	r.db.Raw(`SELECT COUNT(*) FROM incidents WHERE status = 'false_alarm' AND `+dateFilter, interval).Scan(&stats.TotalFalseAlarm)
+
+	// Active volunteers (global, tidak di-filter period)
 	r.db.Raw(`SELECT COUNT(*) FROM user_profiles WHERE is_verified_volunteer = true`).Scan(&stats.ActiveVolunteers)
 
 	if stats.TotalSOS > 0 {
 		stats.FalseAlarmRate = float64(stats.TotalFalseAlarm) / float64(stats.TotalSOS) * 100
 	}
 
-	// Avg response time (completed_at - created_at in minutes)
+	// Avg response time (filtered by period)
 	r.db.Raw(`
 		SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 60), 0)
 		FROM incidents
 		WHERE status = 'resolved' AND completed_at IS NOT NULL
-	`).Scan(&stats.AvgResponseMinutes)
+		  AND `+dateFilter, interval).Scan(&stats.AvgResponseMinutes)
 
-	// By type
+	// By type (filtered by period)
 	type kv struct {
 		Key   string `gorm:"column:key"`
 		Count int64  `gorm:"column:count"`
@@ -521,39 +540,27 @@ func (r *Repository) GetStats(period string) (*StatsResponse, error) {
 	var byType []kv
 	r.db.Raw(`
 		SELECT incident_type AS key, COUNT(*) AS count
-		FROM incidents GROUP BY incident_type
-	`).Scan(&byType)
+		FROM incidents
+		WHERE `+dateFilter+`
+		GROUP BY incident_type
+	`, interval).Scan(&byType)
 	for _, v := range byType {
 		stats.ByType[v.Key] = v.Count
 	}
 
-	// By status
+	// By status (filtered by period)
 	var byStatus []kv
 	r.db.Raw(`
 		SELECT status AS key, COUNT(*) AS count
-		FROM incidents GROUP BY status
-	`).Scan(&byStatus)
+		FROM incidents
+		WHERE `+dateFilter+`
+		GROUP BY status
+	`, interval).Scan(&byStatus)
 	for _, v := range byStatus {
 		stats.ByStatus[v.Key] = v.Count
 	}
 
-	// Trend SOS berdasarkan period
-	var dateFormat, interval string
-	switch period {
-	case "daily":
-		dateFormat = "YYYY-MM-DD" // e.g. 2026-05-16
-		interval = "30 days"
-	case "weekly":
-		dateFormat = "IYYY-\"W\"IW" // e.g. 2026-W20
-		interval = "12 weeks"
-	case "yearly":
-		dateFormat = "YYYY" // e.g. 2026
-		interval = "5 years"
-	default: // monthly
-		dateFormat = "YYYY-MM" // e.g. 2026-05
-		interval = "12 months"
-	}
-
+	// Trend SOS
 	var monthly []struct {
 		Month string `gorm:"column:month"`
 		Count int64  `gorm:"column:count"`
@@ -561,7 +568,7 @@ func (r *Repository) GetStats(period string) (*StatsResponse, error) {
 	r.db.Raw(`
 		SELECT TO_CHAR(created_at, ?) AS month, COUNT(*) AS count
 		FROM incidents
-		WHERE created_at >= NOW() - CAST(? AS INTERVAL)
+		WHERE `+dateFilter+`
 		GROUP BY month
 		ORDER BY month ASC
 	`, dateFormat, interval).Scan(&monthly)
