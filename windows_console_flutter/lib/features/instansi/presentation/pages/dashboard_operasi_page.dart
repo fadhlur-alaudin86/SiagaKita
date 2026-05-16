@@ -299,46 +299,48 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
     'crime': 'Kriminalitas',
     'disaster': 'Bencana',
     'accident': 'Kecelakaan',
+    'general': 'Umum',
     'unknown': 'Tidak Diketahui',
   };
 
-  static const _pieColors = [
-    Color(0xFFEF5350), // merah
-    Color(0xFF42A5F5), // biru
-    Color(0xFFFF7043), // oranye
-    Color(0xFFAB47BC), // ungu
-    Color(0xFF26C6DA), // cyan
-    Color(0xFF66BB6A), // hijau
-    Color(0xFFFFCA28), // kuning
-  ];
+  // Warna FIXED per tipe — konsisten di semua halaman
+  static const _typeColorMap = <String, Color>{
+    'fire': Color(0xFFEF5350), // merah
+    'medical': Color(0xFFAB47BC), // ungu
+    'crime': Color(0xFFFF7043), // oranye
+    'disaster': Color(0xFF42A5F5), // biru
+    'accident': Color(0xFF26C6DA), // cyan
+    'general': Color(0xFF66BB6A), // hijau
+    'unknown': Color(0xFFFFCA28), // kuning
+  };
+  static const _fallbackColor = Color(0xFF90A4AE);
 
   List<PieChartSectionData> _buildSections() {
     final entries = _stats.byType.entries.toList();
     final total = entries.fold(0, (s, e) => s + e.value);
-    return entries.asMap().entries.map((e) {
-      final pct = total == 0 ? 0.0 : e.value.value / total * 100;
-      final color = _pieColors[e.key % _pieColors.length];
+    return entries.map((e) {
+      final pct = total == 0 ? 0.0 : e.value / total * 100;
+      final color = _typeColorMap[e.key] ?? _fallbackColor;
       return PieChartSectionData(
-        value: e.value.value.toDouble(),
+        value: e.value.toDouble(),
         color: color,
         title: '${pct.toStringAsFixed(0)}%',
         radius: 110,
         titleStyle: TextStyle(
-          fontSize: pct < 1 ? 0 : 12, // Tampilkan persen bahkan jika irisan kecil (misal tipe Bencana)
+          fontSize: pct < 1 ? 0 : 12,
           color: Colors.white,
           fontWeight: FontWeight.bold,
           shadows: const [Shadow(color: Colors.black38, blurRadius: 4)],
         ),
-        badgeWidget: null, // bisa pakai badge kalau mau
       );
     }).toList();
   }
 
   List<Widget> _buildLegend() {
     final entries = _stats.byType.entries.toList();
-    return entries.asMap().entries.map((e) {
-      final color = _pieColors[e.key % _pieColors.length];
-      final label = _typeLabels[e.value.key] ?? e.value.key;
+    return entries.map((e) {
+      final color = _typeColorMap[e.key] ?? _fallbackColor;
+      final label = _typeLabels[e.key] ?? e.key;
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [

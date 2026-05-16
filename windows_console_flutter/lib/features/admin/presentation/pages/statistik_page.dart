@@ -15,32 +15,37 @@ class StatistikPage extends StatefulWidget {
 class _StatistikPageState extends State<StatistikPage> {
   StatsModel _stats = StatsModel.empty();
   bool _loading = true;
-  String _selectedPeriod = 'monthly'; // weekly | monthly | yearly
+  String _selectedPeriod = 'monthly'; // daily | weekly | monthly | yearly
 
-  // ─── Warna pie chart — identik dengan instansi dashboard ─────────────────
-  static const _pieColors = [
-    Color(0xFFEF5350), // merah
-    Color(0xFF42A5F5), // biru
-    Color(0xFFFF7043), // oranye
-    Color(0xFFAB47BC), // ungu
-    Color(0xFF26C6DA), // cyan
-    Color(0xFF66BB6A), // hijau
-    Color(0xFFFFCA28), // kuning
-  ];
+  // ─── Warna pie chart FIXED per tipe — konsisten di semua period ──────────
+  // Setiap tipe insiden selalu mendapat warna yang sama, berapapun jumlah
+  // entries dan berapapun urutan dari API.
+  static const _typeColorMap = <String, Color>{
+    'fire': Color(0xFFEF5350), // merah
+    'medical': Color(0xFFAB47BC), // ungu
+    'crime': Color(0xFFFF7043), // oranye
+    'disaster': Color(0xFF42A5F5), // biru
+    'accident': Color(0xFF26C6DA), // cyan
+    'general': Color(0xFF66BB6A), // hijau
+    'unknown': Color(0xFFFFCA28), // kuning
+  };
 
-  // Kamus tipe insiden → nama Indonesia (sama dengan instansi)
+  // Fallback untuk tipe yang belum terdaftar
+  static const _fallbackColor = Color(0xFF90A4AE);
+
+  // Kamus tipe insiden → nama Indonesia (sama dengan instansi, tanpa rescue)
   static const _typeLabels = <String, String>{
     'fire': 'Kebakaran',
     'medical': 'Medis',
     'crime': 'Kriminalitas',
     'disaster': 'Bencana',
     'accident': 'Kecelakaan',
-    'rescue': 'Penyelamatan',
     'general': 'Umum',
     'unknown': 'Tidak Diketahui',
   };
 
   static const _periodLabels = {
+    'daily': 'Perhari',
     'weekly': 'Perminggu',
     'monthly': 'Perbulan',
     'yearly': 'Pertahun',
@@ -129,55 +134,62 @@ class _StatistikPageState extends State<StatistikPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── KPI Cards ─────────────────────────────────────────────────────
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return GridView.count(
-                crossAxisCount: 5,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                childAspectRatio: 1.6,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _KpiCard(
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _KpiCard(
                     label: 'TOTAL SOS',
                     value: '${_stats.totalSOS}',
                     icon: Icons.sensors,
                     color: Colors.redAccent,
                     textTheme: textTheme,
                   ),
-                  _KpiCard(
-                    label: 'TOTAL SELESAI',
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _KpiCard(
+                    label: 'SELESAI',
                     value: '${_stats.totalResolved}',
                     icon: Icons.check_circle_rounded,
                     color: Colors.greenAccent,
                     textTheme: textTheme,
                   ),
-                  _KpiCard(
-                    label: 'RATA-RATA RESPONS',
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _KpiCard(
+                    label: 'RATA-RATA',
                     value:
                         '${_stats.avgResponseMinutes.toStringAsFixed(1)} mnt',
                     icon: Icons.timer_outlined,
                     color: Colors.blueAccent,
                     textTheme: textTheme,
                   ),
-                  _KpiCard(
-                    label: 'TINGKAT ALARM PALSU',
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _KpiCard(
+                    label: 'ALARM PALSU',
                     value: '${_stats.falseAlarmRate.toStringAsFixed(1)}%',
                     icon: Icons.warning_amber_rounded,
                     color: Colors.orangeAccent,
                     textTheme: textTheme,
                   ),
-                  _KpiCard(
-                    label: 'RELAWAN AKTIF',
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _KpiCard(
+                    label: 'RELAWAN',
                     value: '${_stats.activeVolunteers}',
                     icon: Icons.people_outline,
                     color: Colors.purpleAccent,
                     textTheme: textTheme,
                   ),
-                ],
-              );
-            },
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -234,7 +246,7 @@ class _StatistikPageState extends State<StatistikPage> {
 
               const SizedBox(width: 24),
 
-              // ── Pie Chart: Distribusi Tipe — identik dengan instansi ──────
+              // ── Pie Chart: Distribusi Tipe ────────────────────────────────
               Expanded(
                 flex: 5,
                 child: Card(
@@ -273,7 +285,7 @@ class _StatistikPageState extends State<StatistikPage> {
                                 ),
                               )
                             : SizedBox(
-                                height: 240,
+                                height: 220,
                                 child: PieChart(
                                   PieChartData(
                                     sectionsSpace: 2,
@@ -288,8 +300,9 @@ class _StatistikPageState extends State<StatistikPage> {
                                   curve: Curves.easeInOutCubic,
                                 ),
                               ),
-                        const SizedBox(height: 20),
-                        // Legend — sama dengan instansi
+                        // ── Spacing antara pie chart dan legend ──────────
+                        const SizedBox(height: 32),
+                        // Legend
                         Wrap(
                           spacing: 12,
                           runSpacing: 10,
@@ -314,29 +327,48 @@ class _StatistikPageState extends State<StatistikPage> {
       return FlSpot(e.key.toDouble(), count);
     }).toList();
 
-    final maxY = spots.isEmpty
+    // Hitung maxY dengan margin atas 20%
+    final rawMax = spots.isEmpty
         ? 10.0
-        : (spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.2)
-              .ceilToDouble();
+        : spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    final maxY = (rawMax * 1.3)
+        .ceilToDouble()
+        .clamp(5.0, double.infinity)
+        .toDouble();
+
+    // Hitung interval Y agar label tidak terlalu rapat
+    final yInterval = (maxY / 5)
+        .ceilToDouble()
+        .clamp(1.0, double.infinity)
+        .toDouble();
+
+    // Hitung interval X (skip labels jika terlalu banyak titik)
+    final xInterval = spots.length > 15
+        ? (spots.length / 10).ceilToDouble()
+        : 1.0;
 
     return LineChart(
       LineChartData(
         minX: 0,
-        maxX: (spots.length - 1).toDouble().clamp(0, double.infinity),
+        maxX: spots.length <= 1 ? 1 : (spots.length - 1).toDouble(),
         minY: 0,
-        maxY: maxY < 5 ? 5 : maxY,
+        maxY: maxY,
         gridData: FlGridData(
           show: true,
-          getDrawingHorizontalLine: (_) =>
-              const FlLine(color: Colors.white10, strokeWidth: 1),
-          getDrawingVerticalLine: (_) =>
-              const FlLine(color: Colors.white10, strokeWidth: 1),
+          drawHorizontalLine: true,
+          drawVerticalLine: false,
+          horizontalInterval: yInterval,
+          getDrawingHorizontalLine: (_) => const FlLine(
+            color: Colors.white24,
+            strokeWidth: 0.5,
+            dashArray: [4, 4],
+          ),
         ),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: 1,
+              interval: xInterval,
               reservedSize: 36,
               getTitlesWidget: (v, meta) {
                 final idx = v.toInt();
@@ -344,10 +376,19 @@ class _StatistikPageState extends State<StatistikPage> {
                   return const SizedBox();
                 }
                 final label = _stats.monthly[idx]['month'] as String? ?? '';
-                // Truncate label to avoid overlap
-                final short = label.length > 7 ? label.substring(0, 7) : label;
+                String short = label;
+                if (_selectedPeriod == 'daily' && label.length == 10) {
+                  short = label.substring(5); // MM-DD
+                } else if (_selectedPeriod == 'weekly' && label.length >= 8) {
+                  short = label; // 2026-W20
+                } else if (_selectedPeriod == 'monthly' && label.length >= 7) {
+                  short = label; // 2026-05
+                }
+                if (short.length > 10) {
+                  short = short.substring(0, 10);
+                }
                 return Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     short,
                     style: const TextStyle(color: Colors.white38, fontSize: 10),
@@ -360,9 +401,10 @@ class _StatistikPageState extends State<StatistikPage> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 32,
+              interval: yInterval,
+              reservedSize: 36,
               getTitlesWidget: (v, meta) {
-                if (v == meta.max) return const SizedBox();
+                if (v == meta.max || v == meta.min) return const SizedBox();
                 return Text(
                   '${v.toInt()}',
                   style: const TextStyle(color: Colors.white38, fontSize: 10),
@@ -377,11 +419,18 @@ class _StatistikPageState extends State<StatistikPage> {
             sideTitles: SideTitles(showTitles: false),
           ),
         ),
-        borderData: FlBorderData(show: false),
+        borderData: FlBorderData(
+          show: true,
+          border: const Border(
+            left: BorderSide(color: Colors.white12, width: 1),
+            bottom: BorderSide(color: Colors.white12, width: 1),
+          ),
+        ),
         lineBarsData: [
           LineChartBarData(
             spots: spots,
             isCurved: true,
+            preventCurveOverShooting: true,
             color: const Color(0xFFFF7043),
             barWidth: 3,
             isStrokeCapRound: true,
@@ -398,7 +447,7 @@ class _StatistikPageState extends State<StatistikPage> {
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFFF7043).withValues(alpha: 0.3),
+                  const Color(0xFFFF7043).withValues(alpha: 0.25),
                   const Color(0xFFFF7043).withValues(alpha: 0.0),
                 ],
                 begin: Alignment.topCenter,
@@ -407,24 +456,44 @@ class _StatistikPageState extends State<StatistikPage> {
             ),
           ),
         ],
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                final idx = spot.x.toInt();
+                final label = idx < _stats.monthly.length
+                    ? _stats.monthly[idx]['month'] as String? ?? ''
+                    : '';
+                return LineTooltipItem(
+                  '$label\n${spot.y.toInt()} SOS',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
       ),
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeInOutCubic,
     );
   }
 
-  // ─── Pie Sections — warna identik dengan instansi ─────────────────────────
+  // ─── Pie Sections — warna FIXED per tipe (konsisten antar period) ─────────
   List<PieChartSectionData> _buildPieSections() {
     final entries = _stats.byType.entries.toList();
     final total = entries.fold(0, (s, e) => s + e.value);
-    return entries.asMap().entries.map((e) {
-      final pct = total == 0 ? 0.0 : e.value.value / total * 100;
-      final color = _pieColors[e.key % _pieColors.length];
+    return entries.map((e) {
+      final pct = total == 0 ? 0.0 : e.value / total * 100;
+      final color = _typeColorMap[e.key] ?? _fallbackColor;
       return PieChartSectionData(
-        value: e.value.value.toDouble(),
+        value: e.value.toDouble(),
         color: color,
         title: '${pct.toStringAsFixed(0)}%',
-        radius: 110,
+        radius: 100,
         titleStyle: TextStyle(
           fontSize: pct < 1 ? 0 : 12,
           color: Colors.white,
@@ -435,12 +504,12 @@ class _StatistikPageState extends State<StatistikPage> {
     }).toList();
   }
 
-  // ─── Legend — identik dengan instansi ─────────────────────────────────────
+  // ─── Legend — warna FIXED per tipe ────────────────────────────────────────
   List<Widget> _buildLegend() {
     final entries = _stats.byType.entries.toList();
-    return entries.asMap().entries.map((e) {
-      final color = _pieColors[e.key % _pieColors.length];
-      final label = _typeLabels[e.value.key] ?? e.value.key;
+    return entries.map((e) {
+      final color = _typeColorMap[e.key] ?? _fallbackColor;
+      final label = _typeLabels[e.key] ?? e.key;
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -463,7 +532,7 @@ class _StatistikPageState extends State<StatistikPage> {
   }
 }
 
-// ─── KPI Card — menggunakan Card widget seperti instansi ─────────────────────
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
 
 class _KpiCard extends StatelessWidget {
   const _KpiCard({
@@ -482,38 +551,41 @@ class _KpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Container(
-        padding: const EdgeInsets.all(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color, size: 22),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 16),
             ),
-            const SizedBox(height: 16),
-            Text(
-              value,
-              style: textTheme.displaySmall?.copyWith(
-                color: color,
-                fontSize: 28,
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: textTheme.displaySmall?.copyWith(
+                  color: color,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
+                letterSpacing: 0.5,
+                fontSize: 10,
               ),
             ),
           ],

@@ -540,6 +540,9 @@ func (r *Repository) GetStats(period string) (*StatsResponse, error) {
 	// Trend SOS berdasarkan period
 	var dateFormat, interval string
 	switch period {
+	case "daily":
+		dateFormat = "YYYY-MM-DD" // e.g. 2026-05-16
+		interval = "30 days"
 	case "weekly":
 		dateFormat = "IYYY-\"W\"IW" // e.g. 2026-W20
 		interval = "12 weeks"
