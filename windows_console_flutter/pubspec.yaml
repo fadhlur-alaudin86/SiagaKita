@@ -84,6 +84,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
   fastforge: ^0.0.1
+  msix: ^3.16.1
 
 flutter_launcher_icons:
   windows:
@@ -95,6 +96,16 @@ flutter_launcher_icons:
   linux:
     generate: true
     image_path: "../mobile-flutter/lib/components/app_icon.png"
+
+msix_config:
+  display_name: SiagaKita Console
+  publisher_display_name: SiagaKita
+  publisher: CN=SiagaKita, O=SiagaKita, L=Banda Aceh, S=Aceh, C=ID
+  identity_name: com.siagakita.console
+  msix_version: 1.0.0.0
+  logo_path: assets/app_icon.png
+  capabilities: internetClient, location
+  install_certificate: true # Otomatis instal sertifikat self-signed saat build di lokal
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
