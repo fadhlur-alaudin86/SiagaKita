@@ -191,7 +191,7 @@ class _KycScreenState extends State<KycScreen> {
       backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
-          'Verifikasi Identitas (KYC)'.tr(context),
+          'Verifikasi Identitas'.tr(context),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: textColor,
@@ -210,12 +210,9 @@ class _KycScreenState extends State<KycScreen> {
                   _buildStatusBanner(isDark),
                   SizedBox(height: 20.h(context)),
 
-                  // Hanya tampilkan form jika status none atau rejected
-                  if (_kycStatus == 'none' || _kycStatus == 'rejected') ...[
-                    _buildInfoCard(cardColor, textColor, primary),
-                    SizedBox(height: 20.h(context)),
-                    _buildForm(cardColor, textColor, primary, isDark),
-                  ],
+                  _buildInfoCard(cardColor, textColor, primary),
+                  SizedBox(height: 20.h(context)),
+                  _buildForm(cardColor, textColor, primary, isDark),
                 ],
               ),
             ),

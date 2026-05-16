@@ -127,6 +127,29 @@ class _BiodataScreenState extends State<BiodataScreen> {
   }
 
   Future<void> _submitBiodata() async {
+    if (_nikController.text.isEmpty ||
+        _phoneController.text.isEmpty ||
+        _placeOfBirthController.text.isEmpty ||
+        _birthDateController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('NIK, No WhatsApp, Tempat Lahir, dan Tanggal Lahir wajib diisi!'.tr(context)),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_nikController.text.length != 16) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('NIK harus 16 digit!'.tr(context)),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     for (var i = 0; i < _contacts.length; i++) {
       final c = _contacts[i];
       if ((c['name']?.isEmpty ?? true) ||

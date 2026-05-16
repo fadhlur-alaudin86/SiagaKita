@@ -150,6 +150,7 @@ class UserService {
 
       final payload = <String, dynamic>{
         'nik': updatedUser.nik,
+        'phone_number': updatedUser.phoneNumber,
         'place_of_birth': updatedUser.placeOfBirth,
         'date_of_birth': updatedUser.birthDate,
         'blood_type': medData['blood_type'],

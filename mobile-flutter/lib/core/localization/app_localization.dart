@@ -637,7 +637,7 @@ class AppLocalization {
     // Navbar
     'Riwayat': 'History',
     // KYC Screen
-    'Verifikasi Identitas (KYC)': 'Identity Verification (KYC)',
+    'Verifikasi Identitas': 'Identity Verification',
     'Verifikasi Identitas NIK Warga': 'Civilian NIK Identity Verification',
     'Status: Belum Diverifikasi': 'Status: Unverified',
     'Status: Menunggu Verifikasi': 'Status: Pending Verification',
