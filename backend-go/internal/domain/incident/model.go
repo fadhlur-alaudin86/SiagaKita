@@ -1,10 +1,33 @@
 package incident
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/lib/pq"
 )
+
+// StringSlice adalah []string yang selalu di-marshal sebagai JSON array (tidak pernah null).
+// Digunakan di response DTOs sebagai pengganti pq.StringArray agar kompatibel dengan
+// Sonic JSON encoder yang digunakan Fiber.
+type StringSlice []string
+
+func (s StringSlice) MarshalJSON() ([]byte, error) {
+	if s == nil {
+		return []byte("[]"), nil
+	}
+	type plain []string
+	return json.Marshal(plain(s))
+}
+
+func (s *StringSlice) Scan(src interface{}) error {
+	var arr pq.StringArray
+	if err := arr.Scan(src); err != nil {
+		return err
+	}
+	*s = StringSlice(arr)
+	return nil
+}
 
 // Nilai-nilai valid untuk incident_status:
 // 'grace_period' | 'broadcasting' | 'handled' | 'resolved' | 'false_alarm' | 'canceled'
@@ -208,7 +231,7 @@ type AllActiveIncidentResponse struct {
 	ReporterDomicile         *string        `json:"reporter_domicile,omitempty"`
 	ReporterBio              *string        `json:"reporter_bio,omitempty"`
 	ReporterEmergencyContact *string        `json:"reporter_emergency_contact,omitempty"`
-	PhotoPaths               pq.StringArray `json:"photo_paths"`
+	PhotoPaths               StringSlice    `json:"photo_paths"`
 	AudioPath                *string        `json:"audio_path,omitempty"`
 }
 
@@ -240,7 +263,7 @@ type NearbyIncidentResponse struct {
 	ReporterTrustLabel string         `json:"reporter_trust_label"`
 	CreatedAt          string         `json:"created_at"`
 	DistanceKm         float64        `json:"distance_km"`
-	PhotoPaths         pq.StringArray `json:"photo_paths"`
+	PhotoPaths         StringSlice    `json:"photo_paths"`
 	AudioPath          *string        `json:"audio_path,omitempty"`
 }
 
@@ -279,7 +302,7 @@ type IncidentReportResponse struct {
 	Longitude     float64        `json:"longitude"`
 	AddressDetail *string        `json:"address_detail,omitempty"`
 	Description   *string        `json:"description,omitempty"`
-	PhotoPaths    pq.StringArray `json:"photo_paths"`
+	PhotoPaths    StringSlice    `json:"photo_paths"`
 	AudioPath     *string        `json:"audio_path,omitempty"`
 	Status        string         `json:"status"`
 	CreatedAt     time.Time      `json:"created_at"`

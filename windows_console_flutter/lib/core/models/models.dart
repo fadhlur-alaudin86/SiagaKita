@@ -145,7 +145,7 @@ class IncidentModel {
       'accident' => 'Kecelakaan',
       'disaster' => 'Bencana Alam',
       'general' => 'Umum',
-      _ => 'Lainnya',
+      _ => 'Tidak diketahui',
     };
   }
 
@@ -303,7 +303,7 @@ class ReportModel {
       'accident' => 'Kecelakaan',
       'disaster' => 'Bencana Alam',
       'general' => 'Umum',
-      _ => 'Lainnya',
+      _ => 'Tidak diketahui',
     };
   }
 
