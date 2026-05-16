@@ -159,7 +159,7 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 			up.domicile AS reporter_domicile,
 			up.bio AS reporter_bio,
 			(SELECT contact_name || ' (' || contact_phone || ')' FROM emergency_contacts ec WHERE ec.user_id = i.reporter_id AND ec.deleted_at IS NULL LIMIT 1) AS reporter_emergency_contact,
-			i.photo_paths,
+			array_to_json(COALESCE(i.photo_paths, ARRAY[]::text[]))::text AS photo_paths,
 			i.audio_path,
 			(SELECT status FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS volunteer_response_status
 		FROM incidents i
@@ -168,6 +168,9 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 		WHERE i.status NOT IN ('resolved', 'false_alarm', 'canceled')
 		ORDER BY i.created_at DESC
 	`).Scan(&results).Error
+	for i := range results {
+		results[i].PhotoPaths = StringSlice(parsePhotoPathsJSON(results[i].PhotoPathsRaw))
+	}
 	return results, err
 }
 
@@ -199,7 +202,7 @@ func (r *Repository) FindAgencyHistory() ([]AllActiveIncidentResponse, error) {
 			up.domicile AS reporter_domicile,
 			up.bio AS reporter_bio,
 			(SELECT contact_name || ' (' || contact_phone || ')' FROM emergency_contacts ec WHERE ec.user_id = i.reporter_id AND ec.deleted_at IS NULL LIMIT 1) AS reporter_emergency_contact,
-			i.photo_paths,
+			array_to_json(COALESCE(i.photo_paths, ARRAY[]::text[]))::text AS photo_paths,
 			i.audio_path,
 			(SELECT status FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS volunteer_response_status
 		FROM incidents i
@@ -208,6 +211,9 @@ func (r *Repository) FindAgencyHistory() ([]AllActiveIncidentResponse, error) {
 		WHERE i.status IN ('resolved', 'false_alarm', 'canceled')
 		ORDER BY i.updated_at DESC
 	`).Scan(&results).Error
+	for i := range results {
+		results[i].PhotoPaths = StringSlice(parsePhotoPathsJSON(results[i].PhotoPathsRaw))
+	}
 	return results, err
 }
 
@@ -221,7 +227,10 @@ func (r *Repository) FindReports(status string) ([]IncidentReportResponse, error
 	var reps []IncidentReportResponse
 	query := `
 		SELECT
-			ir.*,
+			ir.id, ir.reporter_id, ir.incident_type, ir.urgency_level,
+			ir.latitude, ir.longitude, ir.address_detail, ir.description,
+			array_to_json(COALESCE(ir.photo_paths, ARRAY[]::text[]))::text AS photo_paths,
+			ir.audio_path, ir.status, ir.created_at, ir.updated_at, ir.completed_at,
 			COALESCE(up.full_name, u.email, 'Anonim') AS reporter_name,
 			up.phone_number AS reporter_phone
 		FROM incident_reports ir
@@ -234,7 +243,15 @@ func (r *Repository) FindReports(status string) ([]IncidentReportResponse, error
 		args = append(args, status)
 	}
 	query += " ORDER BY ir.created_at DESC"
-	return reps, r.db.Raw(query, args...).Scan(&reps).Error
+	err := r.db.Raw(query, args...).Scan(&reps).Error
+	r.hydrateReportPhotoPaths(reps)
+	return reps, err
+}
+
+func (r *Repository) hydrateReportPhotoPaths(reps []IncidentReportResponse) {
+	for i := range reps {
+		reps[i].PhotoPaths = StringSlice(parsePhotoPathsJSON(reps[i].PhotoPathsRaw))
+	}
 }
 
 func (r *Repository) UpdateReportStatus(id, status string, urgency *int) error {
@@ -254,7 +271,10 @@ func (r *Repository) FindReportsByUser(userID string) ([]IncidentReportResponse,
 	var reps []IncidentReportResponse
 	query := `
 		SELECT
-			ir.*,
+			ir.id, ir.reporter_id, ir.incident_type, ir.urgency_level,
+			ir.latitude, ir.longitude, ir.address_detail, ir.description,
+			array_to_json(COALESCE(ir.photo_paths, ARRAY[]::text[]))::text AS photo_paths,
+			ir.audio_path, ir.status, ir.created_at, ir.updated_at, ir.completed_at,
 			COALESCE(up.full_name, u.email, 'Anonim') AS reporter_name,
 			up.phone_number AS reporter_phone
 		FROM incident_reports ir
@@ -263,7 +283,9 @@ func (r *Repository) FindReportsByUser(userID string) ([]IncidentReportResponse,
 		WHERE ir.reporter_id = ?
 		ORDER BY ir.created_at DESC
 	`
-	return reps, r.db.Raw(query, userID).Scan(&reps).Error
+	err := r.db.Raw(query, userID).Scan(&reps).Error
+	r.hydrateReportPhotoPaths(reps)
+	return reps, err
 }
 
 func (r *Repository) CancelReport(reportID, reporterID string) error {
@@ -436,7 +458,7 @@ func (r *Repository) FindNearby(lat, lng, radiusKm float64, volunteerID string) 
 					sin(radians($1)) * sin(radians(latitude)))
 				)
 			) AS distance_km,
-			photo_paths,
+			array_to_json(COALESCE(photo_paths, ARRAY[]::text[]))::text AS photo_paths,
 			audio_path
 		FROM incidents
 		WHERE status NOT IN ('resolved', 'false_alarm', 'canceled')
@@ -458,6 +480,9 @@ func (r *Repository) FindNearby(lat, lng, radiusKm float64, volunteerID string) 
 		  ) <= $3
 		ORDER BY distance_km ASC
 	`, lat, lng, radiusKm, volunteerID).Scan(&results).Error
+	for i := range results {
+		results[i].PhotoPaths = StringSlice(parsePhotoPathsJSON(results[i].PhotoPathsRaw))
+	}
 	return results, err
 }
 

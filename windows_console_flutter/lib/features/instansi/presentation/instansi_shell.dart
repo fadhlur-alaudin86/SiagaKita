@@ -50,6 +50,8 @@ class _InstansiShellState extends State<InstansiShell> {
   int _unreadReportCount = 0;
   final Set<String> _readSosIds = {};
   final Set<String> _readReportIds = {};
+  // Track known SOS IDs untuk deteksi incident baru dari polling (bukan hanya WS)
+  final Set<String> _knownSosIds = {};
 
   @override
   void initState() {
@@ -117,6 +119,18 @@ class _InstansiShellState extends State<InstansiShell> {
     final incidents = await IncidentApiService.getActiveIncidents(widget.token);
     final reports = await IncidentApiService.getReports(widget.token);
     if (!mounted) return;
+
+    // Deteksi incident baru yang belum pernah terlihat (untuk trigger alarm dari polling)
+    final currentIds = incidents.map((i) => i.id).toSet();
+    final newIds = currentIds.difference(_knownSosIds);
+    if (newIds.isNotEmpty && _knownSosIds.isNotEmpty) {
+      // Ada SOS baru masuk — play alarm jika belum playing
+      if (!AudioService.isPlaying) AudioService.playAlarm();
+    }
+    _knownSosIds
+      ..clear()
+      ..addAll(currentIds);
+
     setState(() {
       _unreadSosCount = incidents
           .where((inc) => !_readSosIds.contains(inc.id))

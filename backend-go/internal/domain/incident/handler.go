@@ -26,7 +26,13 @@ type Handler struct {
 }
 
 func NewHandler(svc *Service, cfg *config.Config, h *hub.Hub, rdb *redis.Client) *Handler {
-	return &Handler{svc: svc, cfg: cfg, hub: h, rdb: rdb}
+	handler := &Handler{svc: svc, cfg: cfg, hub: h, rdb: rdb}
+	// Wire callback: saat service auto-promote grace_period → broadcasting,
+	// broadcast via WS ke console agar alarm berbunyi.
+	svc.OnBroadcast = func(incidentID string) {
+		go handler.broadcastSOSViaREST(incidentID)
+	}
+	return handler
 }
 
 // POST /api/v1/incidents/trigger

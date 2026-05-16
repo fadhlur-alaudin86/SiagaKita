@@ -56,4 +56,25 @@ class OfflineService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_pendingCancelSosKey);
   }
+
+  // ─── Pending Incident Type (simpan tipe insiden saat offline) ────────────
+
+  static const String _pendingTypeKey = 'pending_incident_type';
+
+  /// Simpan tipe insiden yang dipilih user saat offline,
+  /// sehingga bisa di-sync ke server setelah upload berhasil.
+  static Future<void> savePendingIncidentType(String type) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_pendingTypeKey, type);
+  }
+
+  static Future<String?> getPendingIncidentType() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_pendingTypeKey);
+  }
+
+  static Future<void> clearPendingIncidentType() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_pendingTypeKey);
+  }
 }

@@ -15,7 +15,6 @@ Map<String, String> _headersWithIdempotency(String token) => {
   'X-Idempotency-Key': _newIdempotencyKey(),
 };
 
-
 class IncidentApiService {
   // ─── List semua SOS aktif (instansi view) ─────────────────────────────────
 
@@ -224,7 +223,12 @@ class AdminApiService {
     return resp.statusCode == 200;
   }
 
-  static Future<bool> banUser(String token, String id, String reason, int days) async {
+  static Future<bool> banUser(
+    String token,
+    String id,
+    String reason,
+    int days,
+  ) async {
     final resp = await http.post(
       Uri.parse(ApiConstants.adminUserBan(id)),
       headers: AuthService.headers(token),

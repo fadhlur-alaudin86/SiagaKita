@@ -35,6 +35,9 @@ var validIncidentTypes = map[string]bool{
 type Service struct {
 	repo *Repository
 	rdb  *redis.Client
+	// OnBroadcast dipanggil saat auto-promote grace_period → broadcasting
+	// agar WS event INCOMING_EMERGENCY dikirim ke console.
+	OnBroadcast func(incidentID string)
 }
 
 func NewService(repo *Repository, rdb *redis.Client) *Service {
@@ -50,6 +53,16 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest) (*Trigge
 	}
 	if banned {
 		return nil, errors.New("sos_banned: akun Anda dinonaktifkan dari fitur SOS karena pelanggaran berulang")
+	}
+
+	// Guard: cegah duplikat SOS — jika user sudah punya incident aktif, kembalikan yang ada
+	existing, _ := s.repo.FindActiveByReporter(reporterID)
+	if existing != nil {
+		return &TriggerSOSResponse{
+			IncidentID: existing.ID,
+			Status:     existing.Status,
+			Message:    "SOS sudah aktif.",
+		}, nil
 	}
 
 	trustLabel, _ := s.repo.GetTrustLabel(reporterID)
@@ -70,6 +83,9 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest) (*Trigge
 	if err := s.repo.CreateIncident(inc); err != nil {
 		return nil, err
 	}
+
+	// Auto-promote: jadwalkan promosi grace_period → broadcasting setelah 15 detik
+	go s.autoPromoteGracePeriod(inc.ID)
 
 	return &TriggerSOSResponse{
 		IncidentID: inc.ID,
@@ -110,6 +126,25 @@ func (s *Service) PromoteToBroadcasting(incidentID, reporterID string) error {
 		return errors.New("unauthorized")
 	}
 	return s.repo.UpdateStatus(incidentID, "broadcasting")
+}
+
+// autoPromoteGracePeriod secara otomatis mempromosikan incident dari grace_period ke broadcasting
+// setelah 15 detik. Ini memastikan SOS tetap terkirim bahkan jika mobile gagal memanggil
+// /broadcast endpoint (misalnya saat offline). Dipanggil sebagai goroutine.
+func (s *Service) autoPromoteGracePeriod(incidentID string) {
+	time.Sleep(15 * time.Second)
+	inc, err := s.repo.FindByID(incidentID)
+	if err != nil || inc == nil {
+		return
+	}
+	// Hanya promosikan jika masih grace_period (belum diubah oleh mobile)
+	if inc.Status == "grace_period" {
+		_ = s.repo.UpdateStatus(incidentID, "broadcasting")
+		// Trigger WS broadcast ke console agar alarm berbunyi
+		if s.OnBroadcast != nil {
+			s.OnBroadcast(incidentID)
+		}
+	}
 }
 
 // ─── CancelSOS ────────────────────────────────────────────────────────────────

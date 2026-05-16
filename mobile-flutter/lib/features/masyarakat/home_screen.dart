@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen>
       3; // hitung mundur update lokasi berikutnya (detik)
 
   DateTime? _lastLocationUpdate; // timestamp lokasi terakhir berhasil diupdate
-  bool _sosTransmitting = true; // apakah koneksi SOS dalam keadaan baik
+  bool _sosTransmitting = false; // apakah koneksi SOS dalam keadaan baik (mulai false sampai ada HTTP sukses)
   Timer? _countdownTimer; // hitung mundur 1 detik
 
   // Untuk menyimpan ID insiden lokal jika user membatalkan saat proses upload masih berlangsung
@@ -408,14 +408,13 @@ class _HomeScreenState extends State<HomeScreen>
             _lastLocationUpdate = now;
             _sosTransmitting = true;
             _nextUpdateCountdown = 3;
-            _sosUploadStatus = 'sent';
+            // Jangan set _sosUploadStatus di sini — hanya dari polling status
           });
         }
       } catch (_) {
         if (mounted) {
           setState(() {
             _sosTransmitting = false;
-            _sosUploadStatus = 'sending';
           });
         }
       }
@@ -655,7 +654,10 @@ class _HomeScreenState extends State<HomeScreen>
     // Hentikan jika sudah tidak relevan (dibatalkan user / sudah ada server ID)
     if (!mounted) return;
     if (_sosPhase == 'idle') return;
-    if (_pendingIncidentId != null && _pendingIncidentId != localId) return;
+    // Cek apakah masih relevan: pendingId harus match ATAU activeIncident sudah punya server ID
+    if (_pendingIncidentId != null &&
+        _pendingIncidentId != localId &&
+        _activeIncident?.incidentId != localId) return;
 
     try {
       final result = await IncidentService.triggerSOS(
@@ -668,16 +670,18 @@ class _HomeScreenState extends State<HomeScreen>
       if (!mounted) return;
 
       final bool wasCancelled = _cancelledLocalId == localId;
+      final serverId = result.incidentId;
 
       // Ganti local ID dengan server ID (tidak tampil di UI)
       setState(() {
         if (_pendingIncidentId == localId) {
-          _pendingIncidentId = result.incidentId;
+          _pendingIncidentId = serverId;
         }
         _sosUploadStatus = 'sent';
+        _sosTransmitting = true;
         if (_activeIncident != null && _activeIncident!.incidentId == localId) {
           _activeIncident = ActiveIncident(
-            incidentId: result.incidentId,
+            incidentId: serverId,
             status: _activeIncident!.status,
             incidentType: _activeIncident!.incidentType,
             latitude: _activeIncident!.latitude,
@@ -691,22 +695,38 @@ class _HomeScreenState extends State<HomeScreen>
       // Bersihkan pending SOS karena berhasil masuk ke server
       OfflineService.clearPendingSOS();
 
+      // Sync tipe insiden yang tersimpan saat offline
+      final pendingType = await OfflineService.getPendingIncidentType();
+      if (pendingType != null) {
+        try {
+          await IncidentService.updateType(
+            accessToken: widget.accessToken,
+            incidentId: serverId,
+            incidentType: pendingType,
+          );
+          OfflineService.clearPendingIncidentType();
+        } catch (_) {
+          /* akan di-retry di polling berikutnya */
+        }
+      }
+
       if (wasCancelled) {
         IncidentService.cancelSOS(
               accessToken: widget.accessToken,
-              incidentId: result.incidentId,
+              incidentId: serverId,
             )
             .then((_) {
               OfflineService.clearPendingCancelSOS();
             })
             .catchError((_) {
               // Jika gagal cancel, simpan ke pending cancel
-              OfflineService.savePendingCancelSOS(result.incidentId);
+              OfflineService.savePendingCancelSOS(serverId);
             });
         _cancelledLocalId = null;
       }
     } on SOSBannedException catch (e) {
       OfflineService.clearPendingSOS();
+      OfflineService.clearPendingIncidentType();
       if (!mounted) return;
       // SOS banned → batalkan grace period
       _cancelGracePeriodLocally();
@@ -789,17 +809,23 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (confirm == true) {
       if (_pendingIncidentId == null) return;
-      final incidentId = _pendingIncidentId!;
-      _transitionToBroadcasting();
+      // Simpan tipe yang dipilih ke offline cache — akan di-sync setelah upload berhasil
+      OfflineService.savePendingIncidentType(type);
+      _transitionToBroadcasting(selectedType: type);
 
-      try {
-        await IncidentService.updateType(
-          accessToken: widget.accessToken,
-          incidentId: incidentId,
-          incidentType: type,
-        );
-      } catch (_) {
-        /* silent */
+      // Hanya panggil updateType jika ID bukan UUID lokal (sudah punya server ID)
+      final incidentId = _activeIncident?.incidentId ?? _pendingIncidentId;
+      if (incidentId != null && _sosUploadStatus == 'sent') {
+        try {
+          await IncidentService.updateType(
+            accessToken: widget.accessToken,
+            incidentId: incidentId,
+            incidentType: type,
+          );
+          OfflineService.clearPendingIncidentType();
+        } catch (_) {
+          /* akan di-sync setelah upload retry berhasil */
+        }
       }
     }
   }
@@ -819,23 +845,28 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _transitionToBroadcasting() {
+  void _transitionToBroadcasting({String? selectedType}) {
     _graceTimer?.cancel();
+    _sosRetryTimer?.cancel(); // Cegah retry timer membuat duplikat upload
     if (!mounted) return;
-    final incidentId = _pendingIncidentId!;
+    final incidentId = _pendingIncidentId ?? _activeIncident?.incidentId ?? '';
+    if (incidentId.isEmpty) return;
     final newIncident = ActiveIncident(
       incidentId: incidentId,
       status: 'broadcasting',
-      incidentType: 'unknown',
+      incidentType: selectedType ?? 'unknown',
       latitude: 0,
       longitude: 0,
       createdAt: DateTime.now().toIso8601String(),
     );
     setState(() {
       _activeIncident = newIncident;
-      _pendingIncidentId = null;
+      // JANGAN null-kan _pendingIncidentId — masih dibutuhkan oleh retry upload
+      // _pendingIncidentId akan di-null-kan setelah upload berhasil
       _sosPhase = 'broadcasting';
       _showSOSSentBanner = true;
+      // Set status awal transmisi ke false sampai ada HTTP sukses
+      _sosTransmitting = false;
     });
     _startLocationUpdates();
     // Update background service dengan incidentId yang valid

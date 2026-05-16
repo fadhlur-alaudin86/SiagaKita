@@ -20,13 +20,71 @@ func (s StringSlice) MarshalJSON() ([]byte, error) {
 	return json.Marshal(plain(s))
 }
 
-func (s *StringSlice) Scan(src interface{}) error {
-	var arr pq.StringArray
-	if err := arr.Scan(src); err != nil {
-		return err
+// parsePhotoPathsJSON mengkonversi JSON text dari array_to_json()::text ke []string.
+func parsePhotoPathsJSON(raw string) []string {
+	if raw == "" || raw == "null" || raw == "[]" {
+		return []string{}
 	}
-	*s = StringSlice(arr)
-	return nil
+	var result []string
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		return []string{}
+	}
+	return result
+}
+
+func (s *StringSlice) Scan(src interface{}) error {
+	if src == nil {
+		*s = StringSlice{}
+		return nil
+	}
+	// Utama: src adalah JSON text dari array_to_json()::text
+	switch v := src.(type) {
+	case string:
+		if v == "" || v == "null" {
+			*s = StringSlice{}
+			return nil
+		}
+		var result []string
+		if err := json.Unmarshal([]byte(v), &result); err != nil {
+			*s = StringSlice{}
+			return nil
+		}
+		*s = StringSlice(result)
+		return nil
+	case []byte:
+		if len(v) == 0 {
+			*s = StringSlice{}
+			return nil
+		}
+		var result []string
+		if err := json.Unmarshal(v, &result); err != nil {
+			*s = StringSlice{}
+			return nil
+		}
+		*s = StringSlice(result)
+		return nil
+	case []string:
+		*s = StringSlice(v)
+		return nil
+	case []interface{}:
+		result := make(StringSlice, 0, len(v))
+		for _, item := range v {
+			if str, ok := item.(string); ok {
+				result = append(result, str)
+			}
+		}
+		*s = result
+		return nil
+	default:
+		// Fallback: lib/pq format
+		var arr pq.StringArray
+		if err := arr.Scan(src); err != nil {
+			*s = StringSlice{}
+			return nil
+		}
+		*s = StringSlice(arr)
+		return nil
+	}
 }
 
 // Nilai-nilai valid untuk incident_status:
@@ -231,7 +289,8 @@ type AllActiveIncidentResponse struct {
 	ReporterDomicile         *string        `json:"reporter_domicile,omitempty"`
 	ReporterBio              *string        `json:"reporter_bio,omitempty"`
 	ReporterEmergencyContact *string        `json:"reporter_emergency_contact,omitempty"`
-	PhotoPaths               StringSlice    `json:"photo_paths"`
+	PhotoPaths               StringSlice    `gorm:"-" json:"photo_paths"`
+	PhotoPathsRaw            string         `gorm:"column:photo_paths" json:"-"`
 	AudioPath                *string        `json:"audio_path,omitempty"`
 }
 
@@ -263,7 +322,8 @@ type NearbyIncidentResponse struct {
 	ReporterTrustLabel string         `json:"reporter_trust_label"`
 	CreatedAt          string         `json:"created_at"`
 	DistanceKm         float64        `json:"distance_km"`
-	PhotoPaths         StringSlice    `json:"photo_paths"`
+	PhotoPaths         StringSlice    `gorm:"-" json:"photo_paths"`
+	PhotoPathsRaw      string         `gorm:"column:photo_paths" json:"-"`
 	AudioPath          *string        `json:"audio_path,omitempty"`
 }
 
@@ -302,7 +362,8 @@ type IncidentReportResponse struct {
 	Longitude     float64        `json:"longitude"`
 	AddressDetail *string        `json:"address_detail,omitempty"`
 	Description   *string        `json:"description,omitempty"`
-	PhotoPaths    StringSlice    `json:"photo_paths"`
+	PhotoPaths    StringSlice    `gorm:"-" json:"photo_paths"`
+	PhotoPathsRaw string         `gorm:"column:photo_paths" json:"-"`
 	AudioPath     *string        `json:"audio_path,omitempty"`
 	Status        string         `json:"status"`
 	CreatedAt     time.Time      `json:"created_at"`

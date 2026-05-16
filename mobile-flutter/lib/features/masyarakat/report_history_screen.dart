@@ -462,70 +462,74 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             Row(
               children: [
                 // 1. Chip Urgensi (Selalu tampil, '-' jika null)
-                _chip(report.getUrgencyLabel(context), urgencyColor, width: 75),
-                const SizedBox(width: 8),
+                Expanded(
+                  child: _chip(
+                    report.getUrgencyLabel(context),
+                    urgencyColor,
+                  ),
+                ),
+                const SizedBox(width: 6),
 
                 // 2. Chip Foto (Selalu tampil, '-' jika kosong)
-                _chip(
-                  report.photoPaths.isNotEmpty
-                      ? '${report.photoPaths.length} ${'foto'.tr(context)}'
-                      : '-',
-                  Colors.blue,
-                  width: 75,
+                Expanded(
+                  child: _chip(
+                    report.photoPaths.isNotEmpty
+                        ? '${report.photoPaths.length} ${'foto'.tr(context)}'
+                        : '-',
+                    Colors.blue,
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
 
                 // 3. Chip Audio (Selalu tampil, '-' jika null)
-                _chip(
-                  report.audioPath != null ? 'audio'.tr(context) : '-',
-                  Colors.purple,
-                  width: 75,
+                Expanded(
+                  child: _chip(
+                    report.audioPath != null ? 'audio'.tr(context) : '-',
+                    Colors.purple,
+                  ),
                 ),
-                const Spacer(),
-                if (report.status == 'sent' || report.status == 'pending')
-                  SizedBox(
-                    width: 100,
-                    child: OutlinedButton(
-                      onPressed: () => _confirmCancelReport(report.id),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'Batalkan'.tr(context),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                if (report.status == 'failed')
-                  SizedBox(
-                    width: 100,
-                    child: OutlinedButton(
-                      onPressed: () => _resendFailedReport(report),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.blue,
-                        side: const BorderSide(color: Colors.blue),
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'Kirim Ulang'.tr(context),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
+            // ── Tombol Aksi (baris terpisah agar tidak overflow) ──
+            if (report.status == 'sent' ||
+                report.status == 'pending' ||
+                report.status == 'failed') ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: report.status == 'failed'
+                      ? () => _resendFailedReport(report)
+                      : () => _confirmCancelReport(report.id),
+                  icon: Icon(
+                    report.status == 'failed'
+                        ? Icons.refresh
+                        : Icons.cancel_outlined,
+                    size: 16,
+                  ),
+                  label: Text(
+                    report.status == 'failed'
+                        ? 'Kirim Ulang'.tr(context)
+                        : 'Batalkan'.tr(context),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor:
+                        report.status == 'failed' ? Colors.blue : Colors.red,
+                    side: BorderSide(
+                      color: report.status == 'failed'
+                          ? Colors.blue
+                          : Colors.red,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
