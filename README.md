@@ -22,13 +22,15 @@ The SiagaKita system consists of three main components:
 *   **Real-time Radar**: View active SOS requests within a specified radius.
 *   **Mission Acceptance**: Accept SOS calls and automatically share live location with the victim and monitoring agencies.
 *   **Gamification & Ranks**: Earn experience points (XP) and badges for successfully completing rescue missions.
-*   **Verification (KYC)**: Upload ID and medical certifications to become a verified first responder.
+*   **Verification (KYC)**: Strict onboarding with mandatory identity fields (NIK validation, WhatsApp synchronization) and medical certification uploads to become a verified first responder.
 
 ### For Agencies & Admins
 *   **Live Operational Map**: Monitor all active incidents and moving volunteers on an interactive map.
 *   **Multi-Device Sync**: Console users can login from multiple devices simultaneously with real-time state synchronization via WebSockets.
 *   **Incident Management**: Review incoming reports, assign urgency levels, dispatch personnel, and resolve incidents.
 *   **User Management**: Approve or reject volunteer KYC applications, and manage SOS abuse (strikes and bans).
+*   **Analytics Dashboard**: Real-time statistical aggregation of incidents with dynamic filtering periods (Week, Month, Year).
+*   **Agency Customization**: Dynamic profiles integrated natively into the dashboard UI for respective emergency agencies.
 
 ### System Reliability
 *   **Single-Device Mobile Session**: Prevents account sharing and enhances security by enforcing one active session per mobile user via Redis-backed JTI validation.

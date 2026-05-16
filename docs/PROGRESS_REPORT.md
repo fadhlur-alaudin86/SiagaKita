@@ -117,6 +117,23 @@
 
 ---
 
+### Patch 1.0.23 - 16 Mei 2026 (Registration & Admin Stats Refinement)
+
+#### Backend - Go Fiber
+- **Stats Refactoring**: Mengubah logika endpoint `/admin/stats` dari 4 periode (harian, mingguan, bulanan, tahunan) menjadi 3 periode yang difilter dengan ketat: `week` (7 hari), `month` (30 hari), dan `year` (12 bulan). Data agregasi kini murni dibatasi oleh rentang waktu yang dipilih, kecuali metrik "Relawan Aktif" yang bersifat global.
+
+#### Mobile Flutter (Citizen/Volunteer)
+- **Mandatory KYC Fields**: Pendaftaran biodata awal kini memiliki validasi form yang ketat. Field NIK (tepat 16 digit), nomor WhatsApp, tempat lahir, dan tanggal lahir wajib diisi sebelum pengguna dapat menekan tombol simpan, meskipun tombol "Lewati" tetap dipertahankan.
+- **WhatsApp Integration**: Input nomor WhatsApp pada form biodata telah disambungkan dengan endpoint `POST /users/biodata` dan tersimpan di database.
+- **Continuous KYC Navigation**: Memperbaiki akses navigasi dari halaman profil. Halaman pengajuan KYC kini dapat diakses secara kontinu meskipun status sudah `approved` atau `pending`, memungkinkan pengguna untuk memperbarui data identitas.
+
+#### Desktop Console (Admin/Instansi)
+- **Dynamic Agency Sidebar**: Hardcode tulisan 'SIAGAKITA INSTANSI' di sidebar kini digantikan dengan panggilan API `getProfile` dinamis yang menampilkan nama instansi sesungguhnya secara otomatis setelah *login*.
+- **Period Control**: Mengubah komponen period statistik admin menjadi 3 opsi (1 Minggu, 1 Bulan, 1 Tahun) dan memindahkannya ke _top-level selector_. Seluruh *pie chart*, metrik KPI, dan tren *line chart* kini bersifat reaktif terhadap perubahan periode ini.
+- **Custom Branding**: Mengganti ikon perisai standar pada layar masuk Console dengan aset gambar kustom `logo_siagakita_transparant.png` untuk mempertegas identitas proyek.
+
+---
+
 ### 🔖 Patch 1.0.22 - 15 Mei 2026 (Operational UI Refinement & Alarm Logic)
 
 #### 🛡️ Backend - Go Fiber
