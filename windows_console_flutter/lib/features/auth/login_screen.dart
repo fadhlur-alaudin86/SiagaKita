@@ -91,22 +91,11 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF7418).withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFFF7418).withValues(alpha: 0.4),
-                        width: 2,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.shield_outlined,
-                      color: Color(0xFFFF7418),
-                      size: 52,
-                    ),
+                  Image.asset(
+                    'assets/logo_siagakita_transparant.png',
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 28),
                   const Text(

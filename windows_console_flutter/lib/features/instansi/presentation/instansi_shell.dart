@@ -53,9 +53,12 @@ class _InstansiShellState extends State<InstansiShell> {
   // Track known SOS IDs untuk deteksi incident baru dari polling (bukan hanya WS)
   final Set<String> _knownSosIds = {};
 
+  String _agencyName = 'SIAGAKITA INSTANSI';
+
   @override
   void initState() {
     super.initState();
+    _fetchProfile();
     _fetchUnread();
     _wsSub = widget.ws.eventStream.listen((msg) {
       if (!mounted) return;
@@ -113,6 +116,15 @@ class _InstansiShellState extends State<InstansiShell> {
     _wsSub?.cancel();
     _pollingTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _fetchProfile() async {
+    final profile = await AgencyApiService.getProfile(widget.token);
+    if (mounted && profile != null) {
+      setState(() {
+        _agencyName = profile['name'] as String? ?? 'SIAGAKITA INSTANSI';
+      });
+    }
   }
 
   Future<void> _fetchUnread() async {
@@ -213,6 +225,7 @@ class _InstansiShellState extends State<InstansiShell> {
               activeMenu: _activeMenu,
               unreadSosCount: _unreadSosCount,
               unreadReportCount: _unreadReportCount,
+              agencyName: _agencyName,
               onSelected: (menu) {
                 setState(() {
                   _activeMenu = menu;
@@ -254,6 +267,7 @@ class _SideNavigation extends StatelessWidget {
     required this.ws,
     required this.unreadSosCount,
     required this.unreadReportCount,
+    required this.agencyName,
   });
 
   final InstansiMenu activeMenu;
@@ -261,6 +275,7 @@ class _SideNavigation extends StatelessWidget {
   final WsService ws;
   final int unreadSosCount;
   final int unreadReportCount;
+  final String agencyName;
 
   @override
   Widget build(BuildContext context) {
@@ -273,11 +288,11 @@ class _SideNavigation extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
-                  'SIAGAKITA INSTANSI',
-                  style: TextStyle(
+                  agencyName.toUpperCase(),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
                     letterSpacing: 1.1,

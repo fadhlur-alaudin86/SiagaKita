@@ -110,6 +110,7 @@ flutter:
   assets:
     - assets/audio/
     - assets/app_icon.png
+    - assets/logo_siagakita_transparant.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
