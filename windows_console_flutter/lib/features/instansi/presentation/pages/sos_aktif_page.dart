@@ -843,7 +843,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
             const Divider(color: Colors.white12),
             const SizedBox(height: 16),
             const Text(
-              '📸 BUKTI FOTO',
+              'BUKTI FOTO',
               style: TextStyle(
                 color: Colors.white70,
                 fontWeight: FontWeight.bold,

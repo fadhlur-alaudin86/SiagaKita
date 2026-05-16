@@ -62,8 +62,9 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
             .toList();
         // Keep selected in sync
         if (_selected != null) {
-          final updated =
-              _reports.where((r) => r.id == _selected!.id).firstOrNull;
+          final updated = _reports
+              .where((r) => r.id == _selected!.id)
+              .firstOrNull;
           _selected = updated;
         }
         _loading = false;
@@ -262,7 +263,9 @@ class _LaporanMasukPageState extends State<LaporanMasukPage> {
                                           color: Colors.orange.withValues(
                                             alpha: 0.15,
                                           ),
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
                                         ),
                                         child: Icon(
                                           _incidentIcon(r.incidentType),
@@ -406,12 +409,12 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
   void initState() {
     super.initState();
     // Daftarkan semua listener terlepas dari ada tidaknya audio
-    _audioPlayer.onDurationChanged.listen(
-      (d) { if (mounted) setState(() => _duration = d); },
-    );
-    _audioPlayer.onPositionChanged.listen(
-      (p) { if (mounted) setState(() => _position = p); },
-    );
+    _audioPlayer.onDurationChanged.listen((d) {
+      if (mounted) setState(() => _duration = d);
+    });
+    _audioPlayer.onPositionChanged.listen((p) {
+      if (mounted) setState(() => _position = p);
+    });
     _audioPlayer.onPlayerStateChanged.listen((s) {
       if (mounted) setState(() => _isPlaying = s == PlayerState.playing);
     });
@@ -578,8 +581,7 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                   child: Text(
                     r.status == 'sent' ? 'MASUK' : 'DITANGANI',
                     style: TextStyle(
-                      color:
-                          r.status == 'sent' ? Colors.orange : Colors.blue,
+                      color: r.status == 'sent' ? Colors.orange : Colors.blue,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -614,7 +616,11 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 16, color: Colors.white38),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: Colors.white38,
+                  ),
                   const SizedBox(width: 10),
                   const SizedBox(
                     width: 90,
@@ -629,14 +635,21 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                       children: [
                         Text(
                           '${r.latitude}, ${r.longitude}',
-                          style: const TextStyle(color: Colors.white, fontSize: 13),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
                         ),
-                        if (r.addressDetail != null && r.addressDetail!.isNotEmpty)
+                        if (r.addressDetail != null &&
+                            r.addressDetail!.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               r.addressDetail!,
-                              style: const TextStyle(color: Colors.white54, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                       ],
@@ -648,7 +661,9 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                       if (widget.onOpenMap != null) {
                         widget.onOpenMap!(r.latitude, r.longitude);
                       } else {
-                        final uri = Uri.parse('https://maps.google.com/?q=${r.latitude},${r.longitude}');
+                        final uri = Uri.parse(
+                          'https://maps.google.com/?q=${r.latitude},${r.longitude}',
+                        );
                         if (await canLaunchUrl(uri)) launchUrl(uri);
                       }
                     },
@@ -670,7 +685,7 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
             const Divider(color: Colors.white12),
             const SizedBox(height: 16),
             const Text(
-              '📸 LAMPIRAN FOTO',
+              'LAMPIRAN FOTO',
               style: TextStyle(
                 color: Colors.white70,
                 fontWeight: FontWeight.bold,
@@ -787,7 +802,10 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
                     Text(
                       '${_position.inMinutes.toString().padLeft(2, '0')}:${(_position.inSeconds % 60).toString().padLeft(2, '0')} / '
                       '${_duration.inMinutes.toString().padLeft(2, '0')}:${(_duration.inSeconds % 60).toString().padLeft(2, '0')}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -889,9 +907,7 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
               ),
               const SizedBox(width: 8),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 onPressed: _selectedUrgency == null
                     ? null
                     : () => widget.onUpdateStatus('handled', _selectedUrgency),
