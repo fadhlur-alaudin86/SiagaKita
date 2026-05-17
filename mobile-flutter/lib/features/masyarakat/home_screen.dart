@@ -182,6 +182,32 @@ class _HomeScreenState extends State<HomeScreen>
       case MobileWsEvent.forceLogout:
         _handleForceLogout();
         break;
+      case MobileWsEvent.sosFalseAlarm:
+        _stopVibration();
+        _stopLocationUpdates();
+        setState(() {
+          _activeIncident = null;
+          _sosPhase = 'idle';
+          _sosUploadStatus = 'idle';
+          _tapCount = 0;
+          _volunteerPosition = null;
+        });
+        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+          isSOSActive: false,
+        );
+        _startCooldown();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'SOS Anda ditandai palsu oleh instansi.'.tr(context),
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        break;
       case MobileWsEvent.sosCancelled:
       case MobileWsEvent.connected:
       case MobileWsEvent.unknown:
@@ -999,6 +1025,7 @@ class _HomeScreenState extends State<HomeScreen>
         );
         if (!mounted) return;
         if (active == null) {
+          _stopVibration();
           _stopLocationUpdates();
           setState(() {
             _activeIncident = null;

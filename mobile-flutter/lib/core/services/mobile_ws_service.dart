@@ -12,6 +12,7 @@ enum MobileWsEvent {
   reporterLocationUpdate, // REPORTER_LOCATION_UPDATE
   sosCancelled,           // SOS_CANCELLED
   sosResolved,            // SOS_RESOLVED
+  sosFalseAlarm,          // SOS_FALSE_ALARM
   forceLogout,            // FORCE_LOGOUT — sesi digantikan perangkat lain
   connected,
   unknown,
@@ -32,6 +33,7 @@ class MobileWsMessage {
       'REPORTER_LOCATION_UPDATE' => MobileWsEvent.reporterLocationUpdate,
       'SOS_CANCELLED'            => MobileWsEvent.sosCancelled,
       'SOS_RESOLVED'             => MobileWsEvent.sosResolved,
+      'SOS_FALSE_ALARM'          => MobileWsEvent.sosFalseAlarm,
       'FORCE_LOGOUT'             => MobileWsEvent.forceLogout,
       _                          => MobileWsEvent.unknown,
     };

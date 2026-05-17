@@ -79,6 +79,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
         break;
       case MobileWsEvent.sosResolved:
       case MobileWsEvent.sosCancelled:
+      case MobileWsEvent.sosFalseAlarm:
         _checkActiveMission(); // refresh to clear mission
         break;
       case MobileWsEvent.forceLogout:

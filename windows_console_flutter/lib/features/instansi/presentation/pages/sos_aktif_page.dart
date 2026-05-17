@@ -224,23 +224,35 @@ class _SosAktifPageState extends State<SosAktifPage> {
       return;
     }
 
-    final ok = await IncidentApiService.markFalseAlarm(
-      widget.token,
-      _selected!.id,
-      reason,
-    );
-    if (ok && mounted) {
-      _showSnack(
-        'Ditandai sebagai alarm palsu. Strike diberikan.',
-        Colors.orange,
+    // Simpan id sebelum await agar tidak terkena race condition dari WS event
+    final incidentId = _selected!.id;
+
+    try {
+      final ok = await IncidentApiService.markFalseAlarm(
+        widget.token,
+        incidentId,
+        reason,
       );
-      setState(() => _selected = null);
-      _load();
-    } else if (mounted) {
-      _showSnack(
-        'Gagal menandai alarm palsu. Coba lagi.',
-        Colors.red,
-      );
+      if (ok && mounted) {
+        _showSnack(
+          'Ditandai sebagai alarm palsu. Strike diberikan.',
+          Colors.orange,
+        );
+        setState(() => _selected = null);
+        _load();
+      } else if (mounted) {
+        _showSnack(
+          'Gagal menandai alarm palsu. Coba lagi.',
+          Colors.red,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        _showSnack(
+          'Gagal menandai alarm palsu. Periksa koneksi.',
+          Colors.red,
+        );
+      }
     }
   }
 

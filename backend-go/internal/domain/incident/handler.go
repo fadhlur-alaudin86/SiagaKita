@@ -277,6 +277,11 @@ func (h *Handler) MarkFalseAlarm(c *fiber.Ctx) error {
 		},
 	})
 
+	// Notifikasi ke reporter (mobile) agar SOS reset dan vibration berhenti
+	go h.notifyReporter(incidentID, "SOS_FALSE_ALARM", map[string]interface{}{
+		"incident_id": incidentID,
+	})
+
 	return utils.SuccessResponse(c, resp)
 }
 

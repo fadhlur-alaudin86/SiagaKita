@@ -1,4 +1,4 @@
-package com.example.siaga_kita
+package com.siagakita.app.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
