@@ -117,6 +117,18 @@
 
 ---
 
+### 🔖 Patch 1.0.24 - 18 Mei 2026 (Offline SOS Synchronization & Fixes)
+
+#### 🛡️ Backend - Go Fiber
+- **Fix SOS Strike DB Mapping**: Memperbaiki field GORM `GivenBy` pada struct `SOSStrike` (`domain/incident/model.go`) agar dipetakan (mapped) secara benar ke kolom `marked_by` database, mengatasi *error* 500 saat Instansi menandai SOS sebagai *False Alarm*.
+
+#### 📱 Mobile Flutter (Citizen/Volunteer)
+- **Offline SOS Auto-Sync**: Menambahkan konektivitas _listener_ real-time (`ConnectivityService.isOnline`) pada `home_screen.dart` agar sistem dapat otomatis melanjutkan unggahan SOS offline (*pending SOS*) segera setelah gawai terhubung ke internet tanpa perlu me-*restart* aplikasi.
+- **Fix Frozen Grace Period UI**: Merombak alur pengecekan waktu SOS offline. Kini jika SOS ditekan saat offline dan >10 detik berlalu, saat aplikasi dimuat ulang, UI langsung beralih ke fase pencarian (*broadcasting*) tanpa menayangkan *Grace Period* yang membeku.
+- **Persistent SOS Cooldown**: Mengamankan hitung mundur tombol SOS (60 detik pasca pembatalan/penyelesaian) dengan menyimpan _end time_ ke `OfflineService`. *Cooldown* kini tidak dapat di-_bypass_ hanya dengan melakukan _restart_ aplikasi.
+
+---
+
 ### Patch 1.0.23 - 16 Mei 2026 (Registration & Admin Stats Refinement)
 
 #### Backend - Go Fiber

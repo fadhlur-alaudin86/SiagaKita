@@ -16,7 +16,7 @@ The SiagaKita system consists of three main components:
 *   **Instant SOS**: Trigger an emergency alert instantly. The system will broadcast the SOS to nearby volunteers and agencies.
 *   **Background Telemetry**: If an SOS is active, the app transmits real-time GPS locations to responders, even when running in the background.
 *   **Incident Reporting**: Report non-emergency incidents (e.g., traffic accidents, medical situations) with rich evidence, including photos and audio recordings.
-*   **Offline Resilience**: Reports created without an internet connection are saved locally and can be retried later.
+*   **Offline Resilience & Auto-Sync**: Reports and SOS triggers created without an internet connection are saved locally. Pending SOS requests will automatically resume in the background the moment the device reconnects to the network, and their cooldown states are securely persisted to prevent circumvention.
 
 ### For Volunteers
 *   **Real-time Radar**: View active SOS requests within a specified radius.
