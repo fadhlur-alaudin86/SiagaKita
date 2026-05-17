@@ -108,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    ConnectivityService.isOnline.addListener(_onConnectivityChanged);
     _checkActiveIncident();
     // Shared location controller
     // LocationController.instance.start(); // Legacy
@@ -331,6 +332,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    ConnectivityService.isOnline.removeListener(_onConnectivityChanged);
     _pingTimer?.cancel();
     _tapResetTimer?.cancel();
     _locationUpdateTimer?.cancel();
@@ -348,6 +350,39 @@ class _HomeScreenState extends State<HomeScreen>
     // Lepaskan semua GPS caller dari HomeScreen
     LocationController.instance.releaseMode('home_screen_sos');
     super.dispose();
+  }
+
+  void _onConnectivityChanged() async {
+    if (!ConnectivityService.isOnline.value) return;
+
+    // Jika internet kembali aktif, segera retry upload SOS offline
+    if (_pendingIncidentId != null && _sosUploadStatus == 'sending') {
+      final pendingSos = await OfflineService.getPendingSOS();
+      if (pendingSos != null && pendingSos['local_id'] == _pendingIncidentId) {
+        _attemptSOSUpload(
+          lat: pendingSos['latitude'] as double,
+          lng: pendingSos['longitude'] as double,
+          addressDetail: pendingSos['address_detail'] as String?,
+          triggeredBy: 'user',
+          localId: _pendingIncidentId!,
+        );
+      } else {
+        final pos = LocationController.instance.currentPosition;
+        if (pos != null) {
+          _attemptSOSUpload(
+            lat: pos.lat,
+            lng: pos.lng,
+            addressDetail: null,
+            triggeredBy: 'user',
+            localId: _pendingIncidentId!,
+          );
+        } else {
+          _checkActiveIncident();
+        }
+      }
+    } else if (_sosPhase == 'idle') {
+      _checkActiveIncident();
+    }
   }
 
   // ─── Check active incident on load ──────────────────────────────────────────
