@@ -424,8 +424,15 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
           _isPlaying = false;
           _position = Duration.zero;
         });
-        _audioPlayer.seek(Duration.zero);
-        _audioPlayer.pause();
+        // Stop dan re-set source agar bisa diputar ulang
+        _audioPlayer.stop();
+        final rawAudio = widget.report.audioPath;
+        if (rawAudio != null) {
+          final audioUrl = rawAudio.startsWith('http')
+              ? rawAudio
+              : '${ApiConstants.baseUrl.replaceAll('/api/v1', '')}$rawAudio';
+          _audioPlayer.setSourceUrl(audioUrl);
+        }
       }
     });
 

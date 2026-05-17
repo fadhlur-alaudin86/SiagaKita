@@ -58,8 +58,15 @@ class _SosAktifPageState extends State<SosAktifPage> {
           _isPlaying = false;
           _position = Duration.zero;
         });
-        _audioPlayer.seek(Duration.zero);
-        _audioPlayer.pause();
+        // Stop dan re-set source agar bisa diputar ulang
+        _audioPlayer.stop();
+        if (_selected?.audioPath != null) {
+          final url = _selected!.audioPath!.startsWith('/uploads')
+              ? ApiConstants.baseUrl.replaceAll('/api/v1', '') +
+                    _selected!.audioPath!
+              : _selected!.audioPath!;
+          _audioPlayer.setSourceUrl(url);
+        }
       }
     });
     _wsSub = widget.ws.eventStream.listen((msg) {

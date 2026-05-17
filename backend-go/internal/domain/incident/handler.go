@@ -190,6 +190,14 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, status, err.Error())
 	}
 
+	// Notifikasi ke console agar foto/audio baru langsung terlihat
+	go h.broadcastEventToAgencies(hub.Message{
+		Event: "SOS_STATUS_UPDATE",
+		Payload: map[string]interface{}{
+			"incident_id": incidentID,
+		},
+	})
+
 	return utils.SuccessResponse(c, fiber.Map{"evidence_uploaded": true})
 }
 
