@@ -182,9 +182,7 @@ class SOSActionButton extends StatelessWidget {
                             Text(
                               isDisabled
                                   ? 'SOS Terkunci'.tr(context)
-                                  : (isSOSActive
-                                        ? 'AKTIF'.tr(context)
-                                        : 'SOS'),
+                                  : (isSOSActive ? 'AKTIF'.tr(context) : 'SOS'),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
@@ -205,8 +203,7 @@ class SOSActionButton extends StatelessWidget {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.white70,
-                                    fontSize:
-                                        10.csp(context, min: 8, max: 11),
+                                    fontSize: 10.csp(context, min: 8, max: 11),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

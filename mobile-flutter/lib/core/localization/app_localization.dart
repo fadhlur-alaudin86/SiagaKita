@@ -275,6 +275,7 @@ class AppLocalization {
         'Volunteer is on the way to your location!',
     'Misi diterima! Segera menuju ': 'Mission accepted! Proceed to ',
     'lokasi korban': 'victim\'s location',
+    'SOS Terkunci': 'SOS Locked',
     'Selesaikan Misi?': 'Complete Mission?',
     'Kamera akan mengambil foto sebagai bukti penyelesaian misi. Lanjutkan?':
         'Camera will take a photo as proof of mission completion. Continue?',
