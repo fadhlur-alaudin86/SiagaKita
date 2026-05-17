@@ -171,16 +171,17 @@ class IncidentService {
 
   // ─── Upload Evidence (foto + audio pasca broadcasting) ───────────────────
 
-  /// Mengirimkan foto kamera depan dan rekaman audio 5 detik sebagai bukti SOS.
-  /// Dipanggil secara background segera setelah insiden masuk fase 'broadcasting'.
-  /// Tidak melempar exception - error diabaikan (best-effort).
+  /// Mengirimkan foto kamera depan, kamera belakang, dan rekaman audio 5 detik
+  /// sebagai bukti SOS. Dipanggil secara background segera setelah insiden masuk
+  /// fase 'broadcasting'. Tidak melempar exception - error diabaikan (best-effort).
   static Future<void> uploadEvidence({
     required String accessToken,
     required String incidentId,
     File? photoFile,
+    File? rearPhotoFile,
     File? audioFile,
   }) async {
-    if (photoFile == null && audioFile == null) return;
+    if (photoFile == null && rearPhotoFile == null && audioFile == null) return;
     try {
       final uri = Uri.parse('$_baseUrl/incidents/$incidentId/evidence');
       final request = http.MultipartRequest('POST', uri)
@@ -189,6 +190,11 @@ class IncidentService {
       if (photoFile != null && photoFile.existsSync()) {
         request.files.add(
           await http.MultipartFile.fromPath('photo', photoFile.path),
+        );
+      }
+      if (rearPhotoFile != null && rearPhotoFile.existsSync()) {
+        request.files.add(
+          await http.MultipartFile.fromPath('photo', rearPhotoFile.path),
         );
       }
       if (audioFile != null && audioFile.existsSync()) {

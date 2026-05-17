@@ -203,6 +203,9 @@ func (r *Repository) SaveBiodata(userID string, req *BiodataRequest) error {
 			"domicile":           req.Domicile,
 			"updated_at":         time.Now(),
 		}
+		if req.PhoneNumber != nil {
+			profileMap["phone_number"] = *req.PhoneNumber
+		}
 		if req.NIK != nil {
 			profileMap["nik"] = *req.NIK
 		}

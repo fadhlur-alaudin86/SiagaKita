@@ -146,21 +146,22 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Form tidak valid")
 	}
 
-	// Foto kamera depan (max 1, max 5 MB)
+	// Foto kamera (depan + belakang, max 5 MB per file)
 	if photos := form.File["photo"]; len(photos) > 0 {
-		fh := photos[0]
-		if fh.Size <= 5<<20 {
-			ext := filepath.Ext(fh.Filename)
-			if ext == "" {
-				ext = ".jpg"
-			}
-			dir := filepath.Join(uploadDir, "incidents", "evidence", yearMonth, incidentID)
-			_ = os.MkdirAll(dir, 0755)
-			fileName := fmt.Sprintf("evidence_photo_%d%s", now.UnixNano(), ext)
-			dst := filepath.Join(dir, fileName)
-			if saveErr := saveFile(fh, dst); saveErr == nil {
-				relPath := fmt.Sprintf("incidents/evidence/%s/%s/%s", yearMonth, incidentID, fileName)
-				photoPaths = append(photoPaths, baseURL+"/"+relPath)
+		for i, fh := range photos {
+			if fh.Size <= 5<<20 {
+				ext := filepath.Ext(fh.Filename)
+				if ext == "" {
+					ext = ".jpg"
+				}
+				dir := filepath.Join(uploadDir, "incidents", "evidence", yearMonth, incidentID)
+				_ = os.MkdirAll(dir, 0755)
+				fileName := fmt.Sprintf("evidence_photo_%d_%d%s", now.UnixNano(), i, ext)
+				dst := filepath.Join(dir, fileName)
+				if saveErr := saveFile(fh, dst); saveErr == nil {
+					relPath := fmt.Sprintf("incidents/evidence/%s/%s/%s", yearMonth, incidentID, fileName)
+					photoPaths = append(photoPaths, baseURL+"/"+relPath)
+				}
 			}
 		}
 	}

@@ -96,7 +96,7 @@ func (h *Handler) CreateAgency(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "Akun instansi (agency) berhasil dibuat.",
+		"message": "Akun instansi berhasil dibuat.",
 	})
 }
 

@@ -156,6 +156,7 @@ type CreatePersonnelRequest struct {
 // BiodataRequest untuk update profil civilian/volunteer.
 type BiodataRequest struct {
 	NIK                   *string `json:"nik"`
+	PhoneNumber           *string `json:"phone_number"`
 	PlaceOfBirth          *string `json:"place_of_birth"`
 	DateOfBirth           *string `json:"date_of_birth"` // Format: DD-MM-YYYY
 	BloodType             *string `json:"blood_type"`

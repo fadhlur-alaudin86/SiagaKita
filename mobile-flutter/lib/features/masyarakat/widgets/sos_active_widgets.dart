@@ -11,6 +11,8 @@ class SOSActionButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isDisabled;
   final String? disabledReason;
+  final bool isCooldown;
+  final int cooldownSeconds;
 
   const SOSActionButton({
     super.key,
@@ -21,6 +23,8 @@ class SOSActionButton extends StatelessWidget {
     required this.onTap,
     this.isDisabled = false,
     this.disabledReason,
+    this.isCooldown = false,
+    this.cooldownSeconds = 0,
   });
 
   @override
@@ -33,10 +37,12 @@ class SOSActionButton extends StatelessWidget {
     final labelSize = 40.csp(context, min: 28, max: 40);
     final subSize = 9.csp(context, min: 8, max: 11);
 
+    final bool locked = isDisabled || isCooldown;
+
     return Column(
       children: [
         GestureDetector(
-          onTap: isDisabled ? null : onTap,
+          onTap: locked ? null : onTap,
           child: SizedBox(
             width: ringSize,
             height: ringSize,
@@ -44,8 +50,22 @@ class SOSActionButton extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
+                  // Cooldown progress ring
+                  if (isCooldown)
+                    SizedBox(
+                      width: ringSize - 10,
+                      height: ringSize - 10,
+                      child: CircularProgressIndicator(
+                        value: cooldownSeconds / 60,
+                        strokeWidth: 8.cw(context, min: 5, max: 8),
+                        backgroundColor: Colors.grey.withValues(alpha: 0.15),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.grey,
+                        ),
+                      ),
+                    ),
                   // Outer progress ring (tap count)
-                  if (tapCount > 0 && !isDisabled)
+                  if (tapCount > 0 && !locked)
                     SizedBox(
                       width: ringSize - 10,
                       height: ringSize - 10,
@@ -62,14 +82,14 @@ class SOSActionButton extends StatelessWidget {
                     ),
                   // Main SOS / Cancel Button
                   AnimatedScale(
-                    scale: (tapCount > 0 && !isDisabled) ? 0.96 : 1.0,
+                    scale: (tapCount > 0 && !locked) ? 0.96 : 1.0,
                     duration: const Duration(milliseconds: 80),
                     child: Container(
                       width: btnSize,
                       height: btnSize,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: isDisabled
+                        gradient: locked
                             ? LinearGradient(
                                 colors: [
                                   Colors.grey.shade600,
@@ -82,7 +102,7 @@ class SOSActionButton extends StatelessWidget {
                                     : [primaryColor, const Color(0xFFCB5100)],
                               ),
                         border: Border.all(
-                          color: isDisabled
+                          color: locked
                               ? Colors.white24
                               : (tapCount > 0
                                     ? (isSOSActive
@@ -96,7 +116,7 @@ class SOSActionButton extends StatelessWidget {
                                                 .withValues(alpha: 0.3))),
                           width: 8.cw(context, min: 5, max: 8),
                         ),
-                        boxShadow: isDisabled
+                        boxShadow: locked
                             ? []
                             : [
                                 BoxShadow(
@@ -122,36 +142,34 @@ class SOSActionButton extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            isDisabled
-                                ? Icons.lock_person_outlined
-                                : (isSOSActive
-                                      ? Icons.cancel_outlined
-                                      : Icons.error_outline),
+                            isCooldown
+                                ? Icons.hourglass_top_rounded
+                                : (isDisabled
+                                      ? Icons.lock_person_outlined
+                                      : (isSOSActive
+                                            ? Icons.cancel_outlined
+                                            : Icons.error_outline)),
                             color: Colors.white,
                             size: iconSize,
                           ),
                           SizedBox(height: 8.h(context)),
-                          Text(
-                            isDisabled
-                                ? 'SOS Terkunci'.tr(context)
-                                : (isSOSActive ? 'AKTIF'.tr(context) : 'SOS'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: isDisabled
-                                  ? 24.csp(context, min: 16, max: 24)
-                                  : labelSize,
-                              fontWeight: FontWeight.w900,
+                          if (isCooldown) ...[
+                            Text(
+                              '${cooldownSeconds}s',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: labelSize,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
-                          ),
-                          if (isDisabled && disabledReason != null)
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
                                 vertical: 4,
                               ),
                               child: Text(
-                                disabledReason!.tr(context),
+                                'SOS Terkunci'.tr(context),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.white70,
@@ -159,19 +177,53 @@ class SOSActionButton extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            )
-                          else
+                            ),
+                          ] else ...[
                             Text(
-                              isSOSActive
-                                  ? 'KETUK 3× BATALKAN'.tr(context)
-                                  : 'KETUK 3×'.tr(context),
+                              isDisabled
+                                  ? 'SOS Terkunci'.tr(context)
+                                  : (isSOSActive
+                                        ? 'AKTIF'.tr(context)
+                                        : 'SOS'),
+                              textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: subSize,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
+                                color: Colors.white,
+                                fontSize: isDisabled
+                                    ? 24.csp(context, min: 16, max: 24)
+                                    : labelSize,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
+                            if (isDisabled && disabledReason != null)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 4,
+                                ),
+                                child: Text(
+                                  disabledReason!.tr(context),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize:
+                                        10.csp(context, min: 8, max: 11),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            else
+                              Text(
+                                isSOSActive
+                                    ? 'KETUK 3× BATALKAN'.tr(context)
+                                    : 'KETUK 3×'.tr(context),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: subSize,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                          ],
                         ],
                       ),
                     ),

@@ -90,6 +90,10 @@ class _HomeScreenState extends State<HomeScreen>
   ({double lat, double lng, String? address, String? updatedAt})?
   _volunteerPosition;
 
+  // ─── SOS Cooldown (1 menit setelah SOS selesai) ────────────────────────────
+  int _sosCooldownSeconds = 0;
+  Timer? _sosCooldownTimer;
+
   // ─── Heartbeat Ping ──────────────────────────────────────────────────────────
   Timer? _pingTimer;
 
@@ -162,6 +166,7 @@ class _HomeScreenState extends State<HomeScreen>
         UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
           isSOSActive: false,
         );
+        _startCooldown();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -192,9 +197,11 @@ class _HomeScreenState extends State<HomeScreen>
   void _handleForceLogout() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Sesi Anda telah berakhir karena login di perangkat lain.',
+          'Sesi Anda telah berakhir karena login di perangkat lain.'.tr(
+            context,
+          ),
         ),
         backgroundColor: Colors.redAccent,
         duration: Duration(seconds: 4),
@@ -211,11 +218,11 @@ class _HomeScreenState extends State<HomeScreen>
     _checkHandlerStatus(); // refresh status
     if (!mounted) return;
     final msg = byAgency
-        ? '🏛️ Instansi sedang dalam perjalanan ke lokasi Anda!'
-        : '🦺 Relawan sedang menuju lokasi Anda!';
+        ? 'Badan Penyelamat sedang dalam perjalanan ke lokasi Anda!'.tr(context)
+        : 'Relawan sedang menuju lokasi Anda!'.tr(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg.tr(context)),
+        content: Text(msg),
         backgroundColor: Colors.green.shade700,
         duration: const Duration(seconds: 5),
       ),
@@ -277,6 +284,21 @@ class _HomeScreenState extends State<HomeScreen>
     FlutterBackgroundService().invoke('stopVibration');
   }
 
+  // ─── SOS Cooldown ─────────────────────────────────────────────────────────
+
+  void _startCooldown() {
+    _sosCooldownTimer?.cancel();
+    setState(() => _sosCooldownSeconds = 60);
+    _sosCooldownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _sosCooldownSeconds--);
+      if (_sosCooldownSeconds <= 0) {
+        _sosCooldownTimer?.cancel();
+        _sosCooldownTimer = null;
+      }
+    });
+  }
+
   @override
   void dispose() {
     _pingTimer?.cancel();
@@ -287,6 +309,7 @@ class _HomeScreenState extends State<HomeScreen>
     _sosRetryTimer?.cancel();
     _countdownTimer?.cancel();
     _vibrationTimer?.cancel();
+    _sosCooldownTimer?.cancel();
     _wsSub?.cancel();
     if (_ws != null) {
       _ws!.dispose();
@@ -452,6 +475,8 @@ class _HomeScreenState extends State<HomeScreen>
       );
       return;
     }
+    // Blokir tap jika dalam masa cooldown
+    if (_sosCooldownSeconds > 0) return;
     // Blokir tap jika sudah ada SOS aktif, atau sedang dalam masa grace period/loading
     if (_activeIncident != null ||
         _pendingIncidentId != null ||
@@ -884,11 +909,13 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ─── Evidence Capture (Tahap 3) ────────────────────────────────────────────────
 
-  /// Mengambil 1 foto dari kamera depan dan merekam audio 5 detik secara
-  /// sepenuhnya di background (tidak ada UI kamera yang ditampilkan).
+  /// Mengambil 1 foto dari kamera depan dan 1 foto dari kamera belakang,
+  /// serta merekam audio 5 detik secara sepenuhnya di background
+  /// (tidak ada UI kamera yang ditampilkan).
   /// File dikirim ke server sebagai bukti situasi SOS.
   Future<void> _captureAndUploadEvidence(String incidentId) async {
-    File? photoFile;
+    File? frontPhotoFile;
+    File? rearPhotoFile;
     File? audioFile;
 
     // 1. Ambil foto dari kamera depan
@@ -906,12 +933,32 @@ class _HomeScreenState extends State<HomeScreen>
       await controller.initialize();
       final xFile = await controller.takePicture();
       await controller.dispose();
-      photoFile = File(xFile.path);
+      frontPhotoFile = File(xFile.path);
     } catch (_) {
-      // Kamera tidak tersedia atau ditolak - lanjutkan ke audio
+      // Kamera depan tidak tersedia atau ditolak
     }
 
-    // 2. Rekam audio 5 detik
+    // 2. Ambil foto dari kamera belakang
+    try {
+      final cameras = await availableCameras();
+      final rearCamera = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+      final controller = CameraController(
+        rearCamera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      await controller.initialize();
+      final xFile = await controller.takePicture();
+      await controller.dispose();
+      rearPhotoFile = File(xFile.path);
+    } catch (_) {
+      // Kamera belakang tidak tersedia atau ditolak
+    }
+
+    // 3. Rekam audio 5 detik
     try {
       final dir = await getTemporaryDirectory();
       final audioPath =
@@ -930,11 +977,12 @@ class _HomeScreenState extends State<HomeScreen>
       // Mikrofon tidak tersedia atau ditolak
     }
 
-    // 3. Upload ke server (best-effort, tidak memblokir UI)
+    // 4. Upload ke server (best-effort, tidak memblokir UI)
     await IncidentService.uploadEvidence(
       accessToken: widget.accessToken,
       incidentId: incidentId,
-      photoFile: photoFile,
+      photoFile: frontPhotoFile,
+      rearPhotoFile: rearPhotoFile,
       audioFile: audioFile,
     );
   }
@@ -962,6 +1010,7 @@ class _HomeScreenState extends State<HomeScreen>
 
             _lastLocationUpdate = null;
           });
+          _startCooldown();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -1049,6 +1098,8 @@ class _HomeScreenState extends State<HomeScreen>
                                 context,
                               )
                             : null,
+                        isCooldown: _sosCooldownSeconds > 0 && !isSOSActive,
+                        cooldownSeconds: _sosCooldownSeconds,
                       );
                     },
                   ),
@@ -1369,6 +1420,7 @@ class _HomeScreenState extends State<HomeScreen>
       UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
         isSOSActive: false,
       );
+      _startCooldown();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
