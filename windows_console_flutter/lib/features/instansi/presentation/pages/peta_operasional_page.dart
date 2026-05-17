@@ -175,6 +175,7 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                   userAgentPackageName: 'com.siagakita.console',
                 ),
                 MarkerLayer(
+                  rotate: true,
                   markers: [
                     if (_agencyLocation != null)
                       Marker(
@@ -252,8 +253,11 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                         child: const _AnimatedVolunteerMarker(),
                       );
                     }),
-                    // Target Location Marker (jika ada)
-                    if (widget.targetLocation != null)
+                    // Target Location Marker (hanya jika TIDAK tumpang tindih dengan incident)
+                    if (widget.targetLocation != null &&
+                        !_incidents.any((inc) =>
+                            inc.latitude == widget.targetLocation!.latitude &&
+                            inc.longitude == widget.targetLocation!.longitude))
                       Marker(
                         point: widget.targetLocation!,
                         width: 50,

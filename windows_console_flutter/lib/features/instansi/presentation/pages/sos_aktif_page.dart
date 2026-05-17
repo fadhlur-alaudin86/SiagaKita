@@ -145,6 +145,8 @@ class _SosAktifPageState extends State<SosAktifPage> {
   Future<void> _markFalseAlarm() async {
     if (_selected == null) return;
 
+    final reasonController = TextEditingController();
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -153,9 +155,43 @@ class _SosAktifPageState extends State<SosAktifPage> {
           'Konfirmasi Alarm Palsu',
           style: TextStyle(color: Colors.white),
         ),
-        content: const Text(
-          'Pengguna akan mendapat 1 strike. Setelah 3 strike, akun SOS akan diblokir.',
-          style: TextStyle(color: Colors.white70, fontSize: 13),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pengguna akan mendapat 1 strike. Setelah 3 strike, akun SOS akan diblokir.',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              style: const TextStyle(color: Colors.white),
+              maxLines: 2,
+              decoration: InputDecoration(
+                hintText: 'Alasan menandai alarm palsu (wajib)',
+                hintStyle: const TextStyle(color: Colors.white30),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.orange),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -181,10 +217,17 @@ class _SosAktifPageState extends State<SosAktifPage> {
     );
 
     if (confirmed != true) return;
+
+    final reason = reasonController.text.trim();
+    if (reason.isEmpty) {
+      _showSnack('Alasan wajib diisi untuk menandai alarm palsu.', Colors.red);
+      return;
+    }
+
     final ok = await IncidentApiService.markFalseAlarm(
       widget.token,
       _selected!.id,
-      '',
+      reason,
     );
     if (ok && mounted) {
       _showSnack(
@@ -193,6 +236,11 @@ class _SosAktifPageState extends State<SosAktifPage> {
       );
       setState(() => _selected = null);
       _load();
+    } else if (mounted) {
+      _showSnack(
+        'Gagal menandai alarm palsu. Coba lagi.',
+        Colors.red,
+      );
     }
   }
 
