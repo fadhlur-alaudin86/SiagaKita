@@ -109,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     ConnectivityService.isOnline.addListener(_onConnectivityChanged);
+    _checkCooldownState();
     _checkActiveIncident();
     // Shared location controller
     // LocationController.instance.start(); // Legacy
@@ -317,17 +318,38 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ─── SOS Cooldown ─────────────────────────────────────────────────────────
 
-  void _startCooldown() {
+  void _startCooldown([int? resumeSeconds]) {
     _sosCooldownTimer?.cancel();
-    setState(() => _sosCooldownSeconds = 60);
+    setState(() => _sosCooldownSeconds = resumeSeconds ?? 60);
+
+    if (resumeSeconds == null) {
+      OfflineService.saveCooldownEndTime(
+        DateTime.now().add(const Duration(seconds: 60)),
+      );
+    }
+
     _sosCooldownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _sosCooldownSeconds--);
       if (_sosCooldownSeconds <= 0) {
         _sosCooldownTimer?.cancel();
         _sosCooldownTimer = null;
+        OfflineService.clearCooldownEndTime();
       }
     });
+  }
+
+  Future<void> _checkCooldownState() async {
+    final endTime = await OfflineService.getCooldownEndTime();
+    if (endTime != null) {
+      final now = DateTime.now();
+      if (endTime.isAfter(now)) {
+        final remaining = endTime.difference(now).inSeconds;
+        _startCooldown(remaining);
+      } else {
+        OfflineService.clearCooldownEndTime();
+      }
+    }
   }
 
   @override

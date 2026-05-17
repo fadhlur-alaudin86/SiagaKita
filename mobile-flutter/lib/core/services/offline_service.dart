@@ -77,4 +77,29 @@ class OfflineService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_pendingTypeKey);
   }
+
+  // ─── Cooldown End Time (simpan waktu selesai cooldown SOS) ───────────────
+
+  static const String _cooldownEndTimeKey = 'sos_cooldown_end_time';
+
+  static Future<void> saveCooldownEndTime(DateTime endTime) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_cooldownEndTimeKey, endTime.toIso8601String());
+  }
+
+  static Future<DateTime?> getCooldownEndTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final str = prefs.getString(_cooldownEndTimeKey);
+    if (str != null) {
+      try {
+        return DateTime.parse(str);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  static Future<void> clearCooldownEndTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_cooldownEndTimeKey);
+  }
 }
