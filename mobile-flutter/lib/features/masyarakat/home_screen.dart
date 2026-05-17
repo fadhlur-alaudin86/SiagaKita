@@ -397,13 +397,26 @@ class _HomeScreenState extends State<HomeScreen>
       final lat = pendingSos['latitude'] as double;
       final lng = pendingSos['longitude'] as double;
       final address = pendingSos['address_detail'] as String?;
+      final timestampStr = pendingSos['timestamp'] as String?;
+      final timestamp = timestampStr != null
+          ? DateTime.parse(timestampStr)
+          : DateTime.now();
+      final diff = DateTime.now().difference(timestamp).inSeconds;
 
       setState(() {
         _pendingIncidentId = localId;
-        _sosPhase =
-            'gracePeriod'; // Atau broadcasting tergantung waktu, tapi untuk simplifikasi kita mulai ulang proses upload
         _sosUploadStatus = 'sending';
+        if (diff < 10) {
+          _sosPhase = 'gracePeriod';
+          _graceCountdown = 10 - diff;
+        } else {
+          _sosPhase = 'broadcasting';
+        }
       });
+
+      if (diff < 10) {
+        _startGracePeriodCountdown();
+      }
 
       // Lanjutkan background upload
       _attemptSOSUpload(
@@ -940,7 +953,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _transitionToBroadcasting({String? selectedType}) {
     _graceTimer?.cancel();
-    _sosRetryTimer?.cancel(); // Cegah retry timer membuat duplikat upload
     if (!mounted) return;
     final incidentId = _pendingIncidentId ?? _activeIncident?.incidentId ?? '';
     if (incidentId.isEmpty) return;
