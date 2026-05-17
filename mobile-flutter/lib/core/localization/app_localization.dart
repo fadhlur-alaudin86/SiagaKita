@@ -267,8 +267,8 @@ class AppLocalization {
         'Waiting for Command Center 112 response',
     'SOS Anda telah diselesaikan. Terima kasih!':
         'Your SOS has been resolved. Thank you!',
-    'Badan penyelamat sedang dalam perjalanan ke lokasi Anda!':
-        'Rescue agency is on the way to your location!',
+    'Tim penyelamat sedang dalam perjalanan ke lokasi Anda!':
+        'Rescue team is on the way to your location!',
     'Sesi Anda telah berakhir karena login di perangkat lain.':
         'Your session has ended due to login on another device.',
     'Relawan sedang menuju lokasi Anda!':

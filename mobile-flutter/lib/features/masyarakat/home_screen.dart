@@ -248,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen>
     _checkHandlerStatus(); // refresh status
     if (!mounted) return;
     final msg = byAgency
-        ? 'Badan Penyelamat sedang dalam perjalanan ke lokasi Anda!'.tr(context)
+        ? 'Tim penyelamat sedang dalam perjalanan ke lokasi Anda!'.tr(context)
         : 'Relawan sedang menuju lokasi Anda!'.tr(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
