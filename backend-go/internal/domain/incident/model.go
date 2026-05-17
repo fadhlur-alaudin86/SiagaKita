@@ -136,7 +136,7 @@ type SOSStrike struct {
 	UserID     string    `gorm:"type:uuid;not null" json:"user_id"`
 	IncidentID *string   `gorm:"type:uuid" json:"incident_id,omitempty"`
 	Reason     string    `json:"reason"`
-	GivenBy    *string   `gorm:"type:uuid" json:"given_by,omitempty"` // admin UUID
+	GivenBy    *string   `gorm:"type:uuid;column:marked_by" json:"given_by,omitempty"` // admin/agency UUID
 	CreatedAt  time.Time `json:"created_at"`
 }
 

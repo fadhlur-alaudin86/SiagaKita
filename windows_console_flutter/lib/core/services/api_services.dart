@@ -68,6 +68,7 @@ class IncidentApiService {
       headers: _headersWithIdempotency(token),
       body: jsonEncode({'reason': reason}),
     );
+    print('markFalseAlarm status: ${resp.statusCode}, body: ${resp.body}');
     return resp.statusCode == 200;
   }
 
