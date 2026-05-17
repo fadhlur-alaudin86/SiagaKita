@@ -161,6 +161,8 @@ class _HomeScreenState extends State<HomeScreen>
           _sosUploadStatus = 'idle';
           _tapCount = 0;
           _volunteerPosition = null;
+          _pendingIncidentId = null;
+          _isTriggeringSOS = false;
         });
         // Sync ke global state
         UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
@@ -191,6 +193,8 @@ class _HomeScreenState extends State<HomeScreen>
           _sosUploadStatus = 'idle';
           _tapCount = 0;
           _volunteerPosition = null;
+          _pendingIncidentId = null;
+          _isTriggeringSOS = false;
         });
         UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
           isSOSActive: false,
@@ -200,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'SOS Anda ditandai palsu oleh instansi.'.tr(context),
+                'SOS Anda ditandai palsu oleh tim penyelamat.'.tr(context),
               ),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 5),
@@ -1036,6 +1040,8 @@ class _HomeScreenState extends State<HomeScreen>
             _nextUpdateCountdown = 3;
 
             _lastLocationUpdate = null;
+            _pendingIncidentId = null;
+            _isTriggeringSOS = false;
           });
           _startCooldown();
           if (mounted) {
@@ -1443,6 +1449,8 @@ class _HomeScreenState extends State<HomeScreen>
         _sosUploadStatus = 'idle';
         _tapCount = 0;
         _volunteerPosition = null;
+        _pendingIncidentId = null;
+        _isTriggeringSOS = false;
       });
       UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
         isSOSActive: false,

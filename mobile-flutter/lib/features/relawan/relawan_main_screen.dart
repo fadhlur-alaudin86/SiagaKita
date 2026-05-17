@@ -356,8 +356,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Bukti berhasil dikirim. Menunggu konfirmasi instansi.'
-                          .tr(context),
+                      'Bukti berhasil dikirim. Menunggu konfirmasi...'.tr(
+                        context,
+                      ),
                     ),
                     backgroundColor: Colors.green,
                   ),

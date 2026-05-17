@@ -249,9 +249,13 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 		agencyStatusPtr = &agencyStatus
 	}
 
-	var agencyName *string
+	var agencyNamePtr *string
 	if inc.HandledByAgencyID != nil {
+		var agencyName string
 		s.repo.db.Raw(`SELECT name FROM agencies WHERE id = ?`, inc.HandledByAgencyID).Scan(&agencyName)
+		if agencyName != "" {
+			agencyNamePtr = &agencyName
+		}
 	}
 
 	return &ActiveIncidentResponse{
@@ -264,7 +268,7 @@ func (s *Service) GetActive(reporterID string) (*ActiveIncidentResponse, error) 
 		CreatedAt:               inc.CreatedAt.Format(time.RFC3339),
 		AgencyStatus:            agencyStatusPtr,
 		HandledByAgencyID:       inc.HandledByAgencyID,
-		AgencyName:              agencyName,
+		AgencyName:              agencyNamePtr,
 		VolunteerResponseStatus: volunteerStatus,
 		VolunteerNames:          volunteerNames,
 		VolunteerLocations:      volunteerLocations,

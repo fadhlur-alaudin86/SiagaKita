@@ -218,8 +218,8 @@ class AppLocalization {
     'Cari tindakan (mis: Luka Bakar)...':
         'Search actions (e.g. Burn injury)...',
     'Versi 1.0.0 (Build 20)': 'Version 1.0.0 (Build 20)',
-    'SiagaKita adalah platform penanggulangan darurat terpadu yang menghubungkan masyarakat dengan relawan medis dan instansi penyelamat dalam satu ekosistem waktu nyata (real-time).':
-        'SiagaKita is an integrated emergency response platform connecting communities with medical volunteers and rescue agencies in one real-time ecosystem.',
+    'SiagaKita adalah platform penanggulangan darurat terpadu yang menghubungkan masyarakat dengan relawan medis dan tim penyelamat dalam satu ekosistem waktu nyata (real-time).':
+        'SiagaKita is an integrated emergency response platform connecting communities with medical volunteers and rescue teams in one real-time ecosystem.',
     'Syarat & Ketentuan': 'Terms & Conditions',
     'Kebijakan Privasi': 'Privacy Policy',
     'Lisensi Perangkat Lunak': 'Software Licenses',
@@ -281,11 +281,12 @@ class AppLocalization {
         'Camera will take a photo as proof of mission completion. Continue?',
     'Ya, Selesaikan': 'Yes, Complete',
     'Gagal mengambil foto bukti': 'Failed to capture proof photo',
-    'Bukti berhasil dikirim. Menunggu konfirmasi instansi.':
-        'Proof sent successfully. Waiting for agency confirmation.',
+    'Bukti berhasil dikirim. Menunggu konfirmasi...':
+        'Proof sent successfully. Waiting for confirmation...',
     'Koordinat': 'Coordinates',
     'Lokasi': 'Location',
     'Dilaporkan': 'Reported',
+    'Instansi': 'Agency',
     'Kepercayaan': 'Trust Level',
     'Foto Bukti': 'Proof Photos',
     'Rekaman Audio Darurat Tersedia': 'Emergency Audio Recording Available',
@@ -613,6 +614,8 @@ class AppLocalization {
     'Profil Instansi': 'Agency Profile',
     'Informasi dan pengaturan instansi Anda.':
         'Your agency information and settings.',
+    'SOS Anda ditandai palsu oleh tim penyelamat.':
+        'Your SOS was marked as false by the rescue team.',
     // ─── SOS Cancellation & UI ───────────────────────────────────────────────
     'Batalkan SOS?': 'Cancel SOS?',
     'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?':

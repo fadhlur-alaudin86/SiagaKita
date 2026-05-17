@@ -72,7 +72,7 @@ class AboutScreen extends StatelessWidget {
 
             // Description
             Text(
-              'SiagaKita adalah platform penanggulangan darurat terpadu yang menghubungkan masyarakat dengan relawan medis dan instansi penyelamat dalam satu ekosistem waktu nyata (real-time).'
+              'SiagaKita adalah platform penanggulangan darurat terpadu yang menghubungkan masyarakat dengan relawan medis dan tim penyelamat dalam satu ekosistem waktu nyata (real-time).'
                   .tr(context),
               textAlign: TextAlign.center,
               style: TextStyle(
