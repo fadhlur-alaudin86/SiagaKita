@@ -1,58 +1,84 @@
-# 📚 SiagaKita — Dokumentasi
+# 📚 SiagaKita — Documentation Overview
 
-> Folder ini berisi semua dokumentasi teknis proyek SiagaKita.
-> **Selalu update docs ini setiap ada perubahan signifikan.**
-
----
-
-## Dokumen yang Tersedia
-
-| File | Deskripsi | Terakhir Diperbarui |
-|------|-----------|---------------------|
-| [PROGRESS_REPORT.md](./PROGRESS_REPORT.md) | Laporan kemajuan, changelog per sprint, status komponen, TODO | 13 Mei 2026 |
-| [BACKEND_ARCHITECTURE.md](./BACKEND_ARCHITECTURE.md) | Struktur folder Go, DDD pattern, auth flow, RBAC, WebSocket, OTP, env vars | 1 Mei 2026 |
-| [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) | Schema v3 lengkap, semua tabel + SQL, triggers, ERD, keputusan desain | 1 Mei 2026 |
-| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Setup VPS, GitHub Secrets, alur CI/CD, troubleshooting, firewall | 1 Mei 2026 |
-| [FRONTEND_STRUCTURE.txt](./FRONTEND_STRUCTURE.txt) | Struktur Flutter Mobile (citizen/volunteer), endpoint yang digunakan per screen | 13 Mei 2026 |
-| [DESKTOP_PLANNING_ADMIN_INSTANSI.txt](./DESKTOP_PLANNING_ADMIN_INSTANSI.txt) | Struktur Flutter Desktop Console (admin/instansi), fitur per halaman | 1 Mei 2026 |
-
+> This directory contains all technical documentation for the SiagaKita project.
+> **Keep these documents updated whenever significant architecture, schema, or workflow changes occur.**
 
 ---
 
-## Quick Reference
+## Documentation Index
 
-### Login Endpoints
+| File | Description | Last Updated |
+|------|-------------|--------------|
+| [PROGRESS_REPORT.md](./PROGRESS_REPORT.md) | Development progress log, sprint changelogs, component status, completed/pending tasks | 8 August 2026 |
+| [BACKEND_ARCHITECTURE.md](./BACKEND_ARCHITECTURE.md) | Go directory layout, DDD patterns, auth flows, RBAC, WebSocket hubs, OTP integration, env vars | 1 May 2026 |
+| [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) | Full PostgreSQL schema v12, tables, triggers, ERD, and design decisions | 15 May 2026 |
+| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Production VPS setup, GitHub Secrets, CI/CD automation, rollbacks, firewall config | 8 August 2026 |
+| [FRONTEND_STRUCTURE.txt](./FRONTEND_STRUCTURE.txt) | Flutter Mobile architecture, screen-to-endpoint mappings | 13 May 2026 |
+| [DESKTOP_PLANNING_ADMIN_INSTANSI.txt](./DESKTOP_PLANNING_ADMIN_INSTANSI.txt) | Flutter Desktop Console architecture, page specifications for central agencies | 1 May 2026 |
+| [skills/README.md](./skills/README.md) | Developer guide for AI agent skills (`devops-workflow`, `gh-project-manager`, `feature-dev-workflow`) | 8 August 2026 |
 
-| Role | Endpoint | App |
-|------|----------|-----|
-| civilian, volunteer | `POST /auth/login` | Mobile Citizen |
-| superadmin, admin, agency | `POST /auth/console/login` | Desktop Console |
-| agency_personnel | `POST /auth/personnel/login` | Mobile Responder *(belum dibuat)* |
+---
 
-### Deploy Backend
+## Development & Deployment Workflows
 
-```bash
-# Setelah perubahan kode Go:
-sudo docker compose -f infrastructure/docker-compose.yml up --build -d backend
+### Branching Strategy
 
-# Reset database (HAPUS SEMUA DATA):
-sudo docker exec -i siagakita_postgres psql -U siagakita_admin -d siagakita \
-  < backend-go/migrations/003_schema_v3.sql
+```
+main                          ← Stable release (deploys via tag v*.*.*)
+ └── dev                      ← Active integration branch (target for feature PRs)
+      ├── feature/F-XXX-name  ← New feature development
+      └── fix/F-XXX-name      ← Bug fixes
 ```
 
-### Cek Log Superadmin Seeding
+- **No Direct Pushes**: All code changes must enter `dev` or `main` via Pull Requests.
+- **Conventional Commits**: Commit messages must follow `type(scope): description` (e.g., `feat(incident): add volunteer dispatch`).
+
+### CI/CD Pipelines
+
+| Pipeline | Trigger | Action |
+|----------|---------|--------|
+| `ci-dev.yml` | Push/PR to `dev` | Runs conditional Go & Flutter linting/testing based on modified paths |
+| `ci-main.yml` | PR to `main` | Runs full Go & Flutter CI suite + Docker build validation |
+| `release-deploy.yml` | Push tag `v*.*.*` | Builds Docker image, pushes to Docker Hub, deploys to VPS with automated rollback on health check failure, and creates GitHub Release |
+| `auto-tag.yml` | Push to `main` with modified `VERSION` | Automatically creates git release tag matching `VERSION` file |
+
+### Triggering a Production Deployment
+
+1. Update the root `VERSION` file (e.g., `1.0.25`).
+2. Submit a PR from `dev` to `main` including the `VERSION` file update.
+3. Upon merging to `main`, `auto-tag.yml` creates tag `v1.0.25`.
+4. `release-deploy.yml` builds the Docker image, deploys to VPS, verifies health, and publishes a GitHub Release.
+
+---
+
+## Quick Reference Commands
+
+### Local Backend Execution
 
 ```bash
-sudo docker logs siagakita_backend 2>&1 | grep SuperAdmin
-# Output: [SuperAdmin] Akun superadmin berhasil dibuat: <email>
+# Start infrastructure containers
+cd infrastructure && docker compose up -d postgres redis
+
+# Run backend locally
+cd backend-go && go run cmd/api/main.go
+```
+
+### Running Mobile & Desktop Clients
+
+```bash
+# Mobile Client (Citizen & Volunteer)
+cd mobile-flutter && flutter run --dart-define-from-file=../infrastructure/.env
+
+# Desktop Console (Agency & Admin)
+cd windows_console_flutter && flutter run -d linux --dart-define-from-file=../infrastructure/.env
 ```
 
 ---
 
-## Panduan Kontribusi Docs
+## Documentation Guidelines
 
-1. **Selalu update `PROGRESS_REPORT.md`** setiap sprint atau patch — catat di bagian Changelog
-2. **Jika ada perubahan endpoint API** → update tabel di `PROGRESS_REPORT.md` dan `FRONTEND_STRUCTURE.txt`
-3. **Jika ada perubahan schema DB** → update `DATABASE_SCHEMA.md` dan buat migration file baru (`backend-go/migrations/00X_...sql`)
-4. **Jika ada perubahan arsitektur backend** → update `BACKEND_ARCHITECTURE.md`
-5. **Format tanggal**: DD Bulan YYYY (contoh: 1 Mei 2026)
+1. **Update `PROGRESS_REPORT.md`** after every sprint or patch release.
+2. **API Endpoint Changes**: Update `PROGRESS_REPORT.md` and `FRONTEND_STRUCTURE.txt`.
+3. **Database Schema Changes**: Update `DATABASE_SCHEMA.md` and create incremental migration SQL files in `backend-go/migrations/NNN_description.sql`.
+4. **Backend Architecture Updates**: Update `BACKEND_ARCHITECTURE.md`.
+5. **AI Agent Workflows**: Use agent skills located in `.agent/skills/` and refer to human documentation in `docs/skills/`.

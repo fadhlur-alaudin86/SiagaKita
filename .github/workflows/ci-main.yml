@@ -1,0 +1,116 @@
+name: CI — PR to Main
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ─── Full Go CI ───────────────────────────────────────────────────────────
+  ci-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend-go
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend-go/go.mod
+          cache-dependency-path: backend-go/go.sum
+
+      - name: Check Format (gofmt)
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "❌ Files not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: backend-go
+          args: --timeout=5m
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./... -v -race -timeout 60s
+
+  # ─── Full Flutter Mobile CI ────────────────────────────────────────────────
+  ci-mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./mobile-flutter
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Check Format (dart format)
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Test
+        run: flutter test
+
+  # ─── Full Flutter Desktop CI ───────────────────────────────────────────────
+  ci-desktop:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./windows_console_flutter
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Check Format (dart format)
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+
+  # ─── Docker Build Validation (tidak push, hanya cek build-ability) ─────────
+  docker-build-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image (validate only, no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend-go
+          file: ./backend-go/Dockerfile
+          push: false
+          tags: siagakita-api:validate

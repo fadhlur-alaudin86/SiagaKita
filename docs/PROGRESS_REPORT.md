@@ -1,25 +1,25 @@
-# 📋 SiagaKita - Laporan Kemajuan Pengembangan
+# 📋 SiagaKita - Development Progress Report
 
-> **Terakhir diperbarui:** 15 Mei 2026
-> **Branch aktif:** `main`
-> **Status keseluruhan:** 🟢 Stabil & Dioptimasi Performa
-
----
-
-## 🗂️ Daftar Isi
-
-1. [Gambaran Arsitektur](#1-gambaran-arsitektur)
-2. [Status Per Komponen](#2-status-per-komponen)
-3. [Changelog Per Sprint](#3-changelog-per-sprint)
-4. [Struktur File Terkini](#4-struktur-file-terkini)
-5. [API Endpoint Lengkap](#5-api-endpoint-lengkap)
-6. [Schema Database (v12 - Aktif)](#6-schema-database-v12--aktif)
-7. [Yang Belum Selesai](#7-yang-belum-selesai)
-8. [Panduan Setup untuk Anggota Baru](#8-panduan-setup-untuk-anggota-baru)
+> **Last Updated:** 8 August 2026  
+> **Active Branches:** `dev` (integration), `main` (stable production)  
+> **Overall System Status:** 🟢 Stable, Highly Optimized & CI/CD Automated  
 
 ---
 
-## 1. Gambaran Arsitektur
+## 🗂️ Table of Contents
+
+1. [Architecture Overview](#1-architecture-overview)
+2. [Component Status](#2-component-status)
+3. [Changelog per Sprint](#3-changelog-per-sprint)
+4. [Current File Structure](#4-current-file-structure)
+5. [Complete API Endpoints](#5-complete-api-endpoints)
+6. [Database Schema (v12 - Active)](#6-database-schema-v12---active)
+7. [Pending & Future Tasks](#7-pending--future-tasks)
+8. [Onboarding & Setup Guide](#8-onboarding--setup-guide)
+
+---
+
+## 1. Architecture Overview
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -114,6 +114,21 @@
 ---
 
 ## 3. Changelog Per Sprint
+
+---
+
+### 🔖 Patch 1.0.25 - 8 August 2026 (DevOps Automation, Multi-Branching & Agent Skills)
+
+#### 🚀 DevOps & CI/CD Pipeline
+- **Branching Architecture**: Established dual persistent branch workflow (`main` for stable releases, `dev` for active integration, `feature/*` and `fix/*` for feature branches).
+- **Conditional CI Pipeline (`ci-dev.yml`)**: Automated path-based test filters running Go or Flutter linting/tests based on modified paths.
+- **Production CI Gate (`ci-main.yml`)**: Full validation suite including Docker build verification on PRs targeting `main`.
+- **Release Automation (`release-deploy.yml` & `auto-tag.yml`)**: Triggered by tag `v*.*.*`. Pushes semantically tagged images to Docker Hub, deploys via SSH, performs container health checks with automatic rollback capabilities, and generates GitHub Releases from Conventional Commits.
+
+#### 🤖 Agent Skills & Developer Guides
+- **Structured Skill Catalog (`.agent/skills/`)**: Added standard agent skills in English (`devops-workflow`, `gh-project-manager`, `feature-dev-workflow`).
+- **Developer Documentation (`docs/skills/`)**: Provided human developer guides for onboarding and agent alignment.
+- **Conventional Commits & Semantic Versioning**: Standardized commit conventions and `VERSION` file tracking.
 
 ---
 

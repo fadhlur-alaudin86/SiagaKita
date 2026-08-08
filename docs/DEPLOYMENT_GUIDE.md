@@ -1,207 +1,165 @@
-# 🚀 SiagaKita — Panduan Deployment Production
+# 🚀 SiagaKita — Production Deployment Guide
 
-> **Server:** `139.59.99.230` (DigitalOcean / VPS)
-> **Diperbarui:** 13 Mei 2026
+> **Production Server IP:** `139.59.99.230` (DigitalOcean VPS)
+> **Last Updated:** 8 August 2026
 
 ---
 
-## Daftar Isi
+## Table of Contents
 
-1. [Prasyarat](#1-prasyarat)
-2. [Setup Awal VPS (sekali saja)](#2-setup-awal-vps-sekali-saja)
-3. [GitHub Secrets yang Diperlukan](#3-github-secrets-yang-diperlukan)
-4. [Alur CI/CD Otomatis](#4-alur-cicd-otomatis)
-5. [Deploy Manual (darurat)](#5-deploy-manual-darurat)
+1. [Prerequisites](#1-prerequisites)
+2. [Initial VPS Infrastructure Setup](#2-initial-vps-infrastructure-setup)
+3. [Required GitHub Secrets](#3-required-github-secrets)
+4. [Automated CI/CD Workflow](#4-automated-cicd-workflow)
+5. [Emergency Manual Deployment](#5-emergency-manual-deployment)
 6. [Monitoring & Troubleshooting](#6-monitoring--troubleshooting)
-7. [Reset Database (hati-hati!)](#7-reset-database-hati-hati)
+7. [Client Application Configuration](#7-client-application-configuration)
+8. [Database Migration Procedures](#8-database-migration-procedures)
 
 ---
 
-## 1. Prasyarat
+## 1. Prerequisites
 
-- Akun Docker Hub dengan repository `siagakita-api` (public atau private)
-- SSH key untuk akses ke VPS
-- GitHub repository dengan akses ke Settings → Secrets
+- Docker Hub account with access to repository `siagakita-api`.
+- SSH Key configured for server access (`root@139.59.99.230`).
+- GitHub Repository with admin permissions to configure **Settings → Secrets and variables → Actions**.
 
 ---
 
-## 2. Setup Awal VPS (sekali saja)
+## 2. Initial VPS Infrastructure Setup (One-time)
 
-### 2a. Jalankan script setup dari mesin lokal
+### 2a. Execute Setup Script from Local Machine
 
 ```bash
-# Salin script ke server
+# Copy setup script to server
 scp infrastructure/setup_server.sh root@139.59.99.230:/tmp/
 
-# Salin file yang dibutuhkan server
+# Copy configuration files
 scp infrastructure/docker-compose.prod.yml root@139.59.99.230:/opt/siagakita/
 scp infrastructure/.env                    root@139.59.99.230:/opt/siagakita/
-scp backend-go/migrations/003_schema_v3.sql root@139.59.99.230:/opt/siagakita/
 
-# SSH ke server dan jalankan setup
+# SSH to server and run setup
 ssh root@139.59.99.230
 chmod +x /tmp/setup_server.sh
 /tmp/setup_server.sh
 ```
 
-### 2b. Isi `.env` di server
+### 2b. Server Environment Configuration
 
-File `/opt/siagakita/.env` harus berisi semua nilai yang terisi (tidak boleh kosong untuk field wajib):
+The `/opt/siagakita/.env` file on the server must contain all required production variables:
 
 ```env
 DB_USER=siagakita_admin
-DB_PASSWORD=<password_kuat>
+DB_PASSWORD=<strong_password>
 DB_NAME=siagakita
 DB_HOST=postgres
 DB_PORT=5432
 
-REDIS_PASSWORD=<password_kuat>
+REDIS_PASSWORD=<strong_password>
 REDIS_HOST=redis
 REDIS_PORT=6379
 
-API_HOST=[IP_ADDRESS]
+API_HOST=139.59.99.230
 HTTP_PORT=8080
 WS_PORT=8081
 
-JWT_SECRET=<string_acak_panjang_min_32_char>
+JWT_SECRET=<random_secret_min_32_chars>
 JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=168h
 
-FONNTE_TOKEN=<token_dari_fonnte.com>
+FONNTE_TOKEN=<fonnte_api_token>
 
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=<email@gmail.com>
-SMTP_PASSWORD=<app_password_gmail>
+SMTP_PASSWORD=<gmail_app_password>
 SMTP_FROM=<email@gmail.com>
 
-SUPERADMIN_EMAIL=<email_superadmin>
-SUPERADMIN_PASS=<password_kuat>
+SUPERADMIN_EMAIL=<superadmin_email>
+SUPERADMIN_PASS=<strong_password>
 
-SMS_GATEWAY_SECRET=<string_acak>
+DOCKERHUB_USERNAME=<dockerhub_username>
 
-DOCKERHUB_USERNAME=<username_dockerhub>
-
-# Upload Storage (wajib untuk fitur laporan foto & audio)
 UPLOAD_DIR=/app/uploads
-UPLOAD_BASE_URL=http://[IP_ADDRESS]:8080/uploads
+UPLOAD_BASE_URL=http://139.59.99.230:8080/uploads
 
-# Performance & Logging
 GO_ENV=production
 LOG_PATH=logs/app.log
 ```
 
-### 2c. Setup direktori upload & log
+---
 
-```bash
-# Di VPS — buat direktori penyimpanan file laporan
-sudo mkdir -p /opt/siagakita/uploads/reports/photos
-sudo mkdir -p /opt/siagakita/uploads/reports/audio
-sudo mkdir -p /opt/siagakita/logs
+## 3. Required GitHub Secrets
 
-# Set permission agar bisa ditulis oleh container
-sudo chown -R 1000:1000 /opt/siagakita/uploads
-sudo chown -R 1000:1000 /opt/siagakita/logs
-chmod -R 755 /opt/siagakita/uploads
-chmod -R 755 /opt/siagakita/logs
-```
+Navigate to: **GitHub → Repository → Settings → Secrets and variables → Actions**
 
-> [!NOTE]
-> Volume ini sudah di-mount di `docker-compose.prod.yml` sebagai:
-> - `/opt/siagakita/uploads:/app/uploads`
-> - `/opt/siagakita/logs:/app/logs`
-> File yang ditulis backend akan persisten di VPS meski container di-restart. Log dapat diakses langsung di `/opt/siagakita/logs/app.log`.
+Add the following secrets:
 
-### 2d. Verifikasi infrastruktur berjalan
-
-```bash
-# Cek semua container
-docker ps
-
-# Output yang diharapkan:
-# siagakita_postgres  → Up (healthy)
-# siagakita_redis     → Up (healthy)
-
-> [!IMPORTANT]
-> **Ketergantungan Redis**: Mulai Patch 1.0.21, Redis bukan lagi sekadar cache opsional. Redis **wajib** berjalan sehat karena digunakan untuk:
-> 1.  **Session Guard**: Validasi JTI (mencegah login ganda mobile). Jika Redis mati, user tidak bisa login/akses API.
-> 2.  **Idempotency**: Mencegah double-submit aksi kritis di multi-device console.
-```
+| Secret Name | Value | Purpose |
+|-------------|-------|---------|
+| `DOCKERHUB_USERNAME` | Docker Hub username | Authentication & image tagging |
+| `DOCKERHUB_TOKEN` | Docker Hub access token | Image push authorization |
+| `VPS_HOST` | `139.59.99.230` | Production server IP |
+| `VPS_USERNAME` | `root` | SSH user |
+| `VPS_SSH_KEY` | SSH Private Key content | Automated SSH authentication |
 
 ---
 
-## 3. GitHub Secrets yang Diperlukan
+## 4. Automated CI/CD Workflow
 
-Buka: **GitHub → Repository → Settings → Secrets and variables → Actions**
+The SiagaKita deployment pipeline enforces strict quality gates across branches:
 
-Tambahkan secret berikut:
-
-| Secret Name | Nilai | Keterangan |
-|-------------|-------|-----------|
-| `DOCKERHUB_USERNAME` | Username Docker Hub kamu | Untuk login & tag image |
-| `DOCKERHUB_TOKEN` | Access token Docker Hub | Buat di hub.docker.com → Account Settings → Security |
-| `VPS_HOST` | `[IP_ADDRESS]` | IP server |
-| `VPS_USERNAME` | `root` | User SSH di server |
-| `VPS_SSH_KEY` | Isi private key SSH | Gunakan `cat ~/.ssh/id_rsa` atau key khusus deploy |
-
-### Cara buat SSH key khusus deploy (opsional tapi rekomendasi)
-
-```bash
-# Di mesin lokal
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/siagakita_deploy -N ""
-
-# Salin public key ke server
-ssh-copy-id -i ~/.ssh/siagakita_deploy.pub root@139.59.99.230
-
-# Isi VPS_SSH_KEY dengan konten private key:
-cat ~/.ssh/siagakita_deploy
 ```
+[ Developer Branch ]
+         │
+         ▼ PR to dev
+  .github/workflows/ci-dev.yml (Path-filtered Go & Flutter checks)
+         │
+         ▼ Merge to dev → PR to main
+  .github/workflows/ci-main.yml (Full CI + Docker build validation)
+         │
+         ▼ Merge PR to main (includes VERSION file update)
+  .github/workflows/auto-tag.yml (Generates git tag v1.X.X)
+         │
+         ▼ Pushes tag v1.X.X
+  .github/workflows/release-deploy.yml
+         ├── Job 1: Build Docker image (tags: v1.X.X & latest) → push to Docker Hub
+         ├── Job 2: Deploy to VPS via SSH & perform health verification
+         │           └── (On failure: automatic rollback to previous container image)
+         └── Job 3: Publish GitHub Release with Conventional Commits changelog
+```
+
+### Versioning & Automated Tagging
+
+1. Whenever a release is ready, update the root `VERSION` file (e.g., `1.0.25`).
+2. Submit a PR from `dev` to `main`.
+3. Merging to `main` triggers `auto-tag.yml` which reads `VERSION` and creates tag `v1.0.25`.
+4. `release-deploy.yml` builds, deploys, verifies, and creates the GitHub Release automatically.
+
+### Automated Rollback Strategy
+
+During deployment, `release-deploy.yml` polls container status up to 5 times (with 5-second delays):
+- If `docker inspect` confirms the backend status is `healthy`, deployment completes.
+- If health verification fails, the pipeline automatically halts, pulls the previous Docker image, restores the container, and logs the incident.
 
 ---
 
-## 4. Alur CI/CD Otomatis
+## 5. Emergency Manual Deployment
 
-```
-[Push ke branch main]
-        │
-        ▼
-GitHub Actions (.github/workflows/deploy.yml)
-        │
-        ├── Job 1: build-and-push
-        │     ├── Checkout code
-        │     ├── Login ke Docker Hub
-        │     └── Build image Go → push ke DockerHub
-        │           tag: <username>/siagakita-api:latest
-        │
-        └── Job 2: deploy-to-vps (setelah Job 1 selesai)
-              ├── SSH ke 139.59.99.230
-              ├── cd /opt/siagakita
-              ├── docker compose pull backend   ← ambil image baru
-              ├── docker compose up -d --no-deps backend
-              ├── docker image prune -f
-              └── Verifikasi health status container
-```
-
-**Waktu rata-rata:** ~3–5 menit dari push hingga backend live.
-
----
-
-## 5. Deploy Manual (darurat)
-
-Jika GitHub Actions gagal atau perlu deploy cepat tanpa push:
+If GitHub Actions is unreachable, execute a manual deploy:
 
 ```bash
-# SSH ke server
+# SSH into production server
 ssh root@139.59.99.230
 cd /opt/siagakita
 
-# Pull image terbaru dari Docker Hub
+# Pull latest image
 docker compose -f docker-compose.prod.yml pull backend
 
-# Restart backend
+# Restart backend service
 docker compose -f docker-compose.prod.yml up -d --no-deps backend
 
-# Cek status
+# Verify health status
 docker ps
 curl http://localhost:8080/health
 ```
@@ -210,126 +168,56 @@ curl http://localhost:8080/health
 
 ## 6. Monitoring & Troubleshooting
 
-### Cek health API
+### Health Check Endpoint
 
 ```bash
 curl http://139.59.99.230:8080/health
-# Response: {"service":"SiagaKita REST API","status":"ok"}
+# Expected Output: {"service":"SiagaKita REST API","status":"ok"}
 ```
 
-### Lihat log backend
+### Inspecting Backend Logs
 
 ```bash
 ssh root@139.59.99.230
 docker logs siagakita_backend -f --tail=100
 ```
 
-### Log yang perlu diperhatikan saat startup
-
-```
-[SuperAdmin] Akun superadmin berhasil dibuat: <email>   ← OK
-[API] Starting REST API on :8080                         ← OK
-[WS] Starting WebSocket server on :8081                  ← OK
-```
-
-### Masalah umum
-
-| Masalah | Penyebab | Solusi |
-|---------|---------|--------|
-| Backend tidak start | `.env` tidak lengkap | `docker logs siagakita_backend` cek error |
-| Superadmin tidak ter-seed | `SUPERADMIN_EMAIL`/`PASS` kosong | Isi .env lalu restart backend |
-| Tidak bisa connect WebSocket | Port 8081 tidak terbuka | Cek firewall: `ufw allow 8081/tcp` |
-| Database connection refused | postgres belum healthy | Tunggu 30 detik, cek `docker ps` |
-| Image pull gagal di GitHub Actions | `DOCKERHUB_TOKEN` expired | Buat token baru di Docker Hub |
-| Upload foto/audio gagal | Direktori `/opt/siagakita/uploads` belum ada atau permission salah | `mkdir -p /opt/siagakita/uploads && chmod 755 ...` |
-| File upload tidak bisa diakses publik | `UPLOAD_BASE_URL` salah di `.env` | Sesuaikan dengan IP/domain VPS, restart backend |
-| Volume tidak ter-mount | `docker-compose.prod.yml` belum memiliki `volumes` | Cek section `volumes` di service `backend`, lakukan `up -d --force-recreate backend` |
-
-### Buka port di firewall VPS
+### Firewall Port Configuration
 
 ```bash
 ssh root@139.59.99.230
-
 ufw allow 22/tcp    # SSH
 ufw allow 8080/tcp  # REST API
 ufw allow 8081/tcp  # WebSocket
 ufw enable
-ufw status
 ```
 
 ---
 
-## 7. Setup Aplikasi Mobile & Console (Client Side)
+## 7. Client Application Configuration
 
-Aplikasi mobile (`mobile-flutter`) dan console (`windows_console_flutter`) tidak menggunakan hardcode IP server. Sebagai gantinya, IP server diambil dari file `.env` di direktori `infrastructure/` menggunakan fitur native Flutter `--dart-define-from-file`.
+Both Flutter clients consume API endpoints dynamically via environment variables without hardcoded IP addresses.
 
-### Cara Menjalankan (Development)
 ```bash
-# Untuk Mobile (Masyarakat & Relawan)
-cd mobile-flutter
-flutter run --dart-define-from-file=../infrastructure/.env
+# Run Mobile App (Citizen & Volunteer)
+cd mobile-flutter && flutter run --dart-define-from-file=../infrastructure/.env
 
-# Untuk Console (Instansi & Admin)
-cd windows_console_flutter
-flutter run --dart-define-from-file=../infrastructure/.env
+# Run Desktop Console (Admin & Agency)
+cd windows_console_flutter && flutter run -d linux --dart-define-from-file=../infrastructure/.env
+
+# Build Android Release APK
+cd mobile-flutter && flutter build apk --dart-define-from-file=../infrastructure/.env
 ```
-
-### Cara Membangun (Build)
-```bash
-# Build Android APK
-flutter build apk --dart-define-from-file=../infrastructure/.env
-
-# Build Windows EXE
-flutter build windows --dart-define-from-file=../infrastructure/.env
-```
-
-> [!CAUTION]
-> Pastikan variabel `API_HOST` sudah ada di `infrastructure/.env` sebelum menjalankan build/run. Jangan menggunakan default value di kode untuk menyembunyikan IP publik.
 
 ---
 
-## 8. Menjalankan Migrasi Database
+## 8. Database Migration Procedures
 
-> ⚠️ **PERINGATAN:** Migrasi `003_schema_v3.sql` menghapus SEMUA data. Migrasi `005_reports_v2.sql` bersifat *additive* dan aman dijalankan di production.
-
-### Reset database (fresh setup / dev):
+Raw SQL migrations are placed in `backend-go/migrations/NNN_description.sql`.
 
 ```bash
-# Dari mesin lokal, kirim file migrasi
-scp backend-go/migrations/003_schema_v3.sql root@139.59.99.230:/tmp/
-
-# SSH ke server
+# Execute incremental migration on production database
+scp backend-go/migrations/013_add_dispatch_table.sql root@139.59.99.230:/opt/siagakita/
 ssh root@139.59.99.230
-
-# Jalankan migrasi
-docker exec -i siagakita_postgres psql \
-  -U siagakita_admin -d siagakita \
-  < /tmp/003_schema_v3.sql
-
-# Hapus file setelah dipakai
-rm /tmp/003_schema_v3.sql
-
-# Restart backend (agar superadmin ter-seed ulang)
-docker restart siagakita_backend
+docker exec -i siagakita_postgres psql -U siagakita_admin -d siagakita < /opt/siagakita/013_add_dispatch_table.sql
 ```
-
-### Migrasi incremental — Reports v2 (005):
-
-```bash
-# Dari mesin lokal
-scp backend-go/migrations/005_reports_v2.sql root@139.59.99.230:/opt/siagakita/
-
-# SSH ke server
-ssh root@139.59.99.230
-cd /opt/siagakita
-
-# Jalankan migrasi (aman, tidak menghapus data lama)
-docker exec -i siagakita_postgres psql \
-  -U $DB_USER -d siagakita \
-  < /opt/siagakita/005_reports_v2.sql
-```
-
----
-
-> 📌 Untuk konfigurasi environment variables lebih lengkap, lihat `infrastructure/.env-example`
-> 📌 Untuk arsitektur backend, lihat `docs/BACKEND_ARCHITECTURE.md`

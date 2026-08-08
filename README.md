@@ -39,7 +39,7 @@ The SiagaKita system consists of three main components:
 ## Technology Stack
 
 *   **Mobile & Desktop Frontend**: Flutter (Dart)
-*   **Backend Framework**: Go 1.26 with Fiber v2
+*   **Backend Framework**: Go 1.26 with Fiber v2 + Sonic + Zerolog
 *   **Database**: PostgreSQL 15
 *   **Caching & Session Store**: Redis (Mandatory for Session Guard & Sync)
 *   **Deployment**: Docker & Docker Compose
@@ -47,30 +47,62 @@ The SiagaKita system consists of three main components:
 
 ## Project Structure
 
-*   `backend-go/`: Contains the Go server source code, migrations, and environment configurations.
-*   `mobile-flutter/`: The mobile application code for citizens and volunteers.
-*   `windows_console_flutter/`: The desktop application code for agencies and super-admins.
-*   `infrastructure/`: Contains global environment files (`.env`) and Docker configurations.
-*   `docs/`: Additional documentation including Database Schemas, API Endpoints, and Progress Reports.
+*   `.agent/skills/`: AI Agent skill specifications (`devops-workflow`, `gh-project-manager`, `feature-dev-workflow`).
+*   `.github/workflows/`: GitHub Actions CI/CD automation pipelines (`ci-dev.yml`, `ci-main.yml`, `release-deploy.yml`, `auto-tag.yml`).
+*   `backend-go/`: Go server source code, migrations, and domain logic.
+*   `mobile-flutter/`: Mobile application source code for citizens and volunteers.
+*   `windows_console_flutter/`: Desktop console application source code for emergency agencies and admins.
+*   `infrastructure/`: Global environment configurations (`.env`) and Docker Compose files.
+*   `docs/`: Comprehensive technical documentation, architecture guides, database schemas, and developer skill guides (`docs/skills/`).
+*   `VERSION`: Plain-text file containing the current system release version (e.g., `1.0.24`).
+
+## Development & Git Workflow
+
+### Branch Strategy
+- `main`: Protected production branch (deploys via release tags `v*.*.*`).
+- `dev`: Active integration branch (all feature branches merge here via Pull Request).
+- `feature/F-XXX-name`: Feature development branch (created from `dev`).
+- `fix/F-XXX-name`: Bug fix branch (created from `dev`).
+
+### Conventional Commits
+All commits must follow the format: `<type>(<scope>): <short description>`
+- Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `style`, `perf`
+- Example: `feat(incident): add volunteer dispatch endpoint`
+
+### Release Procedure
+1. Increment the version number in the root `VERSION` file (e.g., `1.0.25`).
+2. Create a PR from `dev` to `main`.
+3. Upon PR approval and merge to `main`, GitHub Actions automatically creates git tag `v1.0.25`.
+4. The release workflow builds Docker images, deploys to production VPS with automated rollback protection, and publishes a GitHub Release.
 
 ## Getting Started
 
 To run the project locally:
 
-1.  Ensure you have Docker, Go, and Flutter installed on your machine.
-2.  Navigate to the `infrastructure/` directory and configure your `.env` file based on `.env-example`.
-3.  Start the database services using Docker Compose:
-    `docker-compose up -d postgres redis`
-4.  Run the backend server:
-    `cd backend-go && go run cmd/api/main.go`
-5.  Run the mobile application:
-    `cd mobile-flutter && flutter run --dart-define-from-file=../infrastructure/.env`
-6.  Run the desktop console:
-    `cd windows_console_flutter && flutter run -d windows --dart-define-from-file=../infrastructure/.env` (or `linux`/`macos` depending on your OS)
+1. Ensure Docker, Go, and Flutter are installed on your machine.
+2. Navigate to `infrastructure/` and configure `.env` based on `.env-example`.
+3. Start database and caching services using Docker Compose:
+   ```bash
+   cd infrastructure && docker compose up -d postgres redis
+   ```
+4. Run the backend server:
+   ```bash
+   cd backend-go && go run cmd/api/main.go
+   ```
+5. Run the mobile application:
+   ```bash
+   cd mobile-flutter && flutter run --dart-define-from-file=../infrastructure/.env
+   ```
+6. Run the desktop console application:
+   ```bash
+   cd windows_console_flutter && flutter run -d linux --dart-define-from-file=../infrastructure/.env
+   ```
 
-## Documentation
+## Documentation & AI Agent Skills
 
-For an in-depth understanding of the system, please refer to the documents in the `docs/` directory:
-*   `DATABASE_SCHEMA.md`: Detailed view of the PostgreSQL tables and their relationships.
-*   `PROGRESS_REPORT.md`: Comprehensive log of development sprints and feature implementations.
-*   `DEPLOYMENT_GUIDE.md`: Instructions for deploying the system to a production environment.
+For comprehensive documentation and guides:
+*   [docs/README.md](docs/README.md): Main documentation directory index.
+*   [docs/skills/README.md](docs/skills/README.md): Human developer guide for AI Agent Skills.
+*   [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md): PostgreSQL schema v12 design and ERD.
+*   [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md): Production VPS deployment & automated CI/CD.
+*   [docs/PROGRESS_REPORT.md](docs/PROGRESS_REPORT.md): System changelogs and sprint progress tracking.

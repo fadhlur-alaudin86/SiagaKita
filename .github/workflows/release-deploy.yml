@@ -1,0 +1,140 @@
+name: Release & Deploy SiagaKita API
+
+# Dipicu hanya saat tag v*.*.* di-push ke main
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag version to deploy (contoh: v1.0.25)'
+        required: true
+        type: string
+
+jobs:
+  # ─── Job 1: Build & Push Docker image ke Docker Hub ────────────────────────
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get Version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend-go
+          file: ./backend-go/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/siagakita-api:${{ steps.get_version.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/siagakita-api:latest
+
+  # ─── Job 2: Deploy ke VPS via SSH ──────────────────────────────────────────
+  deploy-to-vps:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/siagakita
+
+            export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+            VERSION="${{ needs.build-and-push.outputs.version }}"
+
+            echo "🚀 Starting deploy version: $VERSION"
+
+            # Simpan nama image lama untuk rollback
+            OLD_IMAGE=$(docker inspect --format='{{.Image}}' siagakita_backend 2>/dev/null || echo "")
+
+            # Tarik image terbaru
+            docker compose -f docker-compose.prod.yml pull backend
+
+            # Restart backend
+            docker compose -f docker-compose.prod.yml up -d --no-deps backend
+
+            # Hapus image lama agar disk tidak penuh
+            docker image prune -f
+
+            # Tunggu backend siap
+            echo "⏳ Waiting for backend health check..."
+            sleep 10
+
+            # Health check dengan retry
+            HEALTH=""
+            for i in 1 2 3 4 5; do
+              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' siagakita_backend 2>/dev/null || echo "unknown")
+              echo "  Attempt $i: $HEALTH"
+              if [ "$HEALTH" = "healthy" ]; then
+                break
+              fi
+              sleep 5
+            done
+
+            if [ "$HEALTH" != "healthy" ]; then
+              echo "❌ Health check FAILED — initiating rollback..."
+
+              # Rollback: jalankan ulang image versi sebelumnya
+              if [ -n "$OLD_IMAGE" ]; then
+                docker compose -f docker-compose.prod.yml stop backend
+                docker pull "$OLD_IMAGE" 2>/dev/null || true
+                docker compose -f docker-compose.prod.yml up -d --no-deps backend
+                echo "⚠️ Rollback complete. Deployed image: $OLD_IMAGE"
+              else
+                echo "⚠️ No previous image found for rollback."
+              fi
+
+              exit 1
+            fi
+
+            echo "✅ Deploy version $VERSION successful — backend is healthy"
+
+  # ─── Job 3: Auto-create GitHub Release dengan changelog ─────────────────────
+  create-github-release:
+    needs: [build-and-push, deploy-to-vps]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build-and-push.outputs.version }}
+          name: Release ${{ needs.build-and-push.outputs.version }}
+          generate_release_notes: true
+          body: |
+            ## 🚀 Release ${{ needs.build-and-push.outputs.version }}
+
+            **Docker Image:** `${{ secrets.DOCKERHUB_USERNAME }}/siagakita-api:${{ needs.build-and-push.outputs.version }}`
+
+            ### Changes
+            <!-- Release notes generated automatically from Conventional Commits -->
