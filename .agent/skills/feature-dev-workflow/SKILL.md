@@ -21,7 +21,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | -1 | **Resolve Backlog** — Match/create GitHub Issue. Create `docs/backlog/features/F-XXX-name.md` using full template. | Feature log file |
 | 0 | **Branch** — Create `feature/F-XXX-name` from `dev`. Update issue label to `status: in-progress`. Add comment to issue. | Git branch |
 | 1 | **Read Mapping** — Inspect Go domain handler, DB schema, API endpoint, and Flutter screens. | Discovery notes |
-| 2 | **API Contract** — Create/update `docs/api/feat-xxx.yaml` (OpenAPI 3.0). | YAML contract |
+| 2 | **API Contract** — Extend `docs/api/paths/<domain>.yaml` with new endpoint(s) (OpenAPI 3.0). Add new schemas to `docs/api/components/schemas.yaml` if needed. Verify at `http://localhost:8080/docs`. | Updated domain YAML |
 | 3 | **DB Migration** — Read `docs/DATABASE_SCHEMA.md`, write SQL migration in `backend-go/migrations/`. Update schema docs. | SQL migration + updated schema |
 | 4 | **Backend Implementation** — Implement handler, service, repository in `backend-go/internal/domain/<name>/`. | Go source files |
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
@@ -48,6 +48,13 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 11. **Raw SQL** — No ORM. Use raw SQL via `pgx` or `database/sql`.
 12. **Comment Every Public Symbol** — Provide `// why` comments on every public handler, function, middleware.
 13. **Conventional Commits MANDATORY** — Format: `<type>(<scope>): <description>`.
+
+### API Contract (OpenAPI)
+14. **Extend, don't create new** — New endpoints MUST be appended to the existing domain file `docs/api/paths/<domain>.yaml`. Never create a standalone per-feature file.
+15. **Shared schemas go to components** — Any new reusable request/response schema must be added to `docs/api/components/schemas.yaml` using `$ref`.
+16. **Verify Swagger UI** — After editing any YAML file, run the backend locally (`GO_ENV=development`) and confirm the endpoint appears correctly at `http://localhost:8080/docs`.
+17. **Swagger UI is dev-only** — The `/docs` route is conditionally mounted only when `GO_ENV != production`. Never remove this guard.
+18. **Keep contracts accurate** — If a backend handler changes its request/response shape, update the corresponding OpenAPI YAML in the same PR/commit.
 
 ### Flutter
 14. **Responsive Utilities** — Use `lib/core/utils/responsive.dart` for UI scaling.

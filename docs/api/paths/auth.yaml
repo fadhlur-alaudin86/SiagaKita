@@ -1,0 +1,453 @@
+# Auth Domain — /api/v1/auth
+# All endpoints are PUBLIC (no JWT required)
+
+/api/v1/auth/register:
+  post:
+    tags:
+      - Auth
+    summary: Register new civilian/volunteer account
+    description: |
+      Creates a new `civilian` user account. After registration, an email OTP
+      is sent to verify the email address. The account is not active until OTP is verified.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [full_name, email, password]
+            properties:
+              full_name:
+                type: string
+                example: "Budi Santoso"
+              email:
+                type: string
+                format: email
+                example: "budi@example.com"
+              password:
+                type: string
+                format: password
+                minLength: 8
+                example: "secretpassword"
+    responses:
+      '201':
+        description: Registration successful — OTP sent to email
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        user_id:
+                          type: string
+                          format: uuid
+                        email:
+                          type: string
+      '400':
+        description: Validation error or email already registered
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/verify-register-otp:
+  post:
+    tags:
+      - Auth
+    summary: Verify email OTP after registration
+    description: Verifies the 6-digit OTP sent to the registered email. On success, returns JWT tokens.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, otp_code]
+            properties:
+              email:
+                type: string
+                format: email
+                example: "budi@example.com"
+              otp_code:
+                type: string
+                example: "123456"
+    responses:
+      '200':
+        description: Email verified — JWT tokens returned
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/AuthResponse'
+      '400':
+        description: Invalid or expired OTP
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/login:
+  post:
+    tags:
+      - Auth
+    summary: Login for civilian / volunteer (mobile app)
+    description: |
+      Authenticates a `civilian` or `volunteer` user. After successful password check,
+      a 2FA email OTP is sent. Use `/auth/verify-login-otp` to complete login and receive JWT.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email:
+                type: string
+                format: email
+                example: "budi@example.com"
+              password:
+                type: string
+                format: password
+                example: "secretpassword"
+    responses:
+      '200':
+        description: Password valid — OTP sent to email
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: "Kode OTP telah dikirim ke email Anda"
+      '401':
+        description: Invalid credentials
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/verify-login-otp:
+  post:
+    tags:
+      - Auth
+    summary: Complete login with email OTP (civilian / volunteer)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, otp_code]
+            properties:
+              email:
+                type: string
+                format: email
+              otp_code:
+                type: string
+                example: "654321"
+    responses:
+      '200':
+        description: Login successful — JWT tokens returned
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/AuthResponse'
+      '400':
+        description: Invalid or expired OTP
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/console/login:
+  post:
+    tags:
+      - Auth
+    summary: Login for desktop console (admin / superadmin / agency)
+    description: |
+      Direct login for console roles (`admin`, `superadmin`, `agency`).
+      **No 2FA OTP required** — returns JWT tokens immediately on valid credentials.
+      Single-session enforcement is NOT applied to console logins.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+                format: password
+    responses:
+      '200':
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/AuthResponse'
+      '401':
+        description: Invalid credentials or role not allowed
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/personnel/login:
+  post:
+    tags:
+      - Auth
+    summary: Login for agency field personnel (mobile responder)
+    description: Direct login for `agency_personnel` role. Returns JWT immediately.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+                format: password
+    responses:
+      '200':
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/AuthResponse'
+      '401':
+        description: Invalid credentials
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/forgot-password:
+  post:
+    tags:
+      - Auth
+    summary: Request password reset OTP via email
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email]
+            properties:
+              email:
+                type: string
+                format: email
+                example: "budi@example.com"
+    responses:
+      '200':
+        description: OTP sent to email
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+      '400':
+        description: Email not found
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/reset-password:
+  post:
+    tags:
+      - Auth
+    summary: Reset password with OTP
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, otp, new_password]
+            properties:
+              email:
+                type: string
+                format: email
+              otp:
+                type: string
+                example: "123456"
+              new_password:
+                type: string
+                format: password
+                minLength: 8
+    responses:
+      '200':
+        description: Password reset successful
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+      '400':
+        description: Invalid OTP or validation error
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/resend-otp:
+  post:
+    tags:
+      - Auth
+    summary: Resend email OTP
+    description: |
+      Resends an email OTP for a specific context.
+      `context` values: `register`, `login`, `forgot_password`
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, context]
+            properties:
+              email:
+                type: string
+                format: email
+              context:
+                type: string
+                enum: [register, login, forgot_password]
+                example: "register"
+    responses:
+      '200':
+        description: OTP resent
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+      '400':
+        description: Invalid request
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/request-otp:
+  post:
+    tags:
+      - Auth
+    summary: Request WhatsApp OTP for phone verification
+    description: Sends a 6-digit OTP to the given phone number via WhatsApp (Fonnte API).
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [phone_number]
+            properties:
+              phone_number:
+                type: string
+                example: "+6281234567890"
+    responses:
+      '200':
+        description: OTP sent via WhatsApp
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+      '400':
+        description: Invalid phone number
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '429':
+        description: Rate limit — wait 1 minute before requesting again
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/verify-otp:
+  post:
+    tags:
+      - Auth
+    summary: Verify WhatsApp OTP
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [phone_number, otp_code]
+            properties:
+              phone_number:
+                type: string
+                example: "+6281234567890"
+              otp_code:
+                type: string
+                example: "123456"
+    responses:
+      '200':
+        description: OTP verified
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        verified:
+                          type: boolean
+                          example: true
+      '400':
+        description: Invalid or expired OTP
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'

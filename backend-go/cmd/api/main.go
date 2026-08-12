@@ -26,6 +26,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	swagger "github.com/gofiber/swagger"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -115,6 +116,20 @@ func main() {
 		filePath := filepath.Join(uploadDir, filepath.Clean("/"+subPath))
 		return c.SendFile(filePath)
 	})
+
+	// ── Swagger UI (development only) ─────────────────────────────────────────
+	// Serves OpenAPI 3.0 YAML docs and Swagger UI at GET /docs/*
+	// Not mounted in production to avoid exposing API structure.
+	if os.Getenv("GO_ENV") != "production" {
+		// Serve static YAML files under /docs/api/
+		app.Static("/docs/api", "../docs/api")
+		// Mount Swagger UI pointing to the root OpenAPI spec
+		app.Get("/docs/*", swagger.New(swagger.Config{
+			URL:   "/docs/api/openapi.yaml",
+			Title: "SiagaKita API — Swagger UI",
+		}))
+		utils.Info().Msg("[Docs] Swagger UI available at http://localhost:" + cfg.HTTPPort + "/docs")
+	}
 
 	// ── API v1 Routes ──────────────────────────────────────────────────────────
 	v1 := app.Group("/api/v1")

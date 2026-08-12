@@ -1,0 +1,170 @@
+# Telemetry Domain — /api/v1/telemetry + /api/v1/incidents/sms-fallback
+# Auth: Bearer JWT required for telemetry; API Key (X-Gateway-Secret) for SMS fallback
+
+/api/v1/telemetry/location:
+  put:
+    tags:
+      - Telemetry
+    summary: Update volunteer GPS location
+    description: |
+      Stores the caller's GPS coordinates in Redis GEO (no PostgreSQL write).
+      Also broadcasts `VOLUNTEER_LOCATION_UPDATE` to all online console users.
+      **Required roles:** Any authenticated user (intended for `volunteer`)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [latitude, longitude]
+            properties:
+              latitude:
+                type: number
+                format: double
+                example: -6.2088
+              longitude:
+                type: number
+                format: double
+                example: 106.8456
+    responses:
+      '200':
+        description: Location updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: "Lokasi diperbarui"
+      '400':
+        description: Invalid body
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/telemetry/online-status:
+  post:
+    tags:
+      - Telemetry
+    summary: Query online status of multiple users
+    description: |
+      Returns a map of `{user_id: bool}` indicating whether each user is currently
+      online (based on Redis TTL key `user:online:<id>` with 90-second expiry).
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [user_ids]
+            properties:
+              user_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                example:
+                  - "550e8400-e29b-41d4-a716-446655440000"
+                  - "550e8400-e29b-41d4-a716-446655440001"
+    responses:
+      '200':
+        description: Online status map returned
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      additionalProperties:
+                        type: boolean
+                      example:
+                        "550e8400-e29b-41d4-a716-446655440000": true
+                        "550e8400-e29b-41d4-a716-446655440001": false
+      '400':
+        description: Invalid body
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '403':
+        description: Forbidden — insufficient role
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/incidents/sms-fallback:
+  post:
+    tags:
+      - Telemetry
+    summary: SMS fallback SOS trigger (gateway only)
+    description: |
+      Receives a raw SMS string from the SMS gateway and immediately broadcasts
+      `INCOMING_EMERGENCY` to nearby online volunteers (within 5 km via Redis GEO).
+
+      **Authentication:** Static API key in `X-Gateway-Secret` header — NO JWT.
+
+      **SMS format:** `SOS|<userID>|<latitude>|<longitude>`
+
+      Grace period is bypassed — the emergency broadcast is immediate.
+    security:
+      - APIKeyGateway: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [raw_sms]
+            properties:
+              raw_sms:
+                type: string
+                example: "SOS|550e8400-e29b-41d4-a716-446655440000|-6.2088|106.8456"
+    responses:
+      '200':
+        description: SMS received and broadcast triggered
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+      '400':
+        description: Invalid SMS format
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '401':
+        description: Invalid or missing API key
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'

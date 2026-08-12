@@ -1,0 +1,28 @@
+BearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: |
+    JWT Access Token obtained from `/api/v1/auth/login`, `/auth/verify-login-otp`,
+    `/auth/console/login`, or `/auth/personnel/login`.
+
+    **Roles available:**
+    - `civilian` — Mobile app, general public
+    - `volunteer` — Verified volunteer (mobile app)
+    - `agency` — Emergency agency account (desktop console)
+    - `agency_personnel` — Field responder (mobile responder)
+    - `admin` — System administrator (desktop console)
+    - `superadmin` — Root administrator (desktop console)
+
+    **Role group shorthands used in endpoint descriptions:**
+    - **CitizenVolunteer** = civilian + volunteer
+    - **ConsoleOnly** = superadmin + admin + agency
+    - **AdminOnly** = admin + superadmin
+    - **AgencyOnly** = agency + admin + superadmin
+    - **VolunteerOnly** = volunteer only
+
+APIKeyGateway:
+  type: apiKey
+  in: header
+  name: X-Gateway-Secret
+  description: Static API key for the SMS fallback gateway endpoint only.
