@@ -38,6 +38,10 @@ Naming Conventions:
 - Bugfix    : `fix/F-XXX-name` (e.g., `fix/F-015-sos-strike-mapping`)
 - Sub-branch: `feature/F-XXX-name/sub-backend`, `feature/F-XXX-name/sub-mobile`
 
+### Mandatory Merge Methods
+- `feature/*` / `fix/*` → `dev`: **Squash Merge** (1 PR = 1 atomic Conventional Commit on `dev`).
+- `dev` → `main`: **Rebase Merge** (fast-forward linear release history for release bots).
+
 ## GitHub Labels
 
 ```

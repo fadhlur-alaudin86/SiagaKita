@@ -44,17 +44,16 @@ feature/F-XXX/sub-mobile  ─┘                                ↓
                                                             main ← tag v*.*.* ← deploy
 ```
 
-### Branch Protection Rules
+### Branch Protection & Merge Rules
 
 **Branch `dev`:**
-- Require PR (no direct pushes)
-- Require 1 reviewer approval
-- Require `ci-dev` status checks to pass
-- Allow squash merges
+- Require status checks (`ci-dev`) to pass before merging
+- **Squash Merge MANDATORY** for all PRs from `feature/*` and `fix/*` branches to `dev`. All micro/WIP commits are squashed into 1 atomic Conventional Commit (e.g., `feat(incident): add dispatch endpoint`).
 
 **Branch `main`:**
 - Require PR (no direct pushes — only merges from `dev`)
 - Require `ci-main` status checks to pass
+- **Rebase Merge MANDATORY** for PRs from `dev` to `main` (fast-forward linear history, preserves atomic commits from `dev` for automated release notes).
 
 ## CI/CD Workflow Reference
 

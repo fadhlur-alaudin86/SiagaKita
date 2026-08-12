@@ -67,11 +67,13 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 19. **Isolated Tests** — No shared state, fast (< 1s per file).
 20. **Update Feature Log** — Record test command and status in feature log.
 
-### GitHub Sync
+### GitHub Sync & Merge Strategy
 21. **Step 0 → in-progress**: `gh issue edit <N> --add-label "status: in-progress"` + explanatory comment.
 22. **Step 7 → in-review**: `gh issue edit <N> --add-label "status: in-review" --remove-label "status: in-progress"` + comment with PR link.
 23. **Step 8 → Done**: `gh issue close <N> --reason completed` + summary comment.
 24. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
+25. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
+26. **PR to `main` = Rebase Merge MANDATORY** — All PRs from `dev` targeting `main` MUST use **Rebase Merge** to preserve a clean, linear history for automated release notes.
 
 ## Feature Log Template
 
