@@ -355,13 +355,13 @@ func (r *Repository) SubmitKYC(userID, nik, fullName, placeOfBirth, dateOfBirthS
 	}
 
 	updates := map[string]interface{}{
-		"nik":                      nik,
-		"full_name":                fullName,
-		"place_of_birth":           placeOfBirth,
-		"kyc_ktp_url":              ktpURL,
-		"profile_photo_url":        photoURL,
-		"nik_verification_status":  "pending",
-		"updated_at":               time.Now(),
+		"nik":                     nik,
+		"full_name":               fullName,
+		"place_of_birth":          placeOfBirth,
+		"kyc_ktp_url":             ktpURL,
+		"profile_photo_url":       photoURL,
+		"nik_verification_status": "pending",
+		"updated_at":              time.Now(),
 	}
 
 	if dateOfBirthStr != "" {

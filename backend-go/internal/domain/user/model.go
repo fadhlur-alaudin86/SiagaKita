@@ -21,32 +21,32 @@ func (User) TableName() string { return "users" }
 // UserProfile menyimpan data lengkap akun civilian dan volunteer.
 // Row ini dibuat secara transaksional bersamaan dengan pembuatan User.
 type UserProfile struct {
-	UserID                string     `gorm:"type:uuid;primaryKey" json:"user_id"`
-	FullName              *string    `json:"full_name,omitempty"`
-	NIK                   *string    `gorm:"uniqueIndex" json:"nik,omitempty"`
-	PlaceOfBirth          *string    `json:"place_of_birth,omitempty"`
-	DateOfBirth           *time.Time `json:"date_of_birth,omitempty"`
-	PhoneNumber           *string    `gorm:"uniqueIndex" json:"phone_number,omitempty"`
-	IsEmailVerified       bool       `gorm:"default:false" json:"is_email_verified"`
-	IsPhoneVerified       bool       `gorm:"default:false" json:"is_phone_verified"`
-	IsVerifiedVolunteer   bool       `gorm:"default:false" json:"is_verified_volunteer"`
-	SOSStrikeCount        int        `gorm:"default:0" json:"sos_strike_count"`
-	IsSOSBanned           bool       `gorm:"default:false" json:"is_sos_banned"`
-	BannedUntil           *time.Time `json:"banned_until,omitempty"`
-	BloodType             *string    `json:"blood_type,omitempty"`
-	Allergies             *string    `json:"allergies,omitempty"`
-	MedicalConditions     *string    `json:"medical_conditions,omitempty"`
-	HeightCm              *int       `json:"height_cm,omitempty"`
-	WeightKg              *int       `json:"weight_kg,omitempty"`
-	Domicile              *string    `json:"domicile,omitempty"`
-	Bio                   *string    `json:"bio,omitempty"`
+	UserID              string     `gorm:"type:uuid;primaryKey" json:"user_id"`
+	FullName            *string    `json:"full_name,omitempty"`
+	NIK                 *string    `gorm:"uniqueIndex" json:"nik,omitempty"`
+	PlaceOfBirth        *string    `json:"place_of_birth,omitempty"`
+	DateOfBirth         *time.Time `json:"date_of_birth,omitempty"`
+	PhoneNumber         *string    `gorm:"uniqueIndex" json:"phone_number,omitempty"`
+	IsEmailVerified     bool       `gorm:"default:false" json:"is_email_verified"`
+	IsPhoneVerified     bool       `gorm:"default:false" json:"is_phone_verified"`
+	IsVerifiedVolunteer bool       `gorm:"default:false" json:"is_verified_volunteer"`
+	SOSStrikeCount      int        `gorm:"default:0" json:"sos_strike_count"`
+	IsSOSBanned         bool       `gorm:"default:false" json:"is_sos_banned"`
+	BannedUntil         *time.Time `json:"banned_until,omitempty"`
+	BloodType           *string    `json:"blood_type,omitempty"`
+	Allergies           *string    `json:"allergies,omitempty"`
+	MedicalConditions   *string    `json:"medical_conditions,omitempty"`
+	HeightCm            *int       `json:"height_cm,omitempty"`
+	WeightKg            *int       `json:"weight_kg,omitempty"`
+	Domicile            *string    `json:"domicile,omitempty"`
+	Bio                 *string    `json:"bio,omitempty"`
 	// KYC Warga (NIK Verification)
-	KYCKtpURL             *string    `gorm:"column:kyc_ktp_url" json:"kyc_ktp_url,omitempty"`
+	KYCKtpURL *string `gorm:"column:kyc_ktp_url" json:"kyc_ktp_url,omitempty"`
 	// Selfie dari proses KYC sekaligus digunakan sebagai foto profil warga.
-	ProfilePhotoURL       *string    `gorm:"column:profile_photo_url" json:"profile_photo_url,omitempty"`
-	NIKVerificationStatus string     `gorm:"default:'none'" json:"nik_verification_status"`
-	VolunteerExperience   *string    `gorm:"column:volunteer_experience" json:"volunteer_experience,omitempty"`
-	UpdatedAt             time.Time  `json:"updated_at"`
+	ProfilePhotoURL       *string   `gorm:"column:profile_photo_url" json:"profile_photo_url,omitempty"`
+	NIKVerificationStatus string    `gorm:"default:'none'" json:"nik_verification_status"`
+	VolunteerExperience   *string   `gorm:"column:volunteer_experience" json:"volunteer_experience,omitempty"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 func (UserProfile) TableName() string { return "user_profiles" }
@@ -203,14 +203,14 @@ type UserInfo struct {
 
 // ProfileResponse untuk GET /users/profile (civilian/volunteer).
 type ProfileResponse struct {
-	ID                  string               `json:"id"`
-	Email               string               `json:"email"`
-	Role                string               `json:"role"`
-	FullName            *string              `json:"full_name,omitempty"`
-	NIK                 *string              `json:"nik,omitempty"`
-	PlaceOfBirth        *string              `json:"place_of_birth,omitempty"`
-	DateOfBirth         *string              `json:"date_of_birth,omitempty"`
-	PhoneNumber         *string              `json:"phone_number,omitempty"`
+	ID                    string               `json:"id"`
+	Email                 string               `json:"email"`
+	Role                  string               `json:"role"`
+	FullName              *string              `json:"full_name,omitempty"`
+	NIK                   *string              `json:"nik,omitempty"`
+	PlaceOfBirth          *string              `json:"place_of_birth,omitempty"`
+	DateOfBirth           *string              `json:"date_of_birth,omitempty"`
+	PhoneNumber           *string              `json:"phone_number,omitempty"`
 	IsEmailVerified       bool                 `json:"is_email_verified"`
 	IsPhoneVerified       bool                 `json:"is_phone_verified"`
 	IsVerifiedVolunteer   bool                 `json:"is_verified_volunteer"`
@@ -232,19 +232,19 @@ type ProfileResponse struct {
 
 // UpdateProfileRequest untuk PUT /users/profile (civilian/volunteer).
 type UpdateProfileRequest struct {
-	FullName             *string `json:"full_name"`
-	NIK                  *string `json:"nik"`
-	PhoneNumber          *string `json:"phone_number"`
-	PlaceOfBirth         *string `json:"place_of_birth"`
-	DateOfBirth          *string `json:"date_of_birth"` // Format: DD-MM-YYYY
-	BloodType            *string `json:"blood_type"`
-	Allergies            *string `json:"allergies"`
-	MedicalConditions    *string `json:"medical_conditions"`
-	HeightCm             *int    `json:"height_cm"`
-	WeightKg             *int    `json:"weight_kg"`
-	Domicile             *string `json:"domicile"`
-	Bio                  *string `json:"bio"`
-	EmergencyContacts    []EmergencyContactInput `json:"emergency_contacts"`
+	FullName          *string                 `json:"full_name"`
+	NIK               *string                 `json:"nik"`
+	PhoneNumber       *string                 `json:"phone_number"`
+	PlaceOfBirth      *string                 `json:"place_of_birth"`
+	DateOfBirth       *string                 `json:"date_of_birth"` // Format: DD-MM-YYYY
+	BloodType         *string                 `json:"blood_type"`
+	Allergies         *string                 `json:"allergies"`
+	MedicalConditions *string                 `json:"medical_conditions"`
+	HeightCm          *int                    `json:"height_cm"`
+	WeightKg          *int                    `json:"weight_kg"`
+	Domicile          *string                 `json:"domicile"`
+	Bio               *string                 `json:"bio"`
+	EmergencyContacts []EmergencyContactInput `json:"emergency_contacts"`
 }
 
 // EmergencyContactInput untuk update kontak darurat.
@@ -307,4 +307,3 @@ type RegisterVolunteerRequest struct {
 	Specializations []string `form:"specializations"` // Akan diurai sebagai array dari form-data
 	Experience      string   `form:"experience"`
 }
-

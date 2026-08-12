@@ -428,7 +428,6 @@ func (r *Repository) GetAdmins() ([]AdminItem, error) {
 	return rows, err
 }
 
-
 // BanUser sets is_sos_banned = true in user_profiles.
 func (r *Repository) BanUser(userID, reason string) error {
 	_ = reason // bisa disimpan ke tabel audit di masa depan
@@ -602,4 +601,3 @@ func (r *Repository) UpdateBadge(id string, req *BadgeRequest) error {
 func (r *Repository) DeleteBadge(id string) error {
 	return r.db.Delete(&MBadge{}, "id = ?", id).Error
 }
-

@@ -102,7 +102,6 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	h.readLoop(userID, conn)
 }
 
-
 // readLoop blocks and reads incoming messages from the client connection.
 func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
 	_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
@@ -486,4 +485,3 @@ func (h *Handler) BroadcastIncidentUpdated(incidentID, action string) {
 		Int("sent_superadmin", sentSuperadmin).
 		Msg("[WS] INCIDENT_UPDATED broadcasted")
 }
-

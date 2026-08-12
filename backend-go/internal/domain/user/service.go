@@ -35,7 +35,6 @@ func NewService(repo *Repository, cfg *config.Config, otpSvc otp.Service, rdb *r
 	return &Service{repo: repo, cfg: cfg, otpSvc: otpSvc, rdb: rdb, hub: h}
 }
 
-
 // ─── Register (civilian/volunteer via mobile) ─────────────────────────────────
 
 // RegisterResult dikembalikan oleh Register — tidak mengandung JWT karena
@@ -328,14 +327,13 @@ func (s *Service) SubmitVolunteerRegistration(c *fiber.Ctx, userID string, exper
 		specsStr := strings.Join(specializations, ", ")
 		experience = "Spesialisasi: " + specsStr + "\nPengalaman: " + experience
 	}
-	
+
 	if len(experience) > 1000 {
 		return errors.New("pengalaman dan spesialisasi terlalu panjang (maksimal 1000 karakter)")
 	}
 
 	return s.repo.SubmitVolunteerRegistration(userID, experience, certs)
 }
-
 
 // ─── Token builders ───────────────────────────────────────────────────────────
 
@@ -393,7 +391,6 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 		},
 	}, nil
 }
-
 
 // ─── Forgot Password & Resend OTP ─────────────────────────────────────────────
 

@@ -105,8 +105,8 @@ type Incident struct {
 	UrgencyLevel       string         `gorm:"default:'critical'" json:"urgency_level"`
 	ReporterTrustLabel string         `gorm:"default:'standard'" json:"reporter_trust_label"` // 'verified'|'standard'|'unverified'
 	AddressDetail      *string        `json:"address_detail,omitempty"`
-	PhotoPaths         pq.StringArray `gorm:"type:text[]" json:"photo_paths"`   // Bukti foto kamera depan (pasca broadcasting)
-	AudioPath          *string        `json:"audio_path,omitempty"`              // Bukti audio 5 detik (pasca broadcasting)
+	PhotoPaths         pq.StringArray `gorm:"type:text[]" json:"photo_paths"` // Bukti foto kamera depan (pasca broadcasting)
+	AudioPath          *string        `json:"audio_path,omitempty"`           // Bukti audio 5 detik (pasca broadcasting)
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	CompletedAt        *time.Time     `json:"completed_at,omitempty"`
@@ -114,20 +114,20 @@ type Incident struct {
 
 // IncidentReport merepresentasikan laporan warga non-darurat (Jalur B).
 type IncidentReport struct {
-	ID           string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	ReporterID   string         `gorm:"type:uuid;not null" json:"reporter_id"`
-	IncidentType string         `gorm:"not null" json:"incident_type"`
-	UrgencyLevel *int           `json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
-	Latitude     float64        `gorm:"not null" json:"latitude"`
-	Longitude    float64        `gorm:"not null" json:"longitude"`
-	AddressDetail *string       `json:"address_detail,omitempty"`
-	Description  *string        `json:"description,omitempty"`
-	PhotoPaths   pq.StringArray `gorm:"type:text[]" json:"photo_paths"`
-	AudioPath    *string        `json:"audio_path,omitempty"`
-	Status       string         `gorm:"default:'sent'" json:"status"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-	CompletedAt  *time.Time     `json:"completed_at,omitempty"`
+	ID            string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	ReporterID    string         `gorm:"type:uuid;not null" json:"reporter_id"`
+	IncidentType  string         `gorm:"not null" json:"incident_type"`
+	UrgencyLevel  *int           `json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
+	Latitude      float64        `gorm:"not null" json:"latitude"`
+	Longitude     float64        `gorm:"not null" json:"longitude"`
+	AddressDetail *string        `json:"address_detail,omitempty"`
+	Description   *string        `json:"description,omitempty"`
+	PhotoPaths    pq.StringArray `gorm:"type:text[]" json:"photo_paths"`
+	AudioPath     *string        `json:"audio_path,omitempty"`
+	Status        string         `gorm:"default:'sent'" json:"status"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	CompletedAt   *time.Time     `json:"completed_at,omitempty"`
 }
 
 // SOSStrike adalah audit log setiap kali admin menandai false alarm.
@@ -188,21 +188,21 @@ type UploadSOSEvidenceRequest struct {
 
 // UpdateResponseLocationRequest - dikirim relawan saat menangani SOS.
 type UpdateResponseLocationRequest struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
 	AddressDetail *string `json:"address_detail,omitempty"`
 }
 
 // ActiveResponseDTO - misi aktif relawan (incident_response berstatus on_scene).
 type ActiveResponseDTO struct {
-	ResponseID    string   `json:"response_id"`
-	IncidentID    string   `json:"incident_id"`
-	IncidentType  string   `json:"incident_type"`
-	Status        string   `json:"status"`
-	Latitude      float64  `json:"reporter_latitude"`
-	Longitude     float64  `json:"reporter_longitude"`
-	AddressDetail *string  `json:"address_detail,omitempty"`
-	AcceptedAt    string   `json:"accepted_at"`
+	ResponseID    string  `json:"response_id"`
+	IncidentID    string  `json:"incident_id"`
+	IncidentType  string  `json:"incident_type"`
+	Status        string  `json:"status"`
+	Latitude      float64 `json:"reporter_latitude"`
+	Longitude     float64 `json:"reporter_longitude"`
+	AddressDetail *string `json:"address_detail,omitempty"`
+	AcceptedAt    string  `json:"accepted_at"`
 }
 
 // UpdateTypeRequest - dikirim dari grace period UI saat user memilih tipe.
@@ -224,11 +224,11 @@ type MarkFalseAlarmRequest struct {
 
 // CreateReportRequest - Jalur B: laporan warga non-darurat (multipart/form-data).
 type CreateReportRequest struct {
-	IncidentType string  `form:"incident_type"` // wajib
-	Latitude     float64 `form:"latitude"`
-	Longitude    float64 `form:"longitude"`
-	AddressDetail string `form:"address_detail"`
-	Description  string  `form:"description"`
+	IncidentType  string  `form:"incident_type"` // wajib
+	Latitude      float64 `form:"latitude"`
+	Longitude     float64 `form:"longitude"`
+	AddressDetail string  `form:"address_detail"`
+	Description   string  `form:"description"`
 }
 
 // ─── Response DTOs ─────────────────────────────────────────────────────────────
@@ -265,33 +265,33 @@ type ActiveIncidentResponse struct {
 
 // AllActiveIncidentResponse - data SOS aktif LENGKAP untuk console desktop (JOIN ke users & profiles).
 type AllActiveIncidentResponse struct {
-	ID                       string         `json:"id"`
-	ReporterID               string         `json:"reporter_id"`
-	ReporterName             string         `json:"reporter_name"`
-	ReporterPhone            *string        `json:"reporter_phone,omitempty"`
-	BloodType                *string        `json:"blood_type,omitempty"`
-	Allergies                *string        `json:"allergies,omitempty"`
-	IncidentType             string         `json:"incident_type"`
-	Status                   string         `json:"status"`
-	Latitude                 float64        `json:"latitude"`
-	Longitude                float64        `json:"longitude"`
-	AddressDetail            *string        `json:"address_detail,omitempty"`
-	ReporterTrustLabel       string         `json:"reporter_trust_label"`
-	AgencyStatus             *string        `json:"agency_status,omitempty"`
-	HandledByAgencyID        *string        `json:"handled_by_agency_id,omitempty"`
-	VolunteerResponseStatus  *string        `json:"volunteer_response_status,omitempty"`
-	CreatedAt                time.Time      `json:"created_at"`
-	UpdatedAt                time.Time      `json:"updated_at"`
-	CompletedAt              *time.Time     `json:"completed_at,omitempty"`
-	IsNikVerified            bool           `json:"is_nik_verified"`
-	IsPhoneVerified          bool           `json:"is_phone_verified"`
-	ReporterDob              *string        `json:"reporter_dob,omitempty"`
-	ReporterDomicile         *string        `json:"reporter_domicile,omitempty"`
-	ReporterBio              *string        `json:"reporter_bio,omitempty"`
-	ReporterEmergencyContact *string        `json:"reporter_emergency_contact,omitempty"`
-	PhotoPaths               StringSlice    `gorm:"-" json:"photo_paths"`
-	PhotoPathsRaw            string         `gorm:"column:photo_paths" json:"-"`
-	AudioPath                *string        `json:"audio_path,omitempty"`
+	ID                       string      `json:"id"`
+	ReporterID               string      `json:"reporter_id"`
+	ReporterName             string      `json:"reporter_name"`
+	ReporterPhone            *string     `json:"reporter_phone,omitempty"`
+	BloodType                *string     `json:"blood_type,omitempty"`
+	Allergies                *string     `json:"allergies,omitempty"`
+	IncidentType             string      `json:"incident_type"`
+	Status                   string      `json:"status"`
+	Latitude                 float64     `json:"latitude"`
+	Longitude                float64     `json:"longitude"`
+	AddressDetail            *string     `json:"address_detail,omitempty"`
+	ReporterTrustLabel       string      `json:"reporter_trust_label"`
+	AgencyStatus             *string     `json:"agency_status,omitempty"`
+	HandledByAgencyID        *string     `json:"handled_by_agency_id,omitempty"`
+	VolunteerResponseStatus  *string     `json:"volunteer_response_status,omitempty"`
+	CreatedAt                time.Time   `json:"created_at"`
+	UpdatedAt                time.Time   `json:"updated_at"`
+	CompletedAt              *time.Time  `json:"completed_at,omitempty"`
+	IsNikVerified            bool        `json:"is_nik_verified"`
+	IsPhoneVerified          bool        `json:"is_phone_verified"`
+	ReporterDob              *string     `json:"reporter_dob,omitempty"`
+	ReporterDomicile         *string     `json:"reporter_domicile,omitempty"`
+	ReporterBio              *string     `json:"reporter_bio,omitempty"`
+	ReporterEmergencyContact *string     `json:"reporter_emergency_contact,omitempty"`
+	PhotoPaths               StringSlice `gorm:"-" json:"photo_paths"`
+	PhotoPathsRaw            string      `gorm:"column:photo_paths" json:"-"`
+	AudioPath                *string     `json:"audio_path,omitempty"`
 }
 
 type ResolveResponse struct {
@@ -313,18 +313,18 @@ type FalseAlarmResponse struct {
 
 // NearbyIncidentResponse - SOS aktif dalam radius tertentu dari posisi relawan.
 type NearbyIncidentResponse struct {
-	ID                 string   `json:"id"`
-	IncidentType       string   `json:"incident_type"`
-	Status             string   `json:"status"`
-	Latitude           float64  `json:"latitude"`
-	Longitude          float64  `json:"longitude"`
-	AddressDetail      *string        `json:"address_detail,omitempty"`
-	ReporterTrustLabel string         `json:"reporter_trust_label"`
-	CreatedAt          string         `json:"created_at"`
-	DistanceKm         float64        `json:"distance_km"`
-	PhotoPaths         StringSlice    `gorm:"-" json:"photo_paths"`
-	PhotoPathsRaw      string         `gorm:"column:photo_paths" json:"-"`
-	AudioPath          *string        `json:"audio_path,omitempty"`
+	ID                 string      `json:"id"`
+	IncidentType       string      `json:"incident_type"`
+	Status             string      `json:"status"`
+	Latitude           float64     `json:"latitude"`
+	Longitude          float64     `json:"longitude"`
+	AddressDetail      *string     `json:"address_detail,omitempty"`
+	ReporterTrustLabel string      `json:"reporter_trust_label"`
+	CreatedAt          string      `json:"created_at"`
+	DistanceKm         float64     `json:"distance_km"`
+	PhotoPaths         StringSlice `gorm:"-" json:"photo_paths"`
+	PhotoPathsRaw      string      `gorm:"column:photo_paths" json:"-"`
+	AudioPath          *string     `json:"audio_path,omitempty"`
 }
 
 // AcceptSOSResponse - response setelah relawan menerima SOS.
@@ -341,32 +341,32 @@ type AgencyReviewRequest struct {
 }
 
 type MissionHistoryResponse struct {
-	ID            string  `json:"id"`
-	IncidentType  string  `json:"incident_type"`
-	Status        string  `json:"status"` // Status global
-	ResponseStatus string `json:"response_status"` // Status relawan
-	AddressDetail *string `json:"address_detail,omitempty"`
-	AcceptedAt    string  `json:"accepted_at"`
-	XPEarned      int     `json:"xp_earned,omitempty"` // Jika ada XP historis
+	ID             string  `json:"id"`
+	IncidentType   string  `json:"incident_type"`
+	Status         string  `json:"status"`          // Status global
+	ResponseStatus string  `json:"response_status"` // Status relawan
+	AddressDetail  *string `json:"address_detail,omitempty"`
+	AcceptedAt     string  `json:"accepted_at"`
+	XPEarned       int     `json:"xp_earned,omitempty"` // Jika ada XP historis
 }
 
 // IncidentReportResponse - data lengkap laporan (Jalur B) dengan nama pelapor.
 type IncidentReportResponse struct {
-	ID            string         `json:"id"`
-	ReporterID    string         `json:"reporter_id"`
-	ReporterName  string         `json:"reporter_name"`
-	ReporterPhone *string        `json:"reporter_phone,omitempty"`
-	IncidentType  string         `json:"incident_type"`
-	UrgencyLevel  *int           `json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
-	Latitude      float64        `json:"latitude"`
-	Longitude     float64        `json:"longitude"`
-	AddressDetail *string        `json:"address_detail,omitempty"`
-	Description   *string        `json:"description,omitempty"`
-	PhotoPaths    StringSlice    `gorm:"-" json:"photo_paths"`
-	PhotoPathsRaw string         `gorm:"column:photo_paths" json:"-"`
-	AudioPath     *string        `json:"audio_path,omitempty"`
-	Status        string         `json:"status"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
-	CompletedAt   *time.Time     `json:"completed_at,omitempty"`
+	ID            string      `json:"id"`
+	ReporterID    string      `json:"reporter_id"`
+	ReporterName  string      `json:"reporter_name"`
+	ReporterPhone *string     `json:"reporter_phone,omitempty"`
+	IncidentType  string      `json:"incident_type"`
+	UrgencyLevel  *int        `json:"urgency_level,omitempty"` // 0=ringan, 1=sedang, 2=kritis
+	Latitude      float64     `json:"latitude"`
+	Longitude     float64     `json:"longitude"`
+	AddressDetail *string     `json:"address_detail,omitempty"`
+	Description   *string     `json:"description,omitempty"`
+	PhotoPaths    StringSlice `gorm:"-" json:"photo_paths"`
+	PhotoPathsRaw string      `gorm:"column:photo_paths" json:"-"`
+	AudioPath     *string     `json:"audio_path,omitempty"`
+	Status        string      `json:"status"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+	CompletedAt   *time.Time  `json:"completed_at,omitempty"`
 }

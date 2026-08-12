@@ -33,7 +33,7 @@ func TouchLastActive(db *gorm.DB, rdb *redis.Client) fiber.Handler {
 		go func() {
 			// Update DB timestamp
 			db.Exec("UPDATE users SET last_active_at = ? WHERE id = ?", time.Now(), userID)
-			
+
 			// Update Redis online status TTL (90s = 3x 30s heartbeat)
 			if rdb != nil {
 				ctx, canceled := context.WithTimeout(context.Background(), 2*time.Second)
@@ -44,7 +44,6 @@ func TouchLastActive(db *gorm.DB, rdb *redis.Client) fiber.Handler {
 		return nil
 	}
 }
-
 
 // Auth validates JWT from the Authorization header.
 // On success, injects "userID", "userRole", and "userJTI" into c.Locals.
@@ -65,7 +64,6 @@ func Auth(cfg *config.Config) fiber.Handler {
 		return c.Next()
 	}
 }
-
 
 // APIKeyGateway validates a static API key header (SMS fallback endpoint).
 func APIKeyGateway(cfg *config.Config) fiber.Handler {

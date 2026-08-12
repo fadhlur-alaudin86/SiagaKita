@@ -451,7 +451,6 @@ func (h *Handler) GetAgencyHistory(c *fiber.Ctx) error {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-
 func isBanError(err error) bool {
 	return err != nil && len(err.Error()) >= 10 && err.Error()[:10] == "sos_banned"
 }
@@ -473,12 +472,12 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 	msg := hub.Message{
 		Event: "INCOMING_EMERGENCY",
 		Payload: map[string]interface{}{
-			"incident_id": incidentID,
-			"reporter_id": inc.ReporterID,
-			"latitude":    inc.Latitude,
-			"longitude":   inc.Longitude,
+			"incident_id":   incidentID,
+			"reporter_id":   inc.ReporterID,
+			"latitude":      inc.Latitude,
+			"longitude":     inc.Longitude,
 			"incident_type": inc.IncidentType,
-			"status":      inc.Status,
+			"status":        inc.Status,
 		},
 	}
 
@@ -600,7 +599,7 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 		})
 		// Notify reporter bahwa relawan sudah on the way
 		h.notifyReporter(incidentID, "VOLUNTEER_HANDLING", map[string]interface{}{
-			"incident_id": incidentID,
+			"incident_id":      incidentID,
 			"volunteer_status": "en_route",
 		})
 	}()
@@ -646,15 +645,15 @@ func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
 			Payload: map[string]interface{}{"incident_id": incidentID},
 		})
 		h.hub.BroadcastToRole("agency", hub.Message{
-			Event: "INCIDENT_UPDATED",
+			Event:   "INCIDENT_UPDATED",
 			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
 		})
 		h.hub.BroadcastToRole("admin", hub.Message{
-			Event: "INCIDENT_UPDATED",
+			Event:   "INCIDENT_UPDATED",
 			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
 		})
 		h.hub.BroadcastToRole("superadmin", hub.Message{
-			Event: "INCIDENT_UPDATED",
+			Event:   "INCIDENT_UPDATED",
 			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
 		})
 		// Notify reporter bahwa instansi sudah handle
@@ -728,7 +727,7 @@ func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
 // POST /api/v1/incidents/:id/agency-review [ConsoleOnly]
 func (h *Handler) AgencyReviewVolunteer(c *fiber.Ctx) error {
 	incidentID := c.Params("id")
-	
+
 	var req struct {
 		VolunteerID string `json:"volunteer_id"`
 		Approve     bool   `json:"approve"`
@@ -797,7 +796,7 @@ func (h *Handler) AgencyResolveSOS(c *fiber.Ctx) error {
 // GET /api/v1/incidents/my-history [VolunteerOnly]
 func (h *Handler) GetMissionHistory(c *fiber.Ctx) error {
 	volunteerID := c.Locals("userID").(string)
-	
+
 	history, err := h.svc.GetMissionHistory(volunteerID)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat riwayat misi")
@@ -833,11 +832,11 @@ func (h *Handler) UpdateResponseLocation(c *fiber.Ctx) error {
 	// Broadcast lokasi relawan ke agency dan reporter via WebSocket
 	go func() {
 		payload := map[string]interface{}{
-			"incident_id": incidentID,
+			"incident_id":  incidentID,
 			"volunteer_id": volunteerID,
-			"latitude":    req.Latitude,
-			"longitude":   req.Longitude,
-			"updated_at":  time.Now().Format(time.RFC3339),
+			"latitude":     req.Latitude,
+			"longitude":    req.Longitude,
+			"updated_at":   time.Now().Format(time.RFC3339),
 		}
 		if req.AddressDetail != nil {
 			payload["address_detail"] = *req.AddressDetail

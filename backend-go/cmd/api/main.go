@@ -98,9 +98,9 @@ func main() {
 		Format: "[${time}] ${status} ${method} ${path} (${latency})\n",
 	}))
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-Gateway-Secret, X-Idempotency-Key",
-		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+		AllowOrigins:  "*",
+		AllowHeaders:  "Origin, Content-Type, Accept, Authorization, X-Gateway-Secret, X-Idempotency-Key",
+		AllowMethods:  "GET, POST, PUT, PATCH, DELETE, OPTIONS",
 		ExposeHeaders: "X-Idempotency-Cached",
 	}))
 
@@ -204,7 +204,6 @@ func main() {
 	incidents.Post("/:id/agency-resolve", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyResolveSOS)
 	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.MarkFalseAlarm)
 	// endpoint lama: incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve) // bisa tetap ada atau diganti, kita pakai agency-resolve sekarang
-
 
 	reports := v1.Group("/reports", authMw)
 	reports.Post("", middleware.BanCheck(db), incidentHandler.CreateReport)

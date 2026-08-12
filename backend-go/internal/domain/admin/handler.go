@@ -370,4 +370,3 @@ func (h *Handler) DeleteBadge(c *fiber.Ctx) error {
 	}
 	return utils.SuccessResponse(c, fiber.Map{"message": "Badge berhasil dihapus."})
 }
-
