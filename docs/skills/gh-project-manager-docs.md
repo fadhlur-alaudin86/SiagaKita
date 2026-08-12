@@ -34,8 +34,14 @@ Example: `F-014: Volunteer Dispatch from Console to Nearest Responders`
 |----------|------------|-------|
 | **Type** | `type: feature` | New features |
 | | `type: fix` | Bug fixes |
-| | `type: chore` | Maintenance |
+| | `type: chore` | Maintenance & setup |
 | | `type: docs` | Documentation |
+| | `type: refactor` | Code refactoring & performance |
+| | `type: security` | Security & authentication |
+| | `type: gamification` | Gamification & badges |
+| | `type: kyc` | Verification & KYC |
+| | `type: telemetry` | GPS & location tracking |
+| | `type: dispatch` | Incident & volunteer dispatch |
 | **Component** | `component: backend` | Go Fiber backend |
 | | `component: mobile` | Flutter mobile app |
 | | `component: desktop` | Flutter desktop console |

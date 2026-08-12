@@ -1,0 +1,23 @@
+'component: backend':
+  - changed-files:
+      - any-glob-to-any-file: 'backend-go/**'
+
+'component: mobile':
+  - changed-files:
+      - any-glob-to-any-file: 'mobile-flutter/**'
+
+'component: desktop':
+  - changed-files:
+      - any-glob-to-any-file: 'windows_console_flutter/**'
+
+'component: infra':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'infrastructure/**'
+          - '.github/**'
+
+'type: docs':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '*.md'

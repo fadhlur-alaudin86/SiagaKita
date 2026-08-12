@@ -24,7 +24,7 @@ REPO          = SuperBypassUdinnn/SIAGAKITA
 STATUSES      = [Backlog, In Progress, In Review, Done]
 PRIORITIES    = [P0, P1, P2]
 LABELS_STATUS = status: in-progress, status: in-review, status: ready
-LABELS_TYPE   = type: feature, type: fix, type: chore, type: docs
+LABELS_TYPE   = type: feature, type: fix, type: chore, type: docs, type: refactor, type: security, type: gamification, type: kyc, type: telemetry, type: dispatch
 LABELS_COMP   = component: backend, component: mobile, component: desktop, component: infra
 LABELS_PRIO   = priority: P0, priority: P1, priority: P2
 ```
