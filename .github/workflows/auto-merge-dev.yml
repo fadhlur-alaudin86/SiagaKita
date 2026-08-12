@@ -1,0 +1,28 @@
+name: Auto Merge PRs to Dev
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - dev
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  enable-auto-merge:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Enable GitHub Auto-Merge (Squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Enabling auto-merge (squash) for PR #$PR_NUMBER on $REPO..."
+            gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash --delete-branch || echo "Auto-merge already enabled or pending requirements."
+          fi

@@ -1,0 +1,75 @@
+name: Issue Status Auto-Labeler
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+    branches:
+      - dev
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  update-issue-status:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Process Issue Status Updates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_ACTION: ${{ github.event.action }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          REVIEW_STATE: ${{ github.event.review.state }}
+          REVIEWER: ${{ github.event.review.user.login }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Extract issue numbers using regex from title and body
+          FULL_TEXT="$PR_TITLE $PR_BODY"
+          ISSUE_NUMS=$(echo "$FULL_TEXT" | grep -oE '#[0-9]+' | tr -d '#' | sort -u || true)
+
+          if [ -z "$ISSUE_NUMS" ]; then
+            echo "No linked issues found in PR description."
+            exit 0
+          fi
+
+          echo "Found linked issue(s): $ISSUE_NUMS"
+
+          for ISSUE_NUM in $ISSUE_NUMS; do
+            if [ "$ISSUE_NUM" = "$PR_NUMBER" ]; then
+              continue
+            fi
+
+            if ! gh issue view "$ISSUE_NUM" --repo "$REPO" >/dev/null 2>&1; then
+              echo "Issue #$ISSUE_NUM not found, skipping."
+              continue
+            fi
+
+            echo "Processing Issue #$ISSUE_NUM for event $EVENT_NAME ($PR_ACTION)..."
+
+            if [ "$EVENT_NAME" = "pull_request" ]; then
+              if [ "$PR_ACTION" = "opened" ] || [ "$PR_ACTION" = "reopened" ] || [ "$PR_ACTION" = "ready_for_review" ]; then
+                echo "Updating Issue #$ISSUE_NUM to status: in-review"
+                gh issue edit "$ISSUE_NUM" --repo "$REPO" --add-label "status: in-review" --remove-label "status: in-progress" || true
+                gh issue comment "$ISSUE_NUM" --repo "$REPO" --body "🔄 **Status Update:** PR #$PR_NUMBER ($PR_TITLE) has been submitted for review." || true
+
+              elif [ "$PR_ACTION" = "closed" ] && [ "$PR_MERGED" = "true" ]; then
+                echo "Closing Issue #$ISSUE_NUM after merge of PR #$PR_NUMBER"
+                gh issue comment "$ISSUE_NUM" --repo "$REPO" --body "🎉 **Status Update:** PR #$PR_NUMBER was merged into \`dev\`. Resolving issue." || true
+                gh issue close "$ISSUE_NUM" --repo "$REPO" --reason completed || true
+              fi
+
+            elif [ "$EVENT_NAME" = "pull_request_review" ] && [ "$REVIEW_STATE" = "approved" ]; then
+              echo "Updating Issue #$ISSUE_NUM to status: ready"
+              gh issue edit "$ISSUE_NUM" --repo "$REPO" --add-label "status: ready" --remove-label "status: in-review" || true
+              gh issue comment "$ISSUE_NUM" --repo "$REPO" --body "✅ **Status Update:** PR #$PR_NUMBER has been approved by @$REVIEWER and is ready to merge." || true
+            fi
+          done
