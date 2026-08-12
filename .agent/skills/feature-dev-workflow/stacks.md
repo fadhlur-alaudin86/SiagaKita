@@ -99,9 +99,20 @@ Maps          : OpenStreetMap
 ## API Contract & DB Schemas
 
 ```
-API Spec Path : docs/api/<feature-name>.yaml (OpenAPI 3.0 YAML)
-DB Schema Path: docs/DATABASE_SCHEMA.md (Schema v12 active, read before migrations)
+API Spec Root  : docs/api/openapi.yaml         ← Root spec, $ref to all domain path files
+API Paths      : docs/api/paths/<domain>.yaml  ← Per-domain endpoint definitions
+                   auth.yaml, users.yaml, incidents.yaml,
+                   admin.yaml, agencies.yaml, telemetry.yaml
+API Components : docs/api/components/
+                   schemas.yaml                ← Shared request/response schemas
+                   securitySchemes.yaml        ← BearerAuth JWT definition
+Swagger UI     : http://localhost:8080/docs    ← Dev only (GO_ENV=development)
+DB Schema Path : docs/DATABASE_SCHEMA.md       ← Schema v12 active, read before migrations
 ```
+
+> **Rule for Step 2:** Append new endpoints to `docs/api/paths/<domain>.yaml`.
+> Add new schemas to `docs/api/components/schemas.yaml` via `$ref`.
+> Never create a standalone per-feature YAML file.
 
 ## Database
 

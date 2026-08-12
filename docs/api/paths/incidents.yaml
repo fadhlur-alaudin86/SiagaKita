@@ -1,0 +1,890 @@
+# Incidents & Reports Domain
+# Base path: /api/v1/incidents and /api/v1/reports
+# Auth: Bearer JWT required for all endpoints
+
+# ─── SOS Lifecycle ────────────────────────────────────────────────────────────
+
+/api/v1/incidents/trigger:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Trigger an SOS emergency
+    description: |
+      Creates a new SOS incident. A 10-second grace period begins — the reporter
+      can cancel within this window. After grace period, the SOS is broadcast
+      to nearby online volunteers.
+
+      **Required roles:** `civilian`, `volunteer` (BanCheck applied — banned users are rejected)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [latitude, longitude]
+            properties:
+              latitude:
+                type: number
+                format: double
+                example: -6.2088
+              longitude:
+                type: number
+                format: double
+                example: 106.8456
+              address_detail:
+                type: string
+                example: "Jl. Sudirman No. 1, Jakarta"
+    responses:
+      '200':
+        description: SOS triggered successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/TriggerSOSResponse'
+      '403':
+        description: Forbidden — user is SOS banned
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/incidents/active:
+  get:
+    tags:
+      - Incidents (SOS)
+    summary: Get caller's current active SOS
+    description: |
+      Returns the currently active SOS incident for the authenticated user.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Active SOS returned (null if no active SOS)
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/ActiveIncidentResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/incidents/reporter-history:
+  get:
+    tags:
+      - Incidents (SOS)
+    summary: Get caller's SOS history (as reporter)
+    description: |
+      Returns all past SOS incidents triggered by the authenticated user.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: SOS history list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/ActiveIncidentResponse'
+
+/api/v1/incidents/nearby:
+  get:
+    tags:
+      - Incidents (SOS)
+    summary: Get nearby active SOS incidents (volunteer radar)
+    description: |
+      Returns active SOS incidents near the volunteer's last known location.
+      **Required roles:** `volunteer` only
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Nearby SOS list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/NearbyIncidentResponse'
+      '403':
+        description: Forbidden — volunteer role required
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/incidents/my-history:
+  get:
+    tags:
+      - Incidents (SOS)
+    summary: Get volunteer's mission history
+    description: |
+      Returns all past SOS incidents the volunteer has responded to.
+      **Required roles:** `volunteer` only
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Mission history list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/ActiveIncidentResponse'
+
+/api/v1/incidents/my-active-response:
+  get:
+    tags:
+      - Incidents (SOS)
+    summary: Get volunteer's current active mission
+    description: |
+      Returns the SOS incident the volunteer is currently responding to (accepted).
+      **Required roles:** `volunteer` only
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Active mission (null if not on a mission)
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/ActiveIncidentResponse'
+                      nullable: true
+
+/api/v1/incidents/all-active:
+  get:
+    tags:
+      - Incidents (SOS)
+    summary: Get all active SOS incidents (console dashboard)
+    description: |
+      Returns all currently active SOS incidents with full details including
+      reporter information and volunteer responses.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: All active SOS list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/ActiveIncidentResponse'
+      '403':
+        description: Forbidden
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/incidents/agency/history:
+  get:
+    tags:
+      - Incidents (SOS)
+    summary: Get agency SOS history
+    description: |
+      Returns all completed/resolved/canceled SOS incidents for the agency's history view.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [resolved, false_alarm, canceled]
+        description: Filter by resolution status
+    responses:
+      '200':
+        description: Agency SOS history
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/ActiveIncidentResponse'
+
+/api/v1/incidents/{id}/type:
+  patch:
+    tags:
+      - Incidents (SOS)
+    summary: Update SOS incident type
+    description: |
+      Updates the incident type classification of an active SOS.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: SOS incident ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [incident_type]
+            properties:
+              incident_type:
+                type: string
+                enum: [medical, fire, crime, rescue, general]
+                example: "medical"
+    responses:
+      '200':
+        description: Incident type updated
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+      '404':
+        description: Incident not found
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/incidents/{id}/broadcast:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Manually re-broadcast SOS to volunteers
+    description: |
+      Re-sends the `INCOMING_EMERGENCY` event to nearby online volunteers.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: SOS re-broadcast triggered
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/canceled:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Cancel an active SOS
+    description: |
+      Cancels the SOS. Available within the grace period or at any point by the reporter.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: SOS canceled
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/evidence:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Upload SOS evidence (photo/audio)
+    description: |
+      Uploads evidence files for an active SOS. Accepts `multipart/form-data`.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              photo:
+                type: string
+                format: binary
+                description: Photo evidence (JPEG/PNG, max 15MB)
+              audio:
+                type: string
+                format: binary
+                description: Audio evidence (MP3/WAV, max 15MB)
+    responses:
+      '200':
+        description: Evidence uploaded
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/location:
+  put:
+    tags:
+      - Incidents (SOS)
+    summary: Update reporter's real-time location
+    description: |
+      Updates the reporter's live GPS coordinates for an active SOS.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [latitude, longitude]
+            properties:
+              incident_id:
+                type: string
+                format: uuid
+              latitude:
+                type: number
+                format: double
+              longitude:
+                type: number
+                format: double
+    responses:
+      '200':
+        description: Location updated
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/accept:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Accept SOS mission (volunteer)
+    description: |
+      Volunteer accepts an SOS and starts responding.
+      **Required roles:** `volunteer` only
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Mission accepted
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+      '403':
+        description: Forbidden — volunteer role required
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/incidents/{id}/volunteer-complete:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Mark mission as complete (volunteer)
+    description: |
+      Volunteer marks the SOS as resolved from their side.
+      Triggers XP calculation and potential rank-up.
+      **Required roles:** `volunteer` only
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Mission completed — XP reward returned
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/VolunteerCompleteResponse'
+
+/api/v1/incidents/{id}/response-location:
+  put:
+    tags:
+      - Incidents (SOS)
+    summary: Update volunteer's real-time response location
+    description: |
+      Updates volunteer GPS during an active mission response.
+      **Required roles:** `volunteer` only
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [latitude, longitude]
+            properties:
+              latitude:
+                type: number
+                format: double
+              longitude:
+                type: number
+                format: double
+              address_detail:
+                type: string
+                nullable: true
+    responses:
+      '200':
+        description: Response location updated
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/handle:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Agency handles SOS (mobile responder)
+    description: |
+      Marks an SOS as being handled by the caller's agency.
+      Idempotent — use `X-Idempotency-Key` header to prevent duplicate submissions.
+      **Required roles:** `agency`, `admin`, `superadmin` (AgencyOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: SOS marked as handled
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+    x-required-headers:
+      - name: X-Idempotency-Key
+        schema:
+          type: string
+          format: uuid
+
+/api/v1/incidents/{id}/agency-handle:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Agency handles SOS (desktop console)
+    description: |
+      Same as `/handle` but from the desktop console interface.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: SOS handled
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/agency-review:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Agency reviews volunteer response
+    description: |
+      Allows the agency to review the quality of the volunteer's response to an SOS.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: Review submitted
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/agency-resolve:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Agency resolves SOS
+    description: |
+      Agency marks the SOS as fully resolved from the console.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: SOS resolved
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/mark-false-alarm:
+  post:
+    tags:
+      - Incidents (SOS)
+    summary: Mark SOS as false alarm
+    description: |
+      Marks an SOS as a false alarm, incrementing the reporter's strike count.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [reason]
+            properties:
+              reason:
+                type: string
+                example: "No emergency found on arrival"
+    responses:
+      '200':
+        description: Marked as false alarm
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+# ─── Reports (Community Reports) ─────────────────────────────────────────────
+
+/api/v1/reports:
+  post:
+    tags:
+      - Reports
+    summary: Create a community incident report
+    description: |
+      Creates a community report (non-SOS). Accepts `multipart/form-data`
+      with optional photo attachments (max 3) and audio (max 1).
+      **Required roles:** `civilian`, `volunteer` (BanCheck applied)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [incident_type, latitude, longitude, address_detail]
+            properties:
+              incident_type:
+                type: string
+                enum: [medical, fire, crime, rescue, general]
+              latitude:
+                type: number
+                format: double
+              longitude:
+                type: number
+                format: double
+              address_detail:
+                type: string
+              description:
+                type: string
+              urgency_level:
+                type: integer
+                minimum: 1
+                maximum: 5
+              photos[]:
+                type: array
+                items:
+                  type: string
+                  format: binary
+                maxItems: 3
+                description: Up to 3 photo attachments
+              audio:
+                type: string
+                format: binary
+                description: Optional audio recording
+    responses:
+      '201':
+        description: Report created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/IncidentReportResponse'
+      '403':
+        description: Forbidden — user is SOS banned
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+  get:
+    tags:
+      - Reports
+    summary: Get all community reports (console)
+    description: |
+      Returns all submitted reports with filtering support.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [pending, in_progress, resolved, canceled]
+      - name: incident_type
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Report list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/IncidentReportResponse'
+
+/api/v1/reports/my:
+  get:
+    tags:
+      - Reports
+    summary: Get caller's own reports
+    description: |
+      Returns all reports submitted by the authenticated user.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: My reports list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/IncidentReportResponse'
+
+/api/v1/reports/{id}/canceled:
+  post:
+    tags:
+      - Reports
+    summary: Cancel a community report
+    description: |
+      Cancels a pending report submitted by the caller.
+      **Required roles:** `civilian`, `volunteer`
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Report canceled
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/reports/{id}/status:
+  patch:
+    tags:
+      - Reports
+    summary: Update report status (console)
+    description: |
+      Admin/agency updates the processing status of a community report.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status]
+            properties:
+              status:
+                type: string
+                enum: [in_progress, resolved, canceled]
+    responses:
+      '200':
+        description: Status updated
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'

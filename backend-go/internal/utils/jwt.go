@@ -62,4 +62,3 @@ func newSignedToken(userID, role, jti, secret string, ttl time.Duration) (string
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
 }
-

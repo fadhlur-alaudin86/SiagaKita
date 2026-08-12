@@ -325,14 +325,14 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, phot
 	}
 
 	rep := &IncidentReport{
-		ReporterID:   reporterID,
-		IncidentType: req.IncidentType,
-		Latitude:     req.Latitude,
-		Longitude:    req.Longitude,
+		ReporterID:    reporterID,
+		IncidentType:  req.IncidentType,
+		Latitude:      req.Latitude,
+		Longitude:     req.Longitude,
 		AddressDetail: &req.AddressDetail,
-		Status:       "sent",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		Status:        "sent",
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 	if req.Description != "" {
 		rep.Description = &req.Description
@@ -479,10 +479,10 @@ func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve 
 				multiplier = 1.0
 			}
 			totalXP := int((float64(baseXP) + speedBonus) * multiplier)
-			
+
 			// Award XP
 			rep, _ := s.repo.UpsertReputation(volunteerID, totalXP, 1)
-			
+
 			rankUp := false
 			newRankName := ""
 			if rep != nil {
@@ -498,7 +498,7 @@ func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve 
 						_ = s.repo.UpdateRank(volunteerID, newRank.ID)
 					}
 				}
-				
+
 				return &ResolveResponse{
 					Resolved:     true,
 					XPEarned:     totalXP,
@@ -509,7 +509,7 @@ func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve 
 				}, nil
 			}
 		}
-		
+
 		return &ResolveResponse{Resolved: true}, nil
 	}
 
@@ -537,7 +537,7 @@ func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) 
 					// Hitung jarak (Haversine)
 					volunteerLat := positions[0].Latitude
 					volunteerLng := positions[0].Longitude
-					
+
 					// Gunakan formula haversine sederhana (radius bumi = 6371 km)
 					dLat := (inc.Latitude - volunteerLat) * math.Pi / 180.0
 					dLon := (inc.Longitude - volunteerLng) * math.Pi / 180.0
@@ -558,7 +558,7 @@ func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) 
 						}
 						// 50% dari baseXP + multiplier, tanpa speed bonus
 						totalXP := int((float64(baseXP) * multiplier) * 0.5)
-						
+
 						// Award XP
 						_, _ = s.repo.UpsertReputation(resp.ResponderID, totalXP, 1)
 					}

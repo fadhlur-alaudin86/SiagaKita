@@ -1,0 +1,472 @@
+# ─── Standard Response Envelope ───────────────────────────────────────────────
+
+SuccessResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: true
+    data:
+      description: Response payload (varies per endpoint)
+
+ErrorResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: false
+    message:
+      type: string
+      example: "Token tidak valid atau sudah kedaluwarsa"
+
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+AuthResponse:
+  type: object
+  properties:
+    access_token:
+      type: string
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    refresh_token:
+      type: string
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    user:
+      $ref: '#/UserInfo'
+
+UserInfo:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+    email:
+      type: string
+      format: email
+      example: "user@example.com"
+    role:
+      type: string
+      enum: [civilian, volunteer, agency, agency_personnel, admin, superadmin]
+      example: "civilian"
+    full_name:
+      type: string
+      nullable: true
+      example: "Budi Santoso"
+
+# ─── User / Profile ───────────────────────────────────────────────────────────
+
+ProfileResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    email:
+      type: string
+      format: email
+    role:
+      type: string
+      enum: [civilian, volunteer]
+    full_name:
+      type: string
+      nullable: true
+    nik:
+      type: string
+      nullable: true
+      example: "3273012345670001"
+    place_of_birth:
+      type: string
+      nullable: true
+    date_of_birth:
+      type: string
+      nullable: true
+      example: "1995-06-15T00:00:00Z"
+    phone_number:
+      type: string
+      nullable: true
+      example: "+6281234567890"
+    is_email_verified:
+      type: boolean
+    is_phone_verified:
+      type: boolean
+    is_verified_volunteer:
+      type: boolean
+    nik_verification_status:
+      type: string
+      enum: [none, pending, approved, rejected]
+    sos_strike_count:
+      type: integer
+    is_sos_banned:
+      type: boolean
+    blood_type:
+      type: string
+      nullable: true
+    allergies:
+      type: string
+      nullable: true
+    medical_conditions:
+      type: string
+      nullable: true
+    height_cm:
+      type: integer
+      nullable: true
+    weight_kg:
+      type: integer
+      nullable: true
+    domicile:
+      type: string
+      nullable: true
+    bio:
+      type: string
+      nullable: true
+    volunteer_experience:
+      type: string
+      nullable: true
+    volunteer_status:
+      type: string
+      enum: [none, pending, approved]
+    emergency_contacts:
+      type: array
+      items:
+        $ref: '#/EmergencyContact'
+    volunteer_reputation:
+      $ref: '#/VolunteerReputation'
+      nullable: true
+
+EmergencyContact:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    contact_name:
+      type: string
+    contact_phone:
+      type: string
+    relation:
+      type: string
+      nullable: true
+
+VolunteerReputation:
+  type: object
+  properties:
+    user_id:
+      type: string
+      format: uuid
+    exp_points:
+      type: integer
+      example: 150
+    rank_id:
+      type: integer
+      nullable: true
+    total_rescues:
+      type: integer
+      example: 5
+    updated_at:
+      type: string
+      format: date-time
+
+KYCStatusResponse:
+  type: object
+  properties:
+    status:
+      type: string
+      enum: [none, pending, approved, rejected]
+    nik:
+      type: string
+      nullable: true
+    profile_photo_url:
+      type: string
+      nullable: true
+    message:
+      type: string
+
+# ─── Incident / SOS ───────────────────────────────────────────────────────────
+
+TriggerSOSResponse:
+  type: object
+  properties:
+    incident_id:
+      type: string
+      format: uuid
+    status:
+      type: string
+      example: "broadcasting"
+    message:
+      type: string
+
+ActiveIncidentResponse:
+  type: object
+  properties:
+    incident_id:
+      type: string
+      format: uuid
+    status:
+      type: string
+      enum: [broadcasting, accepted, resolved, canceled, false_alarm]
+    incident_type:
+      type: string
+      enum: [medical, fire, crime, rescue, general]
+    latitude:
+      type: number
+      format: double
+    longitude:
+      type: number
+      format: double
+    created_at:
+      type: string
+      format: date-time
+    reporter_trust_label:
+      type: string
+      enum: [verified, unverified]
+    agency_status:
+      type: string
+      nullable: true
+    handled_by_agency_id:
+      type: string
+      format: uuid
+      nullable: true
+    agency_name:
+      type: string
+      nullable: true
+    volunteer_response_status:
+      type: string
+      nullable: true
+    volunteer_names:
+      type: array
+      items:
+        type: string
+    volunteer_locations:
+      type: array
+      items:
+        type: object
+
+NearbyIncidentResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    incident_type:
+      type: string
+    status:
+      type: string
+    latitude:
+      type: number
+      format: double
+    longitude:
+      type: number
+      format: double
+    address_detail:
+      type: string
+      nullable: true
+    reporter_trust_label:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+    distance_km:
+      type: number
+      format: double
+    photo_paths:
+      type: array
+      items:
+        type: string
+    audio_path:
+      type: string
+      nullable: true
+
+VolunteerCompleteResponse:
+  type: object
+  properties:
+    resolved:
+      type: boolean
+    xp_earned:
+      type: integer
+      example: 50
+    new_total_xp:
+      type: integer
+      example: 200
+    total_rescues:
+      type: integer
+      example: 6
+    rank_up:
+      type: boolean
+    new_rank:
+      type: string
+      nullable: true
+
+IncidentReportResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    reporter_id:
+      type: string
+      format: uuid
+    reporter_name:
+      type: string
+      nullable: true
+    reporter_phone:
+      type: string
+      nullable: true
+    incident_type:
+      type: string
+    urgency_level:
+      type: integer
+      example: 2
+    latitude:
+      type: number
+      format: double
+    longitude:
+      type: number
+      format: double
+    address_detail:
+      type: string
+    description:
+      type: string
+    photo_paths:
+      type: array
+      items:
+        type: string
+    audio_path:
+      type: string
+      nullable: true
+    status:
+      type: string
+      enum: [pending, in_progress, resolved, canceled]
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+    completed_at:
+      type: string
+      format: date-time
+      nullable: true
+
+# ─── Admin ────────────────────────────────────────────────────────────────────
+
+RankItem:
+  type: object
+  properties:
+    id:
+      type: integer
+    rank_name:
+      type: string
+    min_exp:
+      type: integer
+    icon_url:
+      type: string
+      nullable: true
+
+BadgeItem:
+  type: object
+  properties:
+    id:
+      type: integer
+    badge_name:
+      type: string
+    description:
+      type: string
+      nullable: true
+    icon_url:
+      type: string
+      nullable: true
+
+AgencyItem:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    type:
+      type: string
+      enum: [police, fire, medical, sar]
+    city_code:
+      type: string
+    hotline_number:
+      type: string
+      nullable: true
+    latitude:
+      type: number
+      format: double
+      nullable: true
+    longitude:
+      type: number
+      format: double
+      nullable: true
+
+AdminUserItem:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    email:
+      type: string
+    role:
+      type: string
+    full_name:
+      type: string
+      nullable: true
+    nik_verification_status:
+      type: string
+    is_sos_banned:
+      type: boolean
+    sos_strike_count:
+      type: integer
+    created_at:
+      type: string
+      format: date-time
+
+StatsResponse:
+  type: object
+  properties:
+    period:
+      type: string
+      enum: [week, month, year]
+    total_sos:
+      type: integer
+    resolved_sos:
+      type: integer
+    false_alarm_sos:
+      type: integer
+    total_reports:
+      type: integer
+    active_volunteers:
+      type: integer
+
+# ─── Agency ───────────────────────────────────────────────────────────────────
+
+AgencyProfile:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    type:
+      type: string
+      enum: [police, fire, medical, sar]
+    city_code:
+      type: string
+    hotline_number:
+      type: string
+      nullable: true
+    latitude:
+      type: number
+      format: double
+      nullable: true
+    longitude:
+      type: number
+      format: double
+      nullable: true
+    account_id:
+      type: string
+      format: uuid

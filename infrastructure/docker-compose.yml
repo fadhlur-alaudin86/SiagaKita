@@ -45,6 +45,8 @@ services:
     ports:
       - "8080:8080" # Port API
       - "8081:8081" # Port WebSocket
+    volumes:
+      - ../docs:/docs
     depends_on:
       - postgres
       - redis

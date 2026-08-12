@@ -1,0 +1,262 @@
+openapi: 3.0.3
+
+info:
+  title: SiagaKita API
+  version: "1.0.25"
+  description: |
+    ## SiagaKita REST API
+
+    Backend for the SiagaKita emergency response platform.
+    Connects civilian/volunteer mobile apps and admin/agency desktop consoles.
+
+    ### Authentication
+    Most endpoints require a **Bearer JWT** token obtained via the `/auth/login` or
+    `/auth/console/login` endpoints. The SMS fallback gateway uses a static API key.
+
+    ### Role Groups
+    | Group | Roles Included |
+    |-------|---------------|
+    | CitizenVolunteer | `civilian`, `volunteer` |
+    | VolunteerOnly | `volunteer` |
+    | ConsoleOnly | `superadmin`, `admin`, `agency` |
+    | AdminOnly | `admin`, `superadmin` |
+    | AgencyOnly | `agency`, `admin`, `superadmin` |
+    | SuperAdminOnly | `superadmin` |
+
+    ### Session Enforcement
+    - **Mobile app** (`civilian`, `volunteer`): Single-device login enforced via Redis JTI session guard.
+    - **Console** (`admin`, `agency`, `superadmin`): Multiple connections allowed per user.
+
+    ### Idempotency
+    Console endpoints that change incident state require the `X-Idempotency-Key` header
+    (UUID v4) to prevent duplicate submissions.
+
+    ### File Upload
+    - Max body size: **15 MB**
+    - Uploaded files are served at `GET /uploads/*`
+
+  contact:
+    name: SiagaKita Dev Team
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.siagakita.app
+    description: Production server (requires VPN/whitelist)
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication and OTP endpoints (public — no JWT required)
+  - name: Users
+    description: User profile, biodata, KYC, and volunteer registration
+  - name: Incidents (SOS)
+    description: SOS lifecycle — trigger, broadcast, accept, resolve, false alarm, and reports
+  - name: Reports
+    description: Community incident reports (non-SOS, Jalur B)
+  - name: Admin
+    description: Admin management — users, KYC, agencies, ranks, badges, statistics
+  - name: Agencies
+    description: Agency profile and personnel management
+  - name: Telemetry
+    description: Real-time location and online status tracking
+
+paths:
+  # ── Auth ───────────────────────────────────────────────────────────────────
+  /api/v1/auth/register:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1register'
+  /api/v1/auth/verify-register-otp:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1verify-register-otp'
+  /api/v1/auth/login:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1login'
+  /api/v1/auth/verify-login-otp:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1verify-login-otp'
+  /api/v1/auth/console/login:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1console~1login'
+  /api/v1/auth/personnel/login:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1personnel~1login'
+  /api/v1/auth/forgot-password:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1forgot-password'
+  /api/v1/auth/reset-password:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1reset-password'
+  /api/v1/auth/resend-otp:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1resend-otp'
+  /api/v1/auth/request-otp:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1request-otp'
+  /api/v1/auth/verify-otp:
+    $ref: './paths/auth.yaml#/~1api~1v1~1auth~1verify-otp'
+
+  # ── Users ──────────────────────────────────────────────────────────────────
+  /api/v1/users/biodata:
+    $ref: './paths/users.yaml#/~1api~1v1~1users~1biodata'
+  /api/v1/users/profile:
+    $ref: './paths/users.yaml#/~1api~1v1~1users~1profile'
+  /api/v1/users/phone/request-otp:
+    $ref: './paths/users.yaml#/~1api~1v1~1users~1phone~1request-otp'
+  /api/v1/users/phone/verify-otp:
+    $ref: './paths/users.yaml#/~1api~1v1~1users~1phone~1verify-otp'
+  /api/v1/users/kyc:
+    $ref: './paths/users.yaml#/~1api~1v1~1users~1kyc'
+  /api/v1/users/kyc/status:
+    $ref: './paths/users.yaml#/~1api~1v1~1users~1kyc~1status'
+  /api/v1/users/volunteer/register:
+    $ref: './paths/users.yaml#/~1api~1v1~1users~1volunteer~1register'
+  /api/v1/users/ping:
+    $ref: './paths/users.yaml#/~1api~1v1~1users~1ping'
+
+  # ── Incidents ─────────────────────────────────────────────────────────────
+  /api/v1/incidents/trigger:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1trigger'
+  /api/v1/incidents/active:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1active'
+  /api/v1/incidents/reporter-history:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1reporter-history'
+  /api/v1/incidents/nearby:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1nearby'
+  /api/v1/incidents/my-history:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1my-history'
+  /api/v1/incidents/my-active-response:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1my-active-response'
+  /api/v1/incidents/all-active:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1all-active'
+  /api/v1/incidents/agency/history:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1agency~1history'
+  /api/v1/incidents/{id}/type:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1type'
+  /api/v1/incidents/{id}/broadcast:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1broadcast'
+  /api/v1/incidents/{id}/canceled:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1canceled'
+  /api/v1/incidents/{id}/evidence:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1evidence'
+  /api/v1/incidents/{id}/location:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1location'
+  /api/v1/incidents/{id}/accept:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1accept'
+  /api/v1/incidents/{id}/volunteer-complete:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1volunteer-complete'
+  /api/v1/incidents/{id}/response-location:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1response-location'
+  /api/v1/incidents/{id}/handle:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1handle'
+  /api/v1/incidents/{id}/agency-handle:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1agency-handle'
+  /api/v1/incidents/{id}/agency-review:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1agency-review'
+  /api/v1/incidents/{id}/agency-resolve:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1agency-resolve'
+  /api/v1/incidents/{id}/mark-false-alarm:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1mark-false-alarm'
+
+  # ── Reports ───────────────────────────────────────────────────────────────
+  /api/v1/reports:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1reports'
+  /api/v1/reports/my:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1reports~1my'
+  /api/v1/reports/{id}/canceled:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1reports~1{id}~1canceled'
+  /api/v1/reports/{id}/status:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1reports~1{id}~1status'
+
+  # ── Admin ─────────────────────────────────────────────────────────────────
+  /api/v1/admin/volunteers/pending:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1volunteers~1pending'
+  /api/v1/admin/volunteers/{id}/approve:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1volunteers~1{id}~1approve'
+  /api/v1/admin/volunteers/{id}/reject:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1volunteers~1{id}~1reject'
+  /api/v1/admin/users/kyc/warga:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1users~1kyc~1warga'
+  /api/v1/admin/users/kyc/warga/{id}/approve:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1users~1kyc~1warga~1{id}~1approve'
+  /api/v1/admin/users/kyc/warga/{id}/reject:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1users~1kyc~1warga~1{id}~1reject'
+  /api/v1/admin/users:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1users'
+  /api/v1/admin/users/{id}/detail:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1users~1{id}~1detail'
+  /api/v1/admin/users/{id}/ban:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1users~1{id}~1ban'
+  /api/v1/admin/users/{id}/unban:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1users~1{id}~1unban'
+  /api/v1/admin/users/{id}/strike:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1users~1{id}~1strike'
+  /api/v1/admin/admins:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1admins'
+  /api/v1/admin/agencies:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1agencies'
+  /api/v1/admin/ranks:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1ranks'
+  /api/v1/admin/ranks/{id}:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1ranks~1{id}'
+  /api/v1/admin/badges:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1badges'
+  /api/v1/admin/badges/{id}:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1badges~1{id}'
+  /api/v1/admin/stats:
+    $ref: './paths/admin.yaml#/~1api~1v1~1admin~1stats'
+
+  # ── Agencies ──────────────────────────────────────────────────────────────
+  /api/v1/agencies/me:
+    $ref: './paths/agencies.yaml#/~1api~1v1~1agencies~1me'
+  /api/v1/agencies/personnels:
+    $ref: './paths/agencies.yaml#/~1api~1v1~1agencies~1personnels'
+
+  # ── Telemetry ─────────────────────────────────────────────────────────────
+  /api/v1/telemetry/location:
+    $ref: './paths/telemetry.yaml#/~1api~1v1~1telemetry~1location'
+  /api/v1/telemetry/online-status:
+    $ref: './paths/telemetry.yaml#/~1api~1v1~1telemetry~1online-status'
+  /api/v1/incidents/sms-fallback:
+    $ref: './paths/telemetry.yaml#/~1api~1v1~1incidents~1sms-fallback'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: './components/securitySchemes.yaml#/BearerAuth'
+    APIKeyGateway:
+      $ref: './components/securitySchemes.yaml#/APIKeyGateway'
+
+  schemas:
+    SuccessResponse:
+      $ref: './components/schemas.yaml#/SuccessResponse'
+    ErrorResponse:
+      $ref: './components/schemas.yaml#/ErrorResponse'
+    AuthResponse:
+      $ref: './components/schemas.yaml#/AuthResponse'
+    UserInfo:
+      $ref: './components/schemas.yaml#/UserInfo'
+    ProfileResponse:
+      $ref: './components/schemas.yaml#/ProfileResponse'
+    EmergencyContact:
+      $ref: './components/schemas.yaml#/EmergencyContact'
+    VolunteerReputation:
+      $ref: './components/schemas.yaml#/VolunteerReputation'
+    KYCStatusResponse:
+      $ref: './components/schemas.yaml#/KYCStatusResponse'
+    TriggerSOSResponse:
+      $ref: './components/schemas.yaml#/TriggerSOSResponse'
+    ActiveIncidentResponse:
+      $ref: './components/schemas.yaml#/ActiveIncidentResponse'
+    NearbyIncidentResponse:
+      $ref: './components/schemas.yaml#/NearbyIncidentResponse'
+    VolunteerCompleteResponse:
+      $ref: './components/schemas.yaml#/VolunteerCompleteResponse'
+    IncidentReportResponse:
+      $ref: './components/schemas.yaml#/IncidentReportResponse'
+    RankItem:
+      $ref: './components/schemas.yaml#/RankItem'
+    BadgeItem:
+      $ref: './components/schemas.yaml#/BadgeItem'
+    AgencyItem:
+      $ref: './components/schemas.yaml#/AgencyItem'
+    AdminUserItem:
+      $ref: './components/schemas.yaml#/AdminUserItem'
+    StatsResponse:
+      $ref: './components/schemas.yaml#/StatsResponse'
+    AgencyProfile:
+      $ref: './components/schemas.yaml#/AgencyProfile'

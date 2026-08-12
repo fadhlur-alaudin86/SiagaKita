@@ -1,0 +1,113 @@
+# Agencies Domain — /api/v1/agencies
+# Required roles: agency, admin, superadmin (AgencyOnly)
+
+/api/v1/agencies/me:
+  get:
+    tags:
+      - Agencies
+    summary: Get current agency profile
+    description: |
+      Returns the agency profile of the authenticated agency account.
+      **Required roles:** `agency`, `admin`, `superadmin` (AgencyOnly)
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Agency profile returned
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/AgencyProfile'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '403':
+        description: Forbidden — insufficient role
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '404':
+        description: Agency profile not found
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/agencies/personnels:
+  post:
+    tags:
+      - Agencies
+    summary: Create a field personnel account
+    description: |
+      Creates a new `agency_personnel` account under the caller's agency.
+      The caller's `userID` is used as the `agency_id` for the new personnel.
+      **Required roles:** `agency`, `admin`, `superadmin` (AgencyOnly)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password, full_name, badge_number]
+            properties:
+              email:
+                type: string
+                format: email
+                example: "personil01@agency.go.id"
+              password:
+                type: string
+                format: password
+                minLength: 8
+                example: "securepassword"
+              full_name:
+                type: string
+                example: "Agus Pratama"
+              badge_number:
+                type: string
+                description: Unique personnel badge/ID number
+                example: "BP-001"
+    responses:
+      '200':
+        description: Personnel account created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: "Akun personil lapangan berhasil didaftarkan."
+      '400':
+        description: Validation error or duplicate badge/email
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '403':
+        description: Forbidden — insufficient role
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'

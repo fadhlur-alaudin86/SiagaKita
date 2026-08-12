@@ -1,0 +1,878 @@
+# Admin Domain — /api/v1/admin
+# Auth: Bearer JWT required for all endpoints
+
+# ─── KYC Volunteer ────────────────────────────────────────────────────────────
+
+/api/v1/admin/volunteers/pending:
+  get:
+    tags:
+      - Admin
+    summary: Get pending volunteer KYC applications
+    description: |
+      Returns a list of volunteers who have submitted KYC certification documents
+      and are waiting for admin approval.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Pending KYC list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          user_id:
+                            type: string
+                            format: uuid
+                          full_name:
+                            type: string
+                            nullable: true
+                          email:
+                            type: string
+                          nik:
+                            type: string
+                            nullable: true
+                          volunteer_experience:
+                            type: string
+                            nullable: true
+                          certifications:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                certificate_type:
+                                  type: string
+                                document_url:
+                                  type: string
+                                expires_at:
+                                  type: string
+                                  nullable: true
+                          submitted_at:
+                            type: string
+                            format: date-time
+
+/api/v1/admin/volunteers/{id}/approve:
+  post:
+    tags:
+      - Admin
+    summary: Approve volunteer KYC
+    description: |
+      Approves a volunteer's KYC application, granting them the `volunteer` role.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Target user UUID
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: KYC approved
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+
+/api/v1/admin/volunteers/{id}/reject:
+  post:
+    tags:
+      - Admin
+    summary: Reject volunteer KYC
+    description: |
+      Rejects a volunteer's KYC application with a reason.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [reason]
+            properties:
+              reason:
+                type: string
+                example: "Documents are unclear or invalid"
+    responses:
+      '200':
+        description: KYC rejected
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+# ─── KYC Warga (NIK Verification) ─────────────────────────────────────────────
+
+/api/v1/admin/users/kyc/warga:
+  get:
+    tags:
+      - Admin
+    summary: Get pending civilian NIK verification requests
+    description: |
+      Returns civilians who have submitted NIK identity verification and are awaiting admin review.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Pending NIK verification list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          user_id:
+                            type: string
+                            format: uuid
+                          full_name:
+                            type: string
+                            nullable: true
+                          email:
+                            type: string
+                          nik:
+                            type: string
+                            nullable: true
+                          kyc_ktp_url:
+                            type: string
+                            nullable: true
+                          profile_photo_url:
+                            type: string
+                            nullable: true
+                          nik_verification_status:
+                            type: string
+                          submitted_at:
+                            type: string
+                            format: date-time
+
+/api/v1/admin/users/kyc/warga/{id}/approve:
+  post:
+    tags:
+      - Admin
+    summary: Approve civilian NIK verification
+    description: |
+      Approves a civilian's NIK (identity) verification.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: NIK verification approved
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/admin/users/kyc/warga/{id}/reject:
+  post:
+    tags:
+      - Admin
+    summary: Reject civilian NIK verification
+    description: |
+      Rejects a civilian's NIK (identity) verification.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: NIK verification rejected
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+# ─── User Management ──────────────────────────────────────────────────────────
+
+/api/v1/admin/users:
+  get:
+    tags:
+      - Admin
+    summary: List all users
+    description: |
+      Returns a filterable list of all civilian/volunteer users.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: banned
+        in: query
+        schema:
+          type: boolean
+        description: Filter to show only SOS-banned users
+      - name: high_strike
+        in: query
+        schema:
+          type: boolean
+        description: Filter to show users with high strike count
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Search by name, email, or NIK
+    responses:
+      '200':
+        description: User list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/AdminUserItem'
+
+/api/v1/admin/users/{id}/detail:
+  get:
+    tags:
+      - Admin
+    summary: Get detailed user profile with activity history
+    description: |
+      Returns full user detail including SOS and report history.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: User detail
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        user_id:
+                          type: string
+                          format: uuid
+                        email:
+                          type: string
+                        role:
+                          type: string
+                        full_name:
+                          type: string
+                          nullable: true
+                        sos_history:
+                          type: array
+                          items:
+                            type: object
+                        report_history:
+                          type: array
+                          items:
+                            type: object
+
+/api/v1/admin/users/{id}/ban:
+  post:
+    tags:
+      - Admin
+    summary: Ban user from SOS feature
+    description: |
+      Bans a user from triggering SOS and submitting reports.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [reason]
+            properties:
+              reason:
+                type: string
+                example: "Repeated false alarm abuse"
+    responses:
+      '200':
+        description: User banned
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/admin/users/{id}/unban:
+  post:
+    tags:
+      - Admin
+    summary: Remove SOS ban from user
+    description: |
+      Lifts the SOS ban from a user.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: User unbanned
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/admin/users/{id}/strike:
+  delete:
+    tags:
+      - Admin
+    summary: Reset user's strike count
+    description: |
+      Resets the SOS strike counter of a user to zero.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Strike count reset
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+# ─── Admin & Agency Account Management ────────────────────────────────────────
+
+/api/v1/admin/admins:
+  post:
+    tags:
+      - Admin
+    summary: Create admin account
+    description: |
+      Creates a new `admin` role account.
+      **Required roles:** `superadmin` only (SuperAdminOnly)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password, full_name]
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+                format: password
+                minLength: 8
+              full_name:
+                type: string
+    responses:
+      '200':
+        description: Admin account created
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+  get:
+    tags:
+      - Admin
+    summary: List all admin accounts
+    description: |
+      Returns all accounts with `admin` and `superadmin` roles.
+      **Required roles:** `superadmin` only (SuperAdminOnly)
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Admin list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          user_id:
+                            type: string
+                          email:
+                            type: string
+                          role:
+                            type: string
+                          full_name:
+                            type: string
+                            nullable: true
+                          created_at:
+                            type: string
+                            format: date-time
+
+/api/v1/admin/agencies:
+  post:
+    tags:
+      - Admin
+    summary: Create emergency agency account
+    description: |
+      Creates a new `agency` account for an emergency agency (police, fire, medical, SAR).
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password, name, type, city_code]
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+                format: password
+              name:
+                type: string
+                example: "Polsek Jakarta Selatan"
+              type:
+                type: string
+                enum: [police, fire, medical, sar]
+              city_code:
+                type: string
+                example: "3273"
+              hotline_number:
+                type: string
+                nullable: true
+              latitude:
+                type: number
+                format: double
+                nullable: true
+              longitude:
+                type: number
+                format: double
+                nullable: true
+    responses:
+      '200':
+        description: Agency account created
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+  get:
+    tags:
+      - Admin
+    summary: List all registered agencies
+    description: |
+      Returns all registered emergency agency accounts.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Agency list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/AgencyItem'
+
+# ─── Master Data: Ranks ───────────────────────────────────────────────────────
+
+/api/v1/admin/ranks:
+  get:
+    tags:
+      - Admin
+    summary: List volunteer ranks
+    description: |
+      Returns all volunteer rank tiers.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Rank list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/RankItem'
+  post:
+    tags:
+      - Admin
+    summary: Create a volunteer rank
+    description: |
+      Creates a new volunteer rank tier.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [rank_name, min_exp]
+            properties:
+              rank_name:
+                type: string
+                example: "Senior Rescuer"
+              min_exp:
+                type: integer
+                example: 500
+              icon_url:
+                type: string
+                nullable: true
+    responses:
+      '201':
+        description: Rank created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/RankItem'
+
+/api/v1/admin/ranks/{id}:
+  put:
+    tags:
+      - Admin
+    summary: Update a volunteer rank
+    description: |
+      Updates an existing volunteer rank.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              rank_name:
+                type: string
+              min_exp:
+                type: integer
+              icon_url:
+                type: string
+    responses:
+      '200':
+        description: Rank updated
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+  delete:
+    tags:
+      - Admin
+    summary: Delete a volunteer rank
+    description: |
+      Deletes an existing volunteer rank.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: Rank deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+# ─── Master Data: Badges ──────────────────────────────────────────────────────
+
+/api/v1/admin/badges:
+  get:
+    tags:
+      - Admin
+    summary: List volunteer badges
+    description: |
+      Returns all volunteer achievement badges.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Badge list
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../openapi.yaml#/components/schemas/BadgeItem'
+  post:
+    tags:
+      - Admin
+    summary: Create a volunteer badge
+    description: |
+      Creates a new badge. Accepts `multipart/form-data` with optional icon file upload.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [badge_name]
+            properties:
+              badge_name:
+                type: string
+                example: "First Rescue"
+              description:
+                type: string
+              icon:
+                type: string
+                format: binary
+                description: Badge icon image (max 5MB)
+    responses:
+      '201':
+        description: Badge created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/BadgeItem'
+
+/api/v1/admin/badges/{id}:
+  put:
+    tags:
+      - Admin
+    summary: Update a volunteer badge
+    description: |
+      Updates an existing badge. Accepts `multipart/form-data`.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              badge_name:
+                type: string
+              description:
+                type: string
+              icon_url:
+                type: string
+                description: Keep existing URL (used if no new icon file uploaded)
+              icon:
+                type: string
+                format: binary
+    responses:
+      '200':
+        description: Badge updated
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+  delete:
+    tags:
+      - Admin
+    summary: Delete a volunteer badge
+    description: |
+      Deletes a badge.
+      **Required roles:** `admin`, `superadmin` (AdminOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Badge deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+# ─── Statistics ───────────────────────────────────────────────────────────────
+
+/api/v1/admin/stats:
+  get:
+    tags:
+      - Admin
+    summary: Get operational statistics
+    description: |
+      Returns aggregated SOS and report statistics for a given time period.
+      **Required roles:** `superadmin`, `admin`, `agency` (ConsoleOnly)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: period
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [week, month, year]
+          default: month
+        description: Statistics time period (7 days, 30 days, or 12 months)
+    responses:
+      '200':
+        description: Statistics data
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        total_sos:
+                          type: integer
+                        total_resolved:
+                          type: integer
+                        total_false_alarm:
+                          type: integer
+                        active_volunteers:
+                          type: integer
+                        false_alarm_rate:
+                          type: number
+                          format: double
+                        avg_response_minutes:
+                          type: number
+                          format: double
+                        by_type:
+                          type: object
+                          additionalProperties:
+                            type: integer
+                        by_status:
+                          type: object
+                          additionalProperties:
+                            type: integer
+                        monthly:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              month:
+                                type: string
+                                example: "2026-04"
+                              count:
+                                type: integer

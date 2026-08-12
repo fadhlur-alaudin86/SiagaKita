@@ -168,4 +168,3 @@ type serviceError struct{ msg string }
 func (e *serviceError) Error() string { return e.msg }
 
 func errorMsg(msg string) error { return &serviceError{msg: msg} }
-
