@@ -81,22 +81,12 @@ gh issue create \
 
 ### Update Issue Labels (Status Transitions)
 ```bash
-# Work started: add status: in-progress
+# Work started: add status: in-progress (manual when starting work)
 gh issue edit <number> --repo SuperBypassUdinnn/SIAGAKITA \
   --add-label "status: in-progress"
 
-# PR created: move to in-review
-gh issue edit <number> --repo SuperBypassUdinnn/SIAGAKITA \
-  --add-label "status: in-review" \
-  --remove-label "status: in-progress"
-
-# PR approved, ready to merge: move to ready
-gh issue edit <number> --repo SuperBypassUdinnn/SIAGAKITA \
-  --add-label "status: ready" \
-  --remove-label "status: in-review"
-
-# Close issue after merge
-gh issue close <number> --repo SuperBypassUdinnn/SIAGAKITA --reason completed
+# Note: PR created (in-review), PR approved (ready), and PR merged (close)
+# are automatically handled by issue-status-labeler.yml GitHub Actions workflow.
 ```
 
 ### Add Comment (mandatory on status change)

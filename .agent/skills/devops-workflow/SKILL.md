@@ -63,6 +63,9 @@ feature/F-XXX/sub-mobile  ─┘                                ↓
 | `ci-main.yml` | PR to `main` | Full CI across all components + Docker build validation |
 | `release-deploy.yml` | Push tag `v*.*.*` | Docker build+push + VPS deploy + health check rollback + GitHub Release |
 | `auto-tag.yml` | Push to `main` with changes to `VERSION` | Auto-creates a git tag matching `VERSION` file |
+| `labeler.yml` | PR open/synchronize | Automatically labels PRs based on modified paths |
+| `issue-status-labeler.yml` | PR open/review/merge | Automates issue status transitions (`status: in-review`, `status: ready`, closes on merge) |
+| `auto-merge-dev.yml` | PR open/review to `dev` | Enables automatic squash-merge to `dev` upon 1 approval & passing CI checks |
 
 ## Versioning Flow
 

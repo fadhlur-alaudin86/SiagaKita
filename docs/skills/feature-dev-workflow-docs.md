@@ -22,8 +22,8 @@ Backlog Overview → Discovery → Issue → Branch → Contract → Backend →
 | 4 | Backend Implementation — Implement Go handlers/services/repositories |
 | 5 | Flutter Implementation — Implement Flutter screens/widgets/services |
 | 6 | Tests — Go table-driven unit tests + Flutter widget tests |
-| 7 | CI + Review — Verify CI status, open PR to `dev` |
-| 8 | Close Log — Update feature log, close GitHub issue |
+| 7 | CI + Review — Verify CI status, open PR to `dev` (`issue-status-labeler.yml` updates issue to `status: in-review`) |
+| 8 | Close Log — Update feature log (upon approval + CI pass, `auto-merge-dev.yml` merges PR & `issue-status-labeler.yml` closes issue) |
 
 ---
 

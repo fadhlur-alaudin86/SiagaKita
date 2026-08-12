@@ -35,6 +35,9 @@ main ─────────────────────────
 | CI Main | `.github/workflows/ci-main.yml` | PR to `main` | Full CI suite across all components + Docker build validation |
 | Release Deploy | `.github/workflows/release-deploy.yml` | Push tag `v*.*.*` | Docker push + VPS deployment + automated health check rollback + GitHub Release |
 | Auto Tag | `.github/workflows/auto-tag.yml` | Push to `main` with modified `VERSION` file | Automatically creates git tag `v1.X.X` matching `VERSION` |
+| PR Labeler | `.github/workflows/labeler.yml` | PR open/synchronize | Automatically labels PRs based on modified file paths |
+| Issue Status Auto-Labeler | `.github/workflows/issue-status-labeler.yml` | PR open/review/merge | Automates issue status transitions (`status: in-review`, `status: ready`, closes on merge) |
+| Auto Merge Dev | `.github/workflows/auto-merge-dev.yml` | PR open/review targeting `dev` | Enables automatic squash-merge to `dev` upon 1 approval & passing CI checks |
 
 ---
 
