@@ -29,7 +29,10 @@ class AppTheme {
             letterSpacing: -1,
             color: Colors.white,
           ),
-          titleLarge: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+          titleLarge: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
           titleMedium: TextStyle(
             fontWeight: FontWeight.w700,
             color: Colors.white,
@@ -47,10 +50,7 @@ class AppTheme {
           side: const BorderSide(color: Colors.white10),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: Colors.white12,
-        thickness: 1,
-      ),
+      dividerTheme: const DividerThemeData(color: Colors.white12, thickness: 1),
     );
   }
 }

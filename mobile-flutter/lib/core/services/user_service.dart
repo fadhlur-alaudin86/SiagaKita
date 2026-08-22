@@ -126,10 +126,7 @@ class UserService {
 
   // ─── Save Biodata (POST /users/biodata) ─────────────────────────────────────
 
-  static Future<void> saveBiodata(
-    String token,
-    UserModel updatedUser,
-  ) async {
+  static Future<void> saveBiodata(String token, UserModel updatedUser) async {
     try {
       final contacts = updatedUser.emergencyContacts?.map((c) {
         return {
@@ -159,9 +156,15 @@ class UserService {
         'height_cm': heightCm,
         'weight_kg': weightKg,
         'domicile': medData['address'],
-        'emergency_contact_name': contacts != null && contacts.isNotEmpty ? contacts[0]['name'] : null,
-        'emergency_contact_phone': contacts != null && contacts.isNotEmpty ? contacts[0]['phone'] : null,
-        'emergency_relation': contacts != null && contacts.isNotEmpty ? contacts[0]['relation'] : null,
+        'emergency_contact_name': contacts != null && contacts.isNotEmpty
+            ? contacts[0]['name']
+            : null,
+        'emergency_contact_phone': contacts != null && contacts.isNotEmpty
+            ? contacts[0]['phone']
+            : null,
+        'emergency_relation': contacts != null && contacts.isNotEmpty
+            ? contacts[0]['relation']
+            : null,
       };
 
       payload.removeWhere((k, v) => v == null || v == '');

@@ -248,17 +248,11 @@ class _SosAktifPageState extends State<SosAktifPage> {
         setState(() => _selected = null);
         _load();
       } else if (mounted) {
-        _showSnack(
-          'Gagal menandai alarm palsu. Coba lagi.',
-          Colors.red,
-        );
+        _showSnack('Gagal menandai alarm palsu. Coba lagi.', Colors.red);
       }
     } catch (_) {
       if (mounted) {
-        _showSnack(
-          'Gagal menandai alarm palsu. Periksa koneksi.',
-          Colors.red,
-        );
+        _showSnack('Gagal menandai alarm palsu. Periksa koneksi.', Colors.red);
       }
     }
   }

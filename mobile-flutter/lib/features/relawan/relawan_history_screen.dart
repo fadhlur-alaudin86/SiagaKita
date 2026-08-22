@@ -51,19 +51,13 @@ class _RelawanHistoryScreenState extends State<RelawanHistoryScreen> {
       appBar: AppBar(
         title: Text(
           'Riwayat Misi'.tr(context),
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: primaryText,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: primaryText),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: primaryText),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadHistory,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadHistory),
         ],
       ),
       body: _buildBody(isDark, primaryText, secondaryText),
@@ -98,7 +92,6 @@ class _RelawanHistoryScreenState extends State<RelawanHistoryScreen> {
       ),
     );
   }
-
 
   Widget _emptyPlaceholder(
     IconData icon,

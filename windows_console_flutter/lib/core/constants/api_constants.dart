@@ -14,12 +14,15 @@ class ApiConstants {
   // Incidents
   static const String incidents = '$baseUrl/incidents';
   static const String incidentsAllActive = '$baseUrl/incidents/all-active';
-  static const String incidentsAgencyHistory = '$baseUrl/incidents/agency/history';
+  static const String incidentsAgencyHistory =
+      '$baseUrl/incidents/agency/history';
   static String incidentDetail(String id) => '$baseUrl/incidents/$id';
   static String incidentMarkFalseAlarm(String id) =>
       '$baseUrl/incidents/$id/mark-false-alarm';
-  static String incidentResolve(String id) => '$baseUrl/incidents/$id/agency-resolve';
-  static String incidentAgencyHandle(String id) => '$baseUrl/incidents/$id/agency-handle';
+  static String incidentResolve(String id) =>
+      '$baseUrl/incidents/$id/agency-resolve';
+  static String incidentAgencyHandle(String id) =>
+      '$baseUrl/incidents/$id/agency-handle';
   static String incidentType(String id) => '$baseUrl/incidents/$id/type';
 
   // Reports (Jalur B)
@@ -42,8 +45,10 @@ class ApiConstants {
   static const String adminUsers = '$baseUrl/admin/users';
   static String adminUserDetail(String id) => '$baseUrl/admin/users/$id/detail';
   static const String adminWargaKycPending = '$baseUrl/admin/users/kyc/warga';
-  static String adminWargaKycApprove(String id) => '$baseUrl/admin/users/kyc/warga/$id/approve';
-  static String adminWargaKycReject(String id) => '$baseUrl/admin/users/kyc/warga/$id/reject';
+  static String adminWargaKycApprove(String id) =>
+      '$baseUrl/admin/users/kyc/warga/$id/approve';
+  static String adminWargaKycReject(String id) =>
+      '$baseUrl/admin/users/kyc/warga/$id/reject';
   static String adminUserBan(String id) => '$baseUrl/admin/users/$id/ban';
   static String adminUserUnban(String id) => '$baseUrl/admin/users/$id/unban';
   static String adminUserResetStrike(String id) =>

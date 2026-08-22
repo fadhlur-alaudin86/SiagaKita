@@ -23,14 +23,18 @@ class IncidentService {
     try {
       return await call().timeout(
         timeout ?? _defaultTimeout,
-        onTimeout: () => throw IncidentException('Gagal menghubungi server. Periksa koneksi internet.'),
+        onTimeout: () => throw IncidentException(
+          'Gagal menghubungi server. Periksa koneksi internet.',
+        ),
       );
     } on IncidentException {
       rethrow;
     } on SOSBannedException {
       rethrow;
     } catch (_) {
-      throw IncidentException('Gagal menghubungi server. Periksa koneksi internet.');
+      throw IncidentException(
+        'Gagal menghubungi server. Periksa koneksi internet.',
+      );
     }
   }
 
@@ -61,7 +65,9 @@ class IncidentService {
       ),
       timeout: _sosTimeout, // SOS harus cepat
     );
-    final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
+    final body = await Isolate.run(
+      () => jsonDecode(response.body) as Map<String, dynamic>,
+    );
     if (response.statusCode == 403) {
       throw SOSBannedException(
         body['message'] as String? ?? 'Fitur SOS dinonaktifkan',
@@ -136,7 +142,9 @@ class IncidentService {
     if (response.statusCode != 200) {
       String errorMessage = 'Gagal membatalkan SOS';
       try {
-        final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
+        final body = await Isolate.run(
+          () => jsonDecode(response.body) as Map<String, dynamic>,
+        );
         errorMessage = body['message'] as String? ?? errorMessage;
       } catch (_) {
         // Jika bukan JSON (misal 404 Fiber HTML), ambil text body jika pendek
@@ -221,7 +229,9 @@ class IncidentService {
       ),
     );
     if (response.statusCode != 200) return null;
-    final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
+    final body = await Isolate.run(
+      () => jsonDecode(response.body) as Map<String, dynamic>,
+    );
     final data = body['data'];
     if (data == null) return null;
     return ActiveIncident.fromJson(data as Map<String, dynamic>);
@@ -241,17 +251,21 @@ class IncidentService {
         ),
       );
       if (response.statusCode != 200) {
-        final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
+        final body = await Isolate.run(
+          () => jsonDecode(response.body) as Map<String, dynamic>,
+        );
         throw IncidentException(
           body['message'] as String? ?? 'Gagal memuat riwayat SOS',
         );
       }
-      final body = await Isolate.run(() => jsonDecode(response.body) as Map<String, dynamic>);
+      final body = await Isolate.run(
+        () => jsonDecode(response.body) as Map<String, dynamic>,
+      );
       final data = body['data'] as List?;
       if (data == null) return [];
-      
+
       await prefs.setString('cached_my_history', jsonEncode(data));
-      
+
       return data
           .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -267,7 +281,9 @@ class IncidentService {
           }
         } catch (_) {}
       }
-      throw IncidentException('Periksa koneksi internet. Gagal memuat riwayat: $e');
+      throw IncidentException(
+        'Periksa koneksi internet. Gagal memuat riwayat: $e',
+      );
     }
   }
 
@@ -293,7 +309,7 @@ class IncidentService {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       final data = body['data'] as List?;
       if (data == null) return [];
-      
+
       await prefs.setString('cached_reporter_history', jsonEncode(data));
 
       return data
@@ -311,7 +327,9 @@ class IncidentService {
           }
         } catch (_) {}
       }
-      throw IncidentException('Periksa koneksi internet. Gagal memuat riwayat: $e');
+      throw IncidentException(
+        'Periksa koneksi internet. Gagal memuat riwayat: $e',
+      );
     }
   }
 
@@ -583,7 +601,6 @@ class ActiveIncident {
             .toList() ??
         [],
   );
-
 
   /// Apakah instansi sedang aktif menangani SOS ini.
   bool get isHandledByAgency => agencyStatus == 'handling';

@@ -147,20 +147,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: rankColor.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: rankColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.military_tech,
-                color: rankColor,
-                size: 22,
-              ),
+              Icon(Icons.military_tech, color: rankColor, size: 22),
               const SizedBox(width: 8),
               Text(
                 'REPUTASI RELAWAN'.tr(context),
@@ -208,7 +202,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const Spacer(),
               Text(
-                nextThreshold == 99999 ? '100%' : '${(progress * 100).round()}%',
+                nextThreshold == 99999
+                    ? '100%'
+                    : '${(progress * 100).round()}%',
                 style: TextStyle(
                   fontSize: 11,
                   color: rankColor,
@@ -223,7 +219,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: LinearProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               minHeight: 8,
-              backgroundColor: isDark ? Colors.white12 : rankColor.withValues(alpha: 0.15),
+              backgroundColor: isDark
+                  ? Colors.white12
+                  : rankColor.withValues(alpha: 0.15),
               color: rankColor,
             ),
           ),

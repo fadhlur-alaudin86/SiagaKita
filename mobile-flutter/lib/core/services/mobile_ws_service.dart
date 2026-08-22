@@ -6,14 +6,14 @@ import '../constants/api_config.dart';
 
 /// Event type dari WebSocket untuk user masyarakat (reporter SOS).
 enum MobileWsEvent {
-  agencyHandling,         // AGENCY_HANDLING
-  volunteerHandling,      // VOLUNTEER_HANDLING
+  agencyHandling, // AGENCY_HANDLING
+  volunteerHandling, // VOLUNTEER_HANDLING
   volunteerLocationUpdate, // VOLUNTEER_LOCATION_UPDATE
   reporterLocationUpdate, // REPORTER_LOCATION_UPDATE
-  sosCancelled,           // SOS_CANCELLED
-  sosResolved,            // SOS_RESOLVED
-  sosFalseAlarm,          // SOS_FALSE_ALARM
-  forceLogout,            // FORCE_LOGOUT — sesi digantikan perangkat lain
+  sosCancelled, // SOS_CANCELLED
+  sosResolved, // SOS_RESOLVED
+  sosFalseAlarm, // SOS_FALSE_ALARM
+  forceLogout, // FORCE_LOGOUT — sesi digantikan perangkat lain
   connected,
   unknown,
 }
@@ -27,15 +27,15 @@ class MobileWsMessage {
   factory MobileWsMessage.fromRaw(Map<String, dynamic> json) {
     final eventStr = json['event'] as String? ?? '';
     final event = switch (eventStr) {
-      'AGENCY_HANDLING'          => MobileWsEvent.agencyHandling,
-      'VOLUNTEER_HANDLING'       => MobileWsEvent.volunteerHandling,
-      'VOLUNTEER_LOCATION_UPDATE'=> MobileWsEvent.volunteerLocationUpdate,
+      'AGENCY_HANDLING' => MobileWsEvent.agencyHandling,
+      'VOLUNTEER_HANDLING' => MobileWsEvent.volunteerHandling,
+      'VOLUNTEER_LOCATION_UPDATE' => MobileWsEvent.volunteerLocationUpdate,
       'REPORTER_LOCATION_UPDATE' => MobileWsEvent.reporterLocationUpdate,
-      'SOS_CANCELLED'            => MobileWsEvent.sosCancelled,
-      'SOS_RESOLVED'             => MobileWsEvent.sosResolved,
-      'SOS_FALSE_ALARM'          => MobileWsEvent.sosFalseAlarm,
-      'FORCE_LOGOUT'             => MobileWsEvent.forceLogout,
-      _                          => MobileWsEvent.unknown,
+      'SOS_CANCELLED' => MobileWsEvent.sosCancelled,
+      'SOS_RESOLVED' => MobileWsEvent.sosResolved,
+      'SOS_FALSE_ALARM' => MobileWsEvent.sosFalseAlarm,
+      'FORCE_LOGOUT' => MobileWsEvent.forceLogout,
+      _ => MobileWsEvent.unknown,
     };
     return MobileWsMessage(
       event: event,
@@ -57,6 +57,7 @@ class MobileWsService extends ChangeNotifier {
   final _controller = StreamController<MobileWsMessage>.broadcast();
   bool _connected = false;
   bool _disposed = false;
+
   /// Jika true, sesi ini sudah dihentikan paksa. JANGAN reconnect.
   bool _forceLoggedOut = false;
   Timer? _reconnectTimer;
@@ -144,10 +145,12 @@ class MobileWsService extends ChangeNotifier {
   /// Mengirim koordinat lokasi via WebSocket (real-time).
   void sendLocation(double lat, double lng) {
     if (!_connected || _channel == null) return;
-    _channel!.sink.add(jsonEncode({
-      'event': 'UPDATE_LOCATION',
-      'payload': {'latitude': lat, 'longitude': lng},
-    }));
+    _channel!.sink.add(
+      jsonEncode({
+        'event': 'UPDATE_LOCATION',
+        'payload': {'latitude': lat, 'longitude': lng},
+      }),
+    );
   }
 
   void disconnect() {

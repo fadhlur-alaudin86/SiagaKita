@@ -968,11 +968,7 @@ class _DropdownFilter<T> extends StatelessWidget {
               style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
             const SizedBox(width: 4),
-            Icon(
-              icon ?? Icons.filter_list,
-              color: Colors.white38,
-              size: 16,
-            ),
+            Icon(icon ?? Icons.filter_list, color: Colors.white38, size: 16),
           ],
         ),
       ),
@@ -995,7 +991,9 @@ class _StrikeFilterBtn extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
-          color: value > 0 ? Colors.orange.withValues(alpha: 0.4) : Colors.white12,
+          color: value > 0
+              ? Colors.orange.withValues(alpha: 0.4)
+              : Colors.white12,
         ),
       ),
       onSelected: onChanged,
@@ -1015,9 +1013,7 @@ class _StrikeFilterBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF1A2035),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: value > 0 ? Colors.orange : Colors.white12,
-          ),
+          border: Border.all(color: value > 0 ? Colors.orange : Colors.white12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

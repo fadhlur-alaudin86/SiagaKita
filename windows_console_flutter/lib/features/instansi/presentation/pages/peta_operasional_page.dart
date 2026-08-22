@@ -255,9 +255,11 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                     }),
                     // Target Location Marker (hanya jika TIDAK tumpang tindih dengan incident)
                     if (widget.targetLocation != null &&
-                        !_incidents.any((inc) =>
-                            inc.latitude == widget.targetLocation!.latitude &&
-                            inc.longitude == widget.targetLocation!.longitude))
+                        !_incidents.any(
+                          (inc) =>
+                              inc.latitude == widget.targetLocation!.latitude &&
+                              inc.longitude == widget.targetLocation!.longitude,
+                        ))
                       Marker(
                         point: widget.targetLocation!,
                         width: 50,
@@ -367,7 +369,8 @@ class _AnimatedVolunteerMarker extends StatefulWidget {
   const _AnimatedVolunteerMarker();
 
   @override
-  State<_AnimatedVolunteerMarker> createState() => _AnimatedVolunteerMarkerState();
+  State<_AnimatedVolunteerMarker> createState() =>
+      _AnimatedVolunteerMarkerState();
 }
 
 class _AnimatedVolunteerMarkerState extends State<_AnimatedVolunteerMarker>

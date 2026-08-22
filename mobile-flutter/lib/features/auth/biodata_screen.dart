@@ -133,7 +133,11 @@ class _BiodataScreenState extends State<BiodataScreen> {
         _birthDateController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('NIK, No WhatsApp, Tempat Lahir, dan Tanggal Lahir wajib diisi!'.tr(context)),
+          content: Text(
+            'NIK, No WhatsApp, Tempat Lahir, dan Tanggal Lahir wajib diisi!'.tr(
+              context,
+            ),
+          ),
           backgroundColor: Colors.red,
         ),
       );

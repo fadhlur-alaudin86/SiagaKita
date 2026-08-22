@@ -206,7 +206,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             : Icons.visibility_off,
                       ),
                       onPressed: () => setState(
-                          () => _obscurePasswordConfirm = !_obscurePasswordConfirm),
+                        () =>
+                            _obscurePasswordConfirm = !_obscurePasswordConfirm,
+                      ),
                     ),
                     border: const OutlineInputBorder(),
                   ),

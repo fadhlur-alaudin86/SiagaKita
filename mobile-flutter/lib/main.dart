@@ -15,14 +15,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Persistensi Bahasa & Tema
   final prefs = await SharedPreferences.getInstance();
   final savedLang = prefs.getString('language_code');
   if (savedLang != null) {
     SiagaKitaApp.localeNotifier.value = Locale(savedLang);
   }
-  
+
   await ConnectivityService.instance.init();
   await AppBackgroundService.initialize();
   runApp(const SiagaKitaApp());
@@ -68,9 +68,7 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                 surface: darkCardColor,
                 onSurface: Colors.white,
               ),
-              textTheme: GoogleFonts.interTextTheme(
-                ThemeData.dark().textTheme,
-              ),
+              textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
               appBarTheme: const AppBarTheme(
                 backgroundColor: darkBgColor,
                 elevation: 0,

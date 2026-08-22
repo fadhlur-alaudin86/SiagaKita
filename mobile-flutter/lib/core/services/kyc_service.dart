@@ -46,9 +46,7 @@ class KycService {
       ..fields['full_name'] = fullName
       ..fields['place_of_birth'] = placeOfBirth
       ..fields['date_of_birth'] = dateOfBirth
-      ..files.add(
-        await http.MultipartFile.fromPath('ktp', ktpPhoto.path),
-      )
+      ..files.add(await http.MultipartFile.fromPath('ktp', ktpPhoto.path))
       ..files.add(
         await http.MultipartFile.fromPath('selfie', selfiePhoto.path),
       );
