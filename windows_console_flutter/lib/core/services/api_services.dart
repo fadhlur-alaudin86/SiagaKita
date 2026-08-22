@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
@@ -68,7 +69,7 @@ class IncidentApiService {
       headers: _headersWithIdempotency(token),
       body: jsonEncode({'reason': reason}),
     );
-    print('markFalseAlarm status: ${resp.statusCode}, body: ${resp.body}');
+    debugPrint('markFalseAlarm status: ${resp.statusCode}, body: ${resp.body}');
     return resp.statusCode == 200;
   }
 
