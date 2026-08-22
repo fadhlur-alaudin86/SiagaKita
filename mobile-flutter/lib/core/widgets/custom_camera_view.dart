@@ -152,7 +152,7 @@ class _CustomCameraViewState extends State<CustomCameraView> {
                     Shadow(
                       blurRadius: 4.0,
                       color: Colors.black.withValues(alpha: 0.5),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -194,17 +194,21 @@ class _CustomCameraViewState extends State<CustomCameraView> {
                             Center(
                               child: Container(
                                 width: widget.isOvalOverlay
-                                    ? size.width * 0.55 // Oval lebih kecil
+                                    ? size.width *
+                                          0.55 // Oval lebih kecil
                                     : size.width * 0.85, // KTP lebih lebar
                                 height: widget.isOvalOverlay
-                                    ? size.width * 0.70 // Rasio wajah
+                                    ? size.width *
+                                          0.70 // Rasio wajah
                                     : size.width * 0.53, // Rasio KTP (~1.6:1)
                                 decoration: BoxDecoration(
                                   color: Colors.white, // Membuat tembus pandang
                                   borderRadius: widget.isOvalOverlay
                                       ? BorderRadius.all(
                                           Radius.elliptical(
-                                              size.width * 0.275, size.width * 0.35),
+                                            size.width * 0.275,
+                                            size.width * 0.35,
+                                          ),
                                         )
                                       : BorderRadius.circular(16),
                                 ),

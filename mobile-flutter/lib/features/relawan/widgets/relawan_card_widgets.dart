@@ -104,7 +104,10 @@ class NearbyIncidentCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                   icon: const Icon(Icons.info_outline, size: 16),
-                  label: Text('Detail'.tr(context), style: const TextStyle(fontSize: 13)),
+                  label: Text(
+                    'Detail'.tr(context),
+                    style: const TextStyle(fontSize: 13),
+                  ),
                   onPressed: onDetail,
                 ),
               ),
@@ -123,7 +126,10 @@ class NearbyIncidentCard extends StatelessWidget {
                   icon: const Icon(Icons.check_circle_outline, size: 16),
                   label: Text(
                     'TERIMA'.tr(context),
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: onAccept,
                 ),
@@ -160,7 +166,8 @@ class MissionHistoryCard extends StatelessWidget {
       _ => const Color(0xFF3B82F6),
     };
     final statusLabel = switch (inc.responseStatus) {
-      'completed' => '${'Selesai (+'.tr(context)}${inc.xpEarned}${' XP)'.tr(context)}',
+      'completed' =>
+        '${'Selesai (+'.tr(context)}${inc.xpEarned}${' XP)'.tr(context)}',
       'rejected' => 'Ditolak'.tr(context),
       'waiting_review' => 'Menunggu Review'.tr(context),
       'canceled' => 'Dibatalkan'.tr(context),

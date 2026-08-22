@@ -95,27 +95,24 @@ class LocationController extends ChangeNotifier {
       distanceFilter: isActive ? 0 : 1,
     );
 
-    _subscription = Geolocator.getPositionStream(
-      locationSettings: settings,
-    ).listen(
-      (pos) {
-        if (_effectiveMode == TrackingMode.active) {
-          // Real-time: update setiap kali ada perubahan posisi
-          _currentPosition = (lat: pos.latitude, lng: pos.longitude);
-          notifyListeners();
-        } else if (_effectiveMode == TrackingMode.passive) {
-          // Passive: throttle ke 10 detik agar tidak terlalu sering (hemat baterai)
-          final now = DateTime.now();
-          if (_lastPassiveUpdate == null ||
-              now.difference(_lastPassiveUpdate!) > const Duration(seconds: 10)) {
+    _subscription = Geolocator.getPositionStream(locationSettings: settings)
+        .listen((pos) {
+          if (_effectiveMode == TrackingMode.active) {
+            // Real-time: update setiap kali ada perubahan posisi
             _currentPosition = (lat: pos.latitude, lng: pos.longitude);
-            _lastPassiveUpdate = now;
             notifyListeners();
+          } else if (_effectiveMode == TrackingMode.passive) {
+            // Passive: throttle ke 10 detik agar tidak terlalu sering (hemat baterai)
+            final now = DateTime.now();
+            if (_lastPassiveUpdate == null ||
+                now.difference(_lastPassiveUpdate!) >
+                    const Duration(seconds: 10)) {
+              _currentPosition = (lat: pos.latitude, lng: pos.longitude);
+              _lastPassiveUpdate = now;
+              notifyListeners();
+            }
           }
-        }
-      },
-      onError: (e) => debugPrint('[LocationController] Stream error: $e'),
-    );
+        }, onError: (e) => debugPrint('[LocationController] Stream error: $e'));
   }
 
   /// Ambil posisi terbaru secara paksa (satu kali, tanpa stream).

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
@@ -68,7 +69,7 @@ class IncidentApiService {
       headers: _headersWithIdempotency(token),
       body: jsonEncode({'reason': reason}),
     );
-    print('markFalseAlarm status: ${resp.statusCode}, body: ${resp.body}');
+    debugPrint('markFalseAlarm status: ${resp.statusCode}, body: ${resp.body}');
     return resp.statusCode == 200;
   }
 
@@ -399,14 +400,14 @@ class AdminApiService {
 
   // ─── Stats ────────────────────────────────────────────────────────────────
 
-  static Future<StatsModel> getStats(String token, {String period = 'month'}) async {
-    final uri = Uri.parse(ApiConstants.adminStats).replace(
-      queryParameters: {'period': period},
-    );
-    final resp = await http.get(
-      uri,
-      headers: AuthService.headers(token),
-    );
+  static Future<StatsModel> getStats(
+    String token, {
+    String period = 'month',
+  }) async {
+    final uri = Uri.parse(
+      ApiConstants.adminStats,
+    ).replace(queryParameters: {'period': period});
+    final resp = await http.get(uri, headers: AuthService.headers(token));
     if (resp.statusCode != 200) return StatsModel.empty();
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     return StatsModel.fromJson(body['data'] as Map<String, dynamic>);

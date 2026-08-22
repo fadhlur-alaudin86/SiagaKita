@@ -466,9 +466,8 @@ class _BadgesTabState extends State<_BadgesTab> {
                                   : 'Pilih Gambar',
                             ),
                             onPressed: () async {
-                              fp.FilePickerResult? result = await fp
-                                  .FilePicker
-                                  .pickFiles(
+                              fp.FilePickerResult? result =
+                                  await fp.FilePicker.pickFiles(
                                     type: fp.FileType.image,
                                     withData: true,
                                   );

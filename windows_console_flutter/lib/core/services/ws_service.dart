@@ -17,8 +17,8 @@ enum WsEvent {
   locationUpdate,
   volunteerLocationUpdate,
   sosStatusUpdate,
-  incidentUpdated,  // INCIDENT_UPDATED — trigger auto-refresh di console
-  forceLogout,      // FORCE_LOGOUT — sesi digantikan (tidak relevan untuk console, tapi disiapkan)
+  incidentUpdated, // INCIDENT_UPDATED — trigger auto-refresh di console
+  forceLogout, // FORCE_LOGOUT — sesi digantikan (tidak relevan untuk console, tapi disiapkan)
   connected,
   unknown,
 }
@@ -32,15 +32,15 @@ class WsMessage {
   factory WsMessage.fromRaw(Map<String, dynamic> json) {
     final eventStr = json['event'] as String? ?? '';
     final event = switch (eventStr) {
-      'INCOMING_EMERGENCY'      => WsEvent.incomingEmergency,
-      'SOS_CANCELLED'           => WsEvent.sosCancelled,
-      'RESCUE_ACCEPTED'         => WsEvent.rescueAccepted,
-      'LOCATION_UPDATE'         => WsEvent.locationUpdate,
-      'VOLUNTEER_LOCATION_UPDATE'=> WsEvent.volunteerLocationUpdate,
-      'SOS_STATUS_UPDATE'       => WsEvent.sosStatusUpdate,
-      'INCIDENT_UPDATED'        => WsEvent.incidentUpdated,
-      'FORCE_LOGOUT'            => WsEvent.forceLogout,
-      _                         => WsEvent.unknown,
+      'INCOMING_EMERGENCY' => WsEvent.incomingEmergency,
+      'SOS_CANCELLED' => WsEvent.sosCancelled,
+      'RESCUE_ACCEPTED' => WsEvent.rescueAccepted,
+      'LOCATION_UPDATE' => WsEvent.locationUpdate,
+      'VOLUNTEER_LOCATION_UPDATE' => WsEvent.volunteerLocationUpdate,
+      'SOS_STATUS_UPDATE' => WsEvent.sosStatusUpdate,
+      'INCIDENT_UPDATED' => WsEvent.incidentUpdated,
+      'FORCE_LOGOUT' => WsEvent.forceLogout,
+      _ => WsEvent.unknown,
     };
     return WsMessage(
       event: event,
@@ -105,7 +105,9 @@ class WsService extends ChangeNotifier {
 
   void _onData(dynamic raw) async {
     try {
-      final json = await Isolate.run(() => jsonDecode(raw as String) as Map<String, dynamic>);
+      final json = await Isolate.run(
+        () => jsonDecode(raw as String) as Map<String, dynamic>,
+      );
       final msg = WsMessage.fromRaw(json);
 
       switch (msg.event) {

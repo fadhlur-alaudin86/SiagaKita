@@ -148,9 +148,11 @@ class _InstansiShellState extends State<InstansiShell> {
           .where((inc) => !_readSosIds.contains(inc.id))
           .length;
       _unreadReportCount = reports
-          .where((r) =>
-              (r.status == 'sent' || r.status == 'handled') &&
-              !_readReportIds.contains(r.id))
+          .where(
+            (r) =>
+                (r.status == 'sent' || r.status == 'handled') &&
+                !_readReportIds.contains(r.id),
+          )
           .length;
       // Alarm hanya berhenti bila semua SOS aktif sudah dibuka detail-nya
       if (_unreadSosCount == 0) AudioService.stop();
