@@ -197,7 +197,10 @@ class MissionActiveCard extends StatelessWidget {
                 child: _hasValidCoords
                     ? Text(
                         '${'Lokasi korban: '.tr(context)}${mission.reporterLatitude.toStringAsFixed(5)}, ${mission.reporterLongitude.toStringAsFixed(5)}',
-                        style: const TextStyle(color: Colors.white54, fontSize: 11),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 11,
+                        ),
                       )
                     : Row(
                         children: [
@@ -252,7 +255,10 @@ class MissionActiveCard extends StatelessWidget {
                 icon: const Icon(Icons.check_circle, size: 18),
                 label: Text(
                   'SELESAIKAN MISI'.tr(context),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
                 onPressed: onComplete,
               ),
@@ -269,7 +275,11 @@ class MissionActiveCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.hourglass_top, color: Colors.amber, size: 16),
+                  const Icon(
+                    Icons.hourglass_top,
+                    color: Colors.amber,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Menunggu konfirmasi instansi'.tr(context),

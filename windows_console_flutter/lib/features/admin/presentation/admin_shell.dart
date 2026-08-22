@@ -77,7 +77,10 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget _resolvePage() => switch (_active) {
     AdminMenu.kyc => KycRelawanPage(token: widget.token),
-    AdminMenu.users => UserManagementPage(token: widget.token, role: widget.role),
+    AdminMenu.users => UserManagementPage(
+      token: widget.token,
+      role: widget.role,
+    ),
     AdminMenu.pendaftaran => PendaftaranAkunPage(
       token: widget.token,
       role: widget.role,
@@ -342,7 +345,7 @@ class _AdminTopHeader extends StatelessWidget {
   const _AdminTopHeader({required this.title, required this.role});
   final String title;
   final String role;
-  
+
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -391,7 +394,11 @@ class _AdminTopHeader extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle, color: Colors.white70, size: 28),
+            icon: const Icon(
+              Icons.account_circle,
+              color: Colors.white70,
+              size: 28,
+            ),
             color: const Color(0xFF1E293B),
             offset: const Offset(0, 40),
             itemBuilder: (context) => [

@@ -76,15 +76,16 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       );
       if (mounted) {
         setState(() {
-          _sosHistory = history
-              .where(
-                (s) =>
-                    s.status != 'grace_period' &&
-                    s.status != 'broadcasting' &&
-                    s.status != 'handled',
-              )
-              .toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _sosHistory =
+              history
+                  .where(
+                    (s) =>
+                        s.status != 'grace_period' &&
+                        s.status != 'broadcasting' &&
+                        s.status != 'handled',
+                  )
+                  .toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           _isLoadingSOS = false;
         });
       }
@@ -465,10 +466,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
               children: [
                 // 1. Chip Urgensi (Selalu tampil, '-' jika null)
                 Expanded(
-                  child: _chip(
-                    report.getUrgencyLabel(context),
-                    urgencyColor,
-                  ),
+                  child: _chip(report.getUrgencyLabel(context), urgencyColor),
                 ),
                 const SizedBox(width: 6),
 
@@ -519,8 +517,9 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor:
-                        report.status == 'failed' ? Colors.blue : Colors.red,
+                    foregroundColor: report.status == 'failed'
+                        ? Colors.blue
+                        : Colors.red,
                     side: BorderSide(
                       color: report.status == 'failed'
                           ? Colors.blue

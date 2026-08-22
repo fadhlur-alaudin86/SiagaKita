@@ -557,9 +557,7 @@ class _ReportHistoryTabState extends State<_ReportHistoryTab> {
       if (_filterType != 'Semua') {
         final typeKey = _typeLabelToKey[_filterType];
         if (typeKey != null) {
-          filtered = filtered
-              .where((r) => r.incidentType == typeKey)
-              .toList();
+          filtered = filtered.where((r) => r.incidentType == typeKey).toList();
         }
       }
 

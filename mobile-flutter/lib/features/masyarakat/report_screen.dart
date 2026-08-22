@@ -162,7 +162,7 @@ class _ReportScreenState extends State<ReportScreen> {
     final status = source == ImageSource.camera
         ? await Permission.camera.request()
         : await Permission.photos.request();
-        
+
     if (!status.isGranted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -433,10 +433,13 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _submitReport() async {
-    if (_currentLatLng == null || (_currentLatLng!.latitude == 0 && _currentLatLng!.longitude == 0)) {
+    if (_currentLatLng == null ||
+        (_currentLatLng!.latitude == 0 && _currentLatLng!.longitude == 0)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lokasi belum terdeteksi. Pastikan GPS aktif.'.tr(context)),
+          content: Text(
+            'Lokasi belum terdeteksi. Pastikan GPS aktif.'.tr(context),
+          ),
           backgroundColor: Colors.red,
         ),
       );

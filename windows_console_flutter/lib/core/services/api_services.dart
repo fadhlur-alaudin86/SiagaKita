@@ -399,14 +399,14 @@ class AdminApiService {
 
   // ─── Stats ────────────────────────────────────────────────────────────────
 
-  static Future<StatsModel> getStats(String token, {String period = 'month'}) async {
-    final uri = Uri.parse(ApiConstants.adminStats).replace(
-      queryParameters: {'period': period},
-    );
-    final resp = await http.get(
-      uri,
-      headers: AuthService.headers(token),
-    );
+  static Future<StatsModel> getStats(
+    String token, {
+    String period = 'month',
+  }) async {
+    final uri = Uri.parse(
+      ApiConstants.adminStats,
+    ).replace(queryParameters: {'period': period});
+    final resp = await http.get(uri, headers: AuthService.headers(token));
     if (resp.statusCode != 200) return StatsModel.empty();
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     return StatsModel.fromJson(body['data'] as Map<String, dynamic>);

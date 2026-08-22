@@ -100,19 +100,13 @@ class _WaVerificationScreenState extends State<WaVerificationScreen> {
     });
 
     try {
-      await UserService.verifyPhoneOTP(
-        widget.accessToken,
-        _currentPhone,
-        otp,
-      );
+      await UserService.verifyPhoneOTP(widget.accessToken, _currentPhone, otp);
 
       await UserService.refreshCurrentUser(widget.accessToken);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Nomor WhatsApp berhasil diverifikasi!'.tr(context),
-            ),
+            content: Text('Nomor WhatsApp berhasil diverifikasi!'.tr(context)),
             backgroundColor: Colors.green,
           ),
         );

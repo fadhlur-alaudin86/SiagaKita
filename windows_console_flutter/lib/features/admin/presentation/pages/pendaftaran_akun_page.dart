@@ -166,11 +166,16 @@ class _FormInstansiState extends State<_FormInstansi> {
   Future<void> _searchLocation() async {
     final query = _searchCtrl.text.trim();
     if (query.isEmpty) return;
-    
+
     setState(() => _loading = true);
     try {
-      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=1');
-      final res = await http.get(url, headers: {'User-Agent': 'com.siagakita.console'});
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=1',
+      );
+      final res = await http.get(
+        url,
+        headers: {'User-Agent': 'com.siagakita.console'},
+      );
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
         if (data.isNotEmpty) {
@@ -190,15 +195,27 @@ class _FormInstansiState extends State<_FormInstansi> {
 
   Future<void> _reverseGeocode(LatLng point) async {
     try {
-      final url = Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=${point.latitude}&lon=${point.longitude}&zoom=10');
-      final res = await http.get(url, headers: {'User-Agent': 'com.siagakita.console'});
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?format=json&lat=${point.latitude}&lon=${point.longitude}&zoom=10',
+      );
+      final res = await http.get(
+        url,
+        headers: {'User-Agent': 'com.siagakita.console'},
+      );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final address = data['address'] as Map<String, dynamic>?;
         if (address != null) {
-          String city = address['city'] ?? address['town'] ?? address['county'] ?? address['state'] ?? '';
+          String city =
+              address['city'] ??
+              address['town'] ??
+              address['county'] ??
+              address['state'] ??
+              '';
           if (city.isNotEmpty) {
-            String code = city.replaceAll(RegExp(r'[^a-zA-Z]'), '').toUpperCase();
+            String code = city
+                .replaceAll(RegExp(r'[^a-zA-Z]'), '')
+                .toUpperCase();
             if (code.length > 3) {
               code = code.substring(0, 3);
             }
@@ -246,11 +263,17 @@ class _FormInstansiState extends State<_FormInstansi> {
             ),
             PopupMenuItem(
               value: 'fire',
-              child: Text('Pemadam Kebakaran', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'Pemadam Kebakaran',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             PopupMenuItem(
               value: 'medical',
-              child: Text('Medis / Rumah Sakit', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'Medis / Rumah Sakit',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             PopupMenuItem(
               value: 'sar',
@@ -266,16 +289,13 @@ class _FormInstansiState extends State<_FormInstansi> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  switch (_type) {
-                    'police' => 'Kepolisian',
-                    'fire' => 'Pemadam Kebakaran',
-                    'medical' => 'Medis / Rumah Sakit',
-                    'sar' => 'Tim SAR',
-                    _ => _type,
-                  },
-                  style: const TextStyle(color: Colors.white),
-                ),
+                Text(switch (_type) {
+                  'police' => 'Kepolisian',
+                  'fire' => 'Pemadam Kebakaran',
+                  'medical' => 'Medis / Rumah Sakit',
+                  'sar' => 'Tim SAR',
+                  _ => _type,
+                }, style: const TextStyle(color: Colors.white)),
                 const Icon(Icons.arrow_drop_down, color: Colors.white54),
               ],
             ),
@@ -298,7 +318,10 @@ class _FormInstansiState extends State<_FormInstansi> {
                   hintStyle: const TextStyle(color: Colors.white24),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.05),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -313,8 +336,13 @@ class _FormInstansiState extends State<_FormInstansi> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1F2937),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Icon(Icons.search, size: 20),
             ),

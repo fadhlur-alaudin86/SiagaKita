@@ -54,7 +54,9 @@ class ReportModel {
       addressDetail: json['address_detail'],
       status: json['status'] ?? 'sent',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-      completedAt: json['completed_at'] != null ? DateTime.tryParse(json['completed_at']) : null,
+      completedAt: json['completed_at'] != null
+          ? DateTime.tryParse(json['completed_at'])
+          : null,
       photoPaths:
           (json['photo_paths'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -96,7 +98,9 @@ class ReportModel {
 
 class ReportService {
   static const String _baseUrl = ApiConfig.baseUrl;
-  static const _timeout = Duration(seconds: 60); // Upload foto butuh waktu lebih panjang (maks 3×2MB)
+  static const _timeout = Duration(
+    seconds: 60,
+  ); // Upload foto butuh waktu lebih panjang (maks 3×2MB)
 
   // ─── Submit Report with optional media ───────────────────────────────────────
   static Future<void> submitReport({
@@ -276,7 +280,9 @@ class ReportService {
           return [...offlineReports, ...serverReports];
         } catch (_) {}
       }
-      throw ReportException('Periksa koneksi internet. Gagal memuat laporan: $e');
+      throw ReportException(
+        'Periksa koneksi internet. Gagal memuat laporan: $e',
+      );
     }
   }
 
