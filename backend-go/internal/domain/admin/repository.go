@@ -25,7 +25,9 @@ func (r *Repository) GetPendingKYC() ([]VolunteerKYC, error) {
 		UserID              string    `gorm:"column:user_id"`
 		Email               string    `gorm:"column:email"`
 		FullName            *string   `gorm:"column:full_name"`
+		PhoneNumber         *string   `gorm:"column:phone_number"`
 		NIK                 *string   `gorm:"column:nik"`
+		NIKPhotoURL         *string   `gorm:"column:nik_photo_url"`
 		VolunteerExperience *string   `gorm:"column:volunteer_experience"`
 		SubmittedAt         time.Time `gorm:"column:submitted_at"`
 	}
@@ -33,14 +35,15 @@ func (r *Repository) GetPendingKYC() ([]VolunteerKYC, error) {
 	var rows []row
 	err := r.db.Raw(`
 		SELECT DISTINCT u.id AS user_id, u.email,
-		       p.full_name, p.nik, p.volunteer_experience,
+		       p.full_name, p.phone_number, p.nik, p.kyc_ktp_url AS nik_photo_url,
+		       p.volunteer_experience,
 		       MIN(vc.created_at) AS submitted_at
 		FROM users u
 		JOIN user_profiles p ON p.user_id = u.id
 		JOIN volunteer_certifications vc ON vc.user_id = u.id
 		WHERE vc.status = 'pending'
 		  AND u.deleted_at IS NULL
-		GROUP BY u.id, u.email, p.full_name, p.nik, p.volunteer_experience
+		GROUP BY u.id, u.email, p.full_name, p.phone_number, p.nik, p.kyc_ktp_url, p.volunteer_experience
 		ORDER BY submitted_at ASC
 	`).Scan(&rows).Error
 	if err != nil {
@@ -57,9 +60,12 @@ func (r *Repository) GetPendingKYC() ([]VolunteerKYC, error) {
 			UserID:              r2.UserID,
 			FullName:            r2.FullName,
 			Email:               r2.Email,
+			PhoneNumber:         r2.PhoneNumber,
 			NIK:                 r2.NIK,
+			NIKPhotoURL:         r2.NIKPhotoURL,
 			VolunteerExperience: r2.VolunteerExperience,
 			Certs:               certs,
+			KYCStatus:           "pending",
 			SubmittedAt:         r2.SubmittedAt,
 		})
 	}
@@ -96,7 +102,18 @@ func (r *Repository) getCertsForUser(userID, status string) ([]KYCCert, error) {
 // and upgrades their role from 'civilian' to 'volunteer'.
 func (r *Repository) ApproveKYC(userID, verifiedBy string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		// 1. Approve semua sertifikat pending
+		// 1. Cek apakah ada sertifikat pending untuk user ini
+		var count int64
+		if err := tx.Table("volunteer_certifications").
+			Where("user_id = ? AND status = 'pending'", userID).
+			Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		// 2. Approve semua sertifikat pending
 		if err := tx.Exec(`
 			UPDATE volunteer_certifications
 			SET status = 'approved', verified_by = ?
@@ -104,15 +121,23 @@ func (r *Repository) ApproveKYC(userID, verifiedBy string) error {
 		`, verifiedBy, userID).Error; err != nil {
 			return err
 		}
-		// 2. Tandai profil sebagai relawan terverifikasi
+		// 3. Tandai profil sebagai relawan terverifikasi
 		if err := tx.Exec(`
 			UPDATE user_profiles SET is_verified_volunteer = TRUE WHERE user_id = ?
 		`, userID).Error; err != nil {
 			return err
 		}
-		// 3. Upgrade role: civilian → volunteer (guard agar tidak overwrite role lain)
-		return tx.Exec(`
+		// 4. Upgrade role: civilian → volunteer (guard agar tidak overwrite role lain)
+		if err := tx.Exec(`
 			UPDATE users SET role = 'volunteer' WHERE id = ? AND role = 'civilian'
+		`, userID).Error; err != nil {
+			return err
+		}
+		// 5. Inisialisasi baris volunteer_reputation jika belum ada
+		return tx.Exec(`
+			INSERT INTO volunteer_reputation (user_id, exp_points, rank_id, total_rescues)
+			VALUES (?, 0, 1, 0)
+			ON CONFLICT (user_id) DO NOTHING
 		`, userID).Error
 	})
 }
@@ -120,6 +145,17 @@ func (r *Repository) ApproveKYC(userID, verifiedBy string) error {
 // RejectKYC sets all pending certs for a user to 'rejected'.
 func (r *Repository) RejectKYC(userID, verifiedBy, reason string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Cek apakah ada sertifikat pending untuk user ini
+		var count int64
+		if err := tx.Table("volunteer_certifications").
+			Where("user_id = ? AND status = 'pending'", userID).
+			Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
 		// Store reason in a future 'rejection_reason' column if needed.
 		// For now we just mark rejected + log who did it.
 		_ = reason // will be used when we add rejection_reason column
