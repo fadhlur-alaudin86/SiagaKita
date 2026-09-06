@@ -108,17 +108,28 @@ API Components : docs/api/components/
                    securitySchemes.yaml        ← BearerAuth JWT definition
 Swagger UI     : http://localhost:8080/docs    ← Dev only (GO_ENV=development)
 DB Schema Path : docs/DATABASE_SCHEMA.md       ← Schema v12 active, read before migrations
+Visual ERD     : docs/design/database-erd.md   ← Interactive Mermaid ERD (15 tables)
 ```
 
 > **Rule for Step 2:** Append new endpoints to `docs/api/paths/<domain>.yaml`.
 > Add new schemas to `docs/api/components/schemas.yaml` via `$ref`.
 > Never create a standalone per-feature YAML file.
 
+## System Architecture & Visual Design
+
+```
+Catalog Root   : docs/design/README.md         ← Central architecture and visual design index
+Database ERD   : docs/design/database-erd.md   ← Living Mermaid ERD (Update on migration)
+Use Cases      : docs/design/use-case-diagrams.md ← Actor roles & functional scope
+Activity Flows : docs/design/activity-diagrams.md ← SOS lifecycle, reports & KYC states
+```
+
 ## Database
 
 ```
 Engine   : PostgreSQL 15
 Schema   : docs/DATABASE_SCHEMA.md (Always read before creating migrations)
+Visual   : docs/design/database-erd.md (Always sync when schema changes)
 Version  : Schema v12 (Active)
 ```
 

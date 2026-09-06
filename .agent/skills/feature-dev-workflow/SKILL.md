@@ -20,10 +20,10 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | -2 | **Discovery** — Explore codebase, inspect target domain, ask **5 clarifying questions**. Formulate plan and get user confirmation. | Discovery notes, 5 Q&A, Plan (in memory) |
 | -1 | **Resolve Backlog** — Match/create GitHub Issue. Create `docs/backlog/features/F-XXX-name.md` using full template. | Feature log file |
 | 0 | **Branch** — Create `feature/F-XXX-name` from `dev`. Update issue label to `status: in-progress`. Add comment to issue. | Git branch |
-| 1 | **Read Mapping** — Inspect Go domain handler, DB schema, API endpoint, and Flutter screens. | Discovery notes |
+| 1 | **Read Mapping** — Inspect Go domain handler, DB schema (`docs/DATABASE_SCHEMA.md`), ERD (`docs/design/database-erd.md`), Activity/State diagrams (`docs/design/activity-diagrams.md`), API endpoints, and Flutter screens. | Discovery notes |
 | 2 | **API Contract** — Extend `docs/api/paths/<domain>.yaml` with new endpoint(s) (OpenAPI 3.0). Add new schemas to `docs/api/components/schemas.yaml` if needed. Verify at `http://localhost:8080/docs`. | Updated domain YAML |
-| 3 | **DB Migration** — Read `docs/DATABASE_SCHEMA.md`, write SQL migration in `backend-go/migrations/`. Update schema docs. | SQL migration + updated schema |
-| 4 | **Backend Implementation** — Implement handler, service, repository in `backend-go/internal/domain/<name>/`. | Go source files |
+| 3 | **DB Migration** — Read `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md`, write SQL migration in `backend-go/migrations/`. Update schema docs AND update Mermaid ERD. | SQL migration + updated schema + updated ERD |
+| 4 | **Backend Implementation** — Implement handler, service, repository in `backend-go/internal/domain/<name>/`. If lifecycle states or actor capabilities change, update `docs/design/activity-diagrams.md` or `use-case-diagrams.md`. | Go source files + updated diagrams |
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
 | 6 | **Tests** — Write Go unit tests (`_test.go`) + Flutter tests. Document test outcomes in feature log. | Test files + test docs |
 | 7 | **CI + Review** — Ensure CI passes. Update issue label to `status: in-review`. Open PR targeting `dev`. | Pull Request |
@@ -41,8 +41,8 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 6. **Resume Protocol** — If interrupted or handing off, read feature log first → resume at first pending ⬜ step.
 
 ### Backend (Go Fiber)
-7. **Read Schema First** — Read `docs/DATABASE_SCHEMA.md` before writing migrations.
-8. **Update Schema After Migration** — Update `docs/DATABASE_SCHEMA.md` whenever schema changes.
+7. **Read Schema First** — Read `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md` before writing migrations.
+8. **Update Schema & ERD After Migration** — Update `docs/DATABASE_SCHEMA.md` AND `docs/design/database-erd.md` whenever database schema changes.
 9. **YAGNI** — Do not add abstractions until explicitly needed.
 10. **Max 3 Layers** — handler → service → repository. No deeper.
 11. **Raw SQL** — No ORM. Use raw SQL via `pgx` or `database/sql`.
@@ -56,23 +56,29 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 17. **Swagger UI is dev-only** — The `/docs` route is conditionally mounted only when `GO_ENV != production`. Never remove this guard.
 18. **Keep contracts accurate** — If a backend handler changes its request/response shape, update the corresponding OpenAPI YAML in the same PR/commit.
 
+### System Design & Living Documentation
+19. **Living ERD Synchronization** — Any migration that adds/modifies tables, columns, or foreign keys MUST update both `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md`.
+20. **Living Activity & State Diagrams** — If a feature alters an incident lifecycle status (e.g. `incidents.status` or `incident_responses.status`), grace period logic, or mission flows, you MUST update `docs/design/activity-diagrams.md`.
+21. **Living Use Case Diagrams** — If actor role capabilities or new administrative use cases are introduced, you MUST update `docs/design/use-case-diagrams.md`.
+
 ### Flutter
-14. **Responsive Utilities** — Use `lib/core/utils/responsive.dart` for UI scaling.
-15. **Session-Aware** — Use `SessionService` for persistent session management.
-16. **Offline-Resilient** — Utilize `OfflineService` for operations needing offline support.
-17. **RepaintBoundary** — Wrap heavy list or chart widgets in `RepaintBoundary`.
+22. **Responsive Utilities** — Use `lib/core/utils/responsive.dart` for UI scaling.
+23. **Session-Aware** — Use `SessionService` for persistent session management.
+24. **Offline-Resilient** — Utilize `OfflineService` for operations needing offline support.
+25. **RepaintBoundary** — Wrap heavy list or chart widgets in `RepaintBoundary`.
 
 ### Testing
-18. **Unit Tests per Handler** — Cover 4 mandatory scenarios: success, empty result, invalid input, DB error.
-19. **Isolated Tests** — No shared state, fast (< 1s per file).
-20. **Update Feature Log** — Record test command and status in feature log.
+26. **Unit Tests per Handler** — Cover 4 mandatory scenarios: success, empty result, invalid input, DB error.
+27. **Isolated Tests** — No shared state, fast (< 1s per file).
+28. **Update Feature Log** — Record test command and status in feature log.
 
 ### GitHub Sync & Merge Strategy
-21. **Step 0 → in-progress**: `gh issue edit <N> --add-label "status: in-progress"` + explanatory comment when starting work.
-22. **Step 7 → in-review**: Opening a PR to `dev` automatically triggers `issue-status-labeler.yml` to update the linked issue to `status: in-review` and post a comment.
-23. **Step 8 → Done**: Merging a PR into `dev` automatically triggers `issue-status-labeler.yml` to resolve and close linked issues.
-24. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
-25. **PR to `dev` = Squash Merge (Automated by `auto-merge-dev.yml`)** — Once a PR receives 1 Approval Review and passes CI checks, `auto-merge-dev.yml` automatically executes a **Squash Merge** into `dev` and deletes the feature branch.
+29. **Step 0 → in-progress**: `gh issue edit <N> --add-label "status: in-progress"` + explanatory comment when starting work.
+30. **Step 7 → in-review**: Opening a PR to `dev` automatically triggers `issue-status-labeler.yml` to update the linked issue to `status: in-review` and post a comment.
+31. **Step 8 → Done**: Merging a PR into `dev` automatically triggers `issue-status-labeler.yml` to resolve and close linked issues.
+32. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
+33. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
+34. **PR to `main` = Rebase Merge MANDATORY** — All PRs from `dev` targeting `main` MUST use **Rebase Merge** to preserve a clean, linear history for automated release notes.
 
 ## Feature Log Template
 
@@ -140,4 +146,18 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | | | |
+
+## Outputs Checklist
+
+| # | Artifact | Status |
+|---|----------|:------:|
+| 1 | Feature log (`docs/backlog/features/F-XXX-name.md`) | ⬜ |
+| 2 | API Contract (`docs/api/paths/<domain>.yaml`) | ⬜ |
+| 3 | DB Migration (`backend-go/migrations/NNN_*.sql`) | ⬜ |
+| 4 | Updated `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md` | ⬜ |
+| 5 | Updated `docs/design/activity-diagrams.md` (if workflow/state changed) | ⬜ |
+| 6 | Backend code (`backend-go/internal/domain/<name>/`) | ⬜ |
+| 7 | Flutter code (`mobile-flutter/` / `windows_console_flutter/`) | ⬜ |
+| 8 | Unit & widget tests (`*_test.go`, `*_test.dart`) | ⬜ |
+| 9 | Pull request to `dev` (Squash Merge) | ⬜ |
 ```
