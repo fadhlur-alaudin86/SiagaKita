@@ -181,3 +181,5 @@ gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
 5. **Do not close issue without merge** — issues are only closed after the PR merges to `dev`.
 6. **F-XXX numbering** — use GitHub issue number as ID. Title format is always `F-<number>: <description>`.
 7. **Mandatory labels** — every issue must have at least 1 type label + 1 component label + 1 priority label.
+8. **Checklist & Acceptance Criteria Synchronization** — When completing tasks or closing an issue, the agent MUST update all completed `- [ ]` checkboxes to `- [x]` in the issue body using `gh issue edit <number> --body "$UPDATED_BODY"`. Never leave finished tasks unchecked.
+9. **Parent Tracker vs Child Issue** — If an issue is a sub-task under a parent issue, do not close the parent issue when the sub-task finishes. Instead, mark off the corresponding subtask checkbox in the parent issue body.

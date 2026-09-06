@@ -69,10 +69,17 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 
 ### GitHub Sync & Merge Strategy
 21. **Step 0 → in-progress**: `gh issue edit <N> --add-label "status: in-progress"` + explanatory comment when starting work.
-22. **Step 7 → in-review**: Opening a PR to `dev` automatically triggers `issue-status-labeler.yml` to update the linked issue to `status: in-review` and post a comment.
-23. **Step 8 → Done**: Merging a PR into `dev` automatically triggers `issue-status-labeler.yml` to resolve and close linked issues.
+22. **Step 7 → in-review & PR Linking**: Opening a PR to `dev` automatically triggers `issue-status-labeler.yml` to update the linked issue to `status: in-review`.
+    - **Closing Issue**: In the PR description, use `Closes #<child_issue>` for the specific sub-task being completed.
+    - **Parent Tracker Issue**: If the task belongs to a larger tracker issue, specify `Parent Issue: #<parent_issue>` so the workflow does not prematurely close the parent issue.
+23. **Step 8 → Done & Checklist Synchronization**:
+    - **Checklist Sync**: The agent MUST inspect the issue with `gh issue view <N> --json body` and mark all completed task and acceptance criteria checkboxes from `- [ ]` to `- [x]` via `gh issue edit <N> --body "..."`.
+    - **Parent Issue Checklist**: If working under a parent tracker issue, also mark off the completed subtask checkbox (`- [ ]` to `- [x]`) in the parent issue body.
+    - **Close Issue**: Verify the child issue is closed (`gh issue close <N> --reason completed`) with an explanatory comment.
+    - **Close Log**: Mark all steps ✅ in the local feature log `docs/backlog/features/F-XXX-name.md`.
 24. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
-25. **PR to `dev` = Squash Merge (Automated by `auto-merge-dev.yml`)** — Once a PR receives 1 Approval Review and passes CI checks, `auto-merge-dev.yml` automatically executes a **Squash Merge** into `dev` and deletes the feature branch.
+25. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
+26. **PR to `main` = Rebase Merge MANDATORY** — All PRs from `dev` targeting `main` MUST use **Rebase Merge** to preserve a clean, linear history for automated release notes.
 
 ## Feature Log Template
 
