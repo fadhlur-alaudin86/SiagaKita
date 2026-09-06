@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 // Handler holds HTTP handlers for the admin domain.
@@ -24,22 +26,53 @@ func NewHandler(svc *Service, cfg *config.Config) *Handler {
 }
 
 // ─── KYC Relawan ──────────────────────────────────────────────────────────────
-
+ 
 // GET /api/v1/admin/volunteers/pending  [AdminOnly]
 func (h *Handler) GetPendingKYC(c *fiber.Ctx) error {
 	list, err := h.svc.GetPendingKYC()
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
+
+	pageStr := c.Query("page")
+	limitStr := c.Query("limit")
+	if pageStr != "" || limitStr != "" {
+		page, _ := strconv.Atoi(pageStr)
+		if page < 1 {
+			page = 1
+		}
+		limit, _ := strconv.Atoi(limitStr)
+		if limit < 1 {
+			limit = 20
+		}
+		total := len(list)
+		c.Set("X-Total-Count", strconv.Itoa(total))
+		c.Set("X-Page", strconv.Itoa(page))
+		c.Set("X-Limit", strconv.Itoa(limit))
+
+		start := (page - 1) * limit
+		if start >= total {
+			return utils.SuccessResponse(c, []VolunteerKYC{})
+		}
+		end := start + limit
+		if end > total {
+			end = total
+		}
+		return utils.SuccessResponse(c, list[start:end])
+	}
+
 	return utils.SuccessResponse(c, list)
 }
 
 // POST /api/v1/admin/volunteers/:id/approve  [AdminOnly]
 func (h *Handler) ApproveKYC(c *fiber.Ctx) error {
 	targetUserID := c.Params("id")
-	callerID := c.Locals("userID").(string)
+	callerID, _ := c.Locals("userID").(string)
 
 	if err := h.svc.ApproveKYC(targetUserID, callerID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.ErrorResponse(c, fiber.StatusNotFound, "Data relawan atau pengajuan sertifikat pending tidak ditemukan")
+		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{
@@ -50,13 +83,16 @@ func (h *Handler) ApproveKYC(c *fiber.Ctx) error {
 // POST /api/v1/admin/volunteers/:id/reject  [AdminOnly]
 func (h *Handler) RejectKYC(c *fiber.Ctx) error {
 	targetUserID := c.Params("id")
-	callerID := c.Locals("userID").(string)
+	callerID, _ := c.Locals("userID").(string)
 
 	var req RejectKYCRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
 	if err := h.svc.RejectKYC(targetUserID, callerID, req.Reason); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.ErrorResponse(c, fiber.StatusNotFound, "Data relawan atau pengajuan sertifikat pending tidak ditemukan")
+		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{
