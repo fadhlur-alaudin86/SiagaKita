@@ -1,12 +1,20 @@
 // Konfigurasi API untuk desktop app.
-// Ganti _host untuk pindah antara local dan production.
+// Mendukung multi-environment via --dart-define-from-file (.env.dev atau .env.prod)
+// serta fallback backward-compatible ke API_HOST.
 class ApiConstants {
-  // ── GANTI DI SINI jika server berganti ──────────────────────────────
-  static const String _host = String.fromEnvironment('API_HOST');
-  // ────────────────────────────────────────────────────────────────────
+  static const String _rawBaseUrl = String.fromEnvironment('API_BASE_URL');
+  static const String _rawWsUrl = String.fromEnvironment('WS_BASE_URL');
+  static const String _rawHost = String.fromEnvironment('API_HOST');
 
-  static const String baseUrl = 'http://$_host:8080/api/v1';
-  static const String wsUrl = 'ws://$_host:8081/v1/ws/connect';
+  static const String _fallbackHost = _rawHost == '' ? 'localhost' : _rawHost;
+
+  static const String baseUrl = _rawBaseUrl != ''
+      ? _rawBaseUrl
+      : 'http://$_fallbackHost:8080/api/v1';
+
+  static const String wsUrl = _rawWsUrl != ''
+      ? _rawWsUrl
+      : 'ws://$_fallbackHost:8081/v1/ws/connect';
 
   // Auth
   static const String login = '$baseUrl/auth/console/login';

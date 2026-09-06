@@ -7,6 +7,8 @@
 .env.local
 .env.development
 .env.production
+.env.dev
+.env.prod
 # Izinkan file example sebagai template untuk tim
 !.env.example
 !.env-example
@@ -17,7 +19,10 @@
 # Kredensial infrastruktur spesifik
 infrastructure/.env
 infrastructure/.env.*
+infrastructure/.env.dev
+infrastructure/.env.prod
 !infrastructure/.env.example
+
 
 # ==============================================================================
 # 2. INFRASTRUKTUR (DOCKER & DATABASE)
