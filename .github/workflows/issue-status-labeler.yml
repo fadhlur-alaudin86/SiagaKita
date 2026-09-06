@@ -7,6 +7,9 @@ on:
       - dev
   pull_request_review:
     types: [submitted]
+  push:
+    branches:
+      - dev
 
 jobs:
   update-issue-status:
@@ -18,8 +21,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Process Issue Status Updates
+      - name: Process Issue Status & Checklists
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
@@ -32,44 +37,103 @@ jobs:
           REVIEWER: ${{ github.event.review.user.login }}
           REPO: ${{ github.repository }}
         run: |
-          # Extract issue numbers using regex from title and body
-          FULL_TEXT="$PR_TITLE $PR_BODY"
-          ISSUE_NUMS=$(echo "$FULL_TEXT" | grep -oE '#[0-9]+' | tr -d '#' | sort -u || true)
+          python3 - << 'EOF'
+          import os
+          import re
+          import subprocess
+          import json
 
-          if [ -z "$ISSUE_NUMS" ]; then
-            echo "No linked issues found in PR description."
-            exit 0
-          fi
+          repo = os.environ.get("REPO")
+          event_name = os.environ.get("EVENT_NAME")
+          pr_action = os.environ.get("PR_ACTION", "")
+          pr_number = os.environ.get("PR_NUMBER", "")
+          pr_title = os.environ.get("PR_TITLE", "")
+          pr_body = os.environ.get("PR_BODY", "")
+          pr_merged = os.environ.get("PR_MERGED", "") == "true"
+          review_state = os.environ.get("REVIEW_STATE", "")
+          reviewer = os.environ.get("REVIEWER", "")
 
-          echo "Found linked issue(s): $ISSUE_NUMS"
+          def run_cmd(cmd):
+              res = subprocess.run(cmd, shell=True, text=True, capture_output=True)
+              return res.returncode, res.stdout.strip(), res.stderr.strip()
 
-          for ISSUE_NUM in $ISSUE_NUMS; do
-            if [ "$ISSUE_NUM" = "$PR_NUMBER" ]; then
-              continue
-            fi
+          full_text = ""
 
-            if ! gh issue view "$ISSUE_NUM" --repo "$REPO" >/dev/null 2>&1; then
-              echo "Issue #$ISSUE_NUM not found, skipping."
-              continue
-            fi
+          if event_name == "push":
+              code, commit_msg, _ = run_cmd("git log -1 --pretty=%B")
+              full_text = commit_msg
+              pr_match = re.search(r'\(#(\d+)\)', commit_msg)
+              if pr_match and not pr_number:
+                  pr_number = pr_match.group(1)
+              pr_merged = True
+          else:
+              full_text = f"{pr_title}\n{pr_body}"
 
-            echo "Processing Issue #$ISSUE_NUM for event $EVENT_NAME ($PR_ACTION)..."
+          closing_pattern = re.compile(r'(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s*:?\s*#(\d+)', re.IGNORECASE)
+          parent_pattern = re.compile(r'(?:parent|parent\s+issue|ref|refs|related\s+to)\s*:?\s*#(\d+)', re.IGNORECASE)
 
-            if [ "$EVENT_NAME" = "pull_request" ]; then
-              if [ "$PR_ACTION" = "opened" ] || [ "$PR_ACTION" = "reopened" ] || [ "$PR_ACTION" = "ready_for_review" ]; then
-                echo "Updating Issue #$ISSUE_NUM to status: in-review"
-                gh issue edit "$ISSUE_NUM" --repo "$REPO" --add-label "status: in-review" --remove-label "status: in-progress" || true
-                gh issue comment "$ISSUE_NUM" --repo "$REPO" --body "🔄 **Status Update:** PR #$PR_NUMBER ($PR_TITLE) has been submitted for review." || true
+          closing_issues = set(closing_pattern.findall(full_text))
+          parent_issues = set(parent_pattern.findall(full_text))
+          closing_issues = closing_issues - parent_issues
 
-              elif [ "$PR_ACTION" = "closed" ] && [ "$PR_MERGED" = "true" ]; then
-                echo "Closing Issue #$ISSUE_NUM after merge of PR #$PR_NUMBER"
-                gh issue comment "$ISSUE_NUM" --repo "$REPO" --body "🎉 **Status Update:** PR #$PR_NUMBER was merged into \`dev\`. Resolving issue." || true
-                gh issue close "$ISSUE_NUM" --repo "$REPO" --reason completed || true
-              fi
+          print(f"Event: {event_name}, Action: {pr_action}, PR: #{pr_number}")
+          print(f"Closing issues: {closing_issues}")
+          print(f"Parent issues: {parent_issues}")
 
-            elif [ "$EVENT_NAME" = "pull_request_review" ] && [ "$REVIEW_STATE" = "approved" ]; then
-              echo "Updating Issue #$ISSUE_NUM to status: ready"
-              gh issue edit "$ISSUE_NUM" --repo "$REPO" --add-label "status: ready" --remove-label "status: in-review" || true
-              gh issue comment "$ISSUE_NUM" --repo "$REPO" --body "✅ **Status Update:** PR #$PR_NUMBER has been approved by @$REVIEWER and is ready to merge." || true
-            fi
-          done
+          # Process closing issues
+          for issue_num in closing_issues:
+              if issue_num == pr_number:
+                  continue
+              code, out, _ = run_cmd(f'gh issue view "{issue_num}" --repo "{repo}" --json state,body')
+              if code != 0:
+                  print(f"Issue #{issue_num} not found, skipping.")
+                  continue
+              
+              issue_data = json.loads(out)
+              is_open = issue_data.get("state") == "OPEN"
+              body = issue_data.get("body", "")
+
+              if event_name == "pull_request":
+                  if pr_action in ["opened", "reopened", "ready_for_review"]:
+                      print(f"Setting issue #{issue_num} to status: in-review")
+                      run_cmd(f'gh issue edit "{issue_num}" --repo "{repo}" --add-label "status: in-review" --remove-label "status: in-progress"')
+                      run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🔄 **Status Update:** PR #{pr_number} ({pr_title}) has been submitted for review."')
+                  
+                  elif pr_action == "closed" and pr_merged:
+                      if is_open:
+                          print(f"Auto-completing checklists and closing #{issue_num}")
+                          updated_body = re.sub(r'(\*|-)?\s*\[\s*\]', lambda m: m.group(0).replace('[ ]', '[x]').replace('[]', '[x]'), body)
+                          if updated_body != body:
+                              p = subprocess.Popen(['gh', 'issue', 'edit', issue_num, '--repo', repo, '--body', updated_body], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                              p.communicate()
+                          run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🎉 **Status Update:** PR #{pr_number} was merged into `dev`. All task checklists marked complete and issue resolved."')
+                          run_cmd(f'gh issue close "{issue_num}" --repo "{repo}" --reason completed')
+
+              elif event_name == "pull_request_review" and review_state == "approved":
+                  print(f"Setting issue #{issue_num} to status: ready")
+                  run_cmd(f'gh issue edit "{issue_num}" --repo "{repo}" --add-label "status: ready" --remove-label "status: in-review"')
+                  run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "✅ **Status Update:** PR #{pr_number} has been approved by @{reviewer} and is ready to merge."')
+
+              elif event_name == "push" and is_open:
+                  print(f"Push to dev detected! Auto-completing checklists and closing #{issue_num}")
+                  updated_body = re.sub(r'(\*|-)?\s*\[\s*\]', lambda m: m.group(0).replace('[ ]', '[x]').replace('[]', '[x]'), body)
+                  if updated_body != body:
+                      p = subprocess.Popen(['gh', 'issue', 'edit', issue_num, '--repo', repo, '--body', updated_body], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                      p.communicate()
+                  run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🎉 **Status Update:** Associated PR #{pr_number or ""} merged into `dev`. All tasks completed and issue resolved."')
+                  run_cmd(f'gh issue close "{issue_num}" --repo "{repo}" --reason completed')
+
+          # Process parent issues (Notification only, do NOT close or change status)
+          for parent_num in parent_issues:
+              if parent_num == pr_number:
+                  continue
+              code, _, _ = run_cmd(f'gh issue view "{parent_num}" --repo "{repo}"')
+              if code != 0:
+                  continue
+              
+              if event_name == "pull_request" and pr_action in ["opened", "ready_for_review"]:
+                  run_cmd(f'gh issue comment "{parent_num}" --repo "{repo}" --body "ℹ️ **Notice:** Sub-task PR #{pr_number} ({pr_title}) is currently under review for this parent issue."')
+              elif (event_name == "pull_request" and pr_action == "closed" and pr_merged) or event_name == "push":
+                  run_cmd(f'gh issue comment "{parent_num}" --repo "{repo}" --body "ℹ️ **Notice:** Sub-task PR #{pr_number or ""} has been merged into `dev`."')
+
+          EOF
