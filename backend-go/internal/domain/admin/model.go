@@ -9,9 +9,12 @@ type VolunteerKYC struct {
 	UserID              string    `json:"user_id"`
 	FullName            *string   `json:"full_name"`
 	Email               string    `json:"email"`
+	PhoneNumber         *string   `json:"phone_number,omitempty"`
 	NIK                 *string   `json:"nik,omitempty"`
+	NIKPhotoURL         *string   `json:"nik_photo_url,omitempty"`
 	VolunteerExperience *string   `json:"volunteer_experience,omitempty"`
 	Certs               []KYCCert `json:"certifications"`
+	KYCStatus           string    `json:"kyc_status"`
 	SubmittedAt         time.Time `json:"submitted_at"`
 }
 

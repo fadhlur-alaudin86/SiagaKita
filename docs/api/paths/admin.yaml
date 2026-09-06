@@ -37,12 +37,21 @@
                             nullable: true
                           email:
                             type: string
+                          phone_number:
+                            type: string
+                            nullable: true
                           nik:
+                            type: string
+                            nullable: true
+                          nik_photo_url:
                             type: string
                             nullable: true
                           volunteer_experience:
                             type: string
                             nullable: true
+                          kyc_status:
+                            type: string
+                            example: pending
                           certifications:
                             type: array
                             items:
