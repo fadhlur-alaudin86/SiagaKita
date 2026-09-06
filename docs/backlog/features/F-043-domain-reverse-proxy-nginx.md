@@ -56,3 +56,4 @@
 | 2026-09-06 | Menggunakan Nginx reverse proxy di `docker-compose.prod.yml` | Melindungi IP server asli, terminasi SSL/TLS, proteksi WAF headers, dan routing tunggal domain. |
 | 2026-09-06 | Menutup port publik 8080 & 8081 pada container backend | Mencegah akses bypass langsung tanpa enkripsi dan tanpa filter reverse proxy. |
 | 2026-09-06 | Menambahkan fallback backward-compatible di klien Flutter | Menjaga alur kerja developer lokal tetap lancar tanpa breaking change mendadak. |
+| 2026-09-06 | Menghapus infrastructure/.env lama, mengganti sepenuhnya dengan .env.dev dan .env.prod (diabaikan oleh .gitignore) | Memisahkan konfigurasi lokal dan produksi secara bersih serta mencegah kebocoran kredensial ke repositori git. |

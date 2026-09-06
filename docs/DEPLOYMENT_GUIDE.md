@@ -91,16 +91,16 @@ scp -r infrastructure/nginx/* root@<YOUR_VPS_IP>:/opt/siagakita/nginx/
 scp -r infrastructure/ssl/* root@<YOUR_VPS_IP>:/opt/siagakita/ssl/
 
 # Copy production environment file template
-scp infrastructure/.env.example root@<YOUR_VPS_IP>:/opt/siagakita/.env
+scp infrastructure/.env.example root@<YOUR_VPS_IP>:/opt/siagakita/.env.prod
 ```
 
 ### 2d. Configure Production Environment Variables
 
-SSH into your server and edit `/opt/siagakita/.env` with your production secrets:
+SSH into your server and edit `/opt/siagakita/.env.prod` with your production secrets:
 
 ```bash
 ssh root@<YOUR_VPS_IP>
-nano /opt/siagakita/.env
+nano /opt/siagakita/.env.prod
 ```
 
 Ensure the following production variables are configured:
@@ -154,10 +154,10 @@ GO_ENV=production
 LOG_PATH=logs/app.log
 ```
 
-Protect the `.env` file with restrictive permissions:
+Protect the `.env.prod` file with restrictive permissions:
 
 ```bash
-chmod 600 /opt/siagakita/.env
+chmod 600 /opt/siagakita/.env.prod
 ```
 
 ### 2e. Configure Firewall (`ufw`)

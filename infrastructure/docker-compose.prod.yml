@@ -15,7 +15,7 @@ services:
     container_name: siagakita_postgres
     restart: always
     env_file:
-      - .env
+      - .env.prod
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -38,7 +38,7 @@ services:
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD} --notify-keyspace-events Ex
     env_file:
-      - .env
+      - .env.prod
     # Tidak expose port ke publik
     volumes:
       - ./redis-data:/data
@@ -56,7 +56,7 @@ services:
     container_name: siagakita_backend
     restart: always
     env_file:
-      - .env
+      - .env.prod
     # Port internal hanya dapat diakses oleh Nginx di dalam siagakita_network
     expose:
       - "8080"   # REST API
