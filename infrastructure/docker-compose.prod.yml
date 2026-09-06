@@ -57,9 +57,11 @@ services:
     restart: always
     env_file:
       - .env
-    ports:
-      - "8080:8080"   # REST API
-      - "8081:8081"   # WebSocket
+    # Port internal hanya dapat diakses oleh Nginx di dalam siagakita_network
+    expose:
+      - "8080"   # REST API
+      - "8081"   # WebSocket
+    volumes:
       # Mount direktori upload dan log dari host ke dalam container
       - /opt/siagakita/uploads:/app/uploads
       - /opt/siagakita/logs:/app/logs
@@ -76,6 +78,29 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+
+  # 4. Reverse Proxy Nginx (SSL/TLS Termination, WebSocket Proxy & WAF Security)
+  nginx:
+    image: nginx:alpine
+    container_name: siagakita_nginx
+    restart: always
+    ports:
+      - "80:80"     # HTTP (redirects to HTTPS)
+      - "443:443"   # HTTPS & WSS
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - /opt/siagakita/uploads:/app/uploads:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - siagakita_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
 networks:
   siagakita_network:

@@ -18,6 +18,9 @@
 infrastructure/.env
 infrastructure/.env.*
 !infrastructure/.env.example
+!infrastructure/.env.dev
+!infrastructure/.env.prod
+
 
 # ==============================================================================
 # 2. INFRASTRUKTUR (DOCKER & DATABASE)

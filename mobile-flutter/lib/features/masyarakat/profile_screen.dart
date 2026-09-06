@@ -11,6 +11,7 @@ import 'kyc_screen.dart';
 import 'volunteer_registration_screen.dart';
 import 'report_history_screen.dart';
 import 'wa_verification_screen.dart';
+import '../../core/constants/api_config.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String accessToken;
@@ -552,7 +553,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           clipBehavior: Clip.antiAlias,
                           child: user.profilePhotoUrl != null
                               ? Image.network(
-                                  'http://139.59.99.230:8080${user.profilePhotoUrl}',
+                                  user.profilePhotoUrl!.startsWith('http')
+                                      ? user.profilePhotoUrl!
+                                      : '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}${user.profilePhotoUrl}',
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, _, _) => Icon(
                                     Icons.person,
