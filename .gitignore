@@ -74,6 +74,7 @@ mobile-flutter/.flutter-plugins-dependencies
 mobile-flutter/.metadata
 
 # Android (Kotlin/Java) Build & Keystore
+**/mobile-flutter/android/build/
 **/mobile-flutter/android/app/build/
 **/mobile-flutter/android/.gradle/
 **/mobile-flutter/android/captures/

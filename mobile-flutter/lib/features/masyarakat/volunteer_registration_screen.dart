@@ -203,14 +203,14 @@ class _VolunteerRegistrationScreenState
   }
 
   Future<void> _pickFile(String spec) async {
-    FilePickerResult? result = await FilePicker.pickFiles(
+    final files = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
     );
 
-    if (result != null) {
+    if (files.isNotEmpty) {
       setState(() {
-        _uploadedCerts[spec] = result.files.single.path;
+        _uploadedCerts[spec] = files.first.path;
       });
     }
   }
