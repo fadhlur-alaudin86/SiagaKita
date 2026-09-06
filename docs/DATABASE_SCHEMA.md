@@ -398,6 +398,8 @@ CREATE TABLE public.volunteer_badges_acquired (
 
 ## 8. Diagram Relasi
 
+> 📊 **Full Interactive Mermaid ERD:** Lihat visualisasi lengkap 15 tabel, relasi, dan tipe data di [**`docs/design/database-erd.md`**](design/database-erd.md).
+
 ```
 users (auth gateway)
   ├── user_profiles          [civilian, volunteer]

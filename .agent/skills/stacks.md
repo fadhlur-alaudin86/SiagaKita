@@ -79,6 +79,8 @@ siagakita/
 ├── mobile-flutter/      ← Flutter mobile app (citizen/volunteer)
 ├── windows_console_flutter/ ← Flutter desktop app (admin/agency)
 ├── docs/                ← Project documentation
+│   ├── api/             ← Modular OpenAPI 3.0 specs (Swagger UI)
+│   ├── design/          ← Visual architecture, Mermaid ERD & state diagrams
 │   ├── skills/          ← Skill guides for human developers
 │   └── backlog/         ← Feature logs (F-XXX-name.md)
 └── VERSION              ← Active version file (read by auto-tag.yml)
