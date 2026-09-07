@@ -20,10 +20,10 @@ Read [stacks.md](../stacks.md) for configuration details (repo name, label conve
 ## Configuration
 
 ```
-REPO          = SuperBypassUdinnn/SIAGAKITA
+REPO          = fadhlur-alaudin86/SiagaKita
 STATUSES      = [Backlog, In Progress, In Review, Done]
 PRIORITIES    = [P0, P1, P2]
-LABELS_STATUS = status: in-progress, status: in-review, status: ready
+LABELS_STATUS = status: in-progress, status: in-review, status: ready, status: done
 LABELS_TYPE   = type: feature, type: fix, type: chore, type: docs, type: refactor, type: security, type: gamification, type: kyc, type: telemetry, type: dispatch
 LABELS_COMP   = component: backend, component: mobile, component: desktop, component: infra
 LABELS_PRIO   = priority: P0, priority: P1, priority: P2
@@ -81,34 +81,36 @@ gh issue create \
 
 ### Update Issue Labels (Status Transitions)
 ```bash
-# Work started: add status: in-progress (manual when starting work)
-gh issue edit <number> --repo SuperBypassUdinnn/SIAGAKITA \
-  --add-label "status: in-progress"
+# Work started: add status: in-progress, assign to active user, and strip other status labels
+gh issue edit <number> --repo fadhlur-alaudin86/SiagaKita \
+  --add-label "status: in-progress" \
+  --remove-label "status: ready,status: in-review,status: done" \
+  --add-assignee "@me"
 
-# Note: PR created (in-review), PR approved (ready), and PR merged (close)
+# Note: PR created (in-review), PR approved (ready), and PR merged/closed (done)
 # are automatically handled by issue-status-labeler.yml GitHub Actions workflow.
 ```
 
 ### Add Comment (mandatory on status change)
 ```bash
 gh issue comment <number> \
-  --repo SuperBypassUdinnn/SIAGAKITA \
+  --repo fadhlur-alaudin86/SiagaKita \
   --body "🚀 Starting implementation of F-014. Branch: feature/F-014-dispatch-volunteer"
 ```
 
 ### Assign Issue
 ```bash
-gh issue edit <number> --repo SuperBypassUdinnn/SIAGAKITA \
+gh issue edit <number> --repo fadhlur-alaudin86/SiagaKita \
   --add-assignee "username"
 ```
 
 ### List & Create Milestones
 ```bash
 # List milestones
-gh api repos/SuperBypassUdinnn/SIAGAKITA/milestones
+gh api repos/fadhlur-alaudin86/SiagaKita/milestones
 
 # Create milestone
-gh api repos/SuperBypassUdinnn/SIAGAKITA/milestones \
+gh api repos/fadhlur-alaudin86/SiagaKita/milestones \
   --method POST \
   -f title="Sprint 25 (v1.0.25) — 15 August 2026" \
   -f due_on="2026-08-15T07:00:00Z"
@@ -118,12 +120,12 @@ gh api repos/SuperBypassUdinnn/SIAGAKITA/milestones \
 ```bash
 # Count issues per status label
 for label in "status: in-progress" "status: in-review" "status: ready"; do
-  count=$(gh issue list --repo SuperBypassUdinnn/SIAGAKITA --label "$label" --json number | jq '. | length')
+  count=$(gh issue list --repo fadhlur-alaudin86/SiagaKita --label "$label" --json number | jq '. | length')
   echo "$label: $count"
 done
 
 # Completed (closed) issues this month
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
+gh issue list --repo fadhlur-alaudin86/SiagaKita \
   --state closed \
   --json number,title,closedAt,assignees \
   | jq -r '.[] | "\(.number) \(.title) — closed: \(.closedAt | split("T")[0]). Assignee: \(.assignees[0].login // "unassigned")"'
@@ -134,7 +136,7 @@ gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
 ### `/list-backlog`
 List all open issues with status and priority:
 ```bash
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
+gh issue list --repo fadhlur-alaudin86/SiagaKita \
   --json number,title,labels,assignees,milestone \
   | jq -r '.[] | "#\(.number) \(.title) | \(.labels | map(.name) | join(", ")) | \(.assignees[0].login // "unassigned")"'
 ```
@@ -142,7 +144,7 @@ gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
 ### `/my-tasks`
 List tasks assigned to active user:
 ```bash
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
+gh issue list --repo fadhlur-alaudin86/SiagaKita \
   --assignee "@me" \
   --json number,title,labels
 ```
@@ -159,7 +161,7 @@ gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
 ### `/sprint-report`
 Progress summary per developer:
 ```bash
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
+gh issue list --repo fadhlur-alaudin86/SiagaKita \
   --json number,title,labels,assignees,state \
   | jq -r 'group_by(.assignees[0].login // "unassigned") | .[] | "\(.[0].assignees[0].login // "unassigned"): \(length) issues"'
 ```
@@ -167,7 +169,7 @@ gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
 ### `/sprint-retro`
 List all closed issues with dates:
 ```bash
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
+gh issue list --repo fadhlur-alaudin86/SiagaKita \
   --state closed \
   --json number,title,labels,assignees,closedAt
 ```
@@ -176,10 +178,10 @@ gh issue list --repo SuperBypassUdinnn/SIAGAKITA \
 
 1. **Read stacks.md first** — before creating or modifying anything.
 2. **Check for duplicates before creating** — always run `gh issue list` to verify a similar issue doesn't already exist.
-3. **Mandatory comments** — every status change (label change) must be accompanied by an explanatory comment detailing reason/progress.
+3. **Mandatory comments & Assignee** — every status change (label change) must be accompanied by an explanatory comment detailing reason/progress. When picking up work or transitioning an issue to `status: in-progress`, ALWAYS assign the issue to the active developer/agent account (`--add-assignee "@me"`).
 4. **Milestone assignment** — every new issue must be assigned to an appropriate active milestone.
 5. **Do not close issue without merge** — issues are only closed after the PR merges to `dev`.
 6. **F-XXX numbering** — use GitHub issue number as ID. Title format is always `F-<number>: <description>`.
-7. **Mandatory labels** — every issue must have at least 1 type label + 1 component label + 1 priority label.
-8. **Checklist & Acceptance Criteria Synchronization** — When completing tasks or closing an issue, the agent MUST update all completed `- [ ]` checkboxes to `- [x]` in the issue body using `gh issue edit <number> --body "$UPDATED_BODY"`. Never leave finished tasks unchecked.
+7. **Mandatory labels & single status** — every issue must have at least 1 type label + 1 component label + 1 priority label, and **strictly at most one status label** (`status: in-progress`, `status: in-review`, `status: ready`, or `status: done`). Always remove obsolete status labels when transitioning.
+8. **Checklist & Acceptance Criteria Synchronization** — Before creating a PR or closing an issue, the agent MUST update all completed `- [ ]` checkboxes to `- [x]` in the issue body using `gh issue edit <number> --body "$UPDATED_BODY"`. Never leave finished tasks or acceptance criteria unchecked.
 9. **Parent Tracker vs Child Issue** — If an issue is a sub-task under a parent issue, do not close the parent issue when the sub-task finishes. Instead, mark off the corresponding subtask checkbox in the parent issue body.

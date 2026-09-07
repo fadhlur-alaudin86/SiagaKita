@@ -19,7 +19,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | -3 | **Backlog Overview** — Fetch issues via `gh` + read `DATABASE_SCHEMA.md` + read `stacks.md`. Print compact summary. User picks target. | Inline summary |
 | -2 | **Discovery** — Explore codebase, inspect target domain, ask **5 clarifying questions**. Formulate plan and get user confirmation. | Discovery notes, 5 Q&A, Plan (in memory) |
 | -1 | **Resolve Backlog** — Match/create GitHub Issue. Create `docs/backlog/features/F-XXX-name.md` using full template. | Feature log file |
-| 0 | **Branch** — Create `feature/F-XXX-name` from `dev`. Update issue label to `status: in-progress`. Add comment to issue. | Git branch |
+| 0 | **Branch & Assign** — Create `feature/F-XXX-name` from `dev`. Update issue label to `status: in-progress`, assign to active account (`--add-assignee "@me"`), and add comment to issue. | Git branch |
 | 1 | **Read Mapping** — Inspect Go domain handler, DB schema (`docs/DATABASE_SCHEMA.md`), ERD (`docs/design/database-erd.md`), Activity/State diagrams (`docs/design/activity-diagrams.md`), API endpoints, and Flutter screens. | Discovery notes |
 | 2 | **API Contract** — Extend `docs/api/paths/<domain>.yaml` with new endpoint(s) (OpenAPI 3.0). Add new schemas to `docs/api/components/schemas.yaml` if needed. Verify at `http://localhost:8080/docs`. | Updated domain YAML |
 | 3 | **DB Migration** — Read `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md`, write SQL migration in `backend-go/migrations/`. Update schema docs AND update Mermaid ERD. | SQL migration + updated schema + updated ERD |
@@ -73,14 +73,14 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 28. **Update Feature Log** — Record test command and status in feature log.
 
 ### GitHub Sync & Merge Strategy
-29. **Step 0 → in-progress**: `gh issue edit <N> --add-label "status: in-progress"` + explanatory comment when starting work.
-30. **Step 7 → in-review & PR Linking**: Opening a PR to `dev` automatically triggers `issue-status-labeler.yml` to update the linked issue to `status: in-review`.
-    - **Closing Issue**: In the PR description, use `Closes #<child_issue>` for the specific sub-task being completed.
-    - **Parent Tracker Issue**: If the task belongs to a larger tracker issue, specify `Parent Issue: #<parent_issue>` so the workflow does not prematurely close the parent issue.
-31. **Step 8 → Done & Checklist Synchronization**:
-    - **Checklist Sync**: The agent MUST inspect the issue with `gh issue view <N> --json body` and mark all completed task and acceptance criteria checkboxes from `- [ ]` to `- [x]` via `gh issue edit <N> --body "..."`.
-    - **Parent Issue Checklist**: If working under a parent tracker issue, also mark off the completed subtask checkbox (`- [ ]` to `- [x]`) in the parent issue body.
-    - **Close Issue**: Verify the child issue is closed (`gh issue close <N> --reason completed`) with an explanatory comment.
+29. **Step 0 → in-progress & Assignee**: `gh issue edit <N> --add-label "status: in-progress" --remove-label "status: ready,status: in-review,status: done" --add-assignee "@me"` + explanatory comment when starting work. Always assign the issue to the active developer/agent account (`@me`) when picking up an issue.
+30. **Step 7 → in-review, Checklist Sync & PR Linking**:
+    - **Checklist Pre-Sync (MANDATORY)**: Before creating the PR, the agent MUST inspect the issue body and mark all completed Tasks and Acceptance Criteria checkboxes from `- [ ]` to `- [x]` via `gh issue edit <N> --body "..."`.
+    - **Single Status Label**: Transition to `status: in-review` and ensure old status labels (`status: in-progress`, `status: ready`, `status: done`) are removed to prevent label stacking.
+    - **Closing vs Parent Linking**: In the PR description, use `Closes #<child_issue>` for the issue being solved. If under an epic/tracker issue, specify `Parent Issue: #<parent_issue>` so the parent issue is not prematurely closed.
+31. **Step 8 → Done & Closed**:
+    - Merging into `dev` automatically updates the issue to `status: done`, removes previous status labels, auto-checks any remaining checkboxes, and closes the issue.
+    - **Parent Tracker Sync**: If working under a parent issue, mark off the corresponding subtask checkbox (`- [ ]` to `- [x]`) in the parent issue body.
     - **Close Log**: Mark all steps ✅ in the local feature log `docs/backlog/features/F-XXX-name.md`.
 32. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
 33. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
