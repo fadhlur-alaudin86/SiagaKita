@@ -7,20 +7,20 @@ Sub-file of [SKILL.md](SKILL.md).
 
 | Intent | Command |
 |--------|---------|
-| List all open issues | `gh issue list --repo SuperBypassUdinnn/SIAGAKITA` |
-| List my issues | `gh issue list --repo SuperBypassUdinnn/SIAGAKITA --assignee "@me"` |
-| Create new issue | `gh issue create --repo SuperBypassUdinnn/SIAGAKITA --title "..."` |
-| Edit issue labels | `gh issue edit <N> --repo SuperBypassUdinnn/SIAGAKITA --add-label "..."` |
-| Add comment | `gh issue comment <N> --repo SuperBypassUdinnn/SIAGAKITA --body "..."` |
-| Close issue | `gh issue close <N> --repo SuperBypassUdinnn/SIAGAKITA --reason completed` |
-| Assign issue | `gh issue edit <N> --repo SuperBypassUdinnn/SIAGAKITA --add-assignee "<user>"` |
-| List milestones | `gh api repos/SuperBypassUdinnn/SIAGAKITA/milestones` |
-| Create milestone | `gh api repos/SuperBypassUdinnn/SIAGAKITA/milestones --method POST -f title="..."` |
+| List all open issues | `gh issue list --repo fadhlur-alaudin86/SiagaKita` |
+| List my issues | `gh issue list --repo fadhlur-alaudin86/SiagaKita --assignee "@me"` |
+| Create new issue | `gh issue create --repo fadhlur-alaudin86/SiagaKita --title "..."` |
+| Edit issue labels | `gh issue edit <N> --repo fadhlur-alaudin86/SiagaKita --add-label "..."` |
+| Add comment | `gh issue comment <N> --repo fadhlur-alaudin86/SiagaKita --body "..."` |
+| Close issue | `gh issue close <N> --repo fadhlur-alaudin86/SiagaKita --reason completed` |
+| Assign issue | `gh issue edit <N> --repo fadhlur-alaudin86/SiagaKita --add-assignee "@me"` |
+| List milestones | `gh api repos/fadhlur-alaudin86/SiagaKita/milestones` |
+| Create milestone | `gh api repos/fadhlur-alaudin86/SiagaKita/milestones --method POST -f title="..."` |
 
 ## Status Transition Labels
 
 ```
-[Open] ─┬─► [status: in-progress] ─► [status: in-review] ─► [status: ready] ─► [Closed]
+[Open] ─┬─► [status: in-progress] ─► [status: in-review] ─► [status: ready] ─► [status: done] (Closed)
 ```
 
 ## Issue Body Template

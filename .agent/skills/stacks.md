@@ -46,7 +46,7 @@ Naming Conventions:
 
 ```
 Priority     : priority: P0, priority: P1, priority: P2
-Status       : status: in-progress, status: in-review, status: ready
+Status       : status: in-progress, status: in-review, status: ready, status: done
 Component    : component: backend, component: mobile, component: desktop, component: infra
 Type         : type: feature, type: fix, type: chore, type: docs
 ```
