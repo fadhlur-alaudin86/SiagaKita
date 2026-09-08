@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -167,10 +168,14 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 	switch role {
 	case "masyarakat":
 		// Cari SOS aktif milik user ini
-		inc, _ := h.incRepo.FindActiveByReporter(userID)
-		if inc != nil {
+		inc, err := h.incRepo.FindActiveByReporter(userID)
+		if err != nil {
+			utils.Error().Err(err).Str("user_id", userID).Msg("[WS] Failed to query active SOS for reporter")
+		} else if inc != nil {
 			// Update di DB
-			_ = h.incRepo.UpdateLocation(inc.ID, lat, lng)
+			if err := h.incRepo.UpdateLocation(inc.ID, lat, lng); err != nil {
+				utils.Error().Err(err).Str("incident_id", inc.ID).Msg("[WS] Failed to update incident location in DB")
+			}
 
 			msg := hub.Message{
 				Event: "REPORTER_LOCATION_UPDATE",
@@ -183,24 +188,30 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 			}
 
 			// Broadcast ke relawan yang sedang handle
-			responses, _ := h.incRepo.FindResponsesByIncident(inc.ID)
-			for _, r := range responses {
-				if r.Status == "on_scene" || r.Status == "en_route" {
-					_ = h.hub.SendToUser(r.ResponderID, msg)
+			responses, err := h.incRepo.FindResponsesByIncident(inc.ID)
+			if err != nil {
+				utils.Error().Err(err).Str("incident_id", inc.ID).Msg("[WS] Failed to query incident responses")
+			} else {
+				for _, r := range responses {
+					if r.Status == "on_scene" || r.Status == "en_route" {
+						_ = h.hub.SendToUser(r.ResponderID, msg)
+					}
 				}
 			}
 
 			// Broadcast ke Agency & Admin
-			h.hub.BroadcastToRole("agency", msg)
-			h.hub.BroadcastToRole("admin", msg)
-			h.hub.BroadcastToRole("superadmin", msg)
+			h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin")
 		}
 	case "relawan":
 		// Cari misi aktif milik relawan ini
-		resp, _ := h.incRepo.GetActiveResponse(userID)
-		if resp != nil {
+		resp, err := h.incRepo.GetActiveResponse(userID)
+		if err != nil {
+			utils.Error().Err(err).Str("user_id", userID).Msg("[WS] Failed to query active response for volunteer")
+		} else if resp != nil {
 			// Update di DB
-			_ = h.incRepo.UpdateResponseLocation(resp.IncidentID, userID, lat, lng, nil)
+			if err := h.incRepo.UpdateResponseLocation(resp.IncidentID, userID, lat, lng, nil); err != nil {
+				utils.Error().Err(err).Str("incident_id", resp.IncidentID).Msg("[WS] Failed to update response location in DB")
+			}
 
 			msg := hub.Message{
 				Event: "VOLUNTEER_LOCATION_UPDATE",
@@ -213,15 +224,15 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 			}
 
 			// Broadcast ke korban (reporter)
-			inc, _ := h.incRepo.FindByID(resp.IncidentID)
-			if inc != nil {
+			inc, err := h.incRepo.FindByID(resp.IncidentID)
+			if err != nil {
+				utils.Error().Err(err).Str("incident_id", resp.IncidentID).Msg("[WS] Failed to query incident for volunteer location")
+			} else if inc != nil {
 				_ = h.hub.SendToUser(inc.ReporterID, msg)
 			}
 
 			// Broadcast ke Agency & Admin
-			h.hub.BroadcastToRole("agency", msg)
-			h.hub.BroadcastToRole("admin", msg)
-			h.hub.BroadcastToRole("superadmin", msg)
+			h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin")
 		}
 	}
 }
@@ -283,7 +294,9 @@ func (h *Handler) onCancelSOS(userID string, payload interface{}) {
 	h.rdb.Del(ctx, graceKey)
 
 	// 2. Update incident status to false_alarm
-	_ = h.incRepo.UpdateStatus(sosID, "false_alarm")
+	if err := h.incRepo.UpdateStatus(sosID, "false_alarm"); err != nil {
+		utils.Error().Err(err).Str("sos_id", sosID).Msg("[WS] Failed to update incident status to false_alarm")
+	}
 
 	_ = h.hub.SendToUser(userID, hub.Message{
 		Event:   "SOS_CANCELLED",
@@ -377,7 +390,9 @@ func (h *Handler) broadcastSOS(incidentID string) {
 	defer canceled()
 
 	// 1. Update incident status to broadcasting
-	_ = h.incRepo.UpdateStatus(incidentID, "broadcasting")
+	if err := h.incRepo.UpdateStatus(incidentID, "broadcasting"); err != nil {
+		utils.Error().Err(err).Str("incident_id", incidentID).Msg("[WS] Failed to update incident status to broadcasting")
+	}
 
 	// 2. Retrieve victim location from Redis
 	locKey := fmt.Sprintf(incidentLocKey, incidentID)
@@ -387,9 +402,8 @@ func (h *Handler) broadcastSOS(incidentID string) {
 		return
 	}
 
-	var lat, lng float64
-	_, _ = fmt.Sscanf(vals["lat"], "%f", &lat)
-	_, _ = fmt.Sscanf(vals["lng"], "%f", &lng)
+	lat, _ := strconv.ParseFloat(vals["lat"], 64)
+	lng, _ := strconv.ParseFloat(vals["lng"], 64)
 	reporterID := vals["reporter_id"]
 
 	// 3. GEORADIUS - find volunteers within 5 km

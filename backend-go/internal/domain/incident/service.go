@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sync"
 	"time"
+
+	"siagakita-backend/internal/utils"
 
 	"github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
@@ -33,8 +36,9 @@ var validIncidentTypes = map[string]bool{
 }
 
 type Service struct {
-	repo *Repository
-	rdb  *redis.Client
+	repo        *Repository
+	rdb         *redis.Client
+	graceTimers sync.Map // incidentID -> context.CancelFunc
 	// OnBroadcast dipanggil saat auto-promote grace_period → broadcasting
 	// agar WS event INCOMING_EMERGENCY dikirim ke console.
 	OnBroadcast func(incidentID string)
@@ -85,7 +89,9 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest) (*Trigge
 	}
 
 	// Auto-promote: jadwalkan promosi grace_period → broadcasting setelah 15 detik
-	go s.autoPromoteGracePeriod(inc.ID)
+	ctx, cancel := context.WithCancel(context.Background())
+	s.graceTimers.Store(inc.ID, cancel)
+	go s.autoPromoteGracePeriod(ctx, inc.ID)
 
 	return &TriggerSOSResponse{
 		IncidentID: inc.ID,
@@ -97,6 +103,10 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest) (*Trigge
 // ─── UpdateType (Grace Period) ────────────────────────────────────────────────
 
 func (s *Service) UpdateType(incidentID, reporterID, incidentType string) error {
+	if cancel, ok := s.graceTimers.LoadAndDelete(incidentID); ok {
+		cancel.(context.CancelFunc)()
+	}
+
 	if !validIncidentTypes[incidentType] {
 		return fmt.Errorf("tipe insiden tidak valid: %s", incidentType)
 	}
@@ -118,6 +128,10 @@ func (s *Service) UpdateType(incidentID, reporterID, incidentType string) error 
 
 // PromoteToBroadcasting mengubah status grace_period → broadcasting tanpa mengubah tipe.
 func (s *Service) PromoteToBroadcasting(incidentID, reporterID string) error {
+	if cancel, ok := s.graceTimers.LoadAndDelete(incidentID); ok {
+		cancel.(context.CancelFunc)()
+	}
+
 	inc, err := s.repo.FindByID(incidentID)
 	if err != nil {
 		return err
@@ -129,17 +143,30 @@ func (s *Service) PromoteToBroadcasting(incidentID, reporterID string) error {
 }
 
 // autoPromoteGracePeriod secara otomatis mempromosikan incident dari grace_period ke broadcasting
-// setelah 15 detik. Ini memastikan SOS tetap terkirim bahkan jika mobile gagal memanggil
-// /broadcast endpoint (misalnya saat offline). Dipanggil sebagai goroutine.
-func (s *Service) autoPromoteGracePeriod(incidentID string) {
-	time.Sleep(15 * time.Second)
+// setelah 15 detik atau dibatalkan lebih awal melalui ctx.
+func (s *Service) autoPromoteGracePeriod(ctx context.Context, incidentID string) {
+	defer s.graceTimers.Delete(incidentID)
+
+	select {
+	case <-time.After(15 * time.Second):
+	case <-ctx.Done():
+		return
+	}
+
 	inc, err := s.repo.FindByID(incidentID)
-	if err != nil || inc == nil {
+	if err != nil {
+		utils.Error().Err(err).Str("incident_id", incidentID).Msg("[IncidentService] Failed to query incident for auto-promotion")
+		return
+	}
+	if inc == nil {
 		return
 	}
 	// Hanya promosikan jika masih grace_period (belum diubah oleh mobile)
 	if inc.Status == "grace_period" {
-		_ = s.repo.UpdateStatus(incidentID, "broadcasting")
+		if err := s.repo.UpdateStatus(incidentID, "broadcasting"); err != nil {
+			utils.Error().Err(err).Str("incident_id", incidentID).Msg("[IncidentService] Failed to auto-promote incident status to broadcasting")
+			return
+		}
 		// Trigger WS broadcast ke console agar alarm berbunyi
 		if s.OnBroadcast != nil {
 			s.OnBroadcast(incidentID)
@@ -150,6 +177,10 @@ func (s *Service) autoPromoteGracePeriod(incidentID string) {
 // ─── CancelSOS ────────────────────────────────────────────────────────────────
 
 func (s *Service) CancelSOS(incidentID, reporterID string) error {
+	if cancel, ok := s.graceTimers.LoadAndDelete(incidentID); ok {
+		cancel.(context.CancelFunc)()
+	}
+
 	inc, err := s.repo.FindByID(incidentID)
 	if err != nil {
 		return err
@@ -401,7 +432,9 @@ func (s *Service) Resolve(incidentID, responderID string) (*ResolveResponse, err
 		if newRank.ID != oldRankID {
 			rankUp = true
 			newRankName = newRank.RankName
-			_ = s.repo.UpdateRank(responderID, newRank.ID)
+			if err := s.repo.UpdateRank(responderID, newRank.ID); err != nil {
+				utils.Error().Err(err).Str("user_id", responderID).Msg("[IncidentService] Failed to update user rank")
+			}
 		}
 	}
 
@@ -495,7 +528,9 @@ func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve 
 					if newRank.ID != oldRankID {
 						rankUp = true
 						newRankName = newRank.RankName
-						_ = s.repo.UpdateRank(volunteerID, newRank.ID)
+						if err := s.repo.UpdateRank(volunteerID, newRank.ID); err != nil {
+							utils.Error().Err(err).Str("user_id", volunteerID).Msg("[IncidentService] Failed to update volunteer rank")
+						}
 					}
 				}
 
@@ -560,11 +595,15 @@ func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) 
 						totalXP := int((float64(baseXP) * multiplier) * 0.5)
 
 						// Award XP
-						_, _ = s.repo.UpsertReputation(resp.ResponderID, totalXP, 1)
+						if _, err := s.repo.UpsertReputation(resp.ResponderID, totalXP, 1); err != nil {
+							utils.Error().Err(err).Str("user_id", resp.ResponderID).Msg("[IncidentService] Failed to award fallback reputation")
+						}
 					}
 				}
 				// Ubah status relawan menjadi canceled (oleh sistem/instansi)
-				_ = s.repo.AgencyReviewVolunteer(incidentID, resp.ResponderID, false)
+				if err := s.repo.AgencyReviewVolunteer(incidentID, resp.ResponderID, false); err != nil {
+					utils.Error().Err(err).Str("incident_id", incidentID).Str("volunteer_id", resp.ResponderID).Msg("[IncidentService] Failed to update volunteer review status")
+				}
 			}
 		}
 	}
