@@ -25,8 +25,8 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | 3 | **DB Migration** — Read `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md`, write SQL migration in `backend-go/migrations/`. Update schema docs AND update Mermaid ERD. | SQL migration + updated schema + updated ERD |
 | 4 | **Backend Implementation** — Implement handler, service, repository in `backend-go/internal/domain/<name>/`. If lifecycle states or actor capabilities change, update `docs/design/activity-diagrams.md` or `use-case-diagrams.md`. | Go source files + updated diagrams |
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
-| 6 | **Tests** — Write Go unit tests (`_test.go`) + Flutter tests. Document test outcomes in feature log. | Test files + test docs |
-| 7 | **CI + Review** — Ensure CI passes. Update issue label to `status: in-review`. Open PR targeting `dev`. | Pull Request |
+| 6 | **Tests & Hybrid TDD** — Write Go unit tests (`_test.go`) with RED-GREEN cycle for critical logic + Flutter tests. Document test outcomes in feature log. | Test files + test docs |
+| 7 | **Review Gate & PR** — Run Pre-PR verification (Security, Database, Silent-Failure audits). Ensure CI passes. Sync issue checklist. Open PR targeting `dev`. | Pre-PR audit report + Pull Request |
 | 8 | **Close Log** — Update feature log (all steps ✅). Link PR. Move issue to Done. | Updated feature log |
 
 ## Agent Rules
@@ -42,49 +42,54 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 
 ### Backend (Go Fiber)
 7. **Read Schema First** — Read `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md` before writing migrations.
-8. **Update Schema & ERD After Migration** — Update `docs/DATABASE_SCHEMA.md` AND `docs/design/database-erd.md` whenever database schema changes.
+8. **Update Schema & ERD After Migration** — Update `docs/DATABASE_SCHEMA.md` AND `docs/design/database-erd.md` whenever database schema changes. See [postgres-patterns.md](postgres-patterns.md).
 9. **YAGNI** — Do not add abstractions until explicitly needed.
 10. **Max 3 Layers** — handler → service → repository. No deeper.
-11. **Raw SQL** — No ORM. Use raw SQL via `pgx` or `database/sql`.
+11. **Raw SQL** — No ORM. Use raw SQL via `pgx` with parameterized queries (`$1, $2`).
 12. **Comment Every Public Symbol** — Provide `// why` comments on every public handler, function, middleware.
-13. **Conventional Commits MANDATORY** — Format: `<type>(<scope>): <description>`.
+13. **Error Wrapping** — Always wrap errors with `fmt.Errorf("...: %w", err)` and inspect using `errors.Is`/`errors.As`.
+14. **Conventional Commits MANDATORY** — Format: `<type>(<scope>): <description>`.
 
 ### API Contract (OpenAPI)
-14. **Extend, don't create new** — New endpoints MUST be appended to the existing domain file `docs/api/paths/<domain>.yaml`. Never create a standalone per-feature file.
-15. **Shared schemas go to components** — Any new reusable request/response schema must be added to `docs/api/components/schemas.yaml` using `$ref`.
-16. **Verify Swagger UI** — After editing any YAML file, run the backend locally (`GO_ENV=development`) and confirm the endpoint appears correctly at `http://localhost:8080/docs`.
-17. **Swagger UI is dev-only** — The `/docs` route is conditionally mounted only when `GO_ENV != production`. Never remove this guard.
-18. **Keep contracts accurate** — If a backend handler changes its request/response shape, update the corresponding OpenAPI YAML in the same PR/commit.
+15. **Extend, don't create new** — New endpoints MUST be appended to the existing domain file `docs/api/paths/<domain>.yaml`. Never create a standalone per-feature file.
+16. **Shared schemas go to components** — Any new reusable request/response schema must be added to `docs/api/components/schemas.yaml` using `$ref`.
+17. **Verify Swagger UI** — After editing any YAML file, run the backend locally (`GO_ENV=development`) and confirm the endpoint appears correctly at `http://localhost:8080/docs`.
+18. **Swagger UI is dev-only** — The `/docs` route is conditionally mounted only when `GO_ENV != production`. Never remove this guard.
+19. **Keep contracts accurate** — If a backend handler changes its request/response shape, update the corresponding OpenAPI YAML in the same PR/commit.
 
 ### System Design & Living Documentation
-19. **Living ERD Synchronization** — Any migration that adds/modifies tables, columns, or foreign keys MUST update both `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md`.
-20. **Living Activity & State Diagrams** — If a feature alters an incident lifecycle status (e.g. `incidents.status` or `incident_responses.status`), grace period logic, or mission flows, you MUST update `docs/design/activity-diagrams.md`.
-21. **Living Use Case Diagrams** — If actor role capabilities or new administrative use cases are introduced, you MUST update `docs/design/use-case-diagrams.md`.
+20. **Living ERD Synchronization** — Any migration that adds/modifies tables, columns, or foreign keys MUST update both `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md`.
+21. **Living Activity & State Diagrams** — If a feature alters an incident lifecycle status (e.g. `incidents.status` or `incident_responses.status`), grace period logic, or mission flows, you MUST update `docs/design/activity-diagrams.md`.
+22. **Living Use Case Diagrams** — If actor role capabilities or new administrative use cases are introduced, you MUST update `docs/design/use-case-diagrams.md`.
 
 ### Flutter
-22. **Responsive Utilities** — Use `lib/core/utils/responsive.dart` for UI scaling.
-23. **Session-Aware** — Use `SessionService` for persistent session management.
-24. **Offline-Resilient** — Utilize `OfflineService` for operations needing offline support.
-25. **RepaintBoundary** — Wrap heavy list or chart widgets in `RepaintBoundary`.
+23. **Responsive Utilities** — Use `lib/core/utils/responsive.dart` for UI scaling.
+24. **Session-Aware & Secure Storage** — Use `SessionService` with `flutter_secure_storage` for auth tokens.
+25. **BuildContext Safety** — Always check `if (!context.mounted) return;` across async `await` boundaries.
+26. **Offline-Resilient** — Utilize `OfflineService` for operations needing offline support.
+27. **Widget Clean Architecture** — Extract components to standalone widget classes with `const` constructors.
+28. **RepaintBoundary** — Wrap heavy list or chart widgets in `RepaintBoundary`.
 
-### Testing
-26. **Unit Tests per Handler** — Cover 4 mandatory scenarios: success, empty result, invalid input, DB error.
-27. **Isolated Tests** — No shared state, fast (< 1s per file).
-28. **Update Feature Log** — Record test command and status in feature log.
+### Testing & Hybrid TDD
+29. **Hybrid TDD for Critical Logic** — Write tests first (RED) for SOS lifecycle, Auth/RBAC, Dispatch engine, and points/balance logic, then implement to pass (GREEN).
+30. **Unit Tests per Handler** — Cover 4 mandatory scenarios: success, empty result, invalid input, DB error.
+31. **Isolated Tests** — No shared state, fast (< 1s per file).
+32. **Update Feature Log** — Record test command and status in feature log.
 
-### GitHub Sync & Merge Strategy
-29. **Step 0 → in-progress & Assignee**: `gh issue edit <N> --add-label "status: in-progress" --remove-label "status: ready,status: in-review,status: done" --add-assignee "@me"` + explanatory comment when starting work. Always assign the issue to the active developer/agent account (`@me`) when picking up an issue.
-30. **Step 7 → in-review, Checklist Sync & PR Linking**:
+### GitHub Sync, Pre-PR Review & Merge Strategy
+33. **Step 0 → in-progress & Assignee**: `gh issue edit <N> --add-label "status: in-progress" --remove-label "status: ready,status: in-review,status: done" --add-assignee "@me"` + explanatory comment when starting work. Always assign the issue to the active developer/agent account (`@me`) when picking up an issue.
+34. **Step 7 → Pre-PR Verification Gate (MANDATORY)**:
+    - **Self-Review Checklist**: Review all changed code against [review-standards.md](review-standards.md) (Security Review, Database & Migration Review, and Silent Failure Audit).
     - **Checklist Pre-Sync (MANDATORY)**: Before creating the PR, the agent MUST inspect the issue body and mark all completed Tasks and Acceptance Criteria checkboxes from `- [ ]` to `- [x]` via `gh issue edit <N> --body "..."`.
     - **Single Status Label**: Transition to `status: in-review` and ensure old status labels (`status: in-progress`, `status: ready`, `status: done`) are removed to prevent label stacking.
     - **Closing vs Parent Linking**: In the PR description, use `Closes #<child_issue>` for the issue being solved. If under an epic/tracker issue, specify `Parent Issue: #<parent_issue>` so the parent issue is not prematurely closed.
-31. **Step 8 → Done & Closed**:
+35. **Step 8 → Done & Closed**:
     - Merging into `dev` automatically updates the issue to `status: done`, removes previous status labels, auto-checks any remaining checkboxes, and closes the issue.
     - **Parent Tracker Sync**: If working under a parent issue, mark off the corresponding subtask checkbox (`- [ ]` to `- [x]`) in the parent issue body.
     - **Close Log**: Mark all steps ✅ in the local feature log `docs/backlog/features/F-XXX-name.md`.
-32. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
-33. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
-34. **PR to `main` = Rebase Merge MANDATORY** — All PRs from `dev` targeting `main` MUST use **Rebase Merge** to preserve a clean, linear history for automated release notes.
+36. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
+37. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
+38. **PR to `main` = Rebase Merge MANDATORY** — All PRs from `dev` targeting `main` MUST use **Rebase Merge** to preserve a clean, linear history for automated release notes.
 
 ## Feature Log Template
 
@@ -165,5 +170,18 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 | 6 | Backend code (`backend-go/internal/domain/<name>/`) | ⬜ |
 | 7 | Flutter code (`mobile-flutter/` / `windows_console_flutter/`) | ⬜ |
 | 8 | Unit & widget tests (`*_test.go`, `*_test.dart`) | ⬜ |
-| 9 | Pull request to `dev` (Squash Merge) | ⬜ |
+| 9 | Pre-PR Review Audit (Security, DB, Silent-Failure) | ⬜ |
+| 10 | Pull request to `dev` (Squash Merge) | ⬜ |
 ```
+
+## Detailed References
+
+- **[stacks.md](stacks.md)** — Go+Flutter project paths, patterns, and naming conventions.
+- **[backend-standards.md](backend-standards.md)** — Go coding standards, error wrapping, context timeout, and Conventional Commits.
+- **[flutter-standards.md](flutter-standards.md)** — Flutter/Dart standards, secure storage, mounted checks, and responsive sizing.
+- **[postgres-patterns.md](postgres-patterns.md)** — PostgreSQL 15 & pgx v5 patterns, indexing (B-Tree & GIN), and migration safety.
+- **[review-standards.md](review-standards.md)** — Pre-PR self-review checklists (Security, Database, Silent-Failure audits).
+- **[testing.md](testing.md)** — Testing conventions, Hybrid TDD (RED-GREEN), and plan sanitization.
+- **[gh-project-manager/SKILL.md](../gh-project-manager/SKILL.md)** — GitHub Issues, single-status rules, and sprint tracking.
+- **[docs/DATABASE_SCHEMA.md](../../docs/DATABASE_SCHEMA.md)** — Active schema v12 (always read before creating migrations).
+- **[docs/design/database-erd.md](../../docs/design/database-erd.md)** — Mermaid ERD living documentation.

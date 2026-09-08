@@ -18,9 +18,11 @@ This directory contains all **agent skills** available for the SiagaKita project
 └── feature-dev-workflow/
     ├── SKILL.md                         ← Agent instructions: Feature pipeline
     ├── stacks.md                        ← Specific stack config (Go + Flutter)
-    ├── backend-standards.md            ← Go coding standards
-    ├── flutter-standards.md            ← Flutter/Dart standards
-    └── testing.md                      ← Test conventions & commands
+    ├── backend-standards.md            ← Go coding standards & error wrapping
+    ├── flutter-standards.md            ← Flutter/Dart standards & async safety
+    ├── postgres-patterns.md            ← PostgreSQL 15 & pgx v5 patterns
+    ├── review-standards.md             ← Pre-PR review checklists (Security, DB, Silent-Failure)
+    └── testing.md                      ← Test conventions, Hybrid TDD & sanitization
 ```
 
 **Agent execution steps when receiving a task:**
