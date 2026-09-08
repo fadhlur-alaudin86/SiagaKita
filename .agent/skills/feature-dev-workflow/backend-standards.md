@@ -74,6 +74,7 @@ func FeatureAction(db *pgxpool.Pool, hub *hub.Hub) fiber.Handler {
 - **Migration** — `.sql` files in `backend-go/migrations/` named `NNN_description.sql`.
 - **Always read schema before creating migrations** — Read `docs/DATABASE_SCHEMA.md` (Schema v12).
 - **Update schema after migrations** — Update `docs/DATABASE_SCHEMA.md` and log changes in the feature log.
+- **Read Database Patterns** — See [postgres-patterns.md](postgres-patterns.md) for indexing strategies (B-Tree vs GIN), data types (`timestamptz`), atomic transaction patterns, and anti-patterns.
 
 ### Migration Naming
 ```
@@ -83,7 +84,42 @@ Example:
   014_add_volunteer_location_index.sql
 ```
 
-## Standard 6 — Conventional Commits (MANDATORY)
+## Standard 6 — Error Wrapping & Inspection (ECC Idiom)
+
+- **Always Wrap with `%w`**: When bubbling errors up, wrap them with context:
+  ```go
+  if err := repo.Save(ctx, user); err != nil {
+      return fmt.Errorf("create user %s: %w", user.Email, err)
+  }
+  ```
+- **Inspect with `errors.Is` and `errors.As`**: Never compare error strings (`err.Error() == "not found"`):
+  ```go
+  if errors.Is(err, pgx.ErrNoRows) {
+      return ErrUserNotFound
+  }
+  ```
+- **No Swallowed Errors**: Never discard errors with `_ = fn()`. If an error is truly benign, log it or explicitly document why it is ignored.
+
+## Standard 7 — Context & Timeout Control
+
+- **Always Bind Context to Requests**: Pass `c.Context()` or create child timeouts for external calls and database interactions:
+  ```go
+  ctx, cancel := context.WithTimeout(c.Context(), 5*time.Second)
+  defer cancel()
+  ```
+- **Prevent Goroutine Leaks**: Any background goroutine MUST monitor `ctx.Done()` for graceful termination.
+
+## Standard 8 — Zero Value Safety
+
+- Design structs such that their default zero value is valid and safe to use without panic.
+- Avoid requiring constructors if a simple struct literal `Config{}` functions safely.
+
+## Standard 9 — Static Security Analysis (`gosec`)
+
+- Run `gosec ./...` locally before submitting major backend changes to detect unchecked errors, weak random generators, and SQL injection vectors.
+- Ensure all secrets (JWT secrets, DB credentials, SMTP/Fonnte API keys) are loaded exclusively through environment variables (`config.go`).
+
+## Standard 10 — Conventional Commits (MANDATORY)
 
 All developers MUST use this format. GitHub Release changelogs are automatically generated from commit messages.
 
