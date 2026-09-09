@@ -1,7 +1,6 @@
 package incident
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -484,29 +483,10 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 		},
 	}
 
-	// Broadcast ke semua user online yang bukan reporter:
-	// cek role → kirim ke agency/admin/superadmin
-	ctx := context.Background()
+	// Broadcast ke semua role console (agency, admin, superadmin) yang bukan reporter
 	sent := 0
-	for _, userID := range h.hub.OnlineUsers() {
-		if userID == inc.ReporterID {
-			continue
-		}
-		// Cek role dari Redis cache dulu, fallback ke DB
-		roleKey := fmt.Sprintf("user:role:%s", userID)
-		role, _ := h.rdb.Get(ctx, roleKey).Result()
-		if role == "" {
-			// Cache belum ada - ambil dari DB dan simpan 1 jam
-			h.svc.repo.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
-			if role != "" {
-				h.rdb.Set(ctx, roleKey, role, time.Hour)
-			}
-		}
-		if role == "agency" || role == "admin" || role == "superadmin" {
-			if err := h.hub.SendToUser(userID, msg); err == nil {
-				sent++
-			}
-		}
+	if h.hub != nil {
+		sent = h.hub.BroadcastToRoles(msg, inc.ReporterID, "agency", "admin", "superadmin")
 	}
 	utils.Info().Str("incident_id", incidentID).Int("sent_count", sent).Msg("[IncidentHandler] REST-triggered SOS broadcast")
 }
@@ -515,20 +495,7 @@ func (h *Handler) broadcastEventToAgencies(msg hub.Message) {
 	if h.hub == nil {
 		return
 	}
-	ctx := context.Background()
-	for _, userID := range h.hub.OnlineUsers() {
-		roleKey := fmt.Sprintf("user:role:%s", userID)
-		role, _ := h.rdb.Get(ctx, roleKey).Result()
-		if role == "" {
-			h.svc.repo.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
-			if role != "" {
-				h.rdb.Set(ctx, roleKey, role, time.Hour)
-			}
-		}
-		if role == "agency" || role == "admin" || role == "superadmin" {
-			_ = h.hub.SendToUser(userID, msg)
-		}
-	}
+	h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin")
 }
 
 // notifyReporter mengirimkan WS event ke user yang membuat SOS (reporter).

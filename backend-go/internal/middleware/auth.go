@@ -31,14 +31,25 @@ func TouchLastActive(db *gorm.DB, rdb *redis.Client) fiber.Handler {
 		}
 		// Fire-and-forget, jangan blokir response
 		go func() {
-			// Update DB timestamp
-			db.Exec("UPDATE users SET last_active_at = ? WHERE id = ?", time.Now(), userID)
-
-			// Update Redis online status TTL (90s = 3x 30s heartbeat)
 			if rdb != nil {
 				ctx, canceled := context.WithTimeout(context.Background(), 2*time.Second)
 				defer canceled()
+
+				// Update Redis online status TTL (90s = 3x 30s heartbeat)
 				rdb.Set(ctx, "user:online:"+userID, "1", 90*time.Second)
+
+				// Throttle DB write: hanya tulis ke DB PostgreSQL maksimal sekali setiap 60 detik per user
+				throttleKey := "throttle:last_active:" + userID
+				status, err := rdb.SetArgs(ctx, throttleKey, "1", redis.SetArgs{Mode: "NX", TTL: 60 * time.Second}).Result()
+				if err == nil && status == "OK" {
+					if err := db.Exec("UPDATE users SET last_active_at = ? WHERE id = ?", time.Now(), userID).Error; err != nil {
+						utils.Error().Err(err).Str("user_id", userID).Msg("[TouchLastActive] Failed to update last_active_at in DB")
+					}
+				}
+			} else {
+				if err := db.Exec("UPDATE users SET last_active_at = ? WHERE id = ?", time.Now(), userID).Error; err != nil {
+					utils.Error().Err(err).Str("user_id", userID).Msg("[TouchLastActive] Failed to update last_active_at in DB")
+				}
 			}
 		}()
 		return nil

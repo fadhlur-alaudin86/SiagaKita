@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
+	"time"
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/database"
@@ -98,9 +100,17 @@ func main() {
 	app.Use(logger.New(logger.Config{
 		Format: "[${time}] ${status} ${method} ${path} (${latency})\n",
 	}))
+	corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if corsOrigins == "" {
+		if os.Getenv("GO_ENV") == "production" {
+			corsOrigins = "https://siagakita.com,https://admin.siagakita.com,https://api.siagakita.com"
+		} else {
+			corsOrigins = "*"
+		}
+	}
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:  "*",
-		AllowHeaders:  "Origin, Content-Type, Accept, Accept-Language, Authorization, X-Gateway-Secret, X-Idempotency-Key",
+		AllowOrigins:  corsOrigins,
+		AllowHeaders:  "Origin, Content-Type, Accept, Authorization, X-Gateway-Secret, X-Idempotency-Key",
 		AllowMethods:  "GET, POST, PUT, PATCH, DELETE, OPTIONS",
 		ExposeHeaders: "X-Idempotency-Cached",
 	}))
@@ -116,11 +126,15 @@ func main() {
 		return c.JSON(fiber.Map{"status": "ok", "service": "SiagaKita REST API"})
 	})
 
-	// Static file serving for uploads
-	uploadDir := cfg.UploadDir
+	// Static file serving for uploads (with path containment verification)
+	uploadDir := filepath.Clean(cfg.UploadDir)
 	app.Get("/uploads/*", func(c *fiber.Ctx) error {
 		subPath := c.Params("*")
-		filePath := filepath.Join(uploadDir, filepath.Clean("/"+subPath))
+		cleanSub := filepath.Clean("/" + subPath)
+		filePath := filepath.Join(uploadDir, cleanSub)
+		if !strings.HasPrefix(filePath, uploadDir+string(filepath.Separator)) {
+			return c.Status(fiber.StatusForbidden).SendString("Access denied")
+		}
 		return c.SendFile(filePath)
 	})
 
@@ -297,15 +311,21 @@ func main() {
 	<-quit
 
 	utils.Info().Msg("[Main] Shutting down gracefully...")
-	if err := app.Shutdown(); err != nil {
+	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelShutdown()
+
+	if err := app.ShutdownWithContext(shutdownCtx); err != nil {
 		utils.Error().Err(err).Msg("[API] Shutdown error")
 	}
-	if err := wsServer.Shutdown(context.Background()); err != nil {
+	if err := wsServer.Shutdown(shutdownCtx); err != nil {
 		utils.Error().Err(err).Msg("[WS] Shutdown error")
 	}
-	sqlDB, _ := db.DB()
-	if err := sqlDB.Close(); err != nil {
-		utils.Error().Err(err).Msg("[DB] Close error")
+	if sqlDB, err := db.DB(); err == nil {
+		if err := sqlDB.Close(); err != nil {
+			utils.Error().Err(err).Msg("[DB] Close error")
+		}
+	} else {
+		utils.Error().Err(err).Msg("[DB] Failed to get underlying sql.DB")
 	}
 	if err := rdb.Close(); err != nil {
 		utils.Error().Err(err).Msg("[Redis] Close error")

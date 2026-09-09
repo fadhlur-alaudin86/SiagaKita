@@ -1,13 +1,41 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// SessionService menyimpan dan membaca sesi login secara lokal.
-/// Memungkinkan auto-login saat app dibuka kembali, bahkan dalam kondisi offline.
+/// Menggunakan FlutterSecureStorage (hardware-backed Keystore/Keychain)
+/// untuk token otentikasi sensitif, dan SharedPreferences untuk preferensi non-sensitif.
 class SessionService {
   static const _keyToken = 'session_token';
   static const _keyUserId = 'session_user_id';
   static const _keyEmail = 'session_email';
   static const _keyRole = 'session_role';
   static const _keyName = 'session_name';
+
+  static const _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(resetOnError: true),
+  );
+
+  /// Helper untuk mengambil token otentikasi dari secure storage.
+  static Future<String?> getToken() async {
+    try {
+      final token = await _secureStorage.read(key: _keyToken);
+      if (token != null) return token;
+
+      // Fallback & migrasi dari legacy SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final legacyToken = prefs.getString(_keyToken);
+      if (legacyToken != null) {
+        await _secureStorage.write(key: _keyToken, value: legacyToken);
+        await prefs.remove(_keyToken);
+        return legacyToken;
+      }
+      return null;
+    } catch (_) {
+      // Fallback ke SharedPreferences jika hardware keystore mengalami error platform
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_keyToken);
+    }
+  }
 
   /// Simpan sesi setelah login berhasil.
   static Future<void> saveSession({
@@ -17,8 +45,12 @@ class SessionService {
     required String role,
     String? name,
   }) async {
+    // 1. Simpan token di Secure Storage
+    await _secureStorage.write(key: _keyToken, value: token);
+
+    // 2. Simpan metadata non-sensitif di SharedPreferences untuk performa
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyToken, token);
+    await prefs.remove(_keyToken); // Bersihkan legacy token jika ada
     await prefs.setString(_keyUserId, userId);
     await prefs.setString(_keyEmail, email);
     await prefs.setString(_keyRole, role);
@@ -30,7 +62,7 @@ class SessionService {
   /// Baca sesi tersimpan. Kembalikan null jika tidak ada.
   static Future<SessionData?> loadSession() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(_keyToken);
+    final token = await getToken();
     final userId = prefs.getString(_keyUserId);
     final email = prefs.getString(_keyEmail);
     final role = prefs.getString(_keyRole);
@@ -48,6 +80,7 @@ class SessionService {
 
   /// Hapus sesi saat logout.
   static Future<void> clearSession() async {
+    await _secureStorage.delete(key: _keyToken);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyToken);
     await prefs.remove(_keyUserId);

@@ -170,3 +170,42 @@ func (h *Hub) BroadcastToRole(role string, msg Message) int {
 	}
 	return sent
 }
+
+// BroadcastToRoles sends a Message to all connected clients matching any of the specified roles,
+// optionally excluding a specific user ID (e.g. the incident reporter).
+// Returns the number of successful sends without database or Redis round-trips.
+func (h *Hub) BroadcastToRoles(msg Message, excludeUserID string, roles ...string) int {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return 0
+	}
+
+	roleMap := make(map[string]bool, len(roles))
+	for _, r := range roles {
+		roleMap[r] = true
+	}
+
+	h.mu.RLock()
+	var targets []*websocket.Conn
+	for userID, conns := range h.clients {
+		if excludeUserID != "" && userID == excludeUserID {
+			continue
+		}
+		for _, c := range conns {
+			if roleMap[c.Role] {
+				targets = append(targets, c.Conn)
+			}
+		}
+	}
+	h.mu.RUnlock()
+
+	sent := 0
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for _, conn := range targets {
+		if err := conn.WriteMessage(websocket.TextMessage, data); err == nil {
+			sent++
+		}
+	}
+	return sent
+}
