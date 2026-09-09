@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_config.dart';
@@ -31,9 +32,10 @@ class IncidentService {
       rethrow;
     } on SOSBannedException {
       rethrow;
-    } catch (_) {
+    } catch (e, stack) {
+      debugPrint('[IncidentService] Request failed: $e\n$stack');
       throw IncidentException(
-        'Gagal menghubungi server. Periksa koneksi internet.',
+        'Gagal menghubungi server. Periksa koneksi internet: $e',
       );
     }
   }

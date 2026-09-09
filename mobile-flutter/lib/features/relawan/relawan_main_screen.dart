@@ -174,7 +174,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
         accessToken: widget.accessToken,
       );
       if (mounted) setState(() => _missionHistory = history);
-    } catch (_) {}
+    } catch (e, stack) {
+      debugPrint('[RelawanMainScreen] Gagal memuat riwayat misi: $e\n$stack');
+    }
     if (mounted) setState(() => _loadingHistory = false);
   }
 
@@ -298,7 +300,9 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             _currentPosition = (latitude: pos.lat, longitude: pos.lng);
           });
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[RelawanMainScreen] Gagal mengirim pembaruan lokasi: $e');
+      }
     }
   }
 

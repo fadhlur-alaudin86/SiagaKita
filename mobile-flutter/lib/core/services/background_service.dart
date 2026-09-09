@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
 import '../constants/api_config.dart';
+import 'session_service.dart';
 
 /// Service untuk menjalankan tugas di latar belakang (Foreground Service di Android).
 class AppBackgroundService {
@@ -161,7 +162,7 @@ void onStart(ServiceInstance service) async {
     sosLocationTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
       if (sosIncidentId == null) return;
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('session_token');
+      final token = await SessionService.getToken();
       final sosActive = prefs.getBool('bg_sos_active') ?? false;
 
       if (token == null || !sosActive) {
