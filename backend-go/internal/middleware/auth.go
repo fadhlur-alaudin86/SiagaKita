@@ -144,7 +144,7 @@ func VolunteerOnly() fiber.Handler {
 	return RequireRoles("volunteer")
 }
 
-// BanCheck menolak request jika user memiliki status is_sos_banned = true.
+// BanCheck menolak request jika user memiliki status is_sos_banned = true dan belum kedaluwarsa.
 // Harus digunakan SETELAH Auth middleware, dan hanya untuk endpoint SOS/Laporan.
 func BanCheck(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -152,9 +152,17 @@ func BanCheck(db *gorm.DB) fiber.Handler {
 		if userID == "" {
 			return c.Next()
 		}
-		var isBanned bool
-		db.Raw("SELECT p.is_sos_banned FROM user_profiles p WHERE p.user_id = ?", userID).Scan(&isBanned)
-		if isBanned {
+		var row struct {
+			IsSOSBanned bool       `gorm:"column:is_sos_banned"`
+			BannedUntil *time.Time `gorm:"column:banned_until"`
+		}
+		db.Raw("SELECT p.is_sos_banned, p.banned_until FROM user_profiles p WHERE p.user_id = ?", userID).Scan(&row)
+		if row.IsSOSBanned {
+			// Jika ban sementara dan masa berlakunya sudah lewat, unban otomatis
+			if row.BannedUntil != nil && time.Now().After(*row.BannedUntil) {
+				_ = db.Exec("UPDATE user_profiles SET is_sos_banned = FALSE, banned_until = NULL WHERE user_id = ?", userID).Error
+				return c.Next()
+			}
 			return utils.ErrorResponse(c, fiber.StatusForbidden, "Akun Anda saat ini diblokir dari fitur SOS. Hubungi admin.")
 		}
 		return c.Next()

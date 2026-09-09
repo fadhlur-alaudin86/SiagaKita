@@ -136,13 +136,14 @@ func (h *Handler) CreateAgency(c *fiber.Ctx) error {
 	})
 }
 
-// GET /api/v1/admin/users?banned=true&high_strike=true&search=...  [AdminOnly]
+// GET /api/v1/admin/users?role=volunteer&banned=true&high_strike=true&search=...  [AdminOnly]
 func (h *Handler) GetUsers(c *fiber.Ctx) error {
 	filterBanned := c.Query("banned") == "true"
 	filterHighStrike := c.Query("high_strike") == "true"
 	search := c.Query("search", "")
+	role := c.Query("role", "")
 
-	users, err := h.svc.GetUsers(filterBanned, filterHighStrike, search)
+	users, err := h.svc.GetUsers(filterBanned, filterHighStrike, search, role)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
@@ -152,12 +153,16 @@ func (h *Handler) GetUsers(c *fiber.Ctx) error {
 // POST /api/v1/admin/users/:id/ban  [AdminOnly]
 func (h *Handler) BanUser(c *fiber.Ctx) error {
 	targetUserID := c.Params("id")
+	callerID, _ := c.Locals("userID").(string)
 
 	var req BanUserRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
-	if err := h.svc.BanUser(targetUserID, req.Reason); err != nil {
+	if err := h.svc.BanUser(targetUserID, &req, callerID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.ErrorResponse(c, fiber.StatusNotFound, "Pengguna tidak ditemukan")
+		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{"message": "User berhasil di-ban dari fitur SOS."})
@@ -166,7 +171,12 @@ func (h *Handler) BanUser(c *fiber.Ctx) error {
 // POST /api/v1/admin/users/:id/unban  [AdminOnly]
 func (h *Handler) UnbanUser(c *fiber.Ctx) error {
 	targetUserID := c.Params("id")
-	if err := h.svc.UnbanUser(targetUserID); err != nil {
+	callerID, _ := c.Locals("userID").(string)
+
+	if err := h.svc.UnbanUser(targetUserID, callerID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.ErrorResponse(c, fiber.StatusNotFound, "Pengguna tidak ditemukan")
+		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{"message": "Ban pengguna berhasil dicabut."})
@@ -175,7 +185,12 @@ func (h *Handler) UnbanUser(c *fiber.Ctx) error {
 // DELETE /api/v1/admin/users/:id/strike  [AdminOnly]
 func (h *Handler) ResetStrike(c *fiber.Ctx) error {
 	targetUserID := c.Params("id")
-	if err := h.svc.ResetStrike(targetUserID); err != nil {
+	callerID, _ := c.Locals("userID").(string)
+
+	if err := h.svc.ResetStrike(targetUserID, callerID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.ErrorResponse(c, fiber.StatusNotFound, "Pengguna tidak ditemukan")
+		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{"message": "Strike pengguna berhasil direset."})

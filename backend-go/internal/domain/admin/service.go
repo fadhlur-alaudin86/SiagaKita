@@ -50,24 +50,24 @@ func (s *Service) CreateAgency(req *CreateAgencyRequest) error {
 	return s.repo.CreateAgency(req)
 }
 
-func (s *Service) GetUsers(filterBanned bool, filterHighStrike bool, search string) ([]AdminUserItem, error) {
-	return s.repo.GetUsers(filterBanned, filterHighStrike, search)
+func (s *Service) GetUsers(filterBanned bool, filterHighStrike bool, search string, role string) ([]AdminUserItem, error) {
+	return s.repo.GetUsers(filterBanned, filterHighStrike, search, role)
 }
 
 func (s *Service) GetUserDetail(userID string) (*UserDetailResponse, error) {
 	return s.repo.GetUserDetail(userID)
 }
 
-func (s *Service) BanUser(userID, reason string) error {
-	return s.repo.BanUser(userID, reason)
+func (s *Service) BanUser(userID string, req *BanUserRequest, callerID string) error {
+	return s.repo.BanUser(userID, req, callerID)
 }
 
-func (s *Service) UnbanUser(userID string) error {
-	return s.repo.UnbanUser(userID)
+func (s *Service) UnbanUser(userID string, callerID string) error {
+	return s.repo.UnbanUser(userID, callerID)
 }
 
-func (s *Service) ResetStrike(userID string) error {
-	return s.repo.ResetStrike(userID)
+func (s *Service) ResetStrike(userID string, callerID string) error {
+	return s.repo.ResetStrike(userID, callerID)
 }
 
 // ─── KYC Warga ────────────────────────────────────────────────────────

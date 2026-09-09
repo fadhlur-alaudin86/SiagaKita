@@ -168,6 +168,7 @@ type CreateAgencyRequest struct {
 
 type BanUserRequest struct {
 	Reason string `json:"reason"`
+	Days   int    `json:"days,omitempty"`
 }
 
 type RankRequest struct {

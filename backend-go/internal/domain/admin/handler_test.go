@@ -31,6 +31,11 @@ func setupTestApp(h *Handler, cfg *config.Config) *fiber.App {
 	admin.Get("/volunteers/pending", middleware.AdminOnly(), h.GetPendingKYC)
 	admin.Post("/volunteers/:id/approve", middleware.AdminOnly(), h.ApproveKYC)
 	admin.Post("/volunteers/:id/reject", middleware.AdminOnly(), h.RejectKYC)
+	admin.Get("/users", middleware.AdminOnly(), h.GetUsers)
+	admin.Post("/users/:id/ban", middleware.AdminOnly(), h.BanUser)
+	admin.Post("/users/:id/unban", middleware.AdminOnly(), h.UnbanUser)
+	admin.Delete("/users/:id/strike", middleware.AdminOnly(), h.ResetStrike)
+	admin.Get("/users/:id/detail", middleware.AdminOnly(), h.GetUserDetail)
 
 	return app
 }
@@ -232,6 +237,174 @@ func TestKYC_WithLiveDB(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/volunteers/00000000-0000-0000-0000-000000000000/reject", bytes.NewReader(body))
 		req.Header.Set("Authorization", "Bearer "+token)
 		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found, got %d", resp.StatusCode)
+		}
+	})
+}
+
+// ─── User Management Tests ───────────────────────────────────────────────────
+
+func TestUserManagement_RBAC_Unauthorized(t *testing.T) {
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	h := NewHandler(nil, cfg)
+	app := setupTestApp(h, cfg)
+
+	endpoints := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodGet, "/api/v1/admin/users"},
+		{http.MethodPost, "/api/v1/admin/users/test-id/ban"},
+		{http.MethodPost, "/api/v1/admin/users/test-id/unban"},
+		{http.MethodDelete, "/api/v1/admin/users/test-id/strike"},
+		{http.MethodGet, "/api/v1/admin/users/test-id/detail"},
+	}
+
+	for _, ep := range endpoints {
+		t.Run(ep.method+" "+ep.path, func(t *testing.T) {
+			req := httptest.NewRequest(ep.method, ep.path, nil)
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test failed: %v", err)
+			}
+			if resp.StatusCode != http.StatusUnauthorized {
+				t.Errorf("Expected status 401 Unauthorized, got %d", resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestUserManagement_RBAC_Forbidden_Roles(t *testing.T) {
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	h := NewHandler(nil, cfg)
+	app := setupTestApp(h, cfg)
+
+	forbiddenRoles := []string{"civilian", "volunteer", "agency", "agency_personnel"}
+
+	for _, role := range forbiddenRoles {
+		t.Run("Role_"+role, func(t *testing.T) {
+			token, _, err := utils.GenerateAccessToken("user-123", role, testJWTSecret, time.Hour)
+			if err != nil {
+				t.Fatalf("Failed to generate token: %v", err)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users", nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test failed: %v", err)
+			}
+			if resp.StatusCode != http.StatusForbidden {
+				t.Errorf("Role %s: expected status 403 Forbidden, got %d", role, resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestUserManagement_BanUser_BadRequest_InvalidJSON(t *testing.T) {
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	h := NewHandler(nil, cfg)
+	app := setupTestApp(h, cfg)
+
+	token, _, err := utils.GenerateAccessToken("admin-123", "admin", testJWTSecret, time.Hour)
+	if err != nil {
+		t.Fatalf("Failed to generate token: %v", err)
+	}
+
+	invalidBody := bytes.NewReader([]byte("{invalid-json"))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/users/target-456/ban", invalidBody)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("Expected status 400 Bad Request, got %d", resp.StatusCode)
+	}
+}
+
+func TestUserManagement_WithLiveDB(t *testing.T) {
+	db := getOptionalTestDB()
+	if db == nil {
+		t.Skip("Database testing tidak tersedia — melewati live DB tests")
+	}
+
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	svc := NewService(db)
+	h := NewHandler(svc, cfg)
+	app := setupTestApp(h, cfg)
+
+	token, _, err := utils.GenerateAccessToken("admin-123", "admin", testJWTSecret, time.Hour)
+	if err != nil {
+		t.Fatalf("Failed to generate token: %v", err)
+	}
+
+	t.Run("GET_Users_Success", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users?role=civilian&banned=false", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200 OK, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("POST_Ban_NotFound", func(t *testing.T) {
+		body, _ := json.Marshal(BanUserRequest{Reason: "Spam SOS berkali-kali", Days: 3})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/users/00000000-0000-0000-0000-000000000000/ban", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("POST_Unban_NotFound", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/users/00000000-0000-0000-0000-000000000000/unban", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("DELETE_ResetStrike_NotFound", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/admin/users/00000000-0000-0000-0000-000000000000/strike", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected status 404 Not Found, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("GET_UserDetail_NotFound", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users/00000000-0000-0000-0000-000000000000/detail", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
 
 		resp, err := app.Test(req)
 		if err != nil {
