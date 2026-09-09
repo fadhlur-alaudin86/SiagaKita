@@ -460,22 +460,23 @@ func (s *Service) RefreshToken(ctx context.Context, refreshTokenStr string) (*Au
 
 	// 4. Ambil full_name berdasarkan role
 	var fullName *string
-	if user.Role == "civilian" || user.Role == "volunteer" {
+	switch user.Role {
+	case "civilian", "volunteer":
 		profile, _ := s.repo.FindProfile(user.ID)
 		if profile != nil {
 			fullName = profile.FullName
 		}
-	} else if user.Role == "admin" || user.Role == "superadmin" {
+	case "admin", "superadmin":
 		var ap AdminProfile
 		if err := s.repo.db.Where("user_id = ?", user.ID).First(&ap).Error; err == nil {
 			fullName = ap.FullName
 		}
-	} else if user.Role == "agency_personnel" {
+	case "agency_personnel":
 		personnel, err := s.repo.FindPersonnelByUserID(user.ID)
 		if err == nil {
 			fullName = &personnel.FullName
 		}
-	} else if user.Role == "agency" {
+	case "agency":
 		var agency struct {
 			Name string
 		}

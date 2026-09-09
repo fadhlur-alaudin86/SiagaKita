@@ -39,9 +39,13 @@ class AuthService {
   // ─── Token accessors ────────────────────────────────────────────────────────
 
   static Future<String?> getAccessToken() => _storage.read(key: _tokenKey);
-  static Future<String?> getRefreshToken() => _storage.read(key: _refreshTokenKey);
+  static Future<String?> getRefreshToken() =>
+      _storage.read(key: _refreshTokenKey);
 
-  static Future<void> updateTokens(String accessToken, String refreshToken) async {
+  static Future<void> updateTokens(
+    String accessToken,
+    String refreshToken,
+  ) async {
     await _storage.write(key: _tokenKey, value: accessToken);
     if (refreshToken.isNotEmpty) {
       await _storage.write(key: _refreshTokenKey, value: refreshToken);

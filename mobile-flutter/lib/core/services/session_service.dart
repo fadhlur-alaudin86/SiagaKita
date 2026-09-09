@@ -48,7 +48,10 @@ class SessionService {
   }
 
   /// Update token akses dan refresh token setelah auto-rotation.
-  static Future<void> updateTokens(String accessToken, String refreshToken) async {
+  static Future<void> updateTokens(
+    String accessToken,
+    String refreshToken,
+  ) async {
     await _secureStorage.write(key: _keyToken, value: accessToken);
     await _secureStorage.write(key: _keyRefreshToken, value: refreshToken);
   }

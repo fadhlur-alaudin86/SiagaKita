@@ -318,10 +318,7 @@ class AdminApiService {
   // ─── User Management ──────────────────────────────────────────────────────
 
   static Future<List<UserModel>> getUsers(String token) async {
-    final resp = await _authedGet(
-      Uri.parse(ApiConstants.adminUsers),
-      token,
-    );
+    final resp = await _authedGet(Uri.parse(ApiConstants.adminUsers), token);
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>? ?? [];
@@ -404,10 +401,7 @@ class AdminApiService {
   // ─── Agencies & Admins ────────────────────────────────────────────────────
 
   static Future<List<AgencyModel>> getAgencies(String token) async {
-    final resp = await _authedGet(
-      Uri.parse(ApiConstants.adminAgencies),
-      token,
-    );
+    final resp = await _authedGet(Uri.parse(ApiConstants.adminAgencies), token);
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>? ?? [];
@@ -417,10 +411,7 @@ class AdminApiService {
   }
 
   static Future<List<AdminModel>> getAdmins(String token) async {
-    final resp = await _authedGet(
-      Uri.parse(ApiConstants.adminAdmins),
-      token,
-    );
+    final resp = await _authedGet(Uri.parse(ApiConstants.adminAdmins), token);
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>? ?? [];
@@ -432,10 +423,7 @@ class AdminApiService {
   // ─── Ranks (Gamifikasi) ───────────────────────────────────────────────────
 
   static Future<List<RankModel>> getRanks(String token) async {
-    final resp = await _authedGet(
-      Uri.parse(ApiConstants.adminRanks),
-      token,
-    );
+    final resp = await _authedGet(Uri.parse(ApiConstants.adminRanks), token);
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>? ?? [];
@@ -594,10 +582,7 @@ class AgencyApiService {
   // ─── Profile ──────────────────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>?> getProfile(String token) async {
-    final resp = await _authedGet(
-      Uri.parse(ApiConstants.agencyMe),
-      token,
-    );
+    final resp = await _authedGet(Uri.parse(ApiConstants.agencyMe), token);
     if (resp.statusCode == 200) {
       final body = jsonDecode(resp.body) as Map<String, dynamic>;
       return body['data'] as Map<String, dynamic>;

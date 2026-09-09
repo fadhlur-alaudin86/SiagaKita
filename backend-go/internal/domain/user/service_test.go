@@ -76,8 +76,8 @@ func TestBcryptPasswordHashing(t *testing.T) {
 
 func TestRefreshToken_Validation(t *testing.T) {
 	cfg := &config.Config{
-		JWTSecret:    "test-jwt-secret-key-32-chars-long!",
-		JWTAccessTTL: 15 * time.Minute,
+		JWTSecret:     "test-jwt-secret-key-32-chars-long!",
+		JWTAccessTTL:  15 * time.Minute,
 		JWTRefreshTTL: 7 * 24 * time.Hour,
 	}
 	svc := &Service{cfg: cfg}

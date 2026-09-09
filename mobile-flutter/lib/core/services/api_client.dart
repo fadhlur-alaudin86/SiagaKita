@@ -26,25 +26,33 @@ class ApiClient {
     String? explicitToken,
   }) async {
     final activeToken = explicitToken ?? await SessionService.getToken();
-    final response = await sendFn(activeToken).timeout(timeout ?? _defaultTimeout);
+    final response = await sendFn(
+      activeToken,
+    ).timeout(timeout ?? _defaultTimeout);
 
     if (response.statusCode != 401) {
       return response;
     }
 
     // Tangani 401 Unauthorized
-    debugPrint('[ApiClient] Received 401 Unauthorized. Attempting transparent token refresh...');
+    debugPrint(
+      '[ApiClient] Received 401 Unauthorized. Attempting transparent token refresh...',
+    );
     final newToken = await _acquireRefreshedToken();
 
     if (newToken == null) {
       // Refresh token kedaluwarsa atau invalid
-      debugPrint('[ApiClient] Refresh token failed or expired. Triggering session expiry.');
+      debugPrint(
+        '[ApiClient] Refresh token failed or expired. Triggering session expiry.',
+      );
       onSessionExpired?.call();
       return response;
     }
 
     // Retry request asli menggunakan token baru
-    debugPrint('[ApiClient] Retrying original request with new refreshed token...');
+    debugPrint(
+      '[ApiClient] Retrying original request with new refreshed token...',
+    );
     return await sendFn(newToken).timeout(timeout ?? _defaultTimeout);
   }
 
@@ -67,7 +75,10 @@ class ApiClient {
       }
 
       final result = await AuthService.refreshToken(currentRefreshToken);
-      await SessionService.updateTokens(result.accessToken, result.refreshToken);
+      await SessionService.updateTokens(
+        result.accessToken,
+        result.refreshToken,
+      );
 
       _resolveQueue(result.accessToken);
       return result.accessToken;
@@ -101,7 +112,10 @@ class ApiClient {
     return _executeWithRetry(
       (resolvedToken) => http.get(
         url,
-        headers: {...ApiConfig.headers(token: resolvedToken), ...?headers},
+        headers: {
+          ...ApiConfig.headers(token: resolvedToken),
+          ...?headers,
+        },
       ),
       timeout: timeout,
       explicitToken: token,
@@ -119,7 +133,10 @@ class ApiClient {
     return _executeWithRetry(
       (resolvedToken) => http.post(
         url,
-        headers: {...ApiConfig.headers(token: resolvedToken), ...?headers},
+        headers: {
+          ...ApiConfig.headers(token: resolvedToken),
+          ...?headers,
+        },
         body: body,
         encoding: encoding,
       ),
@@ -139,7 +156,10 @@ class ApiClient {
     return _executeWithRetry(
       (resolvedToken) => http.put(
         url,
-        headers: {...ApiConfig.headers(token: resolvedToken), ...?headers},
+        headers: {
+          ...ApiConfig.headers(token: resolvedToken),
+          ...?headers,
+        },
         body: body,
         encoding: encoding,
       ),
@@ -159,7 +179,10 @@ class ApiClient {
     return _executeWithRetry(
       (resolvedToken) => http.patch(
         url,
-        headers: {...ApiConfig.headers(token: resolvedToken), ...?headers},
+        headers: {
+          ...ApiConfig.headers(token: resolvedToken),
+          ...?headers,
+        },
         body: body,
         encoding: encoding,
       ),
@@ -179,7 +202,10 @@ class ApiClient {
     return _executeWithRetry(
       (resolvedToken) => http.delete(
         url,
-        headers: {...ApiConfig.headers(token: resolvedToken), ...?headers},
+        headers: {
+          ...ApiConfig.headers(token: resolvedToken),
+          ...?headers,
+        },
         body: body,
         encoding: encoding,
       ),

@@ -12,7 +12,7 @@ import (
 type Claims struct {
 	UserID    string `json:"user_id"`
 	Role      string `json:"role"`
-	JTI       string `json:"jti"` // JWT ID — unique per token, used for session allowlist
+	JTI       string `json:"jti"`                  // JWT ID — unique per token, used for session allowlist
 	TokenType string `json:"token_type,omitempty"` // "access" or "refresh"
 	jwt.RegisteredClaims
 }
