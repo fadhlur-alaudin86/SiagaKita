@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'core/localization/app_localization.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/ws_service.dart';
 import 'core/theme/app_theme.dart';
@@ -10,13 +12,32 @@ import 'features/instansi/presentation/instansi_shell.dart';
 class SiagaKitaConsoleApp extends StatelessWidget {
   const SiagaKitaConsoleApp({super.key});
 
+  static final ValueNotifier<Locale> localeNotifier = ValueNotifier(
+    AppLocalization.localeId,
+  );
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SiagaKita Console',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(),
-      home: const _SplashRouter(),
+    return ValueListenableBuilder<Locale>(
+      valueListenable: localeNotifier,
+      builder: (context, currentLocale, _) {
+        return MaterialApp(
+          title: 'SiagaKita Console',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.dark(),
+          locale: currentLocale,
+          supportedLocales: const [
+            AppLocalization.localeId,
+            AppLocalization.localeEn,
+          ],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const _SplashRouter(),
+        );
+      },
     );
   }
 }
@@ -79,8 +100,8 @@ class _SplashRouterState extends State<_SplashRouter> {
   @override
   Widget build(BuildContext context) {
     // Layar splash sederhana selama cek session
-    return const Scaffold(
-      backgroundColor: Color(0xFF0A1628),
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A1628),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -97,8 +118,8 @@ class _SplashRouterState extends State<_SplashRouter> {
             ),
             SizedBox(height: 8),
             Text(
-              'Memuat...',
-              style: TextStyle(color: Colors.white38, fontSize: 13),
+              'Memuat...'.tr(context),
+              style: const TextStyle(color: Colors.white38, fontSize: 13),
             ),
             SizedBox(height: 32),
             CircularProgressIndicator(

@@ -8,6 +8,7 @@ import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
 import '../../../../core/services/ws_service.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/localization/app_localization.dart';
 
 class SosAktifPage extends StatefulWidget {
   final String token;
@@ -158,17 +159,18 @@ class _SosAktifPageState extends State<SosAktifPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
-        title: const Text(
-          'Konfirmasi Alarm Palsu',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          'Konfirmasi Alarm Palsu'.tr(context),
+          style: const TextStyle(color: Colors.white),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Pengguna akan mendapat 1 strike. Setelah 3 strike, akun SOS akan diblokir.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+            Text(
+              'Pengguna akan mendapat 1 strike. Setelah 3 strike, akun SOS akan diblokir.'
+                  .tr(context),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -176,7 +178,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
               style: const TextStyle(color: Colors.white),
               maxLines: 2,
               decoration: InputDecoration(
-                hintText: 'Alasan menandai alarm palsu (wajib)',
+                hintText: 'Alasan menandai alarm palsu (wajib)'.tr(context),
                 hintStyle: const TextStyle(color: Colors.white30),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.05),
@@ -203,7 +205,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -211,9 +216,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Tandai Alarm Palsu',
-              style: TextStyle(
+            child: Text(
+              'Tandai Alarm Palsu'.tr(context),
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -363,7 +368,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         Padding(
                           padding: const EdgeInsets.only(right: 6),
                           child: ChoiceChip(
-                            label: Text(entry.$2),
+                            label: Text(entry.$2.tr(context)),
                             selected: _filterStatus == entry.$1,
                             onSelected: (_) =>
                                 setState(() => _filterStatus = entry.$1),
@@ -1064,7 +1069,7 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         Icons.report_gmailerrorred_outlined,
                         size: 18,
                       ),
-                      label: const Text('Alarm Palsu'),
+                      label: Text('Alarm Palsu'.tr(context)),
                       onPressed: _markFalseAlarm,
                     ),
                   ),
@@ -1080,9 +1085,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
                         ),
                       ),
                       icon: const Icon(Icons.handshake, size: 18),
-                      label: const Text(
-                        'TANGANI',
-                        style: TextStyle(
+                      label: Text(
+                        'TANGANI'.tr(context),
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           letterSpacing: 0.5,
@@ -1094,7 +1099,10 @@ class _SosAktifPageState extends State<SosAktifPage> {
                           inc.id,
                         );
                         if (ok && mounted) {
-                          _showSnack('Status ditangani', Colors.blue);
+                          _showSnack(
+                            'Status ditangani'.tr(context),
+                            Colors.blue,
+                          );
                           _load();
                         }
                       },
@@ -1114,9 +1122,9 @@ class _SosAktifPageState extends State<SosAktifPage> {
                     ),
                   ),
                   icon: const Icon(Icons.check_circle, size: 18),
-                  label: const Text(
-                    'SELESAIKAN',
-                    style: TextStyle(
+                  label: Text(
+                    'SELESAIKAN'.tr(context),
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       letterSpacing: 0.5,

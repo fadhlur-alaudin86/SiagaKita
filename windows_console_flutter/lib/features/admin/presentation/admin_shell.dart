@@ -12,6 +12,8 @@ import 'pages/gamifikasi_page.dart';
 import 'pages/statistik_page.dart';
 import 'pages/pendaftaran_akun_page.dart';
 import '../../auth/login_screen.dart';
+import '../../../core/localization/app_localization.dart';
+import '../../../core/widgets/language_switcher.dart';
 
 enum AdminMenu { kyc, users, pendaftaran, gamifikasi, statistik }
 
@@ -106,7 +108,7 @@ class _AdminShellState extends State<AdminShell> {
             child: Column(
               children: [
                 _AdminTopHeader(
-                  title: _titles[_active] ?? 'Admin Console',
+                  title: (_titles[_active] ?? 'Admin Console').tr(context),
                   role: widget.role,
                 ),
                 Expanded(
@@ -180,18 +182,22 @@ class _AdminSideNav extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
-                  role == 'superadmin'
-                      ? 'Super Administrator'
-                      : 'Administrator',
+                  (role == 'superadmin'
+                          ? 'Super Administrator'
+                          : 'Administrator')
+                      .tr(context),
                   style: const TextStyle(color: Colors.white38, fontSize: 11),
                 ),
               ),
               const SizedBox(height: 24),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 child: Text(
-                  'MANAJEMEN',
-                  style: TextStyle(
+                  'MANAJEMEN'.tr(context),
+                  style: const TextStyle(
                     color: Colors.white24,
                     fontSize: 10,
                     letterSpacing: 1.5,
@@ -199,30 +205,33 @@ class _AdminSideNav extends StatelessWidget {
                 ),
               ),
               _AdminNavItem(
-                label: 'KYC Relawan',
+                label: 'KYC Relawan'.tr(context),
                 icon: Icons.badge_outlined,
                 badge: pendingKycCount > 0 ? pendingKycCount.toString() : null,
                 selected: activeMenu == AdminMenu.kyc,
                 onTap: () => onSelected(AdminMenu.kyc),
               ),
               _AdminNavItem(
-                label: 'Manajemen Akun',
+                label: 'Manajemen Akun'.tr(context),
                 icon: Icons.people_outlined,
                 selected: activeMenu == AdminMenu.users,
                 onTap: () => onSelected(AdminMenu.users),
               ),
               _AdminNavItem(
-                label: 'Pendaftaran Akun',
+                label: 'Pendaftaran Akun'.tr(context),
                 icon: Icons.person_add_outlined,
                 selected: activeMenu == AdminMenu.pendaftaran,
                 onTap: () => onSelected(AdminMenu.pendaftaran),
               ),
               const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 child: Text(
-                  'SISTEM',
-                  style: TextStyle(
+                  'SISTEM'.tr(context),
+                  style: const TextStyle(
                     color: Colors.white24,
                     fontSize: 10,
                     letterSpacing: 1.5,
@@ -238,7 +247,7 @@ class _AdminSideNav extends StatelessWidget {
               //   onTap: () => onSelected(AdminMenu.gamifikasi),
               // ),
               _AdminNavItem(
-                label: 'Statistik & Analitik',
+                label: 'Statistik & Analitik'.tr(context),
                 icon: Icons.analytics_outlined,
                 selected: activeMenu == AdminMenu.statistik,
                 onTap: () => onSelected(AdminMenu.statistik),
@@ -251,13 +260,16 @@ class _AdminSideNav extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white10),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.circle, color: Color(0xFF2EAF60), size: 9),
-                    SizedBox(width: 8),
+                    const Icon(Icons.circle, color: Color(0xFF2EAF60), size: 9),
+                    const SizedBox(width: 8),
                     Text(
-                      'Sistem Online',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                      'Sistem Online'.tr(context),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -393,6 +405,8 @@ class _AdminTopHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
+          const LanguageSwitcher(),
+          const SizedBox(width: 16),
           PopupMenuButton<String>(
             icon: const Icon(
               Icons.account_circle,
@@ -402,34 +416,43 @@ class _AdminTopHeader extends StatelessWidget {
             color: const Color(0xFF1E293B),
             offset: const Offset(0, 40),
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.person, color: Colors.white, size: 20),
-                    SizedBox(width: 10),
-                    Text('Profil Saya', style: TextStyle(color: Colors.white)),
+                    const Icon(Icons.person, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Profil Saya'.tr(context),
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'settings',
                 child: Row(
                   children: [
-                    Icon(Icons.settings, color: Colors.white, size: 20),
-                    SizedBox(width: 10),
-                    Text('Pengaturan', style: TextStyle(color: Colors.white)),
+                    const Icon(Icons.settings, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Pengaturan'.tr(context),
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
               const PopupMenuDivider(height: 1),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout, color: Colors.redAccent, size: 20),
-                    SizedBox(width: 10),
-                    Text('Keluar', style: TextStyle(color: Colors.redAccent)),
+                    const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Keluar'.tr(context),
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
                   ],
                 ),
               ),
@@ -439,7 +462,9 @@ class _AdminTopHeader extends StatelessWidget {
                 _logout(context);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Menu $value segera hadir')),
+                  SnackBar(
+                    content: Text('Menu $value segera hadir'.tr(context)),
+                  ),
                 );
               }
             },

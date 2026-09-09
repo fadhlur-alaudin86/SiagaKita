@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../constants/api_constants.dart';
+import '../localization/app_localization.dart';
 
 class AuthResult {
   final String accessToken;
@@ -29,7 +30,10 @@ class AuthService {
   static Future<AuthResult> login(String email, String password) async {
     final response = await http.post(
       Uri.parse(ApiConstants.login),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': AppLocalization.currentLocaleCode,
+      },
       body: jsonEncode({'email': email, 'password': password}),
     );
 
@@ -90,6 +94,7 @@ class AuthService {
   static Map<String, String> headers(String token) => {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer $token',
+    'Accept-Language': AppLocalization.currentLocaleCode,
   };
 }
 

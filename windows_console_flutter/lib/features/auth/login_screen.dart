@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/localization/app_localization.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/ws_service.dart';
+import '../../core/widgets/language_switcher.dart';
 import '../instansi/presentation/instansi_shell.dart';
 import '../admin/presentation/admin_shell.dart';
 
@@ -65,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Koneksi gagal. Pastikan server berjalan.';
+        _error = 'Koneksi gagal. Pastikan server berjalan.'.tr(context);
         _loading = false;
       });
     }
@@ -146,18 +148,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Masuk ke Console',
-                    style: TextStyle(
+                  const Align(
+                    alignment: Alignment.topRight,
+                    child: LanguageSwitcher(),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Masuk ke Console'.tr(context),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Khusus operator instansi & admin sistem',
-                    style: TextStyle(color: Colors.white38, fontSize: 13),
+                  Text(
+                    'Khusus operator instansi & admin sistem'.tr(context),
+                    style: const TextStyle(color: Colors.white38, fontSize: 13),
                   ),
                   const SizedBox(height: 40),
 
@@ -198,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Email
                   _ConsoleTextField(
                     controller: _emailCtrl,
-                    label: 'Email',
+                    label: 'Email'.tr(context),
                     icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                   ),
@@ -207,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Password
                   _ConsoleTextField(
                     controller: _passCtrl,
-                    label: 'Password',
+                    label: 'Kata Sandi'.tr(context),
                     icon: Icons.lock_outlined,
                     obscure: _obscure,
                     suffixIcon: IconButton(
@@ -249,9 +256,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 strokeWidth: 2.5,
                               ),
                             )
-                          : const Text(
-                              'MASUK',
-                              style: TextStyle(
+                          : Text(
+                              'Masuk'.tr(context).toUpperCase(),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 2,
                                 fontSize: 14,

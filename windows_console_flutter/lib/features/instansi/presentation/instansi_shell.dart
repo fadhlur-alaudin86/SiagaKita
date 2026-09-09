@@ -10,8 +10,10 @@ import 'pages/peta_operasional_page.dart';
 import 'pages/sos_aktif_page.dart';
 import 'pages/riwayat_page.dart';
 import '../../auth/login_screen.dart';
+import '../../../core/localization/app_localization.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/services/api_services.dart';
+import '../../../core/widgets/language_switcher.dart';
 import 'dart:async';
 
 enum InstansiMenu {
@@ -82,12 +84,14 @@ class _InstansiShellState extends State<InstansiShell> {
           _wsSub?.cancel();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text(
-                  'Sesi Anda telah berakhir karena login di perangkat lain.',
+                  'Sesi Anda telah berakhir karena login di perangkat lain.'.tr(
+                    context,
+                  ),
                 ),
                 backgroundColor: Colors.redAccent,
-                duration: Duration(seconds: 4),
+                duration: const Duration(seconds: 4),
               ),
             );
             Navigator.pushAndRemoveUntil(
@@ -243,7 +247,9 @@ class _InstansiShellState extends State<InstansiShell> {
               child: Column(
                 children: [
                   _TopHeader(
-                    title: _titles[_activeMenu] ?? 'Instansi Console',
+                    title: (_titles[_activeMenu] ?? 'Instansi Console').tr(
+                      context,
+                    ),
                     ws: widget.ws,
                   ),
                   Expanded(
@@ -304,20 +310,20 @@ class _SideNavigation extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               _NavItem(
-                label: 'Dashboard Operasi',
+                label: 'Dashboard Operasi'.tr(context),
                 icon: Icons.dashboard_outlined,
                 selected: activeMenu == InstansiMenu.dashboard,
                 onTap: () => onSelected(InstansiMenu.dashboard),
               ),
               _NavItem(
-                label: 'SOS Aktif',
+                label: 'SOS Aktif'.tr(context),
                 icon: Icons.sensors_outlined,
                 selected: activeMenu == InstansiMenu.sosAktif,
                 badgeCount: unreadSosCount,
                 onTap: () => onSelected(InstansiMenu.sosAktif),
               ),
               _NavItem(
-                label: 'Laporan Aktif',
+                label: 'Laporan Aktif'.tr(context),
                 icon: Icons.inbox_outlined,
                 selected: activeMenu == InstansiMenu.laporanMasuk,
                 badgeCount: unreadReportCount,
@@ -326,13 +332,13 @@ class _SideNavigation extends StatelessWidget {
 
               _NavItem(
                 icon: Icons.map_outlined,
-                label: 'Peta Operasional',
+                label: 'Peta Operasional'.tr(context),
                 selected: activeMenu == InstansiMenu.petaOperasional,
                 onTap: () => onSelected(InstansiMenu.petaOperasional),
               ),
               _NavItem(
                 icon: Icons.history_outlined,
-                label: 'Riwayat',
+                label: 'Riwayat'.tr(context),
                 selected: activeMenu == InstansiMenu.riwayat,
                 onTap: () => onSelected(InstansiMenu.riwayat),
               ),
@@ -340,9 +346,9 @@ class _SideNavigation extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.07),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(color: Colors.white10),
                 ),
                 child: Row(
                   children: [
@@ -355,7 +361,9 @@ class _SideNavigation extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      ws.isConnected ? 'WS Connected' : 'Offline',
+                      ws.isConnected
+                          ? 'WS Connected'.tr(context)
+                          : 'Offline'.tr(context),
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -484,7 +492,9 @@ class _TopHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    ws.isConnected ? 'Realtime Connected' : 'Offline',
+                    (ws.isConnected ? 'Realtime Connected' : 'Offline').tr(
+                      context,
+                    ),
                     style: TextStyle(
                       color: ws.isConnected
                           ? const Color(0xFF2EAF60)
@@ -498,6 +508,8 @@ class _TopHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
+          const LanguageSwitcher(),
+          const SizedBox(width: 16),
           PopupMenuButton<String>(
             icon: const Icon(
               Icons.account_circle,
@@ -507,34 +519,43 @@ class _TopHeader extends StatelessWidget {
             color: const Color(0xFF1E293B),
             offset: const Offset(0, 40),
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.person, color: Colors.white, size: 20),
-                    SizedBox(width: 10),
-                    Text('Profil Saya', style: TextStyle(color: Colors.white)),
+                    const Icon(Icons.person, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Profil Saya'.tr(context),
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'settings',
                 child: Row(
                   children: [
-                    Icon(Icons.settings, color: Colors.white, size: 20),
-                    SizedBox(width: 10),
-                    Text('Pengaturan', style: TextStyle(color: Colors.white)),
+                    const Icon(Icons.settings, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Pengaturan'.tr(context),
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
               const PopupMenuDivider(height: 1),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout, color: Colors.redAccent, size: 20),
-                    SizedBox(width: 10),
-                    Text('Keluar', style: TextStyle(color: Colors.redAccent)),
+                    const Icon(Icons.logout, color: Colors.redAccent, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Keluar'.tr(context),
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
                   ],
                 ),
               ),
@@ -549,7 +570,9 @@ class _TopHeader extends StatelessWidget {
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Menu $value segera hadir')),
+                  SnackBar(
+                    content: Text('Menu $value segera hadir'.tr(context)),
+                  ),
                 );
               }
             },
