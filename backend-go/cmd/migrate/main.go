@@ -53,7 +53,11 @@ func main() {
 	if err != nil {
 		utils.Fatal().Err(err).Msg("[Migrate-CLI] Failed to acquire database handle")
 	}
-	defer sqlDB.Close()
+	defer func() {
+		if err := sqlDB.Close(); err != nil {
+			utils.Error().Err(err).Msg("[Migrate-CLI] Failed to close database connection")
+		}
+	}()
 
 	switch command {
 	case "up":
