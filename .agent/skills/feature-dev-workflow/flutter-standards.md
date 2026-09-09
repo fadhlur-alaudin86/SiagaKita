@@ -104,3 +104,10 @@ windows_console_flutter/lib/
 | Widget | Suffix `Widget` | `SOSStatusWidget` |
 | Screen | Suffix `Screen` | `HomeScreen` |
 | Service | Suffix `Service` | `SessionService` |
+
+## Standard 10 — Localization & Internationalization (i18n)
+
+- **Zero Hardcoded Text**: All user-visible strings must be wrapped with `.tr(context)` or `AppLocalization.translate(...)`. Refer to [`.agent/rules/localization.md`](../../rules/localization.md).
+- **Dictionary Parity & Pruning**: When introducing new text, add entries for both Indonesian (`id`) and English (`en`) in `app_localization.dart`. When deleting or refactoring strings, **immediately remove the obsolete keys from the dictionary**.
+- **Dynamic Language Headers**: Pass `'Accept-Language': AppLocalization.currentLocaleCode` on all HTTP network calls and `&lang=...` on WebSocket URLs.
+- **Language Switcher Persistence**: Use `LanguageSwitcher` widget and persist preferences across restarts.

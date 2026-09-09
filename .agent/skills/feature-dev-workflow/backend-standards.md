@@ -170,3 +170,10 @@ feat(user)!: change login endpoint path from /auth/login to /auth/user/login
 BREAKING CHANGE: endpoint path changed, update all clients.
 Closes #42
 ```
+
+## Standard 11 — Localization & Response Translation (i18n)
+
+- **Response Utility Translation**: Always return client responses via `utils.ErrorResponse` or `utils.SuccessResponseWithMsg`. These utilities automatically extract the request locale via `i18n.GetLocale(c)` and translate messages using `internal/i18n`. Refer to [`.agent/rules/localization.md`](../../rules/localization.md).
+- **CORS Configuration**: Maintain `Accept-Language` in `AllowHeaders` of Fiber CORS middleware (`cmd/api/main.go`).
+- **Structured Error Codes**: Provide machine-readable error codes (e.g. `ERR_AUTH_UNAUTHORIZED`) alongside user-facing messages.
+- **Bilingual Tests**: Write unit tests covering both Indonesian and English responses (`Accept-Language: en`).
