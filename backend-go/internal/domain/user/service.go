@@ -481,10 +481,10 @@ func (s *Service) GetKYCStatus(userID string) (*KYCStatusResponse, error) {
 		return nil, err
 	}
 	msg := map[string]string{
-		"none":     "Anda belum mengajukan verifikasi NIK.",
-		"pending":  "Pengajuan sedang diproses oleh admin (1-3 hari kerja).",
-		"approved": "Identitas Anda telah terverifikasi",
-		"rejected": "Pengajuan ditolak. Silakan ajukan ulang dengan foto yang lebih jelas.",
+		string(KYCStatusNone):     "Anda belum mengajukan verifikasi NIK.",
+		string(KYCStatusPending):  "Pengajuan sedang diproses oleh admin (1-3 hari kerja).",
+		string(KYCStatusApproved): "Identitas Anda telah terverifikasi",
+		string(KYCStatusRejected): "Pengajuan ditolak. Silakan ajukan ulang dengan foto yang lebih jelas.",
 	}[profile.NIKVerificationStatus]
 	return &KYCStatusResponse{
 		Status:          KYCStatus(profile.NIKVerificationStatus),

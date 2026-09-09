@@ -253,7 +253,7 @@ func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
 	}
 	return utils.SuccessResponse(c, fiber.Map{
 		"message": "Pengajuan verifikasi NIK berhasil dikirim. Tunggu proses verifikasi admin (1-3 hari kerja).",
-		"status":  "pending",
+		"status":  string(KYCStatusPending),
 	})
 }
 

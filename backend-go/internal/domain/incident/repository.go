@@ -380,28 +380,12 @@ func (r *Repository) IsSOSBanned(userID string) (bool, error) {
 	return count > 0, err
 }
 
-func (r *Repository) GetStrikeCount(userID string) (int, error) {
-	var count int
-	err := r.db.Table("user_profiles").Select("sos_strike_count").
-		Where("user_id = ?", userID).Scan(&count).Error
-	return count, err
-}
-
 // ─── Volunteer XP & Rank ──────────────────────────────────────────────────────
 
 func (r *Repository) CreateResponse(resp *IncidentResponse) error {
 	now := time.Now()
 	resp.AcceptedAt = now
 	return r.db.Create(resp).Error
-}
-
-func (r *Repository) GetReputation(userID string) (*VolunteerReputation, error) {
-	var rep VolunteerReputation
-	err := r.db.Where("user_id = ?", userID).First(&rep).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	return &rep, err
 }
 
 func (r *Repository) UpsertReputation(userID string, addXP, addRescues int) (*VolunteerReputation, error) {
