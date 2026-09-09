@@ -143,4 +143,6 @@ All team members MUST follow Conventional Commits to ensure automated release no
 6. **Enforce Conventional Commits** — if commit messages break standard format, point it out and request correction.
 7. **Automated Rollback awareness** — deployment workflows include automated health check rollbacks. If a deployment fails, inspect container logs and report findings.
 8. **Database Rollback Caution** — Never automate destructive database schema rollbacks in unattended CI/CD pipelines. Always verify backward-compatibility (Expand & Contract) and instruct developers to use `siagakita-migrate` for manual schema rollbacks.
+9. **Major Workflow Evolution Protocol** — Any proposed modifications to GitHub Actions workflows (`.github/workflows/*.yml`), branching models, or deployment automation are classified as Major Evolutions. Draft a structured proposal in `learning_proposal.md` and recommend `/grill-me` alignment before implementing changes. See `feature-dev-workflow/workflow-evolution.md`.
+10. **Update docs** — whenever workflow files or deployment architecture change, update `docs/skills/devops-workflow-docs.md`.
 

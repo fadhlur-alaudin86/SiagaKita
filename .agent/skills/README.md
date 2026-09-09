@@ -22,6 +22,7 @@ This directory contains all **agent skills** available for the SiagaKita project
     ├── flutter-standards.md            ← Flutter/Dart standards & async safety
     ├── postgres-patterns.md            ← PostgreSQL 15 & pgx v5 patterns
     ├── review-standards.md             ← Pre-PR review checklists (Security, DB, Silent-Failure)
+    ├── workflow-evolution.md           ← Evolutionary workflow protocol (minor/major updates)
     └── testing.md                      ← Test conventions, Hybrid TDD & sanitization
 ```
 
