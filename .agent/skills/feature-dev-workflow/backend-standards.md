@@ -177,3 +177,12 @@ Closes #42
 - **CORS Configuration**: Maintain `Accept-Language` in `AllowHeaders` of Fiber CORS middleware (`cmd/api/main.go`).
 - **Structured Error Codes**: Provide machine-readable error codes (e.g. `ERR_AUTH_UNAUTHORIZED`) alongside user-facing messages.
 - **Bilingual Tests**: Write unit tests covering both Indonesian and English responses (`Accept-Language: en`).
+
+## Standard 12 — Clean Code & Dead Code Elimination
+
+- **Purge Uncalled Private Helpers**: When refactoring or replacing algorithms, immediately delete private functions (`func helper(...)`) that no longer have active callers in the package. Never keep unused private functions or helpers "just in case".
+- **Prune Post-Migration Model Fields**: After modifying database schemas or API response contracts, remove struct fields that are no longer queried, scanned, or transmitted.
+- **Eliminate Dead Constants & Errors**: Remove obsolete status codes, retired enum constants, or custom error variables (`var ErrDeprecated = ...`) when their use cases are eliminated.
+- **Static Analysis Verification**: Run `golangci-lint run --enable unused` before submitting changes to ensure zero unread fields, dead constants, or unused helpers remain.
+- **Cross-Domain Safety for Public Symbols**: Never delete exported public symbols (`Func`, `Struct`, `Const`) without first verifying all callers across domains (`internal/domain/...`), hubs (`internal/hub/...`), and middlewares.
+

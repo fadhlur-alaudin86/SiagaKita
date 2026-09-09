@@ -26,7 +26,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | 4 | **Backend Implementation** — Implement handler, service, repository in `backend-go/internal/domain/<name>/`. If lifecycle states or actor capabilities change, update `docs/design/activity-diagrams.md` or `use-case-diagrams.md`. | Go source files + updated diagrams |
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
 | 6 | **Tests & Hybrid TDD** — Write Go unit tests (`_test.go`) with RED-GREEN cycle for critical logic + Flutter tests. Document test outcomes in feature log. | Test files + test docs |
-| 7 | **Review Gate & PR** — Run Pre-PR verification (Security, Database, Silent-Failure audits). Ensure CI passes. Sync issue checklist. Open PR targeting `dev`. | Pre-PR audit report + Pull Request |
+| 7 | **Review Gate & PR** — Run Pre-PR verification (Security, Database, Silent-Failure, and Dead-Code audits). Ensure CI passes. Sync issue checklist. Open PR targeting `dev`. | Pre-PR audit report + Pull Request |
 | 8 | **Close Log** — Update feature log (all steps ✅). Link PR. Move issue to Done. | Updated feature log |
 
 ## Agent Rules
@@ -79,7 +79,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 ### GitHub Sync, Pre-PR Review & Merge Strategy
 33. **Step 0 → in-progress & Assignee**: `gh issue edit <N> --add-label "status: in-progress" --remove-label "status: ready,status: in-review,status: done" --add-assignee "@me"` + explanatory comment when starting work. Always assign the issue to the active developer/agent account (`@me`) when picking up an issue.
 34. **Step 7 → Pre-PR Verification Gate (MANDATORY)**:
-    - **Self-Review Checklist**: Review all changed code against [review-standards.md](review-standards.md) (Security Review, Database & Migration Review, and Silent Failure Audit).
+    - **Self-Review Checklist**: Review all changed code against [review-standards.md](review-standards.md) (Security Review, Database & Migration Review, Silent Failure Audit, and Clean Code & Dead Code Elimination).
     - **Checklist Pre-Sync (MANDATORY)**: Before creating the PR, the agent MUST inspect the issue body and mark all completed Tasks and Acceptance Criteria checkboxes from `- [ ]` to `- [x]` via `gh issue edit <N> --body "..."`.
     - **Single Status Label**: Transition to `status: in-review` and ensure old status labels (`status: in-progress`, `status: ready`, `status: done`) are removed to prevent label stacking.
     - **Closing vs Parent Linking**: In the PR description, use `Closes #<child_issue>` for the issue being solved. If under an epic/tracker issue, specify `Parent Issue: #<parent_issue>` so the parent issue is not prematurely closed.
@@ -170,7 +170,7 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 | 6 | Backend code (`backend-go/internal/domain/<name>/`) | ⬜ |
 | 7 | Flutter code (`mobile-flutter/` / `windows_console_flutter/`) | ⬜ |
 | 8 | Unit & widget tests (`*_test.go`, `*_test.dart`) | ⬜ |
-| 9 | Pre-PR Review Audit (Security, DB, Silent-Failure) | ⬜ |
+| 9 | Pre-PR Review Audit (Security, DB, Silent-Failure, Dead-Code) | ⬜ |
 | 10 | Pull request to `dev` (Squash Merge) | ⬜ |
 ```
 
