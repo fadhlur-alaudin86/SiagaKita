@@ -14,6 +14,7 @@ import (
 	"siagakita-backend/internal/hub"
 	"siagakita-backend/internal/utils"
 
+	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -351,33 +352,38 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, _, err := utils.GenerateRefreshToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTRefreshTTL)
+	refreshToken, refreshJTI, err := utils.GenerateRefreshToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTRefreshTTL)
 	if err != nil {
 		return nil, err
 	}
 
-	// ── Single-session enforcement untuk civilian & volunteer ──────────────────
-	// Hanya mobile roles yang dibatasi 1 sesi. Console roles (agency/admin/superadmin)
-	// boleh login di lebih dari 1 perangkat.
-	if (user.Role == "civilian" || user.Role == "volunteer") && s.rdb != nil {
+	// ── Session & Refresh Token tracking di Redis ──────────────────────────────
+	if s.rdb != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		sessionKey := "session:" + user.ID
+		if user.Role == "civilian" || user.Role == "volunteer" {
+			sessionKey := "session:" + user.ID
+			refreshKey := "refresh_token:" + user.ID
 
-		// Kirim FORCE_LOGOUT ke koneksi WS lama (jika masih online)
-		if s.hub != nil && s.hub.IsOnline(user.ID) {
-			_ = s.hub.SendToUser(user.ID, hub.Message{
-				Event: "FORCE_LOGOUT",
-				Payload: map[string]string{
-					"reason":  "session_replaced",
-					"message": "Akun ini telah login di perangkat lain. Anda telah dikeluarkan.",
-				},
-			})
+			// Kirim FORCE_LOGOUT ke koneksi WS lama (jika masih online)
+			if s.hub != nil && s.hub.IsOnline(user.ID) {
+				_ = s.hub.SendToUser(user.ID, hub.Message{
+					Event: "FORCE_LOGOUT",
+					Payload: map[string]string{
+						"reason":  "session_replaced",
+						"message": "Akun ini telah login di perangkat lain. Anda telah dikeluarkan.",
+					},
+				})
+			}
+
+			// Simpan JTI baru ke Redis (menggantikan session lama)
+			_ = s.rdb.Set(ctx, sessionKey, jti, s.cfg.JWTAccessTTL)
+			_ = s.rdb.Set(ctx, refreshKey, refreshJTI, s.cfg.JWTRefreshTTL)
+		} else {
+			// Console roles: per-JTI tracking (multi-device support)
+			_ = s.rdb.Set(ctx, "refresh_jti:"+refreshJTI, "valid", s.cfg.JWTRefreshTTL)
 		}
-
-		// Simpan JTI baru ke Redis (menggantikan session lama)
-		_ = s.rdb.Set(ctx, sessionKey, jti, s.cfg.JWTAccessTTL)
 	}
 
 	return &AuthResponse{
@@ -390,6 +396,132 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 			FullName: fullName,
 		},
 	}, nil
+}
+
+// RefreshToken memvalidasi refresh token, mendukung 30s grace period untuk toleransi
+// sinyal fluktuatif, mendeteksi replay attack (pencurian token), dan menerbitkan token pair baru.
+func (s *Service) RefreshToken(ctx context.Context, refreshTokenStr string) (*AuthResponse, error) {
+	if refreshTokenStr == "" {
+		return nil, errors.New("refresh_token wajib diisi")
+	}
+
+	claims, err := utils.ParseToken(refreshTokenStr, s.cfg.JWTSecret)
+	if err != nil {
+		return nil, errors.New("token refresh tidak valid atau sudah kedaluwarsa")
+	}
+
+	if claims.TokenType != "refresh" {
+		return nil, errors.New("tipe token tidak valid")
+	}
+
+	oldJTI := claims.JTI
+	userID := claims.UserID
+	role := claims.Role
+	graceKey := "refresh_grace:" + oldJTI
+
+	// 1. Cek Grace-Period Window (30 detik) untuk mengantisipasi jaringan putus-nyambung
+	if s.rdb != nil {
+		cachedJSON, err := s.rdb.Get(ctx, graceKey).Result()
+		if err == nil && cachedJSON != "" {
+			var cachedResp AuthResponse
+			if err := sonic.Unmarshal([]byte(cachedJSON), &cachedResp); err == nil {
+				return &cachedResp, nil
+			}
+		}
+	}
+
+	// 2. Cek validitas refresh token di Redis & deteksi replay attack
+	if s.rdb != nil {
+		if role == "civilian" || role == "volunteer" {
+			refreshKey := "refresh_token:" + userID
+			storedJTI, err := s.rdb.Get(ctx, refreshKey).Result()
+			if err != nil || storedJTI != oldJTI {
+				// Replay attack terdeteksi di luar grace period! Revoke seluruh sesi aktif
+				_ = s.rdb.Del(ctx, "session:"+userID)
+				_ = s.rdb.Del(ctx, "refresh_token:"+userID)
+				return nil, errors.New("ERR_TOKEN_REUSED: Token refresh telah kedaluwarsa atau digunakan kembali")
+			}
+		} else {
+			// Console roles: per-JTI check
+			jtiKey := "refresh_jti:" + oldJTI
+			val, err := s.rdb.Get(ctx, jtiKey).Result()
+			if err != nil || val != "valid" {
+				return nil, errors.New("ERR_TOKEN_REUSED: Token refresh telah kedaluwarsa atau digunakan kembali")
+			}
+			_ = s.rdb.Del(ctx, jtiKey)
+		}
+	}
+
+	// 3. Ambil data user terkini dari DB
+	user, err := s.repo.FindByID(userID)
+	if err != nil {
+		return nil, errors.New("pengguna tidak ditemukan")
+	}
+
+	// 4. Ambil full_name berdasarkan role
+	var fullName *string
+	switch user.Role {
+	case "civilian", "volunteer":
+		profile, _ := s.repo.FindProfile(user.ID)
+		if profile != nil {
+			fullName = profile.FullName
+		}
+	case "admin", "superadmin":
+		var ap AdminProfile
+		if err := s.repo.db.Where("user_id = ?", user.ID).First(&ap).Error; err == nil {
+			fullName = ap.FullName
+		}
+	case "agency_personnel":
+		personnel, err := s.repo.FindPersonnelByUserID(user.ID)
+		if err == nil {
+			fullName = &personnel.FullName
+		}
+	case "agency":
+		var agency struct {
+			Name string
+		}
+		if err := s.repo.db.Table("agencies").Where("account_id = ?", user.ID).First(&agency).Error; err == nil {
+			fullName = &agency.Name
+		}
+	}
+
+	// 5. Generate token baru
+	newAccessToken, newAccessJTI, err := utils.GenerateAccessToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTAccessTTL)
+	if err != nil {
+		return nil, err
+	}
+	newRefreshToken, newRefreshJTI, err := utils.GenerateRefreshToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTRefreshTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &AuthResponse{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+		User: UserInfo{
+			ID:       user.ID,
+			Email:    user.Email,
+			Role:     user.Role,
+			FullName: fullName,
+		},
+	}
+
+	// 6. Simpan token aktif baru di Redis dan daftarkan oldJTI ke grace cache 30 detik
+	if s.rdb != nil {
+		if user.Role == "civilian" || user.Role == "volunteer" {
+			_ = s.rdb.Set(ctx, "session:"+user.ID, newAccessJTI, s.cfg.JWTAccessTTL)
+			_ = s.rdb.Set(ctx, "refresh_token:"+user.ID, newRefreshJTI, s.cfg.JWTRefreshTTL)
+		} else {
+			_ = s.rdb.Set(ctx, "refresh_jti:"+newRefreshJTI, "valid", s.cfg.JWTRefreshTTL)
+		}
+
+		respBytes, err := sonic.Marshal(resp)
+		if err == nil {
+			_ = s.rdb.Set(ctx, graceKey, string(respBytes), 30*time.Second)
+		}
+	}
+
+	return resp, nil
 }
 
 // ─── Forgot Password & Resend OTP ─────────────────────────────────────────────

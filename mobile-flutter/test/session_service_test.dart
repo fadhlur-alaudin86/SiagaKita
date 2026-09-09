@@ -91,4 +91,27 @@ void main() {
     final session = await SessionService.loadSession();
     expect(session?.name, equals('New Name'));
   });
+
+  test(
+    'saveSession and getRefreshToken persist and update refresh tokens',
+    () async {
+      await SessionService.saveSession(
+        token: 'access-token-123',
+        refreshToken: 'refresh-token-456',
+        userId: 'user-uuid-123',
+        email: 'relawan@siagakita.com',
+        role: 'volunteer',
+      );
+
+      final refreshToken = await SessionService.getRefreshToken();
+      expect(refreshToken, equals('refresh-token-456'));
+
+      final session = await SessionService.loadSession();
+      expect(session?.refreshToken, equals('refresh-token-456'));
+
+      await SessionService.updateTokens('new-access-789', 'new-refresh-999');
+      expect(await SessionService.getToken(), equals('new-access-789'));
+      expect(await SessionService.getRefreshToken(), equals('new-refresh-999'));
+    },
+  );
 }

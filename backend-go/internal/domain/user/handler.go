@@ -1,6 +1,8 @@
 package user
 
 import (
+	"strings"
+
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -96,6 +98,26 @@ func (h *Handler) VerifyLoginOTP(c *fiber.Ctx) error {
 	resp, err := h.svc.VerifyLoginOTP(c.Context(), req.Email, req.OTPCode)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+	return utils.SuccessResponse(c, resp)
+}
+
+// ─── POST /api/v1/auth/refresh-token (public) ────────────────────────────────
+func (h *Handler) RefreshToken(c *fiber.Ctx) error {
+	var req RefreshTokenRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+	if req.RefreshToken == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "refresh_token wajib diisi")
+	}
+
+	resp, err := h.svc.RefreshToken(c.Context(), req.RefreshToken)
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "ERR_TOKEN_REUSED") {
+			return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Token refresh telah kedaluwarsa atau digunakan kembali")
+		}
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, err.Error())
 	}
 	return utils.SuccessResponse(c, resp)
 }

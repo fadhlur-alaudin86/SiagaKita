@@ -69,6 +69,9 @@ func Auth(cfg *config.Config) fiber.Handler {
 		if err != nil {
 			return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Token tidak valid atau sudah kedaluwarsa")
 		}
+		if claims.TokenType != "" && claims.TokenType != "access" {
+			return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Tipe token tidak valid")
+		}
 		c.Locals("userID", claims.UserID)
 		c.Locals("userRole", claims.Role)
 		c.Locals("userJTI", claims.JTI) // Dibutuhkan oleh SessionGuard

@@ -451,3 +451,47 @@
           application/json:
             schema:
               $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
+/api/v1/auth/refresh-token:
+  post:
+    tags:
+      - Auth
+    summary: Rotate refresh token and issue new access & refresh tokens
+    description: |
+      Exchanges a valid refresh token for a new access token and rotated refresh token.
+      Enforces single-use rotation with a 30-second network grace-period window.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [refresh_token]
+            properties:
+              refresh_token:
+                type: string
+                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    responses:
+      '200':
+        description: Tokens refreshed successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../openapi.yaml#/components/schemas/AuthResponse'
+      '400':
+        description: Invalid request body
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '401':
+        description: Invalid, expired, or reused refresh token
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
