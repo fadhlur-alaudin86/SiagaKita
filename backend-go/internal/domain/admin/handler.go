@@ -26,7 +26,7 @@ func NewHandler(svc *Service, cfg *config.Config) *Handler {
 }
 
 // ─── KYC Relawan ──────────────────────────────────────────────────────────────
- 
+
 // GET /api/v1/admin/volunteers/pending  [AdminOnly]
 func (h *Handler) GetPendingKYC(c *fiber.Ctx) error {
 	list, err := h.svc.GetPendingKYC()
