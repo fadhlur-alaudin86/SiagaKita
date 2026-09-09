@@ -111,3 +111,12 @@ windows_console_flutter/lib/
 - **Dictionary Parity & Pruning**: When introducing new text, add entries for both Indonesian (`id`) and English (`en`) in `app_localization.dart`. When deleting or refactoring strings, **immediately remove the obsolete keys from the dictionary**.
 - **Dynamic Language Headers**: Pass `'Accept-Language': AppLocalization.currentLocaleCode` on all HTTP network calls and `&lang=...` on WebSocket URLs.
 - **Language Switcher Persistence**: Use `LanguageSwitcher` widget and persist preferences across restarts.
+
+## Standard 11 — Clean Code & Dead Code Elimination
+
+- **Delete Orphaned Widgets & Screens**: When a screen is retired, redesigned, or replaced by a new navigation flow, immediately delete the old screen and widget files. Never leave abandoned UI components in the codebase.
+- **Purge Uncalled Private Methods**: Remove uncalled private helper methods (`_helper()`), obsolete state variables, and dead animation controllers from `State` classes.
+- **Prune Unused Assets & pubspec Declarations**: When removing or replacing visual assets (images, SVGs, icons), delete the corresponding file from `assets/` and remove its entry from `pubspec.yaml`.
+- **Enforce Dictionary Hygiene**: Synchronize UI string deletions with dictionary pruning in `lib/core/localization/app_localization.dart` per Invariant 5 of [`.agent/rules/localization.md`](../../rules/localization.md).
+- **Static Analysis Verification**: Run `flutter analyze` or `dart analyze` across `mobile-flutter` and `windows_console_flutter` before opening PRs to confirm zero unused imports, dead variables, or deprecation warnings.
+

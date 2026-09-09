@@ -1,13 +1,13 @@
 # Pre-PR Review Standards & Verification Checklists — SiagaKita
 
-Mandatory code quality, security, and stability verification checklists prior to opening a Pull Request targeting `dev`. Adapted from ECC (*security-reviewer*, *database-reviewer*, and *silent-failure-hunter*) specializations.  
+Mandatory code quality, security, and stability verification checklists prior to opening a Pull Request targeting `dev`. Adapted from ECC (*security-reviewer*, *database-reviewer*, *silent-failure-hunter*, and *refactor-cleaner*) specializations.  
 Sub-file of [SKILL.md](SKILL.md).
 
 ---
 
 ## Step 7 Verification Flow (Pre-PR Gate)
 
-Before the agent opens a Pull Request to `dev`, the agent MUST conduct a self-review covering the three critical dimensions below:
+Before the agent opens a Pull Request to `dev`, the agent MUST conduct a self-review covering the four critical dimensions below:
 
 ```
 [Code Complete & Tests Pass]
@@ -19,6 +19,8 @@ Before the agent opens a Pull Request to `dev`, the agent MUST conduct a self-re
  │ 2. Database & Migration Review         │
  ├────────────────────────────────────────┤
  │ 3. Silent Failure Hunter Audit         │
+ ├────────────────────────────────────────┤
+ │ 4. Clean Code & Dead Code Elimination  │
  └────────────────────────────────────────┘
               │
       (All Passed?)
@@ -72,7 +74,28 @@ Ensures errors are explicitly handled and failures are never silently swallowed.
 
 ---
 
-## 4. Verification Report Format in Feature Log
+## 4. Clean Code & Dead Code Elimination Checklist
+
+Adapted from ECC's *refactor-cleaner* role. Ensures that unused symbols, obsolete routes, orphaned widgets, dead fields, and abandoned translation keys are completely eradicated before code reaches `dev`.
+
+### Pragmatic Elimination Principle
+- **Private & Internal Symbols (Mandatory Purge)**: Uncalled private functions (`func helper`), unread private struct fields, unreferenced class members, private Dart helpers (`_helper`), and orphaned widgets/screens MUST be removed immediately upon refactoring or feature completion.
+- **Exported & Public Symbols (Cross-Domain Verification)**: Before removing any exported public function, struct, or API model, verify cross-domain calls in `backend-go` and client-backend contract references across `mobile-flutter` and `windows_console_flutter`.
+- **Automated Verification**: Use static analysis tooling to catch undetected dead code (`golangci-lint run --enable unused` for Go, `dart analyze` for Flutter/Dart).
+
+| Category | Verification Item | PASS Criteria | FAIL Criteria |
+|---|---|---|---|
+| **Go Unused Functions** | Private functions & methods | Every private function/method has at least one active caller in its package | Retaining unused private functions/helpers post-refactoring |
+| **Go Unread Struct Fields** | Domain & model struct fields | All struct fields are populated and read in handlers, services, or DB queries | Retaining dead struct fields following schema or API migrations |
+| **Go Dead Constants & Errors** | Enums, constants, custom errors | Defined error variables (`var ErrX = ...`) and constants are actively referenced | Abandoned error variables or obsolete status constants left in code |
+| **Dart Orphaned Widgets** | Widget and screen files | Every widget and screen file in `lib/features/` is imported and used | Leaving abandoned screen/widget files whose routes or callers have been removed |
+| **Dart Uncalled Methods** | Private class methods & helpers | Private members (`_foo()`, `_bar`) are actively invoked within their declaring class | Declaring private helper methods or controllers that are never invoked |
+| **Flutter Unused Assets** | Asset declarations in `pubspec.yaml` | Declared assets under `assets:` are referenced via `AssetImage` or `SvgPicture` | Retaining unused image/icon files or obsolete asset paths in `pubspec.yaml` |
+| **Localization Hygiene** | Active translation key references | All dictionary entries in `app_localization.dart` are referenced via `.tr(context)` | Retaining orphaned dictionary entries per Invariant 5 of `localization.md` |
+
+---
+
+## 5. Verification Report Format in Feature Log
 
 After completing the self-review at Step 7, record the summary in the feature log (`docs/backlog/features/F-XXX-name.md`):
 
@@ -81,4 +104,5 @@ After completing the self-review at Step 7, record the summary in the feature lo
 - [x] Security Review: PASS (No SQL injection, secrets sanitized, role check verified)
 - [x] Database Review: PASS (Migrations idempotent, FK indexed, ERD updated)
 - [x] Silent Failure Audit: PASS (No ignored errors, context.mounted checked, defer cancel present)
+- [x] Dead Code Elimination: PASS (No uncalled private symbols, orphaned widgets, or dead dictionary keys)
 ```
