@@ -209,4 +209,3 @@ func (h *Hub) BroadcastToRoles(msg Message, excludeUserID string, roles ...strin
 	}
 	return sent
 }
-
