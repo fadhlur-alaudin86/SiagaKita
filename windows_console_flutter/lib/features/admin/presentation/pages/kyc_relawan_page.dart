@@ -5,6 +5,7 @@ import 'package:pdfrx/pdfrx.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
+import '../../../../core/localization/app_localization.dart';
 
 class KycRelawanPage extends StatefulWidget {
   final String token;
@@ -91,9 +92,9 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
-        title: const Text(
-          'Tolak Pendaftaran',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          'Tolak Pendaftaran'.tr(context),
+          style: const TextStyle(color: Colors.white),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -108,13 +109,13 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
               controller: _rejectCtrl,
               style: const TextStyle(color: Colors.white),
               maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'Contoh: Foto KTP tidak jelas',
-                hintStyle: TextStyle(color: Colors.white38),
-                enabledBorder: OutlineInputBorder(
+              decoration: InputDecoration(
+                hintText: 'Contoh: Foto KTP tidak jelas'.tr(context),
+                hintStyle: const TextStyle(color: Colors.white38),
+                enabledBorder: const OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white24),
                 ),
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.orange),
                 ),
               ),
@@ -124,12 +125,15 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Tolak'),
+            child: Text('Tolak'.tr(context)),
           ),
         ],
       ),
@@ -510,9 +514,9 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                       ),
                     ),
                     icon: const Icon(Icons.close, size: 18),
-                    label: const Text(
-                      'TOLAK',
-                      style: TextStyle(letterSpacing: 1),
+                    label: Text(
+                      'TOLAK'.tr(context),
+                      style: const TextStyle(letterSpacing: 1),
                     ),
                     onPressed: _reject,
                   ),
@@ -530,9 +534,9 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                       ),
                     ),
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text(
-                      'APPROVE RELAWAN',
-                      style: TextStyle(
+                    label: Text(
+                      'APPROVE RELAWAN'.tr(context),
+                      style: const TextStyle(
                         letterSpacing: 1,
                         fontWeight: FontWeight.bold,
                       ),

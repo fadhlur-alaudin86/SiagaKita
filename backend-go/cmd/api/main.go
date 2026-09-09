@@ -19,6 +19,7 @@ import (
 	"siagakita-backend/internal/domain/telemetry"
 	userDomain "siagakita-backend/internal/domain/user"
 	"siagakita-backend/internal/hub"
+	"siagakita-backend/internal/i18n"
 	"siagakita-backend/internal/middleware"
 	"siagakita-backend/internal/utils"
 	"siagakita-backend/internal/ws"
@@ -113,6 +114,12 @@ func main() {
 		AllowMethods:  "GET, POST, PUT, PATCH, DELETE, OPTIONS",
 		ExposeHeaders: "X-Idempotency-Cached",
 	}))
+
+	// i18n locale detection middleware
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("locale", i18n.GetLocale(c))
+		return c.Next()
+	})
 
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {

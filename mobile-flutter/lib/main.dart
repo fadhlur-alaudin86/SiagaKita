@@ -20,7 +20,9 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final savedLang = prefs.getString('language_code');
   if (savedLang != null) {
-    SiagaKitaApp.localeNotifier.value = Locale(savedLang);
+    final loc = Locale(savedLang);
+    SiagaKitaApp.localeNotifier.value = loc;
+    AppLocalization.currentLocale = loc;
   }
 
   await ConnectivityService.instance.init();

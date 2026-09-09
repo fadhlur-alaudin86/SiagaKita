@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../constants/api_constants.dart';
+import '../localization/app_localization.dart';
 import '../models/models.dart';
 
 // ─── Event types broadcast dari backend ───────────────────────────────────────
@@ -79,7 +80,9 @@ class WsService extends ChangeNotifier {
     if (_connected || _isReconnecting || _forceLoggedOut) return;
     _token = token;
 
-    final uri = Uri.parse('${ApiConstants.wsUrl}?token=$token');
+    final uri = Uri.parse(
+      '${ApiConstants.wsUrl}?token=$token&lang=${AppLocalization.currentLocaleCode}',
+    );
     _channel = WebSocketChannel.connect(uri);
     _sub = _channel!.stream.listen(_onData, onError: _onError, onDone: _onDone);
     _connected = true;

@@ -249,7 +249,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadReports,
-              child: const Text('Coba Lagi'),
+              child: Text('Coba Lagi'.tr(context)),
             ),
           ],
         ),
@@ -320,7 +320,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadSOSHistory,
-              child: const Text('Coba Lagi'),
+              child: Text('Coba Lagi'.tr(context)),
             ),
           ],
         ),

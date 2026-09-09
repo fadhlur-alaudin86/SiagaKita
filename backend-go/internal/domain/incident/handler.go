@@ -11,6 +11,7 @@ import (
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/hub"
+	"siagakita-backend/internal/i18n"
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -53,6 +54,7 @@ func (h *Handler) TriggerSOS(c *fiber.Ctx) error {
 		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
+	resp.Message = i18n.T(c, resp.Message)
 
 	return utils.CreatedResponse(c, resp)
 }
@@ -276,6 +278,7 @@ func (h *Handler) MarkFalseAlarm(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
+	resp.Message = i18n.T(c, resp.Message)
 
 	go h.broadcastEventToAgencies(hub.Message{
 		Event: "SOS_STATUS_UPDATE",
@@ -558,6 +561,7 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusConflict, err.Error())
 	}
+	result.Message = i18n.T(c, result.Message)
 
 	go func() {
 		h.broadcastEventToAgencies(hub.Message{

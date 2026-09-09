@@ -119,7 +119,10 @@ class ReportService {
         Uri.parse('$_baseUrl/reports'),
       );
 
-      request.headers['Authorization'] = 'Bearer $accessToken';
+      request.headers.addAll({
+        'Authorization': 'Bearer $accessToken',
+        'Accept-Language': ApiConfig.headers()['Accept-Language']!,
+      });
 
       // Text fields
       request.fields['incident_type'] = incidentType;
@@ -242,10 +245,7 @@ class ReportService {
       final response = await http
           .get(
             Uri.parse('$_baseUrl/reports/my'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $accessToken',
-            },
+            headers: ApiConfig.headers(token: accessToken),
           )
           .timeout(_timeout);
 
@@ -325,10 +325,7 @@ class ReportService {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/reports/$reportId/canceled'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $accessToken',
-            },
+            headers: ApiConfig.headers(token: accessToken),
           )
           .timeout(_timeout);
 

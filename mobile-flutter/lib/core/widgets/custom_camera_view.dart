@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import '../localization/app_localization.dart';
 
 class CustomCameraView extends StatefulWidget {
   final Function(XFile) onPictureTaken;
@@ -119,7 +120,7 @@ class _CustomCameraViewState extends State<CustomCameraView> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(widget.title),
+        title: Text(widget.title.tr(context)),
         iconTheme: const IconThemeData(color: Colors.white),
         titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18),
         actions: [
@@ -128,7 +129,7 @@ class _CustomCameraViewState extends State<CustomCameraView> {
             IconButton(
               icon: const Icon(Icons.flip_camera_ios, color: Colors.white),
               onPressed: _isSwitching ? null : _flipCamera,
-              tooltip: 'Ganti Kamera',
+              tooltip: 'Ganti Kamera'.tr(context),
             ),
         ],
       ),
@@ -143,7 +144,9 @@ class _CustomCameraViewState extends State<CustomCameraView> {
               child: Text(
                 widget.isOvalOverlay
                     ? 'Posisikan wajah Anda di dalam area oval\ndan pastikan pencahayaan cukup'
-                    : 'Posisikan KTP Anda di dalam area kotak\ndan pastikan tulisan terbaca jelas',
+                          .tr(context)
+                    : 'Posisikan KTP Anda di dalam area kotak\ndan pastikan tulisan terbaca jelas'
+                          .tr(context),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,

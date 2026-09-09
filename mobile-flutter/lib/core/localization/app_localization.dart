@@ -34,9 +34,6 @@ class AppLocalization {
     'Mohon aktifkan izin lokasi secara manual melalui pengaturan aplikasi.':
         'Please enable location permission manually through app settings.',
     'TAMPILAN & AKSESIBILITAS': 'DISPLAY & ACCESSIBILITY',
-    'Mode Gelap (Dark Mode)': 'Dark Mode',
-    'Tema dikendalikan oleh sistem saat ini.':
-        'Theme is currently controlled by system settings.',
     'Bahasa': 'Language',
     'AKUN & KEAMANAN': 'ACCOUNT & SECURITY',
     'Ubah Kata Sandi': 'Change Password',
@@ -70,8 +67,6 @@ class AppLocalization {
     'Belum menerima kode?': 'Didn\'t receive a code?',
     'Kirim ulang dalam': 'Resend in',
     'Masyarakat Umum': 'General Public',
-    'Relawan (Terverifikasi)': 'Volunteer (Verified)',
-    'Instansi Penyelamat': 'Rescue Agency',
     'Masyarakat': 'Public',
     'Agency': 'Agency',
     'Admin': 'Admin',
@@ -82,32 +77,18 @@ class AppLocalization {
     'Bergabung dengan jejaring keselamatan SiagaKita.':
         'Join the SiagaKita safety network.',
     'Daftar di sini': 'Sign up here',
-    'Login sebagai': 'Login as',
-    'Dasbor sedang dalam pengembangan':
-        'Dashboard is currently under development',
     'Tempat, Tanggal Lahir (Umur)': 'Place, Date of Birth (Age)',
     'Beranda': 'Home',
     'Panduan': 'Guide',
     'Operasi': 'Operations',
     'Map': 'Map',
     'Profil': 'Profile',
-    'Tekan dan tahan untuk bantuan': 'Press and hold for help',
-    'TAHAN 10 DETIK': 'HOLD 10 SECONDS',
     'Ketuk 3× untuk mengirim SOS': 'Tap 3× to send SOS',
     'Ketuk 3× untuk batalkan': 'Tap 3× to cancel',
     'YA, KIRIMKAN SEKARANG': 'YES, SEND NOW',
     'KETUK 3×': 'TAP 3×',
-    'Laporkan': 'Report',
-    'Kirim bukti & titik\nlokasi': 'Send proof & location point',
-    'Edukasi': 'Education',
-    'Panduan\npenyelamatan': 'Rescue\nguide',
     'SINYAL SOS TERKIRIM!': 'SOS SIGNAL SENT!',
-    'Bantuan sedang diarahkan ke lokasi Anda.':
-        'Help is being directed to your location.',
     'Buat Akun Baru': 'Create New Account',
-    'Mari bergabung ke dalam jejaring keselamatan kami.':
-        'Join our safety network.',
-    'Lanjut Isi Biodata': 'Continue to Biodata',
     'Lanjut': 'Continue',
     'Sudah punya akun?': 'Already have an account?',
     'Verifikasi Email': 'Verify Email',
@@ -121,17 +102,9 @@ class AppLocalization {
     'Masuk sekarang': 'Log in now',
     'Verifikasi Nomor': 'Verify Number',
     'Verifikasi Nomor WhatsApp': 'Verify Number WhatsApp',
-    'nomor telepon Anda': 'your phone number',
     'Kode OTP': 'OTP Code',
     'Kirim ulang kode OTP': 'Resend OTP code',
     'Foto KTP': 'ID Card Photo',
-    'Mohon berikan foto KTP asli Anda untuk keperluan verifikasi keamanan.':
-        'Please provide your original ID card photo for security verification.',
-    'Ketuk untuk mengambil foto KTP': 'Tap to capture ID card photo',
-    'Foto Wajah': 'Face Photo',
-    'Ambil foto wajah (selfie) untuk pencocokan biometrik.':
-        'Take a selfie for biometric matching.',
-    'Ketuk untuk\nSelfie': 'Tap for\nSelfie',
     'Lengkapi Biodata': 'Complete Biodata',
     'Langkah Terakhir!': 'Final Step!',
     'Data kesehatan ini sangat penting untuk penanganan medis darurat yang tepat sasaran.':
@@ -141,15 +114,9 @@ class AppLocalization {
         'This helps responders understand your physical characteristics.',
     'Tanggal Lahir (DD-MM-YYYY)': 'Date of Birth (DD-MM-YYYY)',
     'Gol. Darah': 'Blood Type',
-    'Berat Badan (kg)': 'Weight (kg)',
-    'Tinggi Badan (cm)': 'Height (cm)',
     'Riwayat Penyakit & Alergi': 'Medical History & Allergies',
     'Kosongkan jika tidak ada. Data ini krusial untuk menghindari pantangan obat darurat.':
         'Leave blank if none. This is crucial to avoid emergency medication contraindications.',
-    'Riwayat Medis (Misal: Asma, Hipertensi)':
-        'Medical History (e.g. Asthma, Hypertension)',
-    'Alergi Utama (Misal: Kacang, Penisilin)':
-        'Main Allergies (e.g. Peanut, Penicillin)',
     'Alamat Tempat Tinggal': 'Home Address',
     'Sebagai acuan domisili terdekat jika evakuasi diperlukan.':
         'Used as nearest domicile reference if evacuation is needed.',
@@ -157,8 +124,6 @@ class AppLocalization {
     'Kontak Darurat (Wali/Keluarga)': 'Emergency Contact (Guardian/Family)',
     'Orang yang akan dihubungi jika Anda dalam bahaya.':
         'Person to contact if you are in danger.',
-    'Nama Kontak Darurat': 'Emergency Contact Name',
-    'Nomor Telepon Darurat': 'Emergency Contact Phone',
     'Simpan & Selesai': 'Save & Finish',
     'Tahun': 'Years',
     'Relawan Terverifikasi': 'Verified Volunteer',
@@ -168,8 +133,6 @@ class AppLocalization {
     'EDIT PROFIL': 'EDIT PROFILE',
     'Edit Profil': 'Edit Profile',
     'INFORMASI PRIBADI': 'PERSONAL INFORMATION',
-    'Nomor Telepon': 'Phone Number',
-    'Tanggal Lahir / Umur': 'Date of Birth / Age',
     'Domisili Terkini': 'Current Domicile',
     'Bio / Deskripsi Profil': 'Bio / Profile Description',
     'Belum ada biodata': 'No biodata yet',
@@ -185,14 +148,11 @@ class AppLocalization {
     'PENGATURAN & BANTUAN': 'SETTINGS & HELP',
     'Tentang Aplikasi': 'About App',
     'DAFTAR MENJADI RELAWAN': 'REGISTER AS VOLUNTEER',
-    'Nomor telepon pengguna minimal 10 digit':
-        'User phone number must be at least 10 digits',
     'Form kontak baris ke': 'Contact form row',
     'belum lengkap!': 'is incomplete!',
     'Nomor pada kontak ke': 'Phone number on contact',
     'minimal 10 digit!': 'must be at least 10 digits!',
     'Profil berhasil diperbarui.': 'Profile updated successfully.',
-    'Nomor Telepon Utama': 'Primary Phone Number',
     'Domisili Lengkap': 'Full Domicile Address',
     'Bio Singkat': 'Short Bio',
     'DATA MEDIS & KEAMANAN': 'MEDICAL & SAFETY DATA',
@@ -223,21 +183,12 @@ class AppLocalization {
     'Syarat & Ketentuan': 'Terms & Conditions',
     'Kebijakan Privasi': 'Privacy Policy',
     'Lisensi Perangkat Lunak': 'Software Licenses',
-    '© 2026 Tim SiagaKita\nDibuat untuk Kemanusiaan':
-        '© 2026 SiagaKita Team\nBuilt for Humanity',
-    'Buat Laporan': 'Create Report',
     'Lokasi Otomatis Ditemukan': 'Automatic Location Found',
     'Kategori Darurat': 'Emergency Category',
     'Lampiran Foto & Audio': 'Photo & Audio Attachments',
-    'Ketuk ambil foto': 'Tap to take photo',
-    'Tahan rekaman suara': 'Hold to record voice',
-    'Ketik deksripsi tambahan jika ada...':
-        'Type additional description if any...',
-    'Tingkat Urgensi': 'Urgency Level',
     'Ringan': 'Low',
     'Sedang': 'Medium',
     'Kritis': 'Critical',
-    'Laporan Berhasil Dikirim!': 'Report sent successfully!',
     'Kirim Laporan': 'Send Report',
     'Kebakaran': 'Fire',
     'Kecelakaan': 'Accident',
@@ -245,26 +196,13 @@ class AppLocalization {
     'Kriminalitas': 'Crime',
     'Medis': 'Medical',
     'Bencana': 'Disaster',
-    'BENCANA ALAM': 'NATURAL DISASTER',
     'JEJARING KESELAMATAN LOKAL': 'LOCAL SAFETY NETWORK',
     'RADAR SIAGA & EVAKUASI': 'ALERT & EVACUATION RADAR',
     'Radius 5 KM': '5 KM Radius',
     'AKTIF': 'ACTIVE',
     'Relawan': 'Volunteer',
-    'Titik Kumpul': 'Assembly Point',
-    'Klinik': 'Clinic',
     'KETUK 3× BATALKAN': 'TAP 3× CANCEL',
     'Riwayat Laporan': 'Report History',
-    'LOKASI ANDA': 'YOUR LOCATION',
-    'RELAWAN SIAGA': 'ON-STANDBY VOLUNTEERS',
-    '12 di sekitar': '12 nearby',
-    'STATUS TRANSMISI (SIMULASI SOS)': 'TRANSMISSION STATUS (SOS SIMULATION)',
-    'Koordinat GPS Terkunci (Akurasi 3m)':
-        'GPS Coordinates Locked (3m accuracy)',
-    'Menyiarkan ke relawan radius 5KM...':
-        'Broadcasting to volunteers within 5KM...',
-    'Menunggu respons Command Center 112':
-        'Waiting for Command Center 112 response',
     'SOS Anda telah diselesaikan. Terima kasih!':
         'Your SOS has been resolved. Thank you!',
     'Tim penyelamat sedang dalam perjalanan ke lokasi Anda!':
@@ -277,10 +215,6 @@ class AppLocalization {
     'lokasi korban': 'victim\'s location',
     'SOS Terkunci': 'SOS Locked',
     'Selesaikan Misi?': 'Complete Mission?',
-    'Kamera akan mengambil foto sebagai bukti penyelesaian misi. Lanjutkan?':
-        'Camera will take a photo as proof of mission completion. Continue?',
-    'Ya, Selesaikan': 'Yes, Complete',
-    'Gagal mengambil foto bukti': 'Failed to capture proof photo',
     'Bukti berhasil dikirim. Menunggu konfirmasi...':
         'Proof sent successfully. Waiting for confirmation...',
     'Koordinat': 'Coordinates',
@@ -305,7 +239,6 @@ class AppLocalization {
     'Riwayat SOS yang kamu tangani akan muncul di sini':
         'History of SOS you handled will appear here',
     'Halo, ': 'Hello, ',
-    'Progress Level': 'Level Progress',
     'Level Maksimal': 'Maximum Level',
     'Kamu sudah mencapai level tertinggi!':
         'You have reached the highest level!',
@@ -332,42 +265,21 @@ class AppLocalization {
     'Menu': 'Menu',
     'Segera Hadir': 'Coming Soon',
     'Keluar': 'Logout',
-    'Komando Operasi': 'Operations Command',
     'DALAM TUGAS': 'ON DUTY',
     'DI LUAR TUGAS': 'OFF DUTY',
-    'Poin Misi': 'Mission Points',
-    'RADAR INSIDEN': 'INCIDENT RADAR',
-    'PANGGILAN DARURAT!': 'EMERGENCY CALL!',
-    'Kecelakaan lalu lintas ganda, butuh evakuasi medis segera.':
-        'Multiple traffic accident, immediate medical evacuation needed.',
-    '1.2 KM (Simpang Lima)': '1.2 KM (Simpang Lima)',
-    'Barusan': 'Just now',
-    'Mengalihkan ke Navigasi Misi...': 'Redirecting to mission navigation...',
-    'TERIMA MISI INI': 'ACCEPT THIS MISSION',
-    'Radar Misi Nonaktif': 'Mission Radar Inactive',
-    'Hidupkan ON DUTY untuk melihat panggilan darurat di sekitar Anda.':
-        'Enable ON DUTY to view nearby emergency calls.',
-    'KOORDINASI & ALAT': 'COORDINATION & TOOLS',
-    'Live Chat Posko': 'Command Post Live Chat',
-    'Panduan Medis': 'Medical Guide',
     'Relawan Aktif': 'Active Volunteers',
     'Riwayat Misi': 'Mission History',
-    'Anda wajib mengunggah KTP dan Sertifikat Keahlian (atau simulasikan dengan menekan kotak upload)':
-        'You must upload ID card and skill certificate (or simulate by tapping the upload box)',
     'Harap centang persetujuan syarat dan ketentuan.':
         'Please check the terms and conditions agreement.',
     'Pengajuan Diterima. Status Anda kini Pending Review.':
         'Submission accepted. Your status is now Pending Review.',
     'Tersimpan': 'Saved',
     'Unggah': 'Upload',
-    '(Tekan untuk simulasi unggah file)': '(Tap to simulate file upload)',
     'PENDAFTARAN RELAWAN': 'VOLUNTEER REGISTRATION',
     'Misi Penyelamatan First Responder': 'First Responder Rescue Mission',
     'SiagaKita memanggil Anda yang memiliki kapabilitas medis / evakuasi gawat darurat. Pengajuan akan ditinjau oleh Admin daerah.':
         'SiagaKita is calling those with emergency medical/evacuation capability. Submission will be reviewed by regional Admin.',
     'PILIHAN SPESIALISASI': 'SPECIALIZATION OPTIONS',
-    'Keahlian Relawan': 'Volunteer Expertise',
-    'Wajib memilih spesialisasi': 'Specialization is required',
     'PENGALAMAN MEDIS / ORGANISASI': 'MEDICAL / ORGANIZATIONAL EXPERIENCE',
     'Contoh: Mantan petugas medis PMI, Relawan Damkar...':
         'Example: Former PMI medic, Fire dept volunteer...',
@@ -376,8 +288,6 @@ class AppLocalization {
     'Data Identitas & Kontak': 'Identity & Contact Data',
     'Konfirmasi Bantuan': 'Confirmation of Assistance',
     'Harap uraikan pengalaman Anda': 'Please describe your experience',
-    'VERIFIKASI DOKUMEN': 'DOCUMENT VERIFICATION',
-    'Sertifikat Keahlian': 'Skill Certificate',
     'Saya menyatakan bahwa dokumen yang dilampirkan adalah benar, dan saya bersedia dipanggil dalam situasi darurat di area jangkauan saya sesuai standar operasional yang berlaku.':
         'I declare that attached documents are valid, and I agree to be called in emergencies within my coverage area according to applicable SOPs.',
     'SUBMIT PENGAJUAN': 'SUBMIT APPLICATION',
@@ -397,7 +307,6 @@ class AppLocalization {
     'Pastikan Anda sudah aman atau bantuan sudah tiba.':
         'Make sure you are safe or help has arrived.',
     'Panggilan SOS telah dibatalkan.': 'SOS call has been canceled.',
-    'Gagal membatalkan SOS. Coba lagi.': 'Failed to cancel SOS. Try again.',
     'Akses Ditolak': 'Access Denied',
     'Persyaratan Belum Lengkap': 'Prerequisites Incomplete',
     'Untuk mendaftar sebagai relawan, Anda wajib melengkapi verifikasi berikut:':
@@ -424,23 +333,13 @@ class AppLocalization {
         'ID number changes require admin re-verification (1-3 working days). Current verification status will be reset to "Waiting for Verification".\n\nDo you want to continue?',
     'Pengubahan nomor WhatsApp memerlukan verifikasi ulang melalui OTP. Tingkat kepercayaan laporan Anda akan berkurang jika nomor belum diverifikasi.\n\nApakah Anda ingin melanjutkan?':
         'Changing WhatsApp number requires re-verification via OTP. Your report trust level will decrease if the number is not verified.\n\nDo you want to continue?',
-    'Nomor WhatsApp Baru': 'New WhatsApp Number',
     'Nomor minimal 10 digit': 'Number must be at least 10 digits',
-    'Gagal mengirim OTP: ': 'Failed to send OTP: ',
     'Verifikasi WhatsApp': 'WhatsApp Verification',
-    'Kode OTP telah dikirim ke WhatsApp:\n':
-        'OTP code has been sent to WhatsApp:\n',
-    'Berlaku 3 menit.': 'Valid for 3 minutes.',
     'Verifikasi': 'Verify',
-    'Nomor WhatsApp berhasil diubah dan diverifikasi':
-        'WhatsApp number successfully changed and verified',
-    'Gagal menyimpan profil: ': 'Failed to save profile: ',
     'Pengguna': 'User',
     'Belum diisi': 'Not filled',
-    'Belum ada bio.': 'No bio yet.',
     'Nomor WhatsApp': 'WhatsApp Number',
     'RIWAYAT': 'HISTORY',
-    'Gagal memperbarui profil: ': 'Failed to update profile: ',
     'Foto KTP wajib dilampirkan': 'KTP photo must be attached',
     'Foto profil (selfie) wajib dilampirkan':
         'Profile photo (selfie) must be attached',
@@ -489,13 +388,10 @@ class AppLocalization {
     'Memuat lokasi...': 'Loading location...',
     'Lokasi tidak tersedia': 'Location not available',
     'Gagal memuat alamat': 'Failed to load address',
-    'Izin kamera ditolak. Buka pengaturan untuk mengizinkan.':
-        'Camera permission denied. Open settings to allow.',
     'Layanan GPS tidak aktif. Aktifkan GPS di pengaturan.':
         'GPS service is inactive. Enable GPS in settings.',
     'Izin GPS belum diberikan': 'GPS permission not granted',
     'Gagal mengambil lokasi: ': 'Failed to get location: ',
-    'Ambil Foto Keadaan Darurat': 'Take Emergency Photo',
     'Izin mikrofon ditolak.': 'Microphone permission denied.',
     'Pilih kategori darurat terlebih dahulu.':
         'Please select an emergency category first.',
@@ -562,7 +458,6 @@ class AppLocalization {
     'STATUS TRANSMISI': 'TRANSMISSION STATUS',
     'Buka tab Operasi untuk terima misi':
         'Open Operations tab to accept mission',
-    'Severe Bleeding': 'Severe Bleeding',
     'Pendarahan Hebat': 'Severe Bleeding',
     'Tekan luka kuat-kuat dengan kain bersih.':
         'Apply firm pressure on the wound with a clean cloth.',
@@ -571,7 +466,6 @@ class AppLocalization {
     'Jangan lepas kain pertama jika darah tembus, tumpuk dengan kain baru.':
         'Do not remove the first cloth if soaked; add another on top.',
     'Segera cari bantuan darurat.': 'Seek emergency help immediately.',
-    'Burn Injury': 'Burn Injury',
     'Luka Bakar': 'Burn Injury',
     'Aliri area luka dengan air mengalir (bukan es) selama 15-20 menit.':
         'Cool the burn under running water (not ice) for 15-20 minutes.',
@@ -580,7 +474,6 @@ class AppLocalization {
     'Tutup luka secara longgar dengan plastik wrap atau kain bersih.':
         'Cover loosely with plastic wrap or a clean cloth.',
     'Jangan pernah memecahkan lepuhan.': 'Do not pop blisters.',
-    'Choking (Adult)': 'Choking (Adult)',
     'Tersedak (Dewasa)': 'Choking (Adult)',
     'Berdirilah di belakang korban dan peluk pinggangnya.':
         'Stand behind the victim and wrap your arms around the waist.',
@@ -589,7 +482,6 @@ class AppLocalization {
     'Genggam kepalan dengan tangan satunya, lalu hentakkan ke atas dan ke dalam (Heimlich Maneuver).':
         'Grab your fist with the other hand and thrust inward and upward (Heimlich maneuver).',
     'Ulangi sampai benda asing keluar.': 'Repeat until the object is expelled.',
-    'Earthquake': 'Earthquake',
     'Gempa Bumi': 'Earthquake',
     'Lakukan Drop, Cover, Hold On (Merunduk, Berlindung di bawah meja yang kuat, Berpegangan).':
         'Drop, Cover, and Hold On.',
@@ -601,62 +493,119 @@ class AppLocalization {
         'Do not use elevators during evacuation.',
     'MEDIS': 'MEDICAL',
     'BENCANA': 'DISASTER',
-    'Administrator': 'Administrator',
-    'Ringkasan statistik kejadian aktif di wilayah Anda.':
-        'Summary of active incident statistics in your area.',
-    'Laporan Masuk': 'Incoming Reports',
-    'Kelola laporan darurat yang masuk dari masyarakat.':
-        'Manage emergency reports submitted by the public.',
     'Tim': 'Team',
-    'Tim Lapangan': 'Field Team',
-    'Kelola penugasan tim dan sumber daya lapangan.':
-        'Manage team assignments and field resources.',
-    'Profil Instansi': 'Agency Profile',
-    'Informasi dan pengaturan instansi Anda.':
-        'Your agency information and settings.',
     'SOS Anda ditandai palsu oleh tim penyelamat.':
         'Your SOS was marked as false by the rescue team.',
     // ─── SOS Cancellation & UI ───────────────────────────────────────────────
     'Batalkan SOS?': 'Cancel SOS?',
-    'Apakah Anda yakin situasi sudah aman dan ingin membatalkan laporan SOS ini?':
-        'Are you sure the situation is safe and you want to cancel this SOS report?',
     'TIDAK': 'NO',
     'YA, BATALKAN': 'YES, CANCEL',
-    'SOS berhasil dibatalkan.': 'SOS successfully canceled.',
-    'Gagal membatalkan SOS:': 'Failed to cancel SOS:',
     'SOS sudah diselesaikan oleh instansi.':
         'SOS has been resolved by the agency.',
-    'Tidak dapat membuka telepon.': 'Cannot open phone app.',
-    'Telepon 112': 'Call 112',
     'Panggilan darurat': 'Emergency call',
-    'Panggilan\\ndarurat': 'Emergency\\ncall',
     'Panggilan darurat\nbebas pulsa': 'Toll-free\nemergency call',
-    'Kirim bukti & titik\\nlokasi': 'Send proof &\\nlocation',
+    'Kirim bukti & titik\nlokasi': 'Send proof &\nlocation',
     'SOS AKTIF': 'SOS ACTIVE',
     'Mencari Bantuan...': 'Searching for Help...',
-    'Lokasi diperbarui tiap 10 detik': 'Location updated every 10s',
-    'Terkirim ✓': 'Sent ✓',
-    'Gagal menelpon 112:': 'Failed to call 112:',
     'Transmitting': 'Transmitting',
     'Signal Lost': 'Signal Lost',
-    'Next update: ': 'Next update: ',
-    // Navbar
     'Riwayat': 'History',
     // KYC Screen
     'Verifikasi Identitas': 'Identity Verification',
-    'Verifikasi Identitas NIK Warga': 'Civilian NIK Identity Verification',
-    'Status: Belum Diverifikasi': 'Status: Unverified',
-    'Status: Menunggu Verifikasi': 'Status: Pending Verification',
-    'Status: Terverifikasi': 'Status: Verified',
-    'Status: Ditolak': 'Status: Rejected',
-    'Selfie dengan KTP (opsional)': 'Selfie with ID card (optional)',
-    'Ambil Selfie': 'Take Selfie',
-    'Mengirim pengajuan...': 'Submitting...',
+    'Gagal': 'Failed',
+    'Terkirim': 'Sent',
+    'NIK harus 16 digit!': 'NIK must be 16 digits!',
+    'NIK, No WhatsApp, Tempat Lahir, dan Tanggal Lahir wajib diisi!':
+        'NIK, WhatsApp Number, Place of Birth, and Date of Birth are required!',
+    'Masukkan kode OTP 6 digit': 'Enter 6-digit OTP code',
+    'Konfirmasi Kata Sandi Baru': 'Confirm New Password',
+    'Konfirmasi kata sandi wajib diisi': 'Password confirmation is required',
+    '© 2026 Tim SiagaKita\nDibuat dengan ❤️ untuk Kemanusiaan':
+        '© 2026 SiagaKita Team\nMade with ❤️ for Humanity',
+    'Akun Anda diblokir dari fitur SOS. Hubungi admin.':
+        'Your account is banned from the SOS feature. Contact admin.',
+    'Gagal mengirim SOS: GPS perangkat Anda dimatikan.':
+        'Failed to send SOS: Your device GPS is turned off.',
+    'Gagal mengirim SOS: Izin akses lokasi belum diberikan.':
+        'Failed to send SOS: Location permission not granted.',
+    'Gagal mengirim SOS: Tidak dapat mengambil lokasi Anda.':
+        'Failed to send SOS: Unable to retrieve your location.',
+    'Panggilan SOS dibatalkan (Menunggu koneksi)...':
+        'SOS call canceled (Waiting for connection)...',
+    'Status SOS telah diselesaikan oleh instansi.':
+        'SOS status has been resolved by the agency.',
+    'Ambil Foto KTP': 'Take ID Card Photo',
+    'Ambil Foto Profil (Selfie)': 'Take Profile Photo (Selfie)',
+    'Sesuai KTP': 'As per ID Card',
+    'Tanggal lahir wajib diisi': 'Date of birth is required',
+    'NIK': 'NIK',
+    'Perhatian': 'Attention',
+    'Kirim Ulang': 'Resend',
+    'Izin ditolak. Buka pengaturan untuk mengizinkan.':
+        'Permission denied. Open settings to allow.',
+    'Lokasi belum terdeteksi. Pastikan GPS aktif.':
+        'Location not detected yet. Ensure GPS is active.',
+    'Harap centang penggunaan WhatsApp di nomor tersebut.':
+        'Please confirm WhatsApp usage on that number.',
+    'Harap lengkapi NIK, No WhatsApp, dan Tempat Lahir':
+        'Please complete NIK, WhatsApp Number, and Place of Birth',
+    'Saya menggunakan WhatsApp di nomor di atas':
+        'I use WhatsApp on the number above',
+    'Gagal mengirim OTP:': 'Failed to send OTP:',
+    'Gagal verifikasi OTP:': 'Failed to verify OTP:',
+    'Kirim Kode Verifikasi': 'Send Verification Code',
+    'Kode 6 digit telah dikirim ke:\n': '6-digit code has been sent to:\n',
+    'Kode OTP telah dikirim ke WhatsApp:':
+        'OTP code has been sent to WhatsApp:',
+    'Masukkan Kode OTP': 'Enter OTP Code',
+    'Nomor WhatsApp berhasil diverifikasi!':
+        'WhatsApp number successfully verified!',
+    'Ubah Nomor / Kirim Ulang': 'Change Number / Resend',
+    'Offline': 'Offline',
+    'Online': 'Online',
+    'BANTUAN SEDANG MENUJU LOKASI': 'HELP IS ON THE WAY TO LOCATION',
+    'Buka Kamera': 'Open Camera',
+    'Foto Bukti Penyelesaian': 'Completion Proof Photo',
+    'Standard': 'Standard',
+    '✓ Terverifikasi': '✓ Verified',
+    'Lokasi korban sedang diperbarui...': 'Victim location is being updated...',
+    'MENUNGGU REVIEW INSTANSI': 'AWAITING AGENCY REVIEW',
+    'Menunggu konfirmasi instansi': 'Awaiting agency confirmation',
+
+    // Camera & UI
+    'Ambil Foto': 'Take Photo',
+    'Ganti Kamera': 'Switch Camera',
+    'Posisikan wajah Anda di dalam area oval\ndan pastikan pencahayaan cukup':
+        'Position your face within the oval area\nand ensure adequate lighting',
+    'Posisikan KTP Anda di dalam area kotak\ndan pastikan tulisan terbaca jelas':
+        'Position your ID card within the box\nand ensure details are clearly legible',
+    'Kode OTP telah dikirim ke email Anda':
+        'OTP code has been sent to your email',
+    'Lupa Password': 'Forgot Password',
+    'Reset Password': 'Reset Password',
+    'MEMBATALKAN...': 'CANCELING...',
+    'RETRYING...': 'RETRYING...',
+    'OK': 'OK',
+
+    // ─── Form Validations & Profile ──────────────────────────────────────────
+    'Email wajib diisi': 'Email is required',
+    'Format email tidak valid': 'Invalid email format',
+    'Gagal memperbarui profil': 'Failed to update profile',
   };
+
+  static Locale currentLocale = localeId;
+  static String get currentLocaleCode => currentLocale.languageCode;
 
   static String tr(BuildContext context, String text) {
     final languageCode = Localizations.localeOf(context).languageCode;
     if (languageCode == localeEn.languageCode) {
+      return _idToEn[text] ?? text;
+    }
+    return text;
+  }
+
+  static String translate(String text) {
+    if (currentLocale.languageCode == localeEn.languageCode) {
       return _idToEn[text] ?? text;
     }
     return text;

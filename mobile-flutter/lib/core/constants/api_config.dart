@@ -1,3 +1,5 @@
+import '../localization/app_localization.dart';
+
 /// Konfigurasi API terpusat untuk mobile-flutter.
 /// Mendukung multi-environment via --dart-define-from-file (.env.dev atau .env.prod)
 /// serta fallback backward-compatible ke API_HOST.
@@ -24,4 +26,12 @@ class ApiConfig {
   static const String wsUrl = _rawWsUrl != ''
       ? _rawWsUrl
       : 'ws://$_fallbackHost:$_wsPort/v1/ws/connect';
+
+  /// Standard HTTP headers including Accept-Language for i18n hook.
+  static Map<String, String> headers({String? token}) => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Accept-Language': AppLocalization.currentLocaleCode,
+    if (token != null) 'Authorization': 'Bearer $token',
+  };
 }

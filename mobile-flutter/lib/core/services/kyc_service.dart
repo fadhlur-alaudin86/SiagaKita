@@ -16,7 +16,7 @@ class KycService {
     final res = await http
         .get(
           Uri.parse('$_baseUrl/users/kyc/status'),
-          headers: {'Authorization': 'Bearer $accessToken'},
+          headers: ApiConfig.headers(token: accessToken),
         )
         .timeout(_timeout);
 
@@ -41,7 +41,10 @@ class KycService {
   }) async {
     final uri = Uri.parse('$_baseUrl/users/kyc');
     final req = http.MultipartRequest('POST', uri)
-      ..headers['Authorization'] = 'Bearer $accessToken'
+      ..headers.addAll({
+        'Authorization': 'Bearer $accessToken',
+        'Accept-Language': ApiConfig.headers()['Accept-Language']!,
+      })
       ..fields['nik'] = nik
       ..fields['full_name'] = fullName
       ..fields['place_of_birth'] = placeOfBirth

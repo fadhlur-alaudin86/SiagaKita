@@ -40,10 +40,8 @@ class IncidentService {
     }
   }
 
-  static Map<String, String> _authHeader(String token) => {
-    'Authorization': 'Bearer $token',
-    'Content-Type': 'application/json',
-  };
+  static Map<String, String> _authHeader(String token) =>
+      ApiConfig.headers(token: token);
 
   // ─── Trigger SOS (Jalur A) ────────────────────────────────────────────────
 

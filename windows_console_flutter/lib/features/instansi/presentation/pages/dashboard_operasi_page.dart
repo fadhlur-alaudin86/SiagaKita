@@ -7,6 +7,7 @@ import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
 import '../../../../core/services/audio_service.dart';
 import '../../../../core/services/ws_service.dart';
+import '../../../../core/localization/app_localization.dart';
 
 class DashboardOperasiPage extends StatefulWidget {
   final String token;
@@ -87,27 +88,27 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _KpiCard(
-                    label: 'SOS AKTIF',
+                    label: 'SOS AKTIF'.tr(context),
                     value: '${_recentSOS.length}',
                     icon: Icons.sensors,
                     color: Colors.redAccent,
                     pulse: _recentSOS.isNotEmpty,
                   ),
                   _KpiCard(
-                    label: 'TOTAL DISELESAIKAN',
+                    label: 'TOTAL DISELESAIKAN'.tr(context),
                     value: '${_stats.totalResolved}',
                     icon: Icons.check_circle_rounded,
                     color: Colors.greenAccent,
                   ),
                   _KpiCard(
-                    label: 'RATA-RATA RESPONS',
+                    label: 'RATA-RATA RESPONS'.tr(context),
                     value:
-                        '${_stats.avgResponseMinutes.toStringAsFixed(1)} mnt',
+                        '${_stats.avgResponseMinutes.toStringAsFixed(1)} ${'mnt'.tr(context)}',
                     icon: Icons.timer_outlined,
                     color: Colors.blueAccent,
                   ),
                   _KpiCard(
-                    label: 'TINGKAT ALARM PALSU',
+                    label: 'TINGKAT ALARM PALSU'.tr(context),
                     value: '${_stats.falseAlarmRate.toStringAsFixed(1)}%',
                     icon: Icons.warning_amber_rounded,
                     color: Colors.orangeAccent,
@@ -139,13 +140,16 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                               size: 20,
                             ),
                             const SizedBox(width: 12),
-                            Text('SOS Terbaru', style: textTheme.titleMedium),
+                            Text(
+                              'SOS Terbaru'.tr(context),
+                              style: textTheme.titleMedium,
+                            ),
                             const Spacer(),
                             if (_recentSOS.isNotEmpty)
                               FilledButton.icon(
                                 onPressed: AudioService.stop,
                                 icon: const Icon(Icons.volume_off, size: 16),
-                                label: const Text('Hentikan Alarm'),
+                                label: Text('Hentikan Alarm'.tr(context)),
                                 style: FilledButton.styleFrom(
                                   backgroundColor: Colors.red.withValues(
                                     alpha: 0.1,
@@ -168,7 +172,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                         child: _recentSOS.isEmpty
                             ? Center(
                                 child: Text(
-                                  'Sistem Terpantau Aman',
+                                  'Sistem Terpantau Aman'.tr(context),
                                   style: textTheme.bodyMedium,
                                 ),
                               )
@@ -197,13 +201,13 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                                       ),
                                     ),
                                     title: Text(
-                                      inc.typeLabelId,
+                                      inc.typeLabelId.tr(context),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     subtitle: Text(
-                                      'Dilaporkan ${inc.timeAgo}',
+                                      '${'Dilaporkan'.tr(context)} ${inc.timeAgo}',
                                       style: textTheme.bodySmall,
                                     ),
                                     trailing: _TrustBadge(
@@ -241,7 +245,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Distribusi Tipe SOS',
+                              'Distribusi Tipe SOS'.tr(context),
                               style: textTheme.titleMedium,
                             ),
                           ],
@@ -252,7 +256,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                                 height: 400,
                                 child: Center(
                                   child: Text(
-                                    'Belum ada data statistik',
+                                    'Belum ada data statistik'.tr(context),
                                     style: textTheme.bodySmall,
                                   ),
                                 ),
@@ -278,7 +282,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
                         Wrap(
                           spacing: 12,
                           runSpacing: 10,
-                          children: _buildLegend(),
+                          children: _buildLegend(context),
                         ),
                       ],
                     ),
@@ -336,7 +340,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
     }).toList();
   }
 
-  List<Widget> _buildLegend() {
+  List<Widget> _buildLegend(BuildContext context) {
     final entries = _stats.byType.entries.toList();
     return entries.map((e) {
       final color = _typeColorMap[e.key] ?? _fallbackColor;
@@ -354,7 +358,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
           ),
           const SizedBox(width: 6),
           Text(
-            label,
+            label.tr(context),
             style: const TextStyle(fontSize: 12, color: Colors.white70),
           ),
         ],

@@ -88,7 +88,7 @@ class SOSButton extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'MEMBATALKAN...',
+                      'MEMBATALKAN...'.tr(context),
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12.sp(context),
@@ -192,7 +192,7 @@ class SOSStatusBanner extends StatelessWidget {
           ),
           if (!isTransmitting)
             Text(
-              'RETRYING...',
+              'RETRYING...'.tr(context),
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
