@@ -592,6 +592,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           ? AppLocalization.localeEn
                           : AppLocalization.localeId;
                       SiagaKitaApp.localeNotifier.value = locale;
+                      AppLocalization.currentLocale = locale;
 
                       // Simpan preferensi
                       final prefs = await SharedPreferences.getInstance();

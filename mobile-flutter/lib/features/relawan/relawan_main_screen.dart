@@ -97,12 +97,14 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
   void _handleForceLogout() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Sesi Anda telah berakhir karena login di perangkat lain.',
+          'Sesi Anda telah berakhir karena login di perangkat lain.'.tr(
+            context,
+          ),
         ),
         backgroundColor: Colors.redAccent,
-        duration: Duration(seconds: 4),
+        duration: const Duration(seconds: 4),
       ),
     );
     // Logout dan redirect ke login

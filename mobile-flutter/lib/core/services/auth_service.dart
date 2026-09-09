@@ -20,7 +20,7 @@ class AuthService {
       return await http
           .post(
             Uri.parse(url),
-            headers: {'Content-Type': 'application/json', ...?headers},
+            headers: {...ApiConfig.headers(), ...?headers},
             body: jsonEncode(body),
           )
           .timeout(

@@ -8,6 +8,8 @@ import '../models/user_model.dart';
 class UserService {
   static const String _baseUrl = ApiConfig.baseUrl;
   static const _timeout = Duration(seconds: 5);
+  static Map<String, String> _headers(String token) =>
+      ApiConfig.headers(token: token);
 
   // ─── Ambil Profil ────────────────────────────────────────────────────────────
 
@@ -15,13 +17,7 @@ class UserService {
     final prefs = await SharedPreferences.getInstance();
     try {
       final response = await http
-          .get(
-            Uri.parse('$_baseUrl/users/profile'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          )
+          .get(Uri.parse('$_baseUrl/users/profile'), headers: _headers(token))
           .timeout(_timeout);
 
       final body = jsonDecode(response.body);
@@ -104,10 +100,7 @@ class UserService {
       final response = await http
           .put(
             Uri.parse('$_baseUrl/users/profile'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
+            headers: _headers(token),
             body: jsonEncode(payload),
           )
           .timeout(_timeout);
@@ -172,10 +165,7 @@ class UserService {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/users/biodata'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
+            headers: _headers(token),
             body: jsonEncode(payload),
           )
           .timeout(_timeout);
@@ -256,10 +246,7 @@ class UserService {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/users/phone/request-otp'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
+            headers: _headers(token),
             body: jsonEncode({'phone_number': phoneNumber}),
           )
           .timeout(_timeout);
@@ -283,10 +270,7 @@ class UserService {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/users/phone/verify-otp'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
+            headers: _headers(token),
             body: jsonEncode({
               'phone_number': phoneNumber,
               'otp_code': otpCode,
@@ -309,10 +293,7 @@ class UserService {
   static Future<void> ping(String token) async {
     try {
       await http
-          .get(
-            Uri.parse('$_baseUrl/users/ping'),
-            headers: {'Authorization': 'Bearer $token'},
-          )
+          .get(Uri.parse('$_baseUrl/users/ping'), headers: _headers(token))
           .timeout(const Duration(seconds: 10));
     } catch (_) {
       // Abaikan error ping — tidak perlu menampilkan error ke user
@@ -325,10 +306,7 @@ class UserService {
       final response = await http
           .patch(
             Uri.parse('$_baseUrl/users/volunteer/availability'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
+            headers: _headers(token),
             body: jsonEncode({'is_available': isAvailable}),
           )
           .timeout(_timeout);

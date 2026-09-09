@@ -16,7 +16,7 @@ class OTPService {
   static Future<void> requestOTP(String phoneNumber) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/request-otp'),
-      headers: {'Content-Type': 'application/json'},
+      headers: ApiConfig.headers(),
       body: jsonEncode({'phone_number': phoneNumber}),
     );
 
@@ -37,7 +37,7 @@ class OTPService {
   static Future<void> verifyOTP(String phoneNumber, String otpCode) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/verify-otp'),
-      headers: {'Content-Type': 'application/json'},
+      headers: ApiConfig.headers(),
       body: jsonEncode({'phone_number': phoneNumber, 'otp_code': otpCode}),
     );
 

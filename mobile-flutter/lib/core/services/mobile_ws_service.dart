@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../constants/api_config.dart';
 
+import '../localization/app_localization.dart';
+
 /// Event type dari WebSocket untuk user masyarakat (reporter SOS).
 enum MobileWsEvent {
   agencyHandling, // AGENCY_HANDLING
@@ -76,7 +78,9 @@ class MobileWsService extends ChangeNotifier {
 
   void _doConnect() {
     try {
-      final uri = Uri.parse('${ApiConfig.wsUrl}?token=$token');
+      final uri = Uri.parse(
+        '${ApiConfig.wsUrl}?token=$token&lang=${AppLocalization.currentLocaleCode}',
+      );
       _channel = WebSocketChannel.connect(uri);
       _sub = _channel!.stream.listen(
         _onData,

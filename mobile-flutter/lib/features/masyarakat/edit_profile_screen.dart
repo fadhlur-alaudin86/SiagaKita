@@ -199,7 +199,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Gagal memperbarui profil: $e'.tr(context)),
+            content: Text('${'Gagal memperbarui profil'.tr(context)}: $e'),
             backgroundColor: Colors.red,
           ),
         );

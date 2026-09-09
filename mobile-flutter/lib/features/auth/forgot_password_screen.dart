@@ -29,7 +29,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await AuthService.forgotPassword(_emailCtrl.text.trim());
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kode OTP telah dikirim ke email Anda')),
+        SnackBar(
+          content: Text('Kode OTP telah dikirim ke email Anda'.tr(context)),
+        ),
       );
       Navigator.pushReplacement(
         context,
@@ -60,7 +62,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lupa Password')),
+      appBar: AppBar(title: Text('Lupa Password'.tr(context))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -84,14 +86,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Alamat Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Email Anda'.tr(context),
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Email wajib diisi';
-                    if (!v.contains('@')) return 'Format email tidak valid';
+                    if (v == null || v.isEmpty) {
+                      return 'Email wajib diisi'.tr(context);
+                    }
+                    if (!v.contains('@')) {
+                      return 'Format email tidak valid'.tr(context);
+                    }
                     return null;
                   },
                 ),
