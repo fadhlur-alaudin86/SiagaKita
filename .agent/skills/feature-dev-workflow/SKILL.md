@@ -26,8 +26,8 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | 4 | **Backend Implementation** — Implement handler, service, repository in `backend-go/internal/domain/<name>/`. If lifecycle states or actor capabilities change, update `docs/design/activity-diagrams.md` or `use-case-diagrams.md`. | Go source files + updated diagrams |
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
 | 6 | **Tests & Hybrid TDD** — Write Go unit tests (`_test.go`) with RED-GREEN cycle for critical logic + Flutter tests. Document test outcomes in feature log. | Test files + test docs |
-| 7 | **Review Gate & PR** — Run Pre-PR verification (Security, Database, Silent-Failure, and Dead-Code audits). Ensure CI passes. Sync issue checklist. Open PR targeting `dev`. | Pre-PR audit report + Pull Request |
-| 8 | **Close Log** — Update feature log (all steps ✅). Link PR. Move issue to Done. | Updated feature log |
+| 7 | **Review Gate & Retrospective** — Run Pre-PR verification (Security, Database, Silent-Failure, and Dead-Code audits). Execute Step 7.5 Workflow Retrospective (apply minor skill updates or draft major proposals). Ensure CI passes. Sync issue checklist. Open PR targeting `dev`. | Pre-PR audit report + workflow updates + Pull Request |
+| 8 | **Close Log & Evolution** — Update feature log (all steps ✅). Record applied workflow evolutions. Link PR. Move issue to Done. | Updated feature log |
 
 ## Agent Rules
 
@@ -78,18 +78,25 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 
 ### GitHub Sync, Pre-PR Review & Merge Strategy
 33. **Step 0 → in-progress & Assignee**: `gh issue edit <N> --add-label "status: in-progress" --remove-label "status: ready,status: in-review,status: done" --add-assignee "@me"` + explanatory comment when starting work. Always assign the issue to the active developer/agent account (`@me`) when picking up an issue.
-34. **Step 7 → Pre-PR Verification Gate (MANDATORY)**:
+34. **Step 7 → Pre-PR Verification Gate & Retrospective (MANDATORY)**:
     - **Self-Review Checklist**: Review all changed code against [review-standards.md](review-standards.md) (Security Review, Database & Migration Review, Silent Failure Audit, and Clean Code & Dead Code Elimination).
+    - **Step 7.5 Workflow Retrospective**: Evaluate whether new technical gotchas, CLI flags, or patterns were learned (see [workflow-evolution.md](workflow-evolution.md)). If minor, apply directly to `.agent/skills/` and commit as `docs(workflow): ...` or `chore(skills): ...` before PR creation. If major, generate `learning_proposal.md` and propose `/grill-me`.
     - **Checklist Pre-Sync (MANDATORY)**: Before creating the PR, the agent MUST inspect the issue body and mark all completed Tasks and Acceptance Criteria checkboxes from `- [ ]` to `- [x]` via `gh issue edit <N> --body "..."`.
     - **Single Status Label**: Transition to `status: in-review` and ensure old status labels (`status: in-progress`, `status: ready`, `status: done`) are removed to prevent label stacking.
     - **Closing vs Parent Linking**: In the PR description, use `Closes #<child_issue>` for the issue being solved. If under an epic/tracker issue, specify `Parent Issue: #<parent_issue>` so the parent issue is not prematurely closed.
 35. **Step 8 → Done & Closed**:
     - Merging into `dev` automatically updates the issue to `status: done`, removes previous status labels, auto-checks any remaining checkboxes, and closes the issue.
     - **Parent Tracker Sync**: If working under a parent issue, mark off the corresponding subtask checkbox (`- [ ]` to `- [x]`) in the parent issue body.
-    - **Close Log**: Mark all steps ✅ in the local feature log `docs/backlog/features/F-XXX-name.md`.
+    - **Close Log & Record Evolution**: Mark all steps ✅ and record applied minor skill changes or major proposals in `docs/backlog/features/F-XXX-name.md`.
 36. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
 37. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
 38. **PR to `main` = Rebase Merge MANDATORY** — All PRs from `dev` targeting `main` MUST use **Rebase Merge** to preserve a clean, linear history for automated release notes.
+
+### Evolutionary Workflow & Self-Improvement
+39. **Continuous Workflow Retrospective** — At Step 7.5, actively check for institutional lessons. Minor updates to existing skills are bundled directly into the active topic branch before PR creation. See [workflow-evolution.md](workflow-evolution.md).
+40. **Strict Minor vs. Major Boundary** — Never modify `.github/workflows/*.yml`, review gates, or branching/rollback policies autonomously. Major evolutions must be drafted in `learning_proposal.md` with `/grill-me` alignment before implementation.
+41. **Context Hygiene & Anti-Bloat** — Keep all skill rules dense, actionable, and under 3 lines where possible. Prune dead prototypes and obsolete instructions immediately.
+
 
 ## Feature Log Template
 
@@ -158,6 +165,13 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 |------|----------|-----------|
 | | | |
 
+## Workflow Retrospective & Evolution
+
+| Type | Skill / File | Changes / Proposal | Status |
+|------|--------------|--------------------|--------|
+| Minor | | | Applied |
+| Major | | | Proposed (/grill-me) |
+
 ## Outputs Checklist
 
 | # | Artifact | Status |
@@ -172,6 +186,7 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 | 8 | Unit & widget tests (`*_test.go`, `*_test.dart`) | ⬜ |
 | 9 | Pre-PR Review Audit (Security, DB, Silent-Failure, Dead-Code) | ⬜ |
 | 10 | Pull request to `dev` (Squash Merge) | ⬜ |
+| 11 | Workflow Retrospective (Minor updates / Major proposals logged) | ⬜ |
 ```
 
 ## Detailed References
@@ -181,6 +196,7 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 - **[flutter-standards.md](flutter-standards.md)** — Flutter/Dart standards, secure storage, mounted checks, and responsive sizing.
 - **[postgres-patterns.md](postgres-patterns.md)** — PostgreSQL 15 & pgx v5 patterns, indexing (B-Tree & GIN), and migration safety.
 - **[review-standards.md](review-standards.md)** — Pre-PR self-review checklists (Security, Database, Silent-Failure audits).
+- **[workflow-evolution.md](workflow-evolution.md)** — Evolutionary workflow protocol, minor auto-update rules, and major proposal guidelines.
 - **[testing.md](testing.md)** — Testing conventions, Hybrid TDD (RED-GREEN), and plan sanitization.
 - **[gh-project-manager/SKILL.md](../gh-project-manager/SKILL.md)** — GitHub Issues, single-status rules, and sprint tracking.
 - **[docs/DATABASE_SCHEMA.md](../../docs/DATABASE_SCHEMA.md)** — Active schema v12 (always read before creating migrations).
