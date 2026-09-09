@@ -4,6 +4,7 @@ import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/permission_service.dart';
+import '../../core/services/session_service.dart';
 import 'biodata_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -174,6 +175,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       // simpan token ke secure storage
+      await SessionService.saveSession(
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+        userId: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+        name: result.user.fullName,
+      );
+      if (!mounted) return;
       debugPrint('${'Registrasi berhasil'.tr(context)}: ${result.user.email}');
 
       // Minta izin GPS setelah registrasi berhasil (poin 4)

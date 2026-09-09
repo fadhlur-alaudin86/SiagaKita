@@ -106,6 +106,20 @@ class AuthService {
     return AuthResult.fromJson(body['data'] as Map<String, dynamic>);
   }
 
+  // ─── Refresh Token: tukar refresh token lama dengan token pair baru ────────
+  static Future<AuthResult> refreshToken(String refreshTokenStr) async {
+    final response = await _post('$_baseUrl/auth/refresh-token', {
+      'refresh_token': refreshTokenStr,
+    });
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw AuthException(
+        body['message'] as String? ?? 'Gagal memperbarui sesi otentikasi',
+      );
+    }
+    return AuthResult.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
   // ─── Forgot Password ───────────────────────────────────────────────────────
   static Future<void> forgotPassword(String email) async {
     final response = await _post('$_baseUrl/auth/forgot-password', {

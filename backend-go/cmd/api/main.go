@@ -187,6 +187,9 @@ func main() {
 	// Mobile Responder (agency_personnel)
 	auth.Post("/personnel/login", userHandler.PersonnelLogin)
 
+	// Refresh Token (auto-rotation)
+	auth.Post("/refresh-token", userHandler.RefreshToken)
+
 	// OTP WhatsApp (phone verification)
 	auth.Post("/request-otp", otpHandler.RequestOTP)
 	auth.Post("/verify-otp", otpHandler.VerifyOTP)

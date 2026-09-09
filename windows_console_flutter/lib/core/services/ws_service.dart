@@ -8,6 +8,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../constants/api_constants.dart';
 import '../localization/app_localization.dart';
 import '../models/models.dart';
+import 'auth_service.dart';
 
 // ─── Event types broadcast dari backend ───────────────────────────────────────
 
@@ -180,9 +181,10 @@ class WsService extends ChangeNotifier {
     _channel?.sink.close();
     _sub = null;
     _channel = null;
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 5), () async {
       _isReconnecting = false;
-      if (_token != null && !_forceLoggedOut) connect(_token!);
+      final activeToken = await AuthService.getAccessToken() ?? _token;
+      if (activeToken != null && !_forceLoggedOut) connect(activeToken);
     });
   }
 

@@ -184,6 +184,10 @@ type VerifyPhoneRequest struct {
 	OTPCode     string `json:"otp_code"`
 }
 
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
 // ─── Response DTOs ─────────────────────────────────────────────────────────────
 
 type AuthResponse struct {

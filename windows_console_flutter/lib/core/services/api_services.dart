@@ -16,13 +16,153 @@ Map<String, String> _headersWithIdempotency(String token) => {
   'X-Idempotency-Key': _newIdempotencyKey(),
 };
 
+/// Helper untuk eksekusi HTTP dengan auto-retry saat 401 Unauthorized
+Future<http.Response> _requestWithRetry(
+  String token,
+  Future<http.Response> Function(String activeToken) sendFn,
+) async {
+  final activeToken = await AuthService.getAccessToken() ?? token;
+  var resp = await sendFn(activeToken);
+
+  if (resp.statusCode == 401) {
+    debugPrint('[ApiService] 401 Unauthorized. Attempting refresh...');
+    final refreshed = await AuthService.refreshToken();
+    if (refreshed != null) {
+      debugPrint('[ApiService] Token refreshed. Retrying request...');
+      resp = await sendFn(refreshed);
+    }
+  }
+  return resp;
+}
+
+Future<http.Response> _authedGet(
+  Uri uri,
+  String token, {
+  Map<String, String>? headers,
+}) {
+  return _requestWithRetry(
+    token,
+    (activeToken) => http.get(
+      uri,
+      headers: {...AuthService.headers(activeToken), ...?headers},
+    ),
+  );
+}
+
+Future<http.Response> _authedPost(
+  Uri uri,
+  String token, {
+  Map<String, String>? headers,
+  Object? body,
+  bool withIdempotency = false,
+}) {
+  return _requestWithRetry(
+    token,
+    (activeToken) => http.post(
+      uri,
+      headers: {
+        if (withIdempotency)
+          ..._headersWithIdempotency(activeToken)
+        else
+          ...AuthService.headers(activeToken),
+        ...?headers,
+      },
+      body: body,
+    ),
+  );
+}
+
+Future<http.Response> _authedPut(
+  Uri uri,
+  String token, {
+  Map<String, String>? headers,
+  Object? body,
+  bool withIdempotency = false,
+}) {
+  return _requestWithRetry(
+    token,
+    (activeToken) => http.put(
+      uri,
+      headers: {
+        if (withIdempotency)
+          ..._headersWithIdempotency(activeToken)
+        else
+          ...AuthService.headers(activeToken),
+        ...?headers,
+      },
+      body: body,
+    ),
+  );
+}
+
+Future<http.Response> _authedPatch(
+  Uri uri,
+  String token, {
+  Map<String, String>? headers,
+  Object? body,
+  bool withIdempotency = false,
+}) {
+  return _requestWithRetry(
+    token,
+    (activeToken) => http.patch(
+      uri,
+      headers: {
+        if (withIdempotency)
+          ..._headersWithIdempotency(activeToken)
+        else
+          ...AuthService.headers(activeToken),
+        ...?headers,
+      },
+      body: body,
+    ),
+  );
+}
+
+Future<http.Response> _authedDelete(
+  Uri uri,
+  String token, {
+  Map<String, String>? headers,
+  Object? body,
+  bool withIdempotency = false,
+}) {
+  return _requestWithRetry(
+    token,
+    (activeToken) => http.delete(
+      uri,
+      headers: {
+        if (withIdempotency)
+          ..._headersWithIdempotency(activeToken)
+        else
+          ...AuthService.headers(activeToken),
+        ...?headers,
+      },
+      body: body,
+    ),
+  );
+}
+
+Future<http.StreamedResponse> _authedMultipart(
+  String token,
+  http.MultipartRequest Function(String activeToken) buildReq,
+) async {
+  final activeToken = await AuthService.getAccessToken() ?? token;
+  var streamed = await buildReq(activeToken).send();
+  if (streamed.statusCode == 401) {
+    final refreshed = await AuthService.refreshToken();
+    if (refreshed != null) {
+      streamed = await buildReq(refreshed).send();
+    }
+  }
+  return streamed;
+}
+
 class IncidentApiService {
   // ─── List semua SOS aktif (instansi view) ─────────────────────────────────
 
   static Future<List<IncidentModel>> getActiveIncidents(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.incidentsAllActive),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -33,9 +173,9 @@ class IncidentApiService {
   }
 
   static Future<List<IncidentModel>> getHistory(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.incidentsAgencyHistory),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -48,9 +188,9 @@ class IncidentApiService {
   // ─── Detail incident ───────────────────────────────────────────────────────
 
   static Future<IncidentModel?> getDetail(String token, String id) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.incidentDetail(id)),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return null;
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -64,9 +204,10 @@ class IncidentApiService {
     String id,
     String reason,
   ) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.incidentMarkFalseAlarm(id)),
-      headers: _headersWithIdempotency(token),
+      token,
+      withIdempotency: true,
       body: jsonEncode({'reason': reason}),
     );
     debugPrint('markFalseAlarm status: ${resp.statusCode}, body: ${resp.body}');
@@ -76,17 +217,19 @@ class IncidentApiService {
   // ─── Resolve / Handle ───────────────────────────────────────────────────────
 
   static Future<bool> agencyHandle(String token, String id) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.incidentAgencyHandle(id)),
-      headers: _headersWithIdempotency(token),
+      token,
+      withIdempotency: true,
     );
     return resp.statusCode == 200;
   }
 
   static Future<bool> resolve(String token, String id) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.incidentResolve(id)),
-      headers: _headersWithIdempotency(token),
+      token,
+      withIdempotency: true,
     );
     return resp.statusCode == 200;
   }
@@ -100,7 +243,7 @@ class IncidentApiService {
     final uri = Uri.parse(
       ApiConstants.reports,
     ).replace(queryParameters: status != null ? {'status': status} : null);
-    final resp = await http.get(uri, headers: AuthService.headers(token));
+    final resp = await _authedGet(uri, token);
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>? ?? [];
@@ -119,9 +262,10 @@ class IncidentApiService {
     if (urgencyLevel != null) {
       bodyData['urgency_level'] = urgencyLevel;
     }
-    final resp = await http.patch(
+    final resp = await _authedPatch(
       Uri.parse(ApiConstants.reportStatus(id)),
-      headers: _headersWithIdempotency(token),
+      token,
+      withIdempotency: true,
       body: jsonEncode(bodyData),
     );
     return resp.statusCode == 200;
@@ -133,9 +277,9 @@ class AdminApiService {
 
   static Future<List<VolunteerModel>> getPendingVolunteers(String token) async {
     try {
-      final resp = await http.get(
+      final resp = await _authedGet(
         Uri.parse(ApiConstants.adminVolunteersPending),
-        headers: AuthService.headers(token),
+        token,
       );
       if (resp.statusCode != 200) return [];
       final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -149,9 +293,10 @@ class AdminApiService {
   }
 
   static Future<bool> approveVolunteer(String token, String id) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.adminVolunteerApprove(id)),
-      headers: _headersWithIdempotency(token),
+      token,
+      withIdempotency: true,
     );
     return resp.statusCode == 200;
   }
@@ -161,9 +306,10 @@ class AdminApiService {
     String id,
     String reason,
   ) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.adminVolunteerReject(id)),
-      headers: _headersWithIdempotency(token),
+      token,
+      withIdempotency: true,
       body: jsonEncode({'reason': reason}),
     );
     return resp.statusCode == 200;
@@ -172,9 +318,9 @@ class AdminApiService {
   // ─── User Management ──────────────────────────────────────────────────────
 
   static Future<List<UserModel>> getUsers(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.adminUsers),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -185,21 +331,21 @@ class AdminApiService {
   }
 
   static Future<UserDetailModel?> getUserDetail(String token, String id) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.adminUserDetail(id)),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return null;
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     return UserDetailModel.fromJson(body['data'] as Map<String, dynamic>);
   }
 
-  // ─── KYC Warga ────────────────────────────────────────────────────────────
+  // ─── KYC Warga ────────────────────────────────────────────────────
 
   static Future<List<WargaKycModel>> getPendingWargaKyc(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.adminWargaKycPending),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -210,17 +356,17 @@ class AdminApiService {
   }
 
   static Future<bool> approveWargaKyc(String token, String id) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.adminWargaKycApprove(id)),
-      headers: AuthService.headers(token),
+      token,
     );
     return resp.statusCode == 200;
   }
 
   static Future<bool> rejectWargaKyc(String token, String id) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.adminWargaKycReject(id)),
-      headers: AuthService.headers(token),
+      token,
     );
     return resp.statusCode == 200;
   }
@@ -231,26 +377,26 @@ class AdminApiService {
     String reason,
     int days,
   ) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.adminUserBan(id)),
-      headers: AuthService.headers(token),
+      token,
       body: jsonEncode({'reason': reason, 'days': days}),
     );
     return resp.statusCode == 200;
   }
 
   static Future<bool> unbanUser(String token, String id) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.adminUserUnban(id)),
-      headers: AuthService.headers(token),
+      token,
     );
     return resp.statusCode == 200;
   }
 
   static Future<bool> resetStrike(String token, String id) async {
-    final resp = await http.delete(
+    final resp = await _authedDelete(
       Uri.parse(ApiConstants.adminUserResetStrike(id)),
-      headers: AuthService.headers(token),
+      token,
     );
     return resp.statusCode == 200;
   }
@@ -258,9 +404,9 @@ class AdminApiService {
   // ─── Agencies & Admins ────────────────────────────────────────────────────
 
   static Future<List<AgencyModel>> getAgencies(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.adminAgencies),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -271,9 +417,9 @@ class AdminApiService {
   }
 
   static Future<List<AdminModel>> getAdmins(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.adminAdmins),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -286,9 +432,9 @@ class AdminApiService {
   // ─── Ranks (Gamifikasi) ───────────────────────────────────────────────────
 
   static Future<List<RankModel>> getRanks(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.adminRanks),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -299,27 +445,27 @@ class AdminApiService {
   }
 
   static Future<bool> createRank(String token, RankModel rank) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.adminRanks),
-      headers: AuthService.headers(token),
+      token,
       body: jsonEncode(rank.toJson()),
     );
     return resp.statusCode == 200 || resp.statusCode == 201;
   }
 
   static Future<bool> updateRank(String token, RankModel rank) async {
-    final resp = await http.put(
+    final resp = await _authedPut(
       Uri.parse(ApiConstants.adminRankDetail(rank.id)),
-      headers: AuthService.headers(token),
+      token,
       body: jsonEncode(rank.toJson()),
     );
     return resp.statusCode == 200;
   }
 
   static Future<bool> deleteRank(String token, String id) async {
-    final resp = await http.delete(
+    final resp = await _authedDelete(
       Uri.parse(ApiConstants.adminRankDetail(id)),
-      headers: AuthService.headers(token),
+      token,
     );
     return resp.statusCode == 200;
   }
@@ -327,9 +473,9 @@ class AdminApiService {
   // ─── Badges (Gamifikasi) ──────────────────────────────────────────────────
 
   static Future<List<BadgeModel>> getBadges(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse('${ApiConstants.baseUrl}/admin/badges'),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -346,20 +492,22 @@ class AdminApiService {
     List<int>? fileBytes,
     String? fileName,
   ) async {
-    final req = http.MultipartRequest(
-      'POST',
-      Uri.parse('${ApiConstants.baseUrl}/admin/badges'),
-    );
-    req.headers.addAll(AuthService.headers(token));
-    req.fields['badge_name'] = name;
-    req.fields['description'] = desc;
-
-    if (fileBytes != null && fileName != null) {
-      req.files.add(
-        http.MultipartFile.fromBytes('icon', fileBytes, filename: fileName),
+    final resp = await _authedMultipart(token, (activeToken) {
+      final req = http.MultipartRequest(
+        'POST',
+        Uri.parse('${ApiConstants.baseUrl}/admin/badges'),
       );
-    }
-    final resp = await req.send();
+      req.headers.addAll(AuthService.headers(activeToken));
+      req.fields['badge_name'] = name;
+      req.fields['description'] = desc;
+
+      if (fileBytes != null && fileName != null) {
+        req.files.add(
+          http.MultipartFile.fromBytes('icon', fileBytes, filename: fileName),
+        );
+      }
+      return req;
+    });
     return resp.statusCode == 200 || resp.statusCode == 201;
   }
 
@@ -372,28 +520,30 @@ class AdminApiService {
     List<int>? fileBytes,
     String? fileName,
   ) async {
-    final req = http.MultipartRequest(
-      'PUT',
-      Uri.parse('${ApiConstants.baseUrl}/admin/badges/$id'),
-    );
-    req.headers.addAll(AuthService.headers(token));
-    req.fields['badge_name'] = name;
-    req.fields['description'] = desc;
-    req.fields['icon_url'] = existingIconUrl;
-
-    if (fileBytes != null && fileName != null) {
-      req.files.add(
-        http.MultipartFile.fromBytes('icon', fileBytes, filename: fileName),
+    final resp = await _authedMultipart(token, (activeToken) {
+      final req = http.MultipartRequest(
+        'PUT',
+        Uri.parse('${ApiConstants.baseUrl}/admin/badges/$id'),
       );
-    }
-    final resp = await req.send();
+      req.headers.addAll(AuthService.headers(activeToken));
+      req.fields['badge_name'] = name;
+      req.fields['description'] = desc;
+      req.fields['icon_url'] = existingIconUrl;
+
+      if (fileBytes != null && fileName != null) {
+        req.files.add(
+          http.MultipartFile.fromBytes('icon', fileBytes, filename: fileName),
+        );
+      }
+      return req;
+    });
     return resp.statusCode == 200;
   }
 
   static Future<bool> deleteBadge(String token, String id) async {
-    final resp = await http.delete(
+    final resp = await _authedDelete(
       Uri.parse('${ApiConstants.baseUrl}/admin/badges/$id'),
-      headers: AuthService.headers(token),
+      token,
     );
     return resp.statusCode == 200;
   }
@@ -407,7 +557,7 @@ class AdminApiService {
     final uri = Uri.parse(
       ApiConstants.adminStats,
     ).replace(queryParameters: {'period': period});
-    final resp = await http.get(uri, headers: AuthService.headers(token));
+    final resp = await _authedGet(uri, token);
     if (resp.statusCode != 200) return StatsModel.empty();
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     return StatsModel.fromJson(body['data'] as Map<String, dynamic>);
@@ -424,9 +574,9 @@ class AgencyApiService {
     String password,
     String badgeNumber,
   ) async {
-    final resp = await http.post(
+    final resp = await _authedPost(
       Uri.parse(ApiConstants.agencyPersonnels),
-      headers: AuthService.headers(token),
+      token,
       body: jsonEncode({
         'full_name': fullName,
         'email': email,
@@ -444,9 +594,9 @@ class AgencyApiService {
   // ─── Profile ──────────────────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>?> getProfile(String token) async {
-    final resp = await http.get(
+    final resp = await _authedGet(
       Uri.parse(ApiConstants.agencyMe),
-      headers: AuthService.headers(token),
+      token,
     );
     if (resp.statusCode == 200) {
       final body = jsonDecode(resp.body) as Map<String, dynamic>;

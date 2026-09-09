@@ -10,23 +10,24 @@ import (
 
 // Claims is the custom JWT payload.
 type Claims struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
-	JTI    string `json:"jti"` // JWT ID — unique per token, used for session allowlist
+	UserID    string `json:"user_id"`
+	Role      string `json:"role"`
+	JTI       string `json:"jti"` // JWT ID — unique per token, used for session allowlist
+	TokenType string `json:"token_type,omitempty"` // "access" or "refresh"
 	jwt.RegisteredClaims
 }
 
 // GenerateAccessToken generates a short-lived access token with a unique JTI.
 func GenerateAccessToken(userID, role, secret string, ttl time.Duration) (string, string, error) {
 	jti := uuid.New().String()
-	token, err := newSignedToken(userID, role, jti, secret, ttl)
+	token, err := newSignedToken(userID, role, jti, "access", secret, ttl)
 	return token, jti, err
 }
 
 // GenerateRefreshToken generates a long-lived refresh token with a unique JTI.
 func GenerateRefreshToken(userID, role, secret string, ttl time.Duration) (string, string, error) {
 	jti := uuid.New().String()
-	token, err := newSignedToken(userID, role, jti, secret, ttl)
+	token, err := newSignedToken(userID, role, jti, "refresh", secret, ttl)
 	return token, jti, err
 }
 
@@ -48,11 +49,12 @@ func ParseToken(tokenStr, secret string) (*Claims, error) {
 	return nil, errors.New("invalid token")
 }
 
-func newSignedToken(userID, role, jti, secret string, ttl time.Duration) (string, error) {
+func newSignedToken(userID, role, jti, tokenType, secret string, ttl time.Duration) (string, error) {
 	claims := Claims{
-		UserID: userID,
-		Role:   role,
-		JTI:    jti,
+		UserID:    userID,
+		Role:      role,
+		JTI:       jti,
+		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(ttl)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

@@ -18,6 +18,7 @@ class ApiConstants {
 
   // Auth
   static const String login = '$baseUrl/auth/console/login';
+  static const String refreshToken = '$baseUrl/auth/refresh-token';
 
   // Incidents
   static const String incidents = '$baseUrl/incidents';

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// untuk token otentikasi sensitif, dan SharedPreferences untuk preferensi non-sensitif.
 class SessionService {
   static const _keyToken = 'session_token';
+  static const _keyRefreshToken = 'session_refresh_token';
   static const _keyUserId = 'session_user_id';
   static const _keyEmail = 'session_email';
   static const _keyRole = 'session_role';
@@ -37,16 +38,35 @@ class SessionService {
     }
   }
 
+  /// Helper untuk mengambil refresh token dari secure storage.
+  static Future<String?> getRefreshToken() async {
+    try {
+      return await _secureStorage.read(key: _keyRefreshToken);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Update token akses dan refresh token setelah auto-rotation.
+  static Future<void> updateTokens(String accessToken, String refreshToken) async {
+    await _secureStorage.write(key: _keyToken, value: accessToken);
+    await _secureStorage.write(key: _keyRefreshToken, value: refreshToken);
+  }
+
   /// Simpan sesi setelah login berhasil.
   static Future<void> saveSession({
     required String token,
+    String? refreshToken,
     required String userId,
     required String email,
     required String role,
     String? name,
   }) async {
-    // 1. Simpan token di Secure Storage
+    // 1. Simpan token & refresh token di Secure Storage
     await _secureStorage.write(key: _keyToken, value: token);
+    if (refreshToken != null) {
+      await _secureStorage.write(key: _keyRefreshToken, value: refreshToken);
+    }
 
     // 2. Simpan metadata non-sensitif di SharedPreferences untuk performa
     final prefs = await SharedPreferences.getInstance();
@@ -63,6 +83,7 @@ class SessionService {
   static Future<SessionData?> loadSession() async {
     final prefs = await SharedPreferences.getInstance();
     final token = await getToken();
+    final refreshToken = await getRefreshToken();
     final userId = prefs.getString(_keyUserId);
     final email = prefs.getString(_keyEmail);
     final role = prefs.getString(_keyRole);
@@ -71,6 +92,7 @@ class SessionService {
     }
     return SessionData(
       token: token,
+      refreshToken: refreshToken,
       userId: userId,
       email: email,
       role: role,
@@ -81,6 +103,7 @@ class SessionService {
   /// Hapus sesi saat logout.
   static Future<void> clearSession() async {
     await _secureStorage.delete(key: _keyToken);
+    await _secureStorage.delete(key: _keyRefreshToken);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyToken);
     await prefs.remove(_keyUserId);
@@ -98,6 +121,7 @@ class SessionService {
 
 class SessionData {
   final String token;
+  final String? refreshToken;
   final String userId;
   final String email;
   final String role;
@@ -105,6 +129,7 @@ class SessionData {
 
   const SessionData({
     required this.token,
+    this.refreshToken,
     required this.userId,
     required this.email,
     required this.role,

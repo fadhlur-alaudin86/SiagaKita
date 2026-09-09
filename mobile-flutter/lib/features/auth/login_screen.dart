@@ -61,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Simpan sesi lokal untuk auto-login offline
       await SessionService.saveSession(
         token: result.accessToken,
+        refreshToken: result.refreshToken,
         userId: result.user.id,
         email: result.user.email,
         role: result.user.role,
