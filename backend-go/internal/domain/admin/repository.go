@@ -274,9 +274,9 @@ func (r *Repository) CreateAgency(req *CreateAgencyRequest) error {
 	})
 }
 
-// GetUsers returns all users with civilian/volunteer role.
+// GetUsers returns all users with civilian/volunteer role, supporting role, banned, strike, and search filters.
 // Strike dihitung secara real-time dari jumlah incidents berstatus false_alarm.
-func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search string) ([]AdminUserItem, error) {
+func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search string, role string) ([]AdminUserItem, error) {
 	var items []AdminUserItem
 	err := r.db.Raw(`
 		SELECT u.id AS user_id, u.email, u.role, u.created_at, u.last_active_at,
@@ -292,6 +292,7 @@ func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search s
 		LEFT JOIN user_profiles p ON p.user_id = u.id
 		WHERE u.deleted_at IS NULL
 		  AND u.role IN ('civilian','volunteer')
+		  AND (? = '' OR u.role = ?)
 		  AND (? = '' OR u.email ILIKE '%' || ? || '%' OR p.full_name ILIKE '%' || ? || '%' OR p.nik ILIKE '%' || ? || '%')
 		  AND (? = false OR p.is_sos_banned = true)
 		  AND (? = false OR (
@@ -299,7 +300,7 @@ func (r *Repository) GetUsers(filterBanned bool, filterHighStrike bool, search s
 		           WHERE i2.reporter_id = u.id AND i2.status = 'false_alarm'
 		       ) >= 2)
 		ORDER BY u.created_at DESC
-	`, search, search, search, search, filterBanned, filterHighStrike).Scan(&items).Error
+	`, role, role, search, search, search, search, filterBanned, filterHighStrike).Scan(&items).Error
 	if err != nil {
 		return nil, err
 	}
@@ -464,30 +465,84 @@ func (r *Repository) GetAdmins() ([]AdminItem, error) {
 	return rows, err
 }
 
-// BanUser sets is_sos_banned = true in user_profiles.
-func (r *Repository) BanUser(userID, reason string) error {
-	_ = reason // bisa disimpan ke tabel audit di masa depan
-	return r.db.Exec(`
-		UPDATE user_profiles SET is_sos_banned = TRUE WHERE user_id = ?
-	`, userID).Error
+// BanUser sets is_sos_banned = true in user_profiles, sets banned_until if days > 0, and records audit in sos_strikes.
+func (r *Repository) BanUser(userID string, req *BanUserRequest, callerID string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var bannedUntil *time.Time
+		if req.Days > 0 {
+			until := time.Now().AddDate(0, 0, req.Days)
+			bannedUntil = &until
+		}
+
+		res := tx.Exec(`
+			UPDATE user_profiles
+			SET is_sos_banned = TRUE, banned_until = ?
+			WHERE user_id = ?
+		`, bannedUntil, userID)
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		reason := req.Reason
+		if reason == "" {
+			reason = "Diblokir oleh admin"
+		}
+		if req.Days > 0 {
+			reason = fmt.Sprintf("%s (Durasi: %d hari)", reason, req.Days)
+		}
+
+		return tx.Exec(`
+			INSERT INTO sos_strikes (id, user_id, incident_id, reason, marked_by, created_at)
+			VALUES (gen_random_uuid(), ?, NULL, ?, ?, NOW())
+		`, userID, reason, callerID).Error
+	})
 }
 
-// UnbanUser sets is_sos_banned = false and clears banned_until.
-func (r *Repository) UnbanUser(userID string) error {
-	return r.db.Exec(`
-		UPDATE user_profiles
-		SET is_sos_banned = FALSE, banned_until = NULL
-		WHERE user_id = ?
-	`, userID).Error
+// UnbanUser sets is_sos_banned = false and clears banned_until, recording audit in sos_strikes.
+func (r *Repository) UnbanUser(userID string, callerID string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		res := tx.Exec(`
+			UPDATE user_profiles
+			SET is_sos_banned = FALSE, banned_until = NULL
+			WHERE user_id = ?
+		`, userID)
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		return tx.Exec(`
+			INSERT INTO sos_strikes (id, user_id, incident_id, reason, marked_by, created_at)
+			VALUES (gen_random_uuid(), ?, NULL, 'Ban dicabut oleh admin', ?, NOW())
+		`, userID, callerID).Error
+	})
 }
 
-// ResetStrike resets sos_strike_count = 0 dan unban.
-func (r *Repository) ResetStrike(userID string) error {
-	return r.db.Exec(`
-		UPDATE user_profiles
-		SET sos_strike_count = 0, is_sos_banned = FALSE, banned_until = NULL
-		WHERE user_id = ?
-	`, userID).Error
+// ResetStrike resets sos_strike_count = 0, is_sos_banned = false, and records audit in sos_strikes.
+func (r *Repository) ResetStrike(userID string, callerID string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		res := tx.Exec(`
+			UPDATE user_profiles
+			SET sos_strike_count = 0, is_sos_banned = FALSE, banned_until = NULL
+			WHERE user_id = ?
+		`, userID)
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		return tx.Exec(`
+			INSERT INTO sos_strikes (id, user_id, incident_id, reason, marked_by, created_at)
+			VALUES (gen_random_uuid(), ?, NULL, 'Strike di-reset oleh admin', ?, NOW())
+		`, userID, callerID).Error
+	})
 }
 
 // ─── Ranks (Master Data) ──────────────────────────────────────────────────────

@@ -301,3 +301,19 @@ func TestIdempotency_BypassNonStateChanging(t *testing.T) {
 		t.Errorf("expected 200 OK, got %d", respPost.StatusCode)
 	}
 }
+
+func TestBanCheck_NoUser(t *testing.T) {
+	app := fiber.New()
+	app.Get("/sos", BanCheck(nil), func(c *fiber.Ctx) error {
+		return c.SendString("sos-ok")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/sos", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 OK for unauthenticated/empty user, got %d", resp.StatusCode)
+	}
+}
