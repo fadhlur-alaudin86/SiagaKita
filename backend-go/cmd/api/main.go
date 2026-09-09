@@ -48,6 +48,15 @@ func main() {
 	db := database.NewPostgres(cfg)
 	rdb := database.NewRedis(cfg)
 
+	// ── 2b. Auto-Migrate Database Schema ──────────────────────────────────────
+	sqlDB, err := db.DB()
+	if err != nil {
+		utils.Fatal().Err(err).Msg("[DB] Failed to acquire underlying sql.DB for auto-migration")
+	}
+	if err := database.AutoMigrate(sqlDB); err != nil {
+		utils.Fatal().Err(err).Msg("[DB] Auto-migration failed to execute")
+	}
+
 	// ── 3. Superadmin seeding ─────────────────────────────────────────────────
 	if err := seedSuperAdmin(db, cfg); err != nil {
 		utils.Fatal().Err(err).Msg("[SuperAdmin] Gagal seed superadmin")

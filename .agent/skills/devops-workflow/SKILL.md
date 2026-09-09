@@ -113,6 +113,26 @@ All team members MUST follow Conventional Commits to ensure automated release no
 
 `auth`, `incident`, `user`, `admin`, `telemetry`, `otp`, `ws`, `mobile`, `desktop`, `infra`, `ci`, `docs`
 
+## Database Migrations & Rollback Operations
+
+### Automated In-App Migrations (Startup)
+- The backend Go binary embeds all migrations (`backend-go/migrations/*.sql`) and executes pending UP migrations automatically upon booting.
+- Multi-container startup races are prevented via PostgreSQL advisory locking in `golang-migrate`.
+
+### Rollback Strategy & Production Safety
+- **No Automatic Schema Rollback on VPS Failure**: The `release-deploy.yml` pipeline automatically rolls back the Docker container image if health checks fail, but intentionally DOES NOT execute `down.sql`. Automatic down-migrations on a live database risk catastrophic, irreversible customer data loss.
+- **Manual Emergency Rollback**: If a database rollback is required, run `siagakita-migrate` through SSH on the VPS:
+  ```bash
+  # Check active schema version
+  docker compose -f docker-compose.prod.yml exec backend ./siagakita-migrate version
+
+  # Roll back 1 migration step
+  docker compose -f docker-compose.prod.yml exec backend ./siagakita-migrate down 1
+
+  # Force specific version if marked dirty
+  docker compose -f docker-compose.prod.yml exec backend ./siagakita-migrate force <version>
+  ```
+
 ## Agent Rules
 
 1. **Read stacks.md first** — before altering any workflow or project configuration.
@@ -122,3 +142,5 @@ All team members MUST follow Conventional Commits to ensure automated release no
 5. **Update VERSION** — remind developers to update `VERSION` when creating a release PR to `main`.
 6. **Enforce Conventional Commits** — if commit messages break standard format, point it out and request correction.
 7. **Automated Rollback awareness** — deployment workflows include automated health check rollbacks. If a deployment fails, inspect container logs and report findings.
+8. **Database Rollback Caution** — Never automate destructive database schema rollbacks in unattended CI/CD pipelines. Always verify backward-compatibility (Expand & Contract) and instruct developers to use `siagakita-migrate` for manual schema rollbacks.
+

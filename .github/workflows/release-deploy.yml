@@ -98,7 +98,9 @@ jobs:
             if [ "$HEALTH" != "healthy" ]; then
               echo "❌ Health check FAILED — initiating rollback..."
 
-              # Rollback: jalankan ulang image versi sebelumnya
+              # Rollback: jalankan ulang image versi sebelumnya.
+              # Catatan: Skema database sengaja tidak di-rollback otomatis demi mencegah permanent data loss.
+              # Gunakan 'docker compose exec backend ./siagakita-migrate down 1' untuk rollback skema manual jika diperlukan.
               if [ -n "$OLD_IMAGE" ]; then
                 docker compose -f docker-compose.prod.yml stop backend
                 docker pull "$OLD_IMAGE" 2>/dev/null || true

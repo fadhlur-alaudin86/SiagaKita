@@ -1,0 +1,2 @@
+-- Rollback for 006_blood_type_rhesus.up.sql
+-- Note: PostgreSQL does not support removing values from an existing ENUM type without recreating it.

@@ -485,6 +485,50 @@ CREATE TABLE incident_reports (
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at  TIMESTAMPTZ                  -- Timestamp saat insiden diselesaikan
 );
+File upload disimpan di VPS: `/opt/siagakita/uploads/reports/` dan diakses via `GET /uploads/*`.
+
+---
+
+## 11. Automated In-App Migrations & Reversible Schema Management
+
+Since migration version `019`, database migrations are managed via **`golang-migrate`** embedded directly into the Go binary (`//go:embed`):
+
+### 1. In-App Auto-Migration
+- The backend application automatically runs pending UP migrations during startup in `cmd/api/main.go` before accepting HTTP/WS connections.
+- Migration state is tracked deterministically in the PostgreSQL `schema_migrations` table.
+- Concurrency safety is guaranteed across multi-instance deployments through PostgreSQL advisory locking.
+
+### 2. Migration Files Inventory (001–019)
+All migrations are strictly paired into `.up.sql` and `.down.sql` scripts in `backend-go/migrations/`:
+- `001_init_schema`: Base initial schema (tables, types, extensions).
+- `002_sos_redesign`: SOS redesign, citizen reports, and strike counter.
+- `003_schema_v3`: Rebuilt slim schema v3.
+- `004_add_agency_location`: Agency office GPS coordinates (`latitude`, `longitude`).
+- `005_reports_v2`: Reports table upgrade with photo arrays and urgency levels.
+- `006_blood_type_rhesus`: Rh factor blood type enum values.
+- `007_add_bio_and_disaster`: User profile bio text and disaster incident category.
+- `008_incident_enhancements`: Canceled status enum value, removal of trigger_method, SOS multimedia evidence.
+- `009_kyc_warga`: Civilian KYC fields (KTP and selfie verification status).
+- `010_admin_features`: Online status tracking via `last_active_at`.
+- `011_drop_phone_unique`: Dropped unique constraint on phone numbers for shared family phones.
+- `012_reports_and_volunteer`: Volunteer experience and report status defaults.
+- `013_separate_handling`: Separate agency handling, proof photo URLs, and badges gamification.
+- `014_incident_responses_update`: Renamed `arrived_at` to `completed_at`, added `on_scene` status.
+- `015_response_location`: Volunteer realtime coordinate fields in incident responses.
+- `016_place_of_birth`: Place of birth attribute in user profiles.
+- `017_refactor_text_to_varchar`: Standardized unbounded `TEXT` fields to explicit `VARCHAR`.
+- `018_incident_reports_address_and_completed_at`: Detailed reverse-geocoded address and completion timestamps.
+- `019_add_missing_fk_indexes`: B-Tree indexes for all 13 foreign key relations to eliminate full-table scans.
+
+### 3. Manual Rollback & Emergency CLI (`siagakita-migrate`)
+Automated down-migrations on VPS deployment failure are prohibited to prevent accidental data loss. To perform a manual rollback in staging or emergency scenarios:
+```bash
+# In local development:
+go run cmd/migrate/main.go down 1
+
+# In Docker / VPS production:
+docker compose exec backend ./siagakita-migrate down 1
+docker compose exec backend ./siagakita-migrate version
+docker compose exec backend ./siagakita-migrate force <version>
 ```
 
-File upload disimpan di VPS: `/opt/siagakita/uploads/reports/` dan diakses via `GET /uploads/*`.

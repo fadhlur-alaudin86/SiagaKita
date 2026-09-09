@@ -22,7 +22,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | 0 | **Branch & Assign** — Create `feature/F-XXX-name` from `dev`. Update issue label to `status: in-progress`, assign to active account (`--add-assignee "@me"`), and add comment to issue. | Git branch |
 | 1 | **Read Mapping** — Inspect Go domain handler, DB schema (`docs/DATABASE_SCHEMA.md`), ERD (`docs/design/database-erd.md`), Activity/State diagrams (`docs/design/activity-diagrams.md`), API endpoints, and Flutter screens. | Discovery notes |
 | 2 | **API Contract** — Extend `docs/api/paths/<domain>.yaml` with new endpoint(s) (OpenAPI 3.0). Add new schemas to `docs/api/components/schemas.yaml` if needed. Verify at `http://localhost:8080/docs`. | Updated domain YAML |
-| 3 | **DB Migration** — Read `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md`, write SQL migration in `backend-go/migrations/`. Update schema docs AND update Mermaid ERD. | SQL migration + updated schema + updated ERD |
+| 3 | **DB Migration** — Read `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md`, write paired SQL migrations (`NNN_name.up.sql` & `NNN_name.down.sql`) in `backend-go/migrations/`. Update schema docs AND update Mermaid ERD. | Paired SQL migrations + updated schema + updated ERD |
 | 4 | **Backend Implementation** — Implement handler, service, repository in `backend-go/internal/domain/<name>/`. If lifecycle states or actor capabilities change, update `docs/design/activity-diagrams.md` or `use-case-diagrams.md`. | Go source files + updated diagrams |
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
 | 6 | **Tests & Hybrid TDD** — Write Go unit tests (`_test.go`) with RED-GREEN cycle for critical logic + Flutter tests. Document test outcomes in feature log. | Test files + test docs |
@@ -42,7 +42,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 
 ### Backend (Go Fiber)
 7. **Read Schema First** — Read `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md` before writing migrations.
-8. **Update Schema & ERD After Migration** — Update `docs/DATABASE_SCHEMA.md` AND `docs/design/database-erd.md` whenever database schema changes. See [postgres-patterns.md](postgres-patterns.md).
+8. **Reversible Migrations & Schema Sync** — Every database change MUST include both `NNN_name.up.sql` and `NNN_name.down.sql` following the Expand & Contract pattern. Update `docs/DATABASE_SCHEMA.md` AND `docs/design/database-erd.md`. See [postgres-patterns.md](postgres-patterns.md).
 9. **YAGNI** — Do not add abstractions until explicitly needed.
 10. **Max 3 Layers** — handler → service → repository. No deeper.
 11. **Raw SQL** — No ORM. Use raw SQL via `pgx` with parameterized queries (`$1, $2`).
@@ -164,7 +164,7 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 |---|----------|:------:|
 | 1 | Feature log (`docs/backlog/features/F-XXX-name.md`) | ⬜ |
 | 2 | API Contract (`docs/api/paths/<domain>.yaml`) | ⬜ |
-| 3 | DB Migration (`backend-go/migrations/NNN_*.sql`) | ⬜ |
+| 3 | DB Migration (`backend-go/migrations/NNN_*.up.sql` & `*.down.sql`) | ⬜ |
 | 4 | Updated `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md` | ⬜ |
 | 5 | Updated `docs/design/activity-diagrams.md` (if workflow/state changed) | ⬜ |
 | 6 | Backend code (`backend-go/internal/domain/<name>/`) | ⬜ |

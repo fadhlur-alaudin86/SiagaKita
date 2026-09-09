@@ -13,6 +13,7 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o siagakita-api ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o siagakita-migrate ./cmd/migrate/main.go
 
 # ==========================================
 # STAGE 2: Runner (Production Image)
@@ -26,6 +27,7 @@ ENV TZ=Asia/Jakarta
 WORKDIR /app
 
 COPY --from=builder /app/siagakita-api .
+COPY --from=builder /app/siagakita-migrate .
 
 EXPOSE 8080
 EXPOSE 8081
