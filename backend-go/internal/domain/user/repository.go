@@ -295,16 +295,16 @@ func (r *Repository) GetProfile(userID string) (*ProfileResponse, error) {
 
 	// Tentukan volunteer_status dari is_verified_volunteer dan volunteer_certifications
 	if profile != nil && profile.IsVerifiedVolunteer {
-		resp.VolunteerStatus = "approved"
+		resp.VolunteerStatus = string(KYCStatusApproved)
 	} else {
 		var pendingCount int64
 		r.db.Model(&VolunteerCertification{}).
-			Where("user_id = ? AND status = 'pending'", userID).
+			Where("user_id = ? AND status = ?", userID, KYCStatusPending).
 			Count(&pendingCount)
 		if pendingCount > 0 {
-			resp.VolunteerStatus = "pending"
+			resp.VolunteerStatus = string(KYCStatusPending)
 		} else {
-			resp.VolunteerStatus = "none"
+			resp.VolunteerStatus = string(KYCStatusNone)
 		}
 	}
 
@@ -360,7 +360,7 @@ func (r *Repository) SubmitKYC(userID, nik, fullName, placeOfBirth, dateOfBirthS
 		"place_of_birth":          placeOfBirth,
 		"kyc_ktp_url":             ktpURL,
 		"profile_photo_url":       photoURL,
-		"nik_verification_status": "pending",
+		"nik_verification_status": KYCStatusPending,
 		"updated_at":              time.Now(),
 	}
 
