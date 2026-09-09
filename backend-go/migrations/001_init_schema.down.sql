@@ -1,4 +1,7 @@
+-- ==========================================================================
 -- Rollback for 001_init_schema.up.sql
+-- Drop tables, functions, and enum types in FK-safe reverse order
+-- ==========================================================================
 
 DROP TABLE IF EXISTS
     public.volunteer_reputation,
@@ -14,6 +17,9 @@ DROP TABLE IF EXISTS
     public.m_badges,
     public.users
 CASCADE;
+
+DROP FUNCTION IF EXISTS public.update_volunteer_verification_status() CASCADE;
+DROP FUNCTION IF EXISTS public.update_medical_timestamp() CASCADE;
 
 DROP TYPE IF EXISTS
     public.user_role,
