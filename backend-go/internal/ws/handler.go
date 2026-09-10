@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -30,7 +31,28 @@ const (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true }, // TODO: restrict in production
+	CheckOrigin: func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		// Allow native mobile, desktop, and non-browser WebSocket clients that do not send an Origin header
+		if origin == "" {
+			return true
+		}
+		// Allow all origins in local/development environment
+		if os.Getenv("GO_ENV") != "production" {
+			return true
+		}
+		// In production, validate against CORS_ALLOWED_ORIGINS
+		corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+		if corsOrigins == "" {
+			corsOrigins = "https://siagakita.com,https://admin.siagakita.com,https://api.siagakita.com"
+		}
+		for _, allowed := range strings.Split(corsOrigins, ",") {
+			if strings.TrimSpace(allowed) == origin {
+				return true
+			}
+		}
+		return false
+	},
 }
 
 // Handler is the WebSocket handler that processes real-time SOS events.

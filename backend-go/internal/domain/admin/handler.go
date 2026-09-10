@@ -358,7 +358,7 @@ func (h *Handler) CreateBadge(c *fiber.Ctx) error {
 			ext := filepath.Ext(fh.Filename)
 			now := time.Now()
 			dir := filepath.Join(h.cfg.UploadDir, "gamification", "badges")
-			_ = os.MkdirAll(dir, 0755)
+			_ = os.MkdirAll(dir, 0750)
 			fileName := fmt.Sprintf("badge_%d%s", now.UnixNano(), ext)
 			dst := filepath.Join(dir, fileName)
 			if err := c.SaveFile(fh, dst); err == nil {
@@ -403,7 +403,7 @@ func (h *Handler) UpdateBadge(c *fiber.Ctx) error {
 			ext := filepath.Ext(fh.Filename)
 			now := time.Now()
 			dir := filepath.Join(h.cfg.UploadDir, "gamification", "badges")
-			_ = os.MkdirAll(dir, 0755)
+			_ = os.MkdirAll(dir, 0750)
 			fileName := fmt.Sprintf("badge_%d%s", now.UnixNano(), ext)
 			dst := filepath.Join(dir, fileName)
 			if err := c.SaveFile(fh, dst); err == nil {

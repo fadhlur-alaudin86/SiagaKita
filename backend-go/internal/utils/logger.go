@@ -28,8 +28,8 @@ func InitLogger(isProd bool) {
 
 	if logPath != "" {
 		// Pastikan folder log ada
-		_ = os.MkdirAll(filepath.Dir(logPath), 0755)
-		file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		_ = os.MkdirAll(filepath.Dir(logPath), 0750)
+		file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err == nil {
 			writers = append(writers, file)
 		}

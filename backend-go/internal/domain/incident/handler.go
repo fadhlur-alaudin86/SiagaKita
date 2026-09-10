@@ -157,7 +157,7 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 					ext = ".jpg"
 				}
 				dir := filepath.Join(uploadDir, "incidents", "evidence", yearMonth, incidentID)
-				_ = os.MkdirAll(dir, 0755)
+				_ = os.MkdirAll(dir, 0750)
 				fileName := fmt.Sprintf("evidence_photo_%d_%d%s", now.UnixNano(), i, ext)
 				dst := filepath.Join(dir, fileName)
 				if saveErr := saveFile(fh, dst); saveErr == nil {
@@ -173,7 +173,7 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 		fh := audios[0]
 		if fh.Size <= 10<<20 {
 			dir := filepath.Join(uploadDir, "incidents", "evidence", yearMonth, incidentID)
-			_ = os.MkdirAll(dir, 0755)
+			_ = os.MkdirAll(dir, 0750)
 			fileName := fmt.Sprintf("evidence_audio_%d.m4a", now.UnixNano())
 			dst := filepath.Join(dir, fileName)
 			if saveErr := saveFile(fh, dst); saveErr == nil {
@@ -353,7 +353,7 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 			}
 			// Use reporterID as temp dir key before report is created
 			dir := filepath.Join(uploadDir, "reports", "photos", yearMonth, reporterID)
-			_ = os.MkdirAll(dir, 0755)
+			_ = os.MkdirAll(dir, 0750)
 			fileName := fmt.Sprintf("photo_%d_%d%s", now.UnixNano(), i, ext)
 			dst := filepath.Join(dir, fileName)
 			if err := saveFile(fh, dst); err == nil {
@@ -367,7 +367,7 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 			fh := audioFiles[0]
 			if fh.Size <= 5<<20 {
 				dir := filepath.Join(uploadDir, "reports", "audio", yearMonth, reporterID)
-				_ = os.MkdirAll(dir, 0755)
+				_ = os.MkdirAll(dir, 0750)
 				fileName := fmt.Sprintf("audio_%d.m4a", now.UnixNano())
 				dst := filepath.Join(dir, fileName)
 				if err := saveFile(fh, dst); err == nil {
@@ -604,6 +604,7 @@ func saveFile(fh *multipart.FileHeader, dst string) error {
 		return err
 	}
 	defer func() { _ = src.Close() }()
+	//nolint:gosec // G304: destination path is constructed via filepath.Join with server-generated filenames
 	out, err := os.Create(dst)
 	if err != nil {
 		return err
@@ -678,7 +679,7 @@ func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
 			now := time.Now()
 			yearMonth := fmt.Sprintf("%d/%02d", now.Year(), now.Month())
 			dir := filepath.Join(h.cfg.UploadDir, "incidents", "volunteer_proofs", yearMonth, incidentID)
-			_ = os.MkdirAll(dir, 0755)
+			_ = os.MkdirAll(dir, 0750)
 			fileName := fmt.Sprintf("proof_%d%s", now.UnixNano(), ext)
 			dst := filepath.Join(dir, fileName)
 
