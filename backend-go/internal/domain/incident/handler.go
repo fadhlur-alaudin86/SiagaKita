@@ -1,6 +1,7 @@
 package incident
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -573,6 +574,25 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 			"incident_id":      incidentID,
 			"volunteer_status": "en_route",
 		})
+		// Notify candidate volunteers that the incident has been claimed
+		if h.rdb != nil && h.hub != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			key := "dispatch:incident:" + incidentID + ":volunteers"
+			volunteers, _ := h.rdb.SMembers(ctx, key).Result()
+			for _, vID := range volunteers {
+				if vID != volunteerID {
+					_ = h.hub.SendToUser(vID, hub.Message{
+						Event: "INCIDENT_ASSIGNMENT_CLAIMED",
+						Payload: map[string]interface{}{
+							"incident_id": incidentID,
+							"claimed_by":  volunteerID,
+						},
+					})
+				}
+			}
+			_ = h.rdb.Del(ctx, key)
+		}
 	}()
 
 	return utils.SuccessResponse(c, result)
@@ -821,3 +841,106 @@ func (h *Handler) UpdateResponseLocation(c *fiber.Ctx) error {
 
 	return utils.SuccessResponse(c, fiber.Map{"updated": true})
 }
+
+// DispatchBroadcast handles POST /api/v1/incidents/:id/dispatch-broadcast [ConsoleOnly]
+// Dispatches incident offers to selected candidate volunteers via WebSocket broadcast.
+func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
+	incidentID := c.Params("id")
+	if incidentID == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "ID insiden wajib diisi")
+	}
+
+	var req struct {
+		VolunteerIDs []string `json:"volunteer_ids"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+	if len(req.VolunteerIDs) == 0 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Daftar volunteer_ids wajib diisi")
+	}
+
+	inc, err := h.svc.repo.FindByID(incidentID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusNotFound, "Insiden tidak ditemukan")
+	}
+	if inc.Status == "resolved" || inc.Status == "canceled" || inc.Status == "false_alarm" {
+		return utils.ErrorResponse(c, fiber.StatusConflict, "Insiden sudah ditangani atau selesai")
+	}
+
+	// Store candidates in Redis Set with 120s TTL
+	if h.rdb != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		key := "dispatch:incident:" + incidentID + ":volunteers"
+		_ = h.rdb.Del(ctx, key)
+		for _, vid := range req.VolunteerIDs {
+			_ = h.rdb.SAdd(ctx, key, vid)
+		}
+		_ = h.rdb.Expire(ctx, key, 120*time.Second)
+	}
+
+	var address string
+	if inc.AddressDetail != nil {
+		address = *inc.AddressDetail
+	}
+
+	if h.hub != nil {
+		offerMsg := hub.Message{
+			Event: "INCIDENT_ASSIGNMENT_OFFER",
+			Payload: map[string]interface{}{
+				"incident_id":     incidentID,
+				"incident_type":   inc.IncidentType,
+				"latitude":        inc.Latitude,
+				"longitude":       inc.Longitude,
+				"address_detail":  address,
+				"reporter_id":     inc.ReporterID,
+				"timeout_seconds": 60,
+				"offered_at":      time.Now().Unix(),
+			},
+		}
+
+		for _, vid := range req.VolunteerIDs {
+			_ = h.hub.SendToUser(vid, offerMsg)
+		}
+
+		// 60-second timeout handler in goroutine
+		go func(targetIDs []string) {
+			time.Sleep(60 * time.Second)
+			if h.rdb == nil {
+				return
+			}
+			checkCtx, checkCancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer checkCancel()
+
+			key := "dispatch:incident:" + incidentID + ":volunteers"
+			exists, _ := h.rdb.Exists(checkCtx, key).Result()
+			if exists > 0 {
+				_ = h.rdb.Del(checkCtx, key)
+				// Broadcast timeout event to console operators
+				h.broadcastEventToAgencies(hub.Message{
+					Event: "INCIDENT_DISPATCH_TIMEOUT",
+					Payload: map[string]interface{}{
+						"incident_id": incidentID,
+					},
+				})
+				// Notify candidate volunteers that offer timed out
+				for _, vid := range targetIDs {
+					_ = h.hub.SendToUser(vid, hub.Message{
+						Event: "INCIDENT_ASSIGNMENT_CLAIMED",
+						Payload: map[string]interface{}{
+							"incident_id": incidentID,
+							"reason":      "timeout",
+						},
+					})
+				}
+			}
+		}(req.VolunteerIDs)
+	}
+
+	return utils.SuccessResponse(c, fiber.Map{
+		"message": "Broadcast penugasan berhasil dikirim",
+		"sent_to": len(req.VolunteerIDs),
+	})
+}
+

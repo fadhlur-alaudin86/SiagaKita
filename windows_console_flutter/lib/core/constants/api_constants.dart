@@ -65,4 +65,14 @@ class ApiConstants {
   static const String adminRanks = '$baseUrl/admin/ranks';
   static String adminRankDetail(String id) => '$baseUrl/admin/ranks/$id';
   static const String adminStats = '$baseUrl/admin/stats';
+
+  // Telemetry & Dispatch
+  static String telemetryNearbyVolunteers(
+    double lat,
+    double lng, {
+    double radiusKm = 15.0,
+  }) =>
+      '$baseUrl/telemetry/nearby-volunteers?lat=$lat&lng=$lng&radius_km=$radiusKm';
+  static String incidentDispatchBroadcast(String id) =>
+      '$baseUrl/incidents/$id/dispatch-broadcast';
 }

@@ -84,6 +84,14 @@ var idToEn = map[string]string{
 	"Status laporan berhasil diperbarui":                                             "Report status updated successfully",
 	"Insiden telah dibatalkan atau sudah selesai":                                    "Incident has been canceled or already resolved",
 	"Insiden sedang ditangani oleh responder lain":                                   "Incident is currently being handled by another responder",
+	"Parameter lat dan lng wajib diisi":                                              "lat and lng parameters are required",
+	"Parameter lat tidak valid":                                                      "Invalid lat parameter",
+	"Parameter lng tidak valid":                                                      "Invalid lng parameter",
+	"Gagal mengambil data relawan terdekat":                                          "Failed to get nearby volunteers",
+	"Daftar volunteer_ids wajib diisi":                                              "volunteer_ids list is required",
+	"Broadcast penugasan berhasil dikirim":                                           "Dispatch broadcast sent successfully",
+	"Gagal mengirim broadcast penugasan":                                             "Failed to send dispatch broadcast",
+	"Insiden sudah ditangani atau selesai":                                           "Incident already handled or completed",
 
 	// ── Admin & Agency ──────────────────────────────────────────────────────────
 	"Admin tidak ditemukan":      "Admin not found",

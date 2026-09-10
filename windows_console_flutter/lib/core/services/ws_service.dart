@@ -20,6 +20,7 @@ enum WsEvent {
   volunteerLocationUpdate,
   sosStatusUpdate,
   incidentUpdated, // INCIDENT_UPDATED — trigger auto-refresh di console
+  incidentDispatchTimeout, // INCIDENT_DISPATCH_TIMEOUT
   forceLogout, // FORCE_LOGOUT — sesi digantikan (tidak relevan untuk console, tapi disiapkan)
   connected,
   unknown,
@@ -41,6 +42,7 @@ class WsMessage {
       'VOLUNTEER_LOCATION_UPDATE' => WsEvent.volunteerLocationUpdate,
       'SOS_STATUS_UPDATE' => WsEvent.sosStatusUpdate,
       'INCIDENT_UPDATED' => WsEvent.incidentUpdated,
+      'INCIDENT_DISPATCH_TIMEOUT' => WsEvent.incidentDispatchTimeout,
       'FORCE_LOGOUT' => WsEvent.forceLogout,
       _ => WsEvent.unknown,
     };
@@ -147,6 +149,7 @@ class WsService extends ChangeNotifier {
         case WsEvent.locationUpdate:
         case WsEvent.volunteerLocationUpdate:
         case WsEvent.sosStatusUpdate:
+        case WsEvent.incidentDispatchTimeout:
         case WsEvent.connected:
         case WsEvent.unknown:
           break;

@@ -49,6 +49,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
   // ─── WebSocket & Vibration ─────────────────────────────────────────────
   MobileWsService? _ws;
   StreamSubscription<MobileWsMessage>? _wsSub;
+  String? _offeredIncidentId;
 
   @override
   void initState() {
@@ -85,6 +86,12 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
       case MobileWsEvent.forceLogout:
         _handleForceLogout();
         break;
+      case MobileWsEvent.incidentAssignmentOffer:
+        _handleAssignmentOffer(msg.payload);
+        break;
+      case MobileWsEvent.incidentAssignmentClaimed:
+        _handleAssignmentClaimed(msg.payload);
+        break;
       case MobileWsEvent.agencyHandling:
       case MobileWsEvent.volunteerHandling:
       case MobileWsEvent.volunteerLocationUpdate:
@@ -109,6 +116,140 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     );
     // Logout dan redirect ke login
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+
+  void _handleAssignmentOffer(Map<String, dynamic> payload) {
+    if (!mounted || _activeMission != null) return;
+    final incidentId = payload['incident_id'] as String?;
+    if (incidentId == null) return;
+
+    _offeredIncidentId = incidentId;
+    final type = (payload['incident_type'] as String? ?? 'unknown')
+        .toUpperCase();
+    final address =
+        payload['address_detail'] as String? ?? 'Lokasi insiden'.tr(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E2537),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFFFF7418), width: 2),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.emergency, color: Color(0xFFFF7418)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Penugasan Darurat dari Operator!'.tr(context),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Operator menugaskan Anda untuk merespons insiden ini secara langsung.'
+                  .tr(context),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF111827),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tipe: $type',
+                    style: const TextStyle(
+                      color: Colors.amber,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    address,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _offeredIncidentId = null;
+            },
+            child: Text(
+              'Tolak'.tr(context),
+              style: const TextStyle(color: Colors.white54),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF7418),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _offeredIncidentId = null;
+              final lat = (payload['latitude'] as num?)?.toDouble() ?? 0.0;
+              final lng = (payload['longitude'] as num?)?.toDouble() ?? 0.0;
+              _acceptSOS(
+                NearbyIncident(
+                  id: incidentId,
+                  incidentType:
+                      payload['incident_type'] as String? ?? 'unknown',
+                  status: 'broadcasting',
+                  latitude: lat,
+                  longitude: lng,
+                  addressDetail: address,
+                  createdAt: DateTime.now().toIso8601String(),
+                  distanceKm: 0.0,
+                ),
+              );
+            },
+            child: Text('Terima Misi'.tr(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleAssignmentClaimed(Map<String, dynamic> payload) {
+    if (!mounted) return;
+    final incidentId = payload['incident_id'] as String?;
+    if (_offeredIncidentId != null && _offeredIncidentId == incidentId) {
+      Navigator.of(context, rootNavigator: true).maybePop();
+      _offeredIncidentId = null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Penugasan telah diambil oleh relawan lain atau waktu habis.'.tr(
+              context,
+            ),
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
   @override

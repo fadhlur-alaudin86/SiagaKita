@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../core/services/ws_service.dart';
 import 'pages/dashboard_operasi_page.dart';
-
+import 'pages/dispatch_relawan_page.dart';
 import 'pages/laporan_masuk_page.dart';
 import 'pages/peta_operasional_page.dart';
 import 'pages/sos_aktif_page.dart';
@@ -19,6 +19,7 @@ import 'dart:async';
 enum InstansiMenu {
   dashboard,
   sosAktif,
+  dispatchRelawan,
   laporanMasuk,
   petaOperasional,
   riwayat,
@@ -41,6 +42,7 @@ class _InstansiShellState extends State<InstansiShell> {
   static const Map<InstansiMenu, String> _titles = {
     InstansiMenu.dashboard: 'Dashboard Operasi',
     InstansiMenu.sosAktif: 'SOS Aktif',
+    InstansiMenu.dispatchRelawan: 'Dispatch Relawan',
     InstansiMenu.laporanMasuk: 'Laporan Masuk',
     InstansiMenu.petaOperasional: 'Peta Operasional',
     InstansiMenu.riwayat: 'Riwayat',
@@ -201,6 +203,8 @@ class _InstansiShellState extends State<InstansiShell> {
           readIds: _readSosIds,
           onSosViewed: _onSosViewed,
         );
+      case InstansiMenu.dispatchRelawan:
+        return DispatchRelawanPage(token: widget.token, ws: widget.ws);
       case InstansiMenu.laporanMasuk:
         return LaporanMasukPage(
           token: widget.token,
@@ -321,6 +325,12 @@ class _SideNavigation extends StatelessWidget {
                 selected: activeMenu == InstansiMenu.sosAktif,
                 badgeCount: unreadSosCount,
                 onTap: () => onSelected(InstansiMenu.sosAktif),
+              ),
+              _NavItem(
+                label: 'Dispatch Relawan'.tr(context),
+                icon: Icons.radar_outlined,
+                selected: activeMenu == InstansiMenu.dispatchRelawan,
+                onTap: () => onSelected(InstansiMenu.dispatchRelawan),
               ),
               _NavItem(
                 label: 'Laporan Aktif'.tr(context),

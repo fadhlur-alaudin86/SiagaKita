@@ -234,6 +234,40 @@ class IncidentApiService {
     return resp.statusCode == 200;
   }
 
+  // ─── Dispatch & Telemetry ──────────────────────────────────────────────────
+
+  static Future<List<Map<String, dynamic>>> getNearbyVolunteers(
+    String token,
+    double lat,
+    double lng, {
+    double radiusKm = 15.0,
+  }) async {
+    final resp = await _authedGet(
+      Uri.parse(
+        ApiConstants.telemetryNearbyVolunteers(lat, lng, radiusKm: radiusKm),
+      ),
+      token,
+    );
+    if (resp.statusCode != 200) return [];
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final data = body['data'] as List<dynamic>? ?? [];
+    return data.cast<Map<String, dynamic>>();
+  }
+
+  static Future<bool> dispatchBroadcast(
+    String token,
+    String incidentId,
+    List<String> volunteerIds,
+  ) async {
+    final resp = await _authedPost(
+      Uri.parse(ApiConstants.incidentDispatchBroadcast(incidentId)),
+      token,
+      withIdempotency: true,
+      body: jsonEncode({'volunteer_ids': volunteerIds}),
+    );
+    return resp.statusCode == 200;
+  }
+
   // ─── Reports (Jalur B) ────────────────────────────────────────────────────
 
   static Future<List<ReportModel>> getReports(
