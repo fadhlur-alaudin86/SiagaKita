@@ -72,8 +72,9 @@ jobs:
         uses: golang/govulncheck-action@v1
         with:
           go-version-file: backend-go/go.mod
-          package-path: ./...
-          working-directory: backend-go
+          go-package: ./...
+          work-dir: backend-go
+          repo-checkout: false
 
       - name: Build
         run: go build ./...
