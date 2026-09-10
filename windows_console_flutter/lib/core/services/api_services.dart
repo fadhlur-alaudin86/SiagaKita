@@ -292,33 +292,67 @@ class AdminApiService {
     }
   }
 
-  static Future<bool> approveVolunteer(String token, String id) async {
-    final resp = await _authedPost(
-      Uri.parse(ApiConstants.adminVolunteerApprove(id)),
-      token,
-      withIdempotency: true,
-    );
-    return resp.statusCode == 200;
+  static Future<({bool ok, String? message})> approveVolunteer(
+    String token,
+    String id,
+  ) async {
+    try {
+      final resp = await _authedPost(
+        Uri.parse(ApiConstants.adminVolunteerApprove(id)),
+        token,
+        withIdempotency: true,
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (ok: resp.statusCode == 200, message: msg?.toString());
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
   }
 
-  static Future<bool> rejectVolunteer(
+  static Future<({bool ok, String? message})> rejectVolunteer(
     String token,
     String id,
     String reason,
   ) async {
-    final resp = await _authedPost(
-      Uri.parse(ApiConstants.adminVolunteerReject(id)),
-      token,
-      withIdempotency: true,
-      body: jsonEncode({'reason': reason}),
-    );
-    return resp.statusCode == 200;
+    try {
+      final resp = await _authedPost(
+        Uri.parse(ApiConstants.adminVolunteerReject(id)),
+        token,
+        withIdempotency: true,
+        body: jsonEncode({'reason': reason}),
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (ok: resp.statusCode == 200, message: msg?.toString());
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
   }
 
   // ─── User Management ──────────────────────────────────────────────────────
 
-  static Future<List<UserModel>> getUsers(String token) async {
-    final resp = await _authedGet(Uri.parse(ApiConstants.adminUsers), token);
+  static Future<List<UserModel>> getUsers(
+    String token, {
+    String? role,
+    bool? banned,
+    bool? highStrike,
+    String? search,
+  }) async {
+    final queryParams = <String, String>{};
+    if (role != null && role.isNotEmpty) queryParams['role'] = role;
+    if (banned != null) queryParams['banned'] = banned.toString();
+    if (highStrike != null) queryParams['high_strike'] = highStrike.toString();
+    if (search != null && search.isNotEmpty) queryParams['search'] = search;
+
+    final uri = Uri.parse(
+      ApiConstants.adminUsers,
+    ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+    final resp = await _authedGet(uri, token);
     if (resp.statusCode != 200) return [];
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final data = body['data'] as List<dynamic>? ?? [];
@@ -368,34 +402,64 @@ class AdminApiService {
     return resp.statusCode == 200;
   }
 
-  static Future<bool> banUser(
+  static Future<({bool ok, String? message})> banUser(
     String token,
     String id,
     String reason,
     int days,
   ) async {
-    final resp = await _authedPost(
-      Uri.parse(ApiConstants.adminUserBan(id)),
-      token,
-      body: jsonEncode({'reason': reason, 'days': days}),
-    );
-    return resp.statusCode == 200;
+    try {
+      final resp = await _authedPost(
+        Uri.parse(ApiConstants.adminUserBan(id)),
+        token,
+        body: jsonEncode({'reason': reason, 'days': days}),
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (ok: resp.statusCode == 200, message: msg?.toString());
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
   }
 
-  static Future<bool> unbanUser(String token, String id) async {
-    final resp = await _authedPost(
-      Uri.parse(ApiConstants.adminUserUnban(id)),
-      token,
-    );
-    return resp.statusCode == 200;
+  static Future<({bool ok, String? message})> unbanUser(
+    String token,
+    String id,
+  ) async {
+    try {
+      final resp = await _authedPost(
+        Uri.parse(ApiConstants.adminUserUnban(id)),
+        token,
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (ok: resp.statusCode == 200, message: msg?.toString());
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
   }
 
-  static Future<bool> resetStrike(String token, String id) async {
-    final resp = await _authedDelete(
-      Uri.parse(ApiConstants.adminUserResetStrike(id)),
-      token,
-    );
-    return resp.statusCode == 200;
+  static Future<({bool ok, String? message})> resetStrike(
+    String token,
+    String id,
+  ) async {
+    try {
+      final resp = await _authedDelete(
+        Uri.parse(ApiConstants.adminUserResetStrike(id)),
+        token,
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (ok: resp.statusCode == 200, message: msg?.toString());
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
   }
 
   // ─── Agencies & Admins ────────────────────────────────────────────────────
@@ -432,30 +496,66 @@ class AdminApiService {
         .toList();
   }
 
-  static Future<bool> createRank(String token, RankModel rank) async {
-    final resp = await _authedPost(
-      Uri.parse(ApiConstants.adminRanks),
-      token,
-      body: jsonEncode(rank.toJson()),
-    );
-    return resp.statusCode == 200 || resp.statusCode == 201;
+  static Future<({bool ok, String? message})> createRank(
+    String token,
+    RankModel rank,
+  ) async {
+    try {
+      final resp = await _authedPost(
+        Uri.parse(ApiConstants.adminRanks),
+        token,
+        body: jsonEncode(rank.toJson()),
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (
+        ok: resp.statusCode == 200 || resp.statusCode == 201,
+        message: msg?.toString(),
+      );
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
   }
 
-  static Future<bool> updateRank(String token, RankModel rank) async {
-    final resp = await _authedPut(
-      Uri.parse(ApiConstants.adminRankDetail(rank.id)),
-      token,
-      body: jsonEncode(rank.toJson()),
-    );
-    return resp.statusCode == 200;
+  static Future<({bool ok, String? message})> updateRank(
+    String token,
+    RankModel rank,
+  ) async {
+    try {
+      final resp = await _authedPut(
+        Uri.parse(ApiConstants.adminRankDetail(rank.id)),
+        token,
+        body: jsonEncode(rank.toJson()),
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (ok: resp.statusCode == 200, message: msg?.toString());
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
   }
 
-  static Future<bool> deleteRank(String token, String id) async {
-    final resp = await _authedDelete(
-      Uri.parse(ApiConstants.adminRankDetail(id)),
-      token,
-    );
-    return resp.statusCode == 200;
+  static Future<({bool ok, String? message})> deleteRank(
+    String token,
+    String id,
+  ) async {
+    try {
+      final resp = await _authedDelete(
+        Uri.parse(ApiConstants.adminRankDetail(id)),
+        token,
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (ok: resp.statusCode == 200, message: msg?.toString());
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
   }
 
   // ─── Badges (Gamifikasi) ──────────────────────────────────────────────────
@@ -538,17 +638,23 @@ class AdminApiService {
 
   // ─── Stats ────────────────────────────────────────────────────────────────
 
-  static Future<StatsModel> getStats(
+  static Future<StatsModel?> getStats(
     String token, {
     String period = 'month',
   }) async {
-    final uri = Uri.parse(
-      ApiConstants.adminStats,
-    ).replace(queryParameters: {'period': period});
-    final resp = await _authedGet(uri, token);
-    if (resp.statusCode != 200) return StatsModel.empty();
-    final body = jsonDecode(resp.body) as Map<String, dynamic>;
-    return StatsModel.fromJson(body['data'] as Map<String, dynamic>);
+    try {
+      final uri = Uri.parse(
+        ApiConstants.adminStats,
+      ).replace(queryParameters: {'period': period});
+      final resp = await _authedGet(uri, token);
+      if (resp.statusCode != 200) return null;
+      final body = jsonDecode(resp.body) as Map<String, dynamic>;
+      final data = body['data'] as Map<String, dynamic>?;
+      if (data == null) return null;
+      return StatsModel.fromJson(data);
+    } catch (_) {
+      return null;
+    }
   }
 }
 

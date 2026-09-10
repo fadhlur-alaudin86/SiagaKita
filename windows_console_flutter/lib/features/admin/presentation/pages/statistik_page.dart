@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_localization.dart';
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
 
@@ -15,6 +16,8 @@ class StatistikPage extends StatefulWidget {
 class _StatistikPageState extends State<StatistikPage> {
   StatsModel _stats = StatsModel.empty();
   bool _loading = true;
+  bool _isRefreshing = false;
+  bool _hasError = false;
   String _selectedPeriod = 'month'; // week | month | year
 
   // ─── Warna pie chart FIXED per tipe — konsisten di semua period ──────────
@@ -56,16 +59,34 @@ class _StatistikPageState extends State<StatistikPage> {
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _load({bool isRefresh = false}) async {
+    if (isRefresh) {
+      setState(() {
+        _isRefreshing = true;
+        _hasError = false;
+      });
+    } else {
+      setState(() {
+        _loading = true;
+        _hasError = false;
+      });
+    }
+
     final data = await AdminApiService.getStats(
       widget.token,
       period: _selectedPeriod,
     );
+
     if (mounted) {
       setState(() {
-        _stats = data;
+        if (data != null) {
+          _stats = data;
+          _hasError = false;
+        } else {
+          _hasError = true;
+        }
         _loading = false;
+        _isRefreshing = false;
       });
     }
   }
@@ -74,7 +95,9 @@ class _StatistikPageState extends State<StatistikPage> {
   Widget _buildPeriodDropdown() {
     final colors = Theme.of(context).colorScheme;
     const boxWidth = 140.0;
-    final currentLabel = _periodLabels[_selectedPeriod] ?? '1 Bulan';
+    final currentLabel = (_periodLabels[_selectedPeriod] ?? '1 Bulan').tr(
+      context,
+    );
 
     return PopupMenuButton<String>(
       initialValue: _selectedPeriod,
@@ -88,14 +111,14 @@ class _StatistikPageState extends State<StatistikPage> {
       onSelected: (v) {
         if (v != _selectedPeriod) {
           setState(() => _selectedPeriod = v);
-          _load();
+          _load(isRefresh: true);
         }
       },
       itemBuilder: (ctx) => _periodLabels.entries.map((e) {
         return PopupMenuItem<String>(
           value: e.key,
           child: Text(
-            e.value,
+            e.value.tr(context),
             style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
         );
@@ -127,6 +150,37 @@ class _StatistikPageState extends State<StatistikPage> {
     final textTheme = Theme.of(context).textTheme;
     if (_loading) return const Center(child: CircularProgressIndicator());
 
+    if (_hasError) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+            const SizedBox(height: 16),
+            Text(
+              'Gagal memuat statistik. Silakan coba lagi.'.tr(context),
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF7418),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text('Coba Lagi'.tr(context)),
+              onPressed: () => _load(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final pieTotal = _stats.byType.values.fold(0, (s, v) => s + v);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(right: 16, bottom: 16),
       child: Column(
@@ -136,11 +190,24 @@ class _StatistikPageState extends State<StatistikPage> {
           Row(
             children: [
               Text(
-                'Statistik ${_periodLabels[_selectedPeriod] ?? ''} Terakhir',
+                '${"Statistik Terakhir".tr(context)} (${(_periodLabels[_selectedPeriod] ?? '').tr(context)})',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              if (_isRefreshing) ...[
+                const SizedBox(width: 12),
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFFFF7418),
+                    ),
+                  ),
+                ),
+              ],
               const Spacer(),
               _buildPeriodDropdown(),
             ],
@@ -154,7 +221,7 @@ class _StatistikPageState extends State<StatistikPage> {
               children: [
                 Expanded(
                   child: _KpiCard(
-                    label: 'TOTAL SOS',
+                    label: 'TOTAL SOS'.tr(context),
                     value: '${_stats.totalSOS}',
                     icon: Icons.sensors,
                     color: Colors.redAccent,
@@ -164,7 +231,7 @@ class _StatistikPageState extends State<StatistikPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _KpiCard(
-                    label: 'SELESAI',
+                    label: 'SELESAI'.tr(context),
                     value: '${_stats.totalResolved}',
                     icon: Icons.check_circle_rounded,
                     color: Colors.greenAccent,
@@ -174,9 +241,9 @@ class _StatistikPageState extends State<StatistikPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _KpiCard(
-                    label: 'RATA-RATA',
+                    label: 'RATA-RATA'.tr(context),
                     value:
-                        '${_stats.avgResponseMinutes.toStringAsFixed(1)} mnt',
+                        '${_stats.avgResponseMinutes.toStringAsFixed(1)} ${"mnt".tr(context)}',
                     icon: Icons.timer_outlined,
                     color: Colors.blueAccent,
                     textTheme: textTheme,
@@ -185,7 +252,7 @@ class _StatistikPageState extends State<StatistikPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _KpiCard(
-                    label: 'ALARM PALSU',
+                    label: 'ALARM PALSU'.tr(context),
                     value: '${_stats.falseAlarmRate.toStringAsFixed(1)}%',
                     icon: Icons.warning_amber_rounded,
                     color: Colors.orangeAccent,
@@ -195,7 +262,7 @@ class _StatistikPageState extends State<StatistikPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _KpiCard(
-                    label: 'RELAWAN',
+                    label: 'RELAWAN'.tr(context),
                     value: '${_stats.activeVolunteers}',
                     icon: Icons.people_outline,
                     color: Colors.purpleAccent,
@@ -233,7 +300,7 @@ class _StatistikPageState extends State<StatistikPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Tren SOS (${_periodLabels[_selectedPeriod] ?? ''})',
+                              '${"Tren SOS".tr(context)} (${(_periodLabels[_selectedPeriod] ?? '').tr(context)})',
                               style: textTheme.titleMedium,
                             ),
                           ],
@@ -244,7 +311,7 @@ class _StatistikPageState extends State<StatistikPage> {
                           child: _stats.monthly.isEmpty
                               ? Center(
                                   child: Text(
-                                    'Belum ada data statistik',
+                                    'Belum ada data statistik'.tr(context),
                                     style: textTheme.bodySmall,
                                   ),
                                 )
@@ -280,18 +347,18 @@ class _StatistikPageState extends State<StatistikPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Distribusi Tipe Insiden',
+                              'Distribusi Tipe Insiden'.tr(context),
                               style: textTheme.titleMedium,
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
-                        _stats.byType.isEmpty
+                        _stats.byType.isEmpty || pieTotal == 0
                             ? SizedBox(
                                 height: 280,
                                 child: Center(
                                   child: Text(
-                                    'Belum ada data statistik',
+                                    'Belum ada data statistik'.tr(context),
                                     style: textTheme.bodySmall,
                                   ),
                                 ),
@@ -312,14 +379,14 @@ class _StatistikPageState extends State<StatistikPage> {
                                   curve: Curves.easeInOutCubic,
                                 ),
                               ),
-                        // ── Spacing antara pie chart dan legend ──────────
-                        const SizedBox(height: 32),
-                        // Legend
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 10,
-                          children: _buildLegend(),
-                        ),
+                        if (_stats.byType.isNotEmpty && pieTotal > 0) ...[
+                          const SizedBox(height: 32),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 10,
+                            children: _buildLegend(),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -521,7 +588,7 @@ class _StatistikPageState extends State<StatistikPage> {
     final entries = _stats.byType.entries.toList();
     return entries.map((e) {
       final color = _typeColorMap[e.key] ?? _fallbackColor;
-      final label = _typeLabels[e.key] ?? e.key;
+      final labelKey = _typeLabels[e.key] ?? e.key;
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -535,7 +602,7 @@ class _StatistikPageState extends State<StatistikPage> {
           ),
           const SizedBox(width: 6),
           Text(
-            label,
+            labelKey.tr(context),
             style: const TextStyle(fontSize: 12, color: Colors.white70),
           ),
         ],

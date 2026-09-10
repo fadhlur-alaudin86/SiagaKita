@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart' as fp;
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
+import '../../../../core/localization/app_localization.dart';
 
 class GamifikasiPage extends StatelessWidget {
   final String token;
@@ -15,22 +16,22 @@ class GamifikasiPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Master Data Gamifikasi',
-            style: TextStyle(
+          Text(
+            'Master Data Gamifikasi'.tr(context),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
-          const TabBar(
-            indicatorColor: Color(0xFFFF7418),
-            labelColor: Color(0xFFFF7418),
+          TabBar(
+            indicatorColor: const Color(0xFFFF7418),
+            labelColor: const Color(0xFFFF7418),
             unselectedLabelColor: Colors.white54,
             tabs: [
-              Tab(text: 'Rank (XP Otomatis)'),
-              Tab(text: 'Badges (Pemberian Manual)'),
+              Tab(text: 'Rank (XP Otomatis)'.tr(context)),
+              Tab(text: 'Badges (Pemberian Manual)'.tr(context)),
             ],
           ),
           const SizedBox(height: 16),
@@ -80,117 +81,222 @@ class _RankTabState extends State<_RankTab> {
   }
 
   Future<void> _showForm({RankModel? existing}) async {
+    final isBaseRank = existing != null && existing.minExp == 0;
     final nameCtrl = TextEditingController(text: existing?.rankName ?? '');
     final xpCtrl = TextEditingController(
       text: existing?.minExp.toString() ?? '0',
     );
     final iconCtrl = TextEditingController(text: existing?.iconUrl ?? '');
+    String? errorMessage;
 
-    final saved = await showDialog<bool>(
+    await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E2537),
-        title: Text(
-          existing == null ? 'Tambah Rank Baru' : 'Edit Rank',
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: SizedBox(
-          width: 380,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _FormField(
-                controller: nameCtrl,
-                label: 'Nama Rank',
-                hint: 'Contoh: Relawan Ahli',
-              ),
-              const SizedBox(height: 12),
-              _FormField(
-                controller: xpCtrl,
-                label: 'Minimum XP',
-                hint: '1000',
-                numeric: true,
-              ),
-              const SizedBox(height: 12),
-              _FormField(
-                controller: iconCtrl,
-                label: 'Icon URL / Emoji',
-                hint: '🏅 atau URL gambar',
-              ),
-            ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E2537),
+          title: Text(
+            (existing == null ? 'Tambah Rank Baru' : 'Edit Rank').tr(context),
+            style: const TextStyle(color: Colors.white),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF7418),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (errorMessage != null) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Text(
+                      errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+                _FormField(
+                  controller: nameCtrl,
+                  label: 'Nama Rank'.tr(context),
+                  hint: 'Contoh: Relawan Ahli',
+                ),
+                const SizedBox(height: 12),
+                _FormField(
+                  controller: xpCtrl,
+                  label: 'Minimum XP'.tr(context),
+                  hint: '1000',
+                  numeric: true,
+                  enabled: !isBaseRank,
+                  helperText: isBaseRank
+                      ? 'Rank dasar memiliki batas minimum 0 XP dan tidak dapat diubah.'
+                            .tr(context)
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                _FormField(
+                  controller: iconCtrl,
+                  label: 'Icon URL / Emoji'.tr(context),
+                  hint: '🏅 atau URL gambar',
+                ),
+              ],
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(existing == null ? 'Tambah' : 'Simpan'),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text(
+                'Batal'.tr(context),
+                style: const TextStyle(color: Colors.white54),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF7418),
+              ),
+              onPressed: () async {
+                final name = nameCtrl.text.trim();
+                final xpParsed = int.tryParse(xpCtrl.text.trim());
+
+                if (name.isEmpty) {
+                  setDialogState(() {
+                    errorMessage = 'Nama rank wajib diisi'.tr(context);
+                  });
+                  return;
+                }
+                if (xpParsed == null) {
+                  setDialogState(() {
+                    errorMessage = 'Minimum XP harus berupa angka'.tr(context);
+                  });
+                  return;
+                }
+                if (existing == null && xpParsed <= 0) {
+                  setDialogState(() {
+                    errorMessage =
+                        'Minimum XP untuk rank baru harus lebih besar dari 0'
+                            .tr(context);
+                  });
+                  return;
+                }
+
+                final minExp = isBaseRank ? 0 : xpParsed;
+                final rank = RankModel(
+                  id: existing?.id ?? '',
+                  rankName: name,
+                  minExp: minExp,
+                  iconUrl: iconCtrl.text.trim().isEmpty
+                      ? '🏅'
+                      : iconCtrl.text.trim(),
+                );
+
+                Navigator.pop(dialogCtx);
+
+                final result = existing == null
+                    ? await AdminApiService.createRank(widget.token, rank)
+                    : await AdminApiService.updateRank(widget.token, rank);
+
+                if (mounted) {
+                  if (result.ok) {
+                    _load();
+                    _showSnack(
+                      result.message ??
+                          (existing == null
+                              ? 'Rank berhasil ditambahkan'.tr(context)
+                              : 'Rank berhasil diupdate'.tr(context)),
+                      Colors.green,
+                    );
+                  } else {
+                    _showSnack(
+                      result.message ??
+                          (existing == null
+                              ? 'Gagal menambah rank'.tr(context)
+                              : 'Gagal memperbarui rank'.tr(context)),
+                      Colors.red,
+                    );
+                  }
+                }
+              },
+              child: Text((existing == null ? 'Tambah' : 'Simpan').tr(context)),
+            ),
+          ],
+        ),
       ),
     );
-
-    if (saved != true) return;
-
-    final rank = RankModel(
-      id: existing?.id ?? '',
-      rankName: nameCtrl.text,
-      minExp: int.tryParse(xpCtrl.text) ?? 0,
-      iconUrl: iconCtrl.text,
-    );
-
-    bool ok;
-    if (existing == null) {
-      ok = await AdminApiService.createRank(widget.token, rank);
-    } else {
-      ok = await AdminApiService.updateRank(widget.token, rank);
-    }
-
-    if (ok && mounted) {
-      _load();
-      _showSnack(
-        existing == null
-            ? 'Rank berhasil ditambahkan'
-            : 'Rank berhasil diupdate',
-        Colors.green,
-      );
-    }
   }
 
   Future<void> _delete(RankModel rank) async {
+    if (rank.minExp == 0) {
+      _showSnack(
+        'Rank dasar (min_exp = 0) tidak dapat dihapus.'.tr(context),
+        Colors.red,
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
-        title: const Text('Hapus Rank?', style: TextStyle(color: Colors.white)),
-        content: Text(
-          'Hapus rank "${rank.rankName}"? Tindakan ini tidak bisa dibatalkan.',
-          style: const TextStyle(color: Colors.white70),
+        title: Text(
+          'Hapus Rank?'.tr(context),
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${"Hapus rank".tr(context)} "${rank.rankName}"? ${"Tindakan ini tidak bisa dibatalkan.".tr(context)}',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Relawan yang berada di rank ini akan otomatis di-downgrade ke rank di bawahnya.'
+                  .tr(context),
+              style: const TextStyle(color: Colors.amber, fontSize: 13),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Hapus'),
+            child: Text('Hapus'.tr(context)),
           ),
         ],
       ),
     );
     if (confirmed != true) return;
-    final ok = await AdminApiService.deleteRank(widget.token, rank.id);
-    if (ok && mounted) {
-      _load();
-      _showSnack('Rank dihapus.', Colors.orange);
+    final result = await AdminApiService.deleteRank(widget.token, rank.id);
+    if (mounted) {
+      if (result.ok) {
+        _load();
+        _showSnack(
+          result.message ?? 'Rank dihapus.'.tr(context),
+          Colors.orange,
+        );
+      } else {
+        _showSnack(
+          result.message ?? 'Gagal menghapus rank'.tr(context),
+          Colors.red,
+        );
+      }
     }
   }
 
@@ -205,10 +311,11 @@ class _RankTabState extends State<_RankTab> {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Relawan akan naik rank secara otomatis saat XP mereka mencapai batas minimum.',
-                style: TextStyle(color: Colors.white38, fontSize: 13),
+                'Relawan akan naik rank secara otomatis saat XP mereka mencapai batas minimum.'
+                    .tr(context),
+                style: const TextStyle(color: Colors.white38, fontSize: 13),
               ),
             ),
             ElevatedButton.icon(
@@ -220,7 +327,7 @@ class _RankTabState extends State<_RankTab> {
                 ),
               ),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Tambah Rank'),
+              label: Text('Tambah Rank'.tr(context)),
               onPressed: () => _showForm(),
             ),
           ],
@@ -240,9 +347,14 @@ class _RankTabState extends State<_RankTab> {
                         color: Colors.white38,
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Belum ada data rank. Silakan tambah rank baru.',
-                        style: TextStyle(color: Colors.white54, fontSize: 14),
+                      Text(
+                        'Belum ada data rank. Silakan tambah rank baru.'.tr(
+                          context,
+                        ),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -273,6 +385,33 @@ class _RankTabState extends State<_RankTab> {
                                   r.iconUrl.length <= 4 ? r.iconUrl : '🏅',
                                   style: const TextStyle(fontSize: 28),
                                 ),
+                                if (r.minExp == 0) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF1E88E5,
+                                      ).withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: const Color(0xFF1E88E5),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'BASE',
+                                      style: TextStyle(
+                                        color: Color(0xFF1E88E5),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                                 const Spacer(),
                                 IconButton(
                                   icon: const Icon(
@@ -281,16 +420,23 @@ class _RankTabState extends State<_RankTab> {
                                     size: 18,
                                   ),
                                   onPressed: () => _showForm(existing: r),
-                                  tooltip: 'Edit',
+                                  tooltip: 'Edit'.tr(context),
                                 ),
                                 IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.delete_outline,
-                                    color: Colors.red,
+                                    color: r.minExp == 0
+                                        ? Colors.white24
+                                        : Colors.red,
                                     size: 18,
                                   ),
-                                  onPressed: () => _delete(r),
-                                  tooltip: 'Hapus',
+                                  onPressed: r.minExp == 0
+                                      ? null
+                                      : () => _delete(r),
+                                  tooltip: r.minExp == 0
+                                      ? 'Rank dasar (min_exp = 0) tidak dapat dihapus.'
+                                            .tr(context)
+                                      : 'Hapus'.tr(context),
                                 ),
                               ],
                             ),
@@ -734,22 +880,33 @@ class _FormField extends StatelessWidget {
     required this.label,
     required this.hint,
     this.numeric = false,
+    this.enabled = true,
+    this.helperText,
   });
   final TextEditingController controller;
   final String label;
   final String hint;
   final bool numeric;
+  final bool enabled;
+  final String? helperText;
 
   @override
   Widget build(BuildContext context) => TextField(
     controller: controller,
+    enabled: enabled,
     keyboardType: numeric ? TextInputType.number : TextInputType.text,
-    style: const TextStyle(color: Colors.white),
+    style: TextStyle(color: enabled ? Colors.white : Colors.white38),
     decoration: InputDecoration(
       labelText: label,
       hintText: hint,
+      helperText: helperText,
+      helperStyle: const TextStyle(color: Colors.amber, fontSize: 12),
+      helperMaxLines: 2,
       labelStyle: const TextStyle(color: Colors.white54),
       hintStyle: const TextStyle(color: Colors.white24),
+      disabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.white12),
+      ),
       enabledBorder: const OutlineInputBorder(
         borderSide: BorderSide(color: Colors.white12),
       ),

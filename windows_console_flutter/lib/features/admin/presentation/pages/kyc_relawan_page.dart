@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
@@ -59,39 +60,135 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Gagal memuat data: ${e.toString()}';
+          _error = '${'Gagal memuat data'.tr(context)}: ${e.toString()}';
         });
+      }
+    }
+  }
+
+  Future<void> _launchExternalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        _showSnack('Gagal membuka tautan dokumen'.tr(context), Colors.red);
       }
     }
   }
 
   Future<void> _approve() async {
     if (_selected == null) return;
-    final ok = await AdminApiService.approveVolunteer(
+    final volunteer = _selected!;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E2537),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.verified_user, color: Color(0xFF2EAF60)),
+            const SizedBox(width: 8),
+            Text(
+              'Konfirmasi Persetujuan'.tr(context),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Apakah Anda yakin ingin menyetujui relawan ini?'.tr(context),
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Column(
+                children: [
+                  _DetailRow(
+                    label: 'Nama Lengkap'.tr(context),
+                    value: volunteer.fullName,
+                  ),
+                  const SizedBox(height: 8),
+                  _DetailRow(
+                    label: 'NIK'.tr(context),
+                    value: volunteer.nik ?? '-',
+                  ),
+                  const SizedBox(height: 8),
+                  _DetailRow(
+                    label: 'Jumlah Sertifikat'.tr(context),
+                    value: '${volunteer.certs.length}',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.white54),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2EAF60),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Setujui'.tr(context)),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    if (confirmed != true) return;
+
+    final result = await AdminApiService.approveVolunteer(
       widget.token,
-      _selected!.id,
+      volunteer.id,
     );
     if (!mounted) return;
-    if (ok) {
-      _showSnack(
-        '✅ ${_selected!.fullName} disetujui sebagai relawan.',
-        Colors.green,
-      );
-      setState(() => _selected = null);
-      _load();
+    if (result.ok) {
+      final msg =
+          result.message ?? 'Pendaftaran berhasil disetujui'.tr(context);
+      _showSnack('✅ $msg', Colors.green);
+      setState(() {
+        _volunteers.removeWhere((v) => v.id == volunteer.id);
+        _selected = null;
+      });
+      _load(silent: true);
     } else {
-      _showSnack('Gagal menyetujui. Coba lagi.', Colors.red);
+      final errorMsg =
+          result.message ?? 'Gagal menyetujui. Coba lagi.'.tr(context);
+      _showSnack('❌ $errorMsg', Colors.red);
     }
   }
 
   Future<void> _reject() async {
     if (_selected == null) return;
+    final volunteer = _selected!;
     _rejectCtrl.clear();
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Tolak Pendaftaran'.tr(context),
           style: const TextStyle(color: Colors.white),
@@ -101,7 +198,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Alasan penolakan untuk ${_selected!.fullName}:',
+              '${'Alasan penolakan untuk'.tr(context)} ${volunteer.fullName}:',
               style: const TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: 12),
@@ -139,20 +236,32 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
       ),
     );
 
-    if (confirmed != true || _rejectCtrl.text.isEmpty) return;
-    final ok = await AdminApiService.rejectVolunteer(
+    if (!mounted) return;
+    if (confirmed != true) return;
+    final reason = _rejectCtrl.text.trim();
+    if (reason.isEmpty) {
+      _showSnack('Alasan penolakan wajib diisi'.tr(context), Colors.orange);
+      return;
+    }
+
+    final result = await AdminApiService.rejectVolunteer(
       widget.token,
-      _selected!.id,
-      _rejectCtrl.text,
+      volunteer.id,
+      reason,
     );
     if (!mounted) return;
-    if (ok) {
-      _showSnack(
-        '❌ Pendaftaran ${_selected!.fullName} ditolak.',
-        Colors.orange,
-      );
-      setState(() => _selected = null);
-      _load();
+    if (result.ok) {
+      final msg = result.message ?? 'Pendaftaran relawan ditolak'.tr(context);
+      _showSnack('❌ $msg', Colors.orange);
+      setState(() {
+        _volunteers.removeWhere((v) => v.id == volunteer.id);
+        _selected = null;
+      });
+      _load(silent: true);
+    } else {
+      final errorMsg =
+          result.message ?? 'Gagal menolak. Coba lagi.'.tr(context);
+      _showSnack('❌ $errorMsg', Colors.red);
     }
   }
 
@@ -187,9 +296,9 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                         size: 18,
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Antrian KYC',
-                        style: TextStyle(
+                      Text(
+                        'Antrian KYC'.tr(context),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -244,9 +353,11 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                                 const SizedBox(height: 12),
                                 TextButton(
                                   onPressed: _load,
-                                  child: const Text(
-                                    'Coba Lagi',
-                                    style: TextStyle(color: Colors.orange),
+                                  child: Text(
+                                    'Coba Lagi'.tr(context),
+                                    style: const TextStyle(
+                                      color: Colors.orange,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -254,10 +365,10 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                           ),
                         )
                       : _volunteers.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
-                            'Tidak ada antrian',
-                            style: TextStyle(color: Colors.white38),
+                            'Tidak ada antrian'.tr(context),
+                            style: const TextStyle(color: Colors.white38),
                           ),
                         )
                       : ListView.builder(
@@ -344,15 +455,17 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.touch_app_outlined,
                         color: Colors.white24,
                         size: 48,
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Pilih relawan dari daftar untuk verifikasi',
-                        style: TextStyle(color: Colors.white38),
+                      Text(
+                        'Pilih relawan dari daftar untuk verifikasi'.tr(
+                          context,
+                        ),
+                        style: const TextStyle(color: Colors.white38),
                       ),
                     ],
                   ),
@@ -413,58 +526,81 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
             const SizedBox(height: 16),
 
             // NIK
-            _DetailRow(label: 'NIK', value: v.nik ?? '-'),
+            _DetailRow(label: 'NIK'.tr(context), value: v.nik ?? '-'),
             const SizedBox(height: 16),
 
             // Foto KTP
-            const Text(
-              'Foto KTP:',
-              style: TextStyle(
+            Text(
+              'Foto KTP:'.tr(context),
+              style: const TextStyle(
                 color: Colors.white70,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
             if (v.nikPhotoUrl != null && v.nikPhotoUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  v.nikPhotoUrl!,
-                  height: 180,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 100,
-                    color: Colors.white10,
-                    child: const Center(
-                      child: Text(
-                        'Gagal memuat foto',
-                        style: TextStyle(color: Colors.white38),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      v.nikPhotoUrl!,
+                      height: 180,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 100,
+                        color: Colors.white10,
+                        child: Center(
+                          child: Text(
+                            'Gagal memuat foto'.tr(context),
+                            style: const TextStyle(color: Colors.white38),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: const BorderSide(color: Colors.white24),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.open_in_new, size: 14),
+                    label: Text(
+                      'Buka Dokumen Eksternal'.tr(context),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    onPressed: () => _launchExternalUrl(v.nikPhotoUrl!),
+                  ),
+                ],
               )
             else
-              const Text(
-                'Tidak ada foto KTP',
-                style: TextStyle(color: Colors.white38),
+              Text(
+                'Tidak ada foto KTP'.tr(context),
+                style: const TextStyle(color: Colors.white38),
               ),
 
             const SizedBox(height: 20),
 
             // Sertifikat
-            const Text(
-              'Sertifikat:',
-              style: TextStyle(
+            Text(
+              'Sertifikat:'.tr(context),
+              style: const TextStyle(
                 color: Colors.white70,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
             if (v.certs.isEmpty)
-              const Text(
-                'Tidak ada sertifikat',
-                style: TextStyle(color: Colors.white38),
+              Text(
+                'Tidak ada sertifikat'.tr(context),
+                style: const TextStyle(color: Colors.white38),
               )
             else
               ...v.certs.asMap().entries.map(
@@ -474,9 +610,9 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
             const SizedBox(height: 20),
 
             // Pengalaman & Spesialisasi
-            const Text(
-              'Pengalaman & Spesialisasi:',
-              style: TextStyle(
+            Text(
+              'Pengalaman & Spesialisasi:'.tr(context),
+              style: const TextStyle(
                 color: Colors.white70,
                 fontWeight: FontWeight.w600,
               ),
@@ -491,7 +627,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                 border: Border.all(color: Colors.white12),
               ),
               child: Text(
-                v.experience ?? 'Tidak ada pengalaman yang ditulis',
+                v.experience ?? 'Tidak ada pengalaman yang ditulis'.tr(context),
                 style: const TextStyle(color: Colors.white, height: 1.5),
               ),
             ),
@@ -563,7 +699,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label tipe
+          // Label tipe & tombol buka eksternal
           Row(
             children: [
               const Icon(
@@ -580,6 +716,23 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: Colors.white24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+                icon: const Icon(Icons.open_in_new, size: 14),
+                label: Text(
+                  'Buka Dokumen Eksternal'.tr(context),
+                  style: const TextStyle(fontSize: 12),
+                ),
+                onPressed: () => _launchExternalUrl(cert.url),
               ),
             ],
           ),
@@ -722,10 +875,24 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
                         ),
                       ),
                     ),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white38),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      icon: const Icon(Icons.open_in_new, size: 16),
+                      label: Text('Buka Dokumen Eksternal'.tr(context)),
+                      onPressed: () => _launchExternalUrl(cert.url),
+                    ),
+                    const SizedBox(width: 12),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
                       onPressed: () => Navigator.pop(ctx),
-                      tooltip: 'Tutup',
+                      tooltip: 'Tutup'.tr(context),
                     ),
                   ],
                 ),

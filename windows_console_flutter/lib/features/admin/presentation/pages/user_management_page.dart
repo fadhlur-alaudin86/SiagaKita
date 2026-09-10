@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
+import '../../../../core/localization/app_localization.dart';
 import 'user_detail_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -16,10 +17,10 @@ class UserManagementPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      const Tab(text: 'Masyarakat'),
-      const Tab(text: 'Relawan'),
-      const Tab(text: 'Instansi'),
-      if (role == 'superadmin') const Tab(text: 'Admin'),
+      Tab(text: 'Masyarakat'.tr(context)),
+      Tab(text: 'Relawan'.tr(context)),
+      Tab(text: 'Instansi'.tr(context)),
+      if (role == 'superadmin') Tab(text: 'Admin'.tr(context)),
     ];
     return DefaultTabController(
       length: tabs.length,
@@ -108,10 +109,13 @@ class _UserListTabState extends State<_UserListTab> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final data = await AdminApiService.getUsers(widget.token);
+      final data = await AdminApiService.getUsers(
+        widget.token,
+        role: widget.roleFilter,
+      );
       if (mounted) {
         setState(() {
-          _all = data.where((u) => u.role == widget.roleFilter).toList();
+          _all = data;
           _applyFilterSort();
           _loading = false;
         });
@@ -119,7 +123,7 @@ class _UserListTabState extends State<_UserListTab> {
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
-        _snack('Gagal memuat data: $e', Colors.red);
+        _snack('${'Gagal memuat data'.tr(context)}: $e', Colors.red);
       }
     }
   }
@@ -189,63 +193,149 @@ class _UserListTabState extends State<_UserListTab> {
 
   Future<void> _ban(UserModel user) async {
     _banReasonCtrl.clear();
-    final daysCtrl = TextEditingController(text: '7');
+    int selectedDays = 7;
+    final durations = [
+      (1, '1 Hari'),
+      (3, '3 Hari'),
+      (7, '7 Hari'),
+      (30, '30 Hari'),
+      (365, 'Permanen (365 Hari)'),
+    ];
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (_, ss) => AlertDialog(
+        builder: (dialogCtx, ss) => AlertDialog(
           backgroundColor: const Color(0xFF1E2537),
-          title: Text(
-            'Ban ${user.fullName}?',
-            style: const TextStyle(color: Colors.white),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+          title: Row(
             children: [
-              const Text(
-                'Pengguna tidak bisa menggunakan SOS.',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+              const Icon(Icons.block, color: Colors.red),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${'Ban'.tr(context)} ${user.fullName}?',
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ),
-              const SizedBox(height: 12),
-              _inputField(
-                _banReasonCtrl,
-                'Alasan ban',
-                onChanged: (_) => ss(() {}),
-              ),
-              const SizedBox(height: 8),
-              _inputField(daysCtrl, 'Durasi (hari)', isNum: true),
             ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pengguna tidak bisa menggunakan SOS.'.tr(context),
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Durasi Ban'.tr(context),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: durations.map((d) {
+                    final isSel = selectedDays == d.$1;
+                    return ChoiceChip(
+                      label: Text(d.$2.tr(context)),
+                      selected: isSel,
+                      onSelected: (val) {
+                        if (val) ss(() => selectedDays = d.$1);
+                      },
+                      selectedColor: Colors.red.withValues(alpha: 0.3),
+                      backgroundColor: const Color(0xFF1A2035),
+                      labelStyle: TextStyle(
+                        color: isSel ? Colors.white : Colors.white60,
+                        fontSize: 11,
+                        fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      side: BorderSide(
+                        color: isSel ? Colors.red : Colors.white12,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _banReasonCtrl,
+                  maxLines: 2,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  onChanged: (_) => ss(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Alasan ban'.tr(context),
+                    hintText: 'Contoh: Panggilan palsu berulang kali',
+                    labelStyle: const TextStyle(color: Colors.white54),
+                    hintStyle: const TextStyle(
+                      color: Colors.white24,
+                      fontSize: 12,
+                    ),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white24),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text(
-                'Batal',
-                style: TextStyle(color: Colors.white54),
+              child: Text(
+                'Batal'.tr(context),
+                style: const TextStyle(color: Colors.white54),
               ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
               onPressed: _banReasonCtrl.text.trim().isEmpty
                   ? null
                   : () => Navigator.pop(ctx, true),
-              child: const Text('Ban', style: TextStyle(color: Colors.white)),
+              child: Text('Ban'.tr(context)),
             ),
           ],
         ),
       ),
     );
-    if (ok != true || _banReasonCtrl.text.trim().isEmpty) return;
-    final days = int.tryParse(daysCtrl.text) ?? 7;
-    if (await AdminApiService.banUser(
-          widget.token,
-          user.id,
-          _banReasonCtrl.text,
-          days,
-        ) &&
-        mounted) {
+
+    if (!mounted) return;
+    if (ok != true) return;
+    final reason = _banReasonCtrl.text.trim();
+    if (reason.isEmpty) {
+      _snack('Alasan ban wajib diisi'.tr(context), Colors.orange);
+      return;
+    }
+
+    final result = await AdminApiService.banUser(
+      widget.token,
+      user.id,
+      reason,
+      selectedDays,
+    );
+    if (!mounted) return;
+    if (result.ok) {
       _load();
-      _snack('${user.fullName} telah dibanned.', Colors.red);
+      final msg =
+          result.message ?? '${user.fullName} ${'telah dibanned.'.tr(context)}';
+      _snack(msg, Colors.red);
+    } else {
+      final errorMsg = result.message ?? 'Gagal melakukan ban.'.tr(context);
+      _snack(errorMsg, Colors.red);
     }
   }
 
@@ -254,38 +344,150 @@ class _UserListTabState extends State<_UserListTab> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
-        title: Text(
-          'Unban ${user.fullName}?',
-          style: const TextStyle(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.lock_open_outlined, color: Colors.green),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${'Unban'.tr(context)} ${user.fullName}?',
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+          ],
         ),
-        content: const Text(
-          'Pengguna dapat menggunakan SOS kembali.',
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          'Pengguna dapat menggunakan SOS kembali.'.tr(context),
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Unban', style: TextStyle(color: Colors.white)),
+            child: Text('Unban'.tr(context)),
           ),
         ],
       ),
     );
+
+    if (!mounted) return;
     if (ok != true) return;
-    if (await AdminApiService.unbanUser(widget.token, user.id) && mounted) {
+
+    final result = await AdminApiService.unbanUser(widget.token, user.id);
+    if (!mounted) return;
+    if (result.ok) {
       _load();
-      _snack('${user.fullName} di-unban.', Colors.green);
+      final msg =
+          result.message ?? '${user.fullName} ${'di-unban.'.tr(context)}';
+      _snack(msg, Colors.green);
+    } else {
+      final errorMsg = result.message ?? 'Gagal mencabut ban.'.tr(context);
+      _snack(errorMsg, Colors.red);
     }
   }
 
   Future<void> _resetStrike(UserModel user) async {
-    if (await AdminApiService.resetStrike(widget.token, user.id) && mounted) {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E2537),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.refresh, color: Colors.blue),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Konfirmasi Reset Strike'.tr(context),
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${'Apakah Anda yakin ingin mereset strike untuk'.tr(context)} ${user.fullName}?',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${'Strike'.tr(context)}: ${user.sosStrikeCount}/3',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Tindakan ini akan mengembalikan strike ke 0/3.'.tr(context),
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.white54),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Reset Strike'.tr(context)),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    if (ok != true) return;
+
+    final result = await AdminApiService.resetStrike(widget.token, user.id);
+    if (!mounted) return;
+    if (result.ok) {
       _load();
-      _snack('Strike ${user.fullName} direset.', Colors.blue);
+      final msg = result.message ?? 'Strike berhasil direset.'.tr(context);
+      _snack(msg, Colors.blue);
+    } else {
+      final errorMsg = result.message ?? 'Gagal mereset strike.'.tr(context);
+      _snack(errorMsg, Colors.red);
     }
   }
 
@@ -306,7 +508,7 @@ class _UserListTabState extends State<_UserListTab> {
                 onChanged: (v) => _setFilter(() => _search = v),
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: 'Cari nama atau email...',
+                  hintText: 'Cari nama atau email...'.tr(context),
                   hintStyle: const TextStyle(color: Colors.white38),
                   prefixIcon: const Icon(Icons.search, color: Colors.white38),
                   filled: true,
@@ -322,25 +524,25 @@ class _UserListTabState extends State<_UserListTab> {
             const SizedBox(width: 10),
             // Ban filter
             _DropdownFilter<_BanFilter>(
-              label: 'Status Akun',
+              label: 'Status Akun'.tr(context),
               value: _banFilter,
-              items: const {
-                _BanFilter.all: 'Semua',
-                _BanFilter.active: 'Aktif',
-                _BanFilter.banned: 'Banned',
+              items: {
+                _BanFilter.all: 'Semua'.tr(context),
+                _BanFilter.active: 'Aktif'.tr(context),
+                _BanFilter.banned: 'Banned'.tr(context),
               },
               onChanged: (v) => _setFilter(() => _banFilter = v),
             ),
             const SizedBox(width: 8),
             // Online filter
             _DropdownFilter<_OnlineFilter>(
-              label: 'Koneksi',
+              label: 'Koneksi'.tr(context),
               value: _onlineFilter,
-              items: const {
-                _OnlineFilter.all: 'Semua',
-                _OnlineFilter.online: 'Online',
-                _OnlineFilter.background: 'Latar Belakang',
-                _OnlineFilter.offline: 'Offline',
+              items: {
+                _OnlineFilter.all: 'Semua'.tr(context),
+                _OnlineFilter.online: 'Online'.tr(context),
+                _OnlineFilter.background: 'Latar Belakang'.tr(context),
+                _OnlineFilter.offline: 'Offline'.tr(context),
               },
               onChanged: (v) => _setFilter(() => _onlineFilter = v),
             ),
@@ -353,20 +555,22 @@ class _UserListTabState extends State<_UserListTab> {
             const SizedBox(width: 8),
             // Sort
             _DropdownFilter<_SortBy>(
-              label: 'Urutkan',
+              label: 'Urutkan'.tr(context),
               icon: Icons.sort,
               value: _sortBy,
-              items: const {
-                _SortBy.name: 'Nama',
-                _SortBy.nik: 'NIK',
-                _SortBy.strike: 'Strike',
-                _SortBy.status: 'Status',
+              items: {
+                _SortBy.name: 'Nama'.tr(context),
+                _SortBy.nik: 'NIK'.tr(context),
+                _SortBy.strike: 'Strike'.tr(context),
+                _SortBy.status: 'Status'.tr(context),
               },
               onChanged: (v) => _setFilter(() => _sortBy = v),
             ),
             const SizedBox(width: 4),
             IconButton(
-              tooltip: _sortDir == _SortDir.asc ? 'Naik' : 'Turun',
+              tooltip: _sortDir == _SortDir.asc
+                  ? 'Naik'.tr(context)
+                  : 'Turun'.tr(context),
               icon: Icon(
                 _sortDir == _SortDir.asc
                     ? Icons.arrow_upward
@@ -406,26 +610,35 @@ class _UserListTabState extends State<_UserListTab> {
                             bottom: BorderSide(color: Colors.white12),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Expanded(flex: 28, child: _TH('NAMA & STATUS')),
-                            SizedBox(width: 8),
-                            Expanded(flex: 18, child: _TH('NIK')),
-                            SizedBox(width: 8),
-                            Expanded(flex: 28, child: _TH('KONTAK')),
-                            SizedBox(width: 8),
-                            Expanded(flex: 10, child: _TH('STRIKE')),
-                            SizedBox(width: 8),
-                            Expanded(flex: 28, child: _TH('AKSI')),
+                            Expanded(
+                              flex: 28,
+                              child: _TH('NAMA & STATUS'.tr(context)),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(flex: 18, child: _TH('NIK'.tr(context))),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 28,
+                              child: _TH('KONTAK'.tr(context)),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 10,
+                              child: _TH('STRIKE'.tr(context)),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(flex: 28, child: _TH('AKSI'.tr(context))),
                           ],
                         ),
                       ),
                       Expanded(
                         child: _view.isEmpty
-                            ? const Center(
+                            ? Center(
                                 child: Text(
-                                  'Tidak ada data',
-                                  style: TextStyle(color: Colors.white38),
+                                  'Tidak ada data'.tr(context),
+                                  style: const TextStyle(color: Colors.white38),
                                 ),
                               )
                             : ListView.separated(
@@ -471,10 +684,10 @@ class _UserRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strikeColor = user.sosStrikeCount >= 3
-        ? Colors.red
-        : user.sosStrikeCount >= 2
-        ? Colors.orange
-        : Colors.green;
+        ? const Color(0xFFE53935)
+        : user.sosStrikeCount == 2
+        ? const Color(0xFFFFB300)
+        : const Color(0xFF43A047);
     final isBanned = user.isSOSBanned;
     final statusLabel = isBanned ? 'BANNED' : user.onlineStatus;
     final statusColor = isBanned
@@ -622,19 +835,32 @@ class _UserRow extends StatelessWidget {
           // STRIKE
           Expanded(
             flex: 10,
-            child: Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: strikeColor, size: 13),
-                const SizedBox(width: 3),
-                Text(
-                  '${user.sosStrikeCount}/3',
-                  style: TextStyle(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: strikeColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: strikeColor.withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
                     color: strikeColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    size: 12,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Text(
+                    '${user.sosStrikeCount}/3',
+                    style: TextStyle(
+                      color: strikeColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -646,7 +872,7 @@ class _UserRow extends StatelessWidget {
               runSpacing: 5,
               children: [
                 _ActionBtn(
-                  label: 'Detail',
+                  label: 'Detail'.tr(context),
                   color: Colors.purpleAccent,
                   icon: Icons.remove_red_eye,
                   onTap: () => Navigator.push(
@@ -659,21 +885,21 @@ class _UserRow extends StatelessWidget {
                 ),
                 if (isBanned)
                   _ActionBtn(
-                    label: 'Unban',
+                    label: 'Unban'.tr(context),
                     color: Colors.green,
                     icon: Icons.lock_open_outlined,
                     onTap: onUnban,
                   )
                 else
                   _ActionBtn(
-                    label: 'Ban',
+                    label: 'Ban'.tr(context),
                     color: Colors.red,
                     icon: Icons.block,
                     onTap: onBan,
                   ),
                 if (user.sosStrikeCount > 0)
                   _ActionBtn(
-                    label: 'Reset',
+                    label: 'Reset'.tr(context),
                     color: Colors.blue,
                     icon: Icons.refresh,
                     onTap: onResetStrike,
@@ -983,7 +1209,9 @@ class _StrikeFilterBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = value == 0 ? 'Semua Strike' : 'Strike ≥ $value';
+    final label = value == 0
+        ? 'Semua Strike'.tr(context)
+        : '${'Strike'.tr(context)} ≥ $value';
     return PopupMenuButton<int>(
       initialValue: value,
       color: const Color(0xFF1E2537),
@@ -1002,7 +1230,9 @@ class _StrikeFilterBtn extends StatelessWidget {
             (v) => PopupMenuItem<int>(
               value: v,
               child: Text(
-                v == 0 ? 'Semua Strike' : 'Strike ≥ $v',
+                v == 0
+                    ? 'Semua Strike'.tr(context)
+                    : '${'Strike'.tr(context)} ≥ $v',
                 style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ),
@@ -1079,25 +1309,3 @@ class _ActionBtn extends StatelessWidget {
     ),
   );
 }
-
-TextField _inputField(
-  TextEditingController ctrl,
-  String label, {
-  bool isNum = false,
-  void Function(String)? onChanged,
-}) => TextField(
-  controller: ctrl,
-  keyboardType: isNum ? TextInputType.number : TextInputType.text,
-  onChanged: onChanged,
-  style: const TextStyle(color: Colors.white),
-  decoration: InputDecoration(
-    labelText: label,
-    labelStyle: const TextStyle(color: Colors.white54),
-    enabledBorder: const OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.white24),
-    ),
-    focusedBorder: const OutlineInputBorder(
-      borderSide: BorderSide(color: Color(0xFFFF7418)),
-    ),
-  ),
-);
