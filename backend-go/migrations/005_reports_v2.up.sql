@@ -22,24 +22,55 @@ CREATE TABLE IF NOT EXISTS incident_reports_v2 (
 );
 
 -- 2. Migrasi data lama jika tabel sebelumnya sudah ada
-INSERT INTO incident_reports_v2 (id, reporter_id, incident_type, urgency_level, latitude, longitude, description, photo_paths, audio_path, status, created_at, updated_at)
-SELECT
-    id,
-    reporter_id,
-    incident_type,
-    CASE urgency WHEN 'high' THEN 2 WHEN 'medium' THEN 1 ELSE 0 END,
-    latitude,
-    longitude,
-    description,
-    CASE WHEN photo_url IS NOT NULL THEN ARRAY[photo_url] ELSE '{}' END,
-    audio_url,
-    CASE status WHEN 'actioned' THEN 'resolved' WHEN 'reviewed' THEN 'processing' ELSE 'received' END,
-    created_at,
-    updated_at
-FROM incident_reports
-ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'incident_reports' AND column_name = 'urgency'
+    ) THEN
+        EXECUTE 'INSERT INTO incident_reports_v2 (id, reporter_id, incident_type, urgency_level, latitude, longitude, description, photo_paths, audio_path, status, created_at, updated_at)
+        SELECT
+            id,
+            reporter_id,
+            incident_type,
+            CASE urgency WHEN ''high'' THEN 2 WHEN ''medium'' THEN 1 ELSE 0 END,
+            latitude,
+            longitude,
+            description,
+            CASE WHEN photo_url IS NOT NULL THEN ARRAY[photo_url] ELSE ''{}'' END,
+            audio_url,
+            CASE status WHEN ''actioned'' THEN ''resolved'' WHEN ''reviewed'' THEN ''processing'' ELSE ''received'' END,
+            created_at,
+            created_at
+        FROM incident_reports
+        ON CONFLICT DO NOTHING';
+    ELSIF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'incident_reports' AND column_name = 'urgency_level'
+    ) THEN
+        EXECUTE 'INSERT INTO incident_reports_v2 (id, reporter_id, incident_type, urgency_level, latitude, longitude, description, photo_paths, audio_path, status, created_at, updated_at)
+        SELECT
+            id,
+            reporter_id,
+            incident_type,
+            urgency_level,
+            latitude,
+            longitude,
+            description,
+            CASE WHEN photo_url IS NOT NULL THEN ARRAY[photo_url] ELSE ''{}'' END,
+            audio_url,
+            CASE status WHEN ''actioned'' THEN ''resolved'' WHEN ''reviewed'' THEN ''processing'' ELSE ''received'' END,
+            created_at,
+            created_at
+        FROM incident_reports
+        ON CONFLICT DO NOTHING';
+    END IF;
+END $$;
 
 -- 3. Rename tabel lama dan baru
+DROP TABLE IF EXISTS incident_reports_old CASCADE;
 ALTER TABLE IF EXISTS incident_reports RENAME TO incident_reports_old;
 ALTER TABLE incident_reports_v2 RENAME TO incident_reports;
 

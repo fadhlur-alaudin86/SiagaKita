@@ -25,8 +25,8 @@ func TestMigrationsEmbeddedDiscovery(t *testing.T) {
 		t.Errorf("expected first migration version to be 1, got %d", firstVersion)
 	}
 
-	// Verify all sequential migrations exist from 1 to 19
-	for i := 1; i <= 19; i++ {
+	// Verify all sequential migrations exist from 1 to 20
+	for i := 1; i <= 20; i++ {
 		upName := fmt.Sprintf("%03d_*.up.sql", i)
 		matches, err := fs.Glob(migrations.FS, upName)
 		if err != nil {
@@ -53,8 +53,8 @@ func TestMigrationFileContentNotEmpty(t *testing.T) {
 		t.Fatalf("failed to read embedded migrations directory: %v", err)
 	}
 
-	if len(entries) < 38 {
-		t.Errorf("expected at least 38 migration files (19 up + 19 down), found %d entries", len(entries))
+	if len(entries) < 40 {
+		t.Errorf("expected at least 40 migration files (20 up + 20 down), found %d entries", len(entries))
 	}
 
 	for _, entry := range entries {

@@ -37,6 +37,15 @@ func setupTestApp(h *Handler, cfg *config.Config) *fiber.App {
 	admin.Delete("/users/:id/strike", middleware.AdminOnly(), h.ResetStrike)
 	admin.Get("/users/:id/detail", middleware.AdminOnly(), h.GetUserDetail)
 
+	// Master Data: Ranks
+	admin.Get("/ranks", middleware.ConsoleOnly(), h.GetRanks)
+	admin.Post("/ranks", middleware.AdminOnly(), h.CreateRank)
+	admin.Put("/ranks/:id", middleware.AdminOnly(), h.UpdateRank)
+	admin.Delete("/ranks/:id", middleware.AdminOnly(), h.DeleteRank)
+
+	// Statistics
+	admin.Get("/stats", middleware.ConsoleOnly(), h.GetStats)
+
 	return app
 }
 
@@ -412,6 +421,576 @@ func TestUserManagement_WithLiveDB(t *testing.T) {
 		}
 		if resp.StatusCode != http.StatusNotFound {
 			t.Errorf("Expected status 404 Not Found, got %d", resp.StatusCode)
+		}
+	})
+}
+
+// ─── Stats Parameter Normalization Tests ─────────────────────────────────────
+
+func TestAdmin_NormalizePeriod(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"week", "week"},
+		{"weekly", "week"},
+		{"WEEK", "week"},
+		{"  week  ", "week"},
+		{"year", "year"},
+		{"yearly", "year"},
+		{"YEAR", "year"},
+		{"month", "month"},
+		{"monthly", "month"},
+		{"MONTH", "month"},
+		{"", "month"},
+		{"   ", "month"},
+		{"unknown_period", "month"},
+	}
+
+	for _, tc := range tests {
+		t.Run("Input_"+tc.input, func(t *testing.T) {
+			result := normalizePeriod(tc.input)
+			if result != tc.expected {
+				t.Errorf("normalizePeriod(%q) = %q, expected %q", tc.input, result, tc.expected)
+			}
+		})
+	}
+}
+
+// ─── Ranks RBAC Tests ─────────────────────────────────────────────────────────
+
+func TestRanks_RBAC_Unauthorized(t *testing.T) {
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	h := NewHandler(nil, cfg)
+	app := setupTestApp(h, cfg)
+
+	endpoints := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodGet, "/api/v1/admin/ranks"},
+		{http.MethodPost, "/api/v1/admin/ranks"},
+		{http.MethodPut, "/api/v1/admin/ranks/1"},
+		{http.MethodDelete, "/api/v1/admin/ranks/1"},
+	}
+
+	for _, ep := range endpoints {
+		t.Run(ep.method+" "+ep.path, func(t *testing.T) {
+			req := httptest.NewRequest(ep.method, ep.path, nil)
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test failed: %v", err)
+			}
+			if resp.StatusCode != http.StatusUnauthorized {
+				t.Errorf("Expected status 401 Unauthorized, got %d", resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestRanks_RBAC_Forbidden_Roles(t *testing.T) {
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	h := NewHandler(nil, cfg)
+	app := setupTestApp(h, cfg)
+
+	// Write endpoints require AdminOnly (admin, superadmin)
+	writeEndpoints := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodPost, "/api/v1/admin/ranks"},
+		{http.MethodPut, "/api/v1/admin/ranks/1"},
+		{http.MethodDelete, "/api/v1/admin/ranks/1"},
+	}
+
+	forbiddenWriteRoles := []string{"civilian", "volunteer", "agency", "agency_personnel"}
+	for _, role := range forbiddenWriteRoles {
+		t.Run("Write_Forbidden_"+role, func(t *testing.T) {
+			token, _, err := utils.GenerateAccessToken("user-123", role, testJWTSecret, time.Hour)
+			if err != nil {
+				t.Fatalf("Failed to generate token: %v", err)
+			}
+			for _, ep := range writeEndpoints {
+				req := httptest.NewRequest(ep.method, ep.path, nil)
+				req.Header.Set("Authorization", "Bearer "+token)
+				resp, err := app.Test(req)
+				if err != nil {
+					t.Fatalf("app.Test failed: %v", err)
+				}
+				if resp.StatusCode != http.StatusForbidden {
+					t.Errorf("[%s] %s %s: expected 403 Forbidden, got %d", role, ep.method, ep.path, resp.StatusCode)
+				}
+			}
+		})
+	}
+
+	// Read endpoint GET /ranks requires ConsoleOnly (superadmin, admin, agency)
+	forbiddenReadRoles := []string{"civilian", "volunteer", "agency_personnel"}
+	for _, role := range forbiddenReadRoles {
+		t.Run("Read_Forbidden_"+role, func(t *testing.T) {
+			token, _, err := utils.GenerateAccessToken("user-123", role, testJWTSecret, time.Hour)
+			if err != nil {
+				t.Fatalf("Failed to generate token: %v", err)
+			}
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/ranks", nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test failed: %v", err)
+			}
+			if resp.StatusCode != http.StatusForbidden {
+				t.Errorf("[%s] GET /admin/ranks: expected 403 Forbidden, got %d", role, resp.StatusCode)
+			}
+		})
+	}
+}
+
+// ─── Stats RBAC Tests ─────────────────────────────────────────────────────────
+
+func TestStats_RBAC_Unauthorized(t *testing.T) {
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	h := NewHandler(nil, cfg)
+	app := setupTestApp(h, cfg)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/stats", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("Expected status 401 Unauthorized, got %d", resp.StatusCode)
+	}
+}
+
+func TestStats_RBAC_Forbidden_Roles(t *testing.T) {
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	h := NewHandler(nil, cfg)
+	app := setupTestApp(h, cfg)
+
+	forbiddenRoles := []string{"civilian", "volunteer", "agency_personnel"}
+	for _, role := range forbiddenRoles {
+		t.Run("Role_"+role, func(t *testing.T) {
+			token, _, err := utils.GenerateAccessToken("user-123", role, testJWTSecret, time.Hour)
+			if err != nil {
+				t.Fatalf("Failed to generate token: %v", err)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/stats", nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test failed: %v", err)
+			}
+			if resp.StatusCode != http.StatusForbidden {
+				t.Errorf("Role %s: expected status 403 Forbidden, got %d", role, resp.StatusCode)
+			}
+		})
+	}
+}
+
+// ─── Rank Validation & Service Unit Tests ─────────────────────────────────────
+
+func TestRanks_Validation_BadRequest(t *testing.T) {
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	h := NewHandler(nil, cfg)
+	app := setupTestApp(h, cfg)
+
+	token, _, err := utils.GenerateAccessToken("admin-123", "admin", testJWTSecret, time.Hour)
+	if err != nil {
+		t.Fatalf("Failed to generate token: %v", err)
+	}
+
+	t.Run("Create_InvalidJSON", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/ranks", bytes.NewReader([]byte("{invalid-json")))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("Update_InvalidID", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/admin/ranks/not-a-number", bytes.NewReader([]byte("{}")))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request for non-integer ID, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("Delete_InvalidID", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/admin/ranks/not-a-number", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request for non-integer ID, got %d", resp.StatusCode)
+		}
+	})
+}
+
+func TestRanks_Service_Validation(t *testing.T) {
+	svc := &Service{}
+
+	t.Run("CreateRank_EmptyName", func(t *testing.T) {
+		_, err := svc.CreateRank(&RankRequest{RankName: "   ", MinExp: 100})
+		if err == nil || err.Error() != "rank_name wajib diisi" {
+			t.Errorf("Expected error 'rank_name wajib diisi', got %v", err)
+		}
+	})
+
+	t.Run("CreateRank_NegativeMinExp", func(t *testing.T) {
+		_, err := svc.CreateRank(&RankRequest{RankName: "Siswa", MinExp: -10})
+		if err == nil || err.Error() != "min_exp tidak boleh negatif" {
+			t.Errorf("Expected error 'min_exp tidak boleh negatif', got %v", err)
+		}
+	})
+
+	t.Run("UpdateRank_EmptyName", func(t *testing.T) {
+		_, err := svc.UpdateRank(1, &RankRequest{RankName: "", MinExp: 100})
+		if err == nil || err.Error() != "rank_name wajib diisi" {
+			t.Errorf("Expected error 'rank_name wajib diisi', got %v", err)
+		}
+	})
+
+	t.Run("UpdateRank_NegativeMinExp", func(t *testing.T) {
+		_, err := svc.UpdateRank(1, &RankRequest{RankName: "Siswa", MinExp: -1})
+		if err == nil || err.Error() != "min_exp tidak boleh negatif" {
+			t.Errorf("Expected error 'min_exp tidak boleh negatif', got %v", err)
+		}
+	})
+
+	t.Run("CreateBadge_EmptyName", func(t *testing.T) {
+		_, err := svc.CreateBadge(&BadgeRequest{BadgeName: ""})
+		if err == nil || err.Error() != "badge_name wajib diisi" {
+			t.Errorf("Expected error 'badge_name wajib diisi', got %v", err)
+		}
+	})
+}
+
+// ─── Live Database Tests for Ranks & Stats ───────────────────────────────────
+
+func TestRanksAndStats_WithLiveDB(t *testing.T) {
+	db := getOptionalTestDB()
+	if db == nil {
+		t.Skip("Database testing tidak tersedia — melewati live DB tests")
+	}
+
+	cfg := &config.Config{JWTSecret: testJWTSecret}
+	svc := NewService(db)
+	h := NewHandler(svc, cfg)
+	app := setupTestApp(h, cfg)
+
+	token, _, err := utils.GenerateAccessToken("admin-123", "admin", testJWTSecret, time.Hour)
+	if err != nil {
+		t.Fatalf("Failed to generate token: %v", err)
+	}
+
+	// Clean up any test ranks from previous runs
+	cleanupRanks := func() {
+		db.Exec("DELETE FROM volunteer_reputation WHERE rank_id IN (SELECT id FROM m_ranks WHERE rank_name LIKE 'TestRank_%')")
+		db.Exec("DELETE FROM m_ranks WHERE rank_name LIKE 'TestRank_%'")
+	}
+	cleanupRanks()
+	defer cleanupRanks()
+
+	var baseRankID int
+	var tier1RankID int
+	var tier2RankID int
+
+	t.Run("1_CreateRank_BaseRank", func(t *testing.T) {
+		// Check if a base rank already exists
+		var existing MRank
+		if err := db.Where("min_exp = 0").First(&existing).Error; err == nil {
+			baseRankID = existing.ID
+		} else {
+			body, _ := json.Marshal(RankRequest{
+				RankName: "TestRank_Base",
+				MinExp:   0,
+			})
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/ranks", bytes.NewReader(body))
+			req.Header.Set("Authorization", "Bearer "+token)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test failed: %v", err)
+			}
+			if resp.StatusCode != http.StatusCreated {
+				t.Fatalf("Expected 201 Created for base rank, got %d", resp.StatusCode)
+			}
+
+			var created MRank
+			if err := db.Where("min_exp = 0").First(&created).Error; err != nil {
+				t.Fatalf("Failed to find created base rank in DB: %v", err)
+			}
+			baseRankID = created.ID
+		}
+	})
+
+	t.Run("2_CreateRank_DuplicateMinExp_Rejected", func(t *testing.T) {
+		body, _ := json.Marshal(RankRequest{
+			RankName: "TestRank_DuplicateBase",
+			MinExp:   0,
+		})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/ranks", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request for duplicate min_exp 0, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("3_CreateRank_Tier1_Success", func(t *testing.T) {
+		body, _ := json.Marshal(RankRequest{
+			RankName: "TestRank_Tier1",
+			MinExp:   100,
+		})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/ranks", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusCreated {
+			t.Fatalf("Expected 201 Created for Tier1 rank, got %d", resp.StatusCode)
+		}
+
+		var created MRank
+		if err := db.Where("LOWER(rank_name) = LOWER('TestRank_Tier1')").First(&created).Error; err != nil {
+			t.Fatalf("Failed to find created Tier1 rank in DB: %v", err)
+		}
+		tier1RankID = created.ID
+	})
+
+	t.Run("4_CreateRank_DuplicateName_CaseInsensitive_Rejected", func(t *testing.T) {
+		body, _ := json.Marshal(RankRequest{
+			RankName: "testrank_tier1", // lowercase of existing TestRank_Tier1
+			MinExp:   250,
+		})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/ranks", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request for case-insensitive duplicate name, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("5_CreateRank_Tier2_Success", func(t *testing.T) {
+		body, _ := json.Marshal(RankRequest{
+			RankName: "TestRank_Tier2",
+			MinExp:   300,
+		})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/ranks", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusCreated {
+			t.Fatalf("Expected 201 Created for Tier2 rank, got %d", resp.StatusCode)
+		}
+
+		var created MRank
+		if err := db.Where("LOWER(rank_name) = LOWER('TestRank_Tier2')").First(&created).Error; err != nil {
+			t.Fatalf("Failed to find created Tier2 rank in DB: %v", err)
+		}
+		tier2RankID = created.ID
+	})
+
+	t.Run("6_UpdateRank_BaseRank_NonZeroMinExp_Rejected", func(t *testing.T) {
+		body, _ := json.Marshal(RankRequest{
+			RankName: "TestRank_Base_Renamed",
+			MinExp:   50, // base rank cannot have min_exp > 0
+		})
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/admin/ranks/%d", baseRankID), bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request when updating base rank min_exp to non-zero, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("7_UpdateRank_DuplicateName_Rejected", func(t *testing.T) {
+		body, _ := json.Marshal(RankRequest{
+			RankName: "testrank_tier2", // collides with Tier2
+			MinExp:   100,
+		})
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/admin/ranks/%d", tier1RankID), bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request when updating rank to duplicate name, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("8_UpdateRank_DuplicateMinExp_Rejected", func(t *testing.T) {
+		body, _ := json.Marshal(RankRequest{
+			RankName: "TestRank_Tier1_Unique",
+			MinExp:   300, // collides with Tier2 min_exp
+		})
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/admin/ranks/%d", tier1RankID), bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request when updating rank to duplicate min_exp, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("9_UpdateRank_NotFound", func(t *testing.T) {
+		body, _ := json.Marshal(RankRequest{
+			RankName: "TestRank_NonExistent",
+			MinExp:   999,
+		})
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/admin/ranks/999999", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected 404 Not Found for non-existent rank update, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("10_DeleteRank_BaseRank_Forbidden", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/admin/ranks/%d", baseRankID), nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("Expected 400 Bad Request when attempting to delete base rank (min_exp = 0), got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("11_DeleteRank_NotFound", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/admin/ranks/999999", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected 404 Not Found when deleting non-existent rank, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("12_DeleteRank_AutoDowngrade_Success", func(t *testing.T) {
+		// Create a test volunteer holding Tier 2 rank
+		dummyUserID := "00000000-0000-0000-0000-000000000077"
+		db.Exec(`INSERT INTO users (id, email, password_hash, role) 
+		         VALUES (?, 'vol_test77@example.com', 'hash', 'volunteer') 
+		         ON CONFLICT (id) DO NOTHING`, dummyUserID)
+		db.Exec(`INSERT INTO volunteer_reputation (user_id, exp_points, rank_id) 
+		         VALUES (?, 350, ?) 
+		         ON CONFLICT (user_id) DO UPDATE SET rank_id = EXCLUDED.rank_id`, dummyUserID, tier2RankID)
+
+		defer func() {
+			db.Exec("DELETE FROM volunteer_reputation WHERE user_id = ?", dummyUserID)
+			db.Exec("DELETE FROM users WHERE id = ?", dummyUserID)
+		}()
+
+		// Delete Tier 2 rank -> should auto-downgrade to Tier 1
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/admin/ranks/%d", tier2RankID), nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("Expected 200 OK for rank deletion with auto-downgrade, got %d", resp.StatusCode)
+		}
+
+		// Verify volunteer was downgraded to Tier 1
+		var currentRankID int
+		err = db.Raw("SELECT rank_id FROM volunteer_reputation WHERE user_id = ?", dummyUserID).Scan(&currentRankID).Error
+		if err != nil {
+			t.Fatalf("Failed to query volunteer reputation after downgrade: %v", err)
+		}
+		if currentRankID != tier1RankID {
+			t.Errorf("Expected volunteer rank to be downgraded to Tier 1 (%d), got %d", tier1RankID, currentRankID)
+		}
+	})
+
+	t.Run("13_GetStats_AllPeriods", func(t *testing.T) {
+		periods := []string{"", "week", "month", "year", "weekly", "monthly", "yearly"}
+		for _, p := range periods {
+			url := "/api/v1/admin/stats"
+			if p != "" {
+				url += "?period=" + p
+			}
+			req := httptest.NewRequest(http.MethodGet, url, nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("app.Test failed for period %q: %v", p, err)
+			}
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("Expected 200 OK for GET %s, got %d", url, resp.StatusCode)
+			}
+
+			var body struct {
+				Success bool          `json:"success"`
+				Data    StatsResponse `json:"data"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+				t.Errorf("Failed to decode stats response for period %q: %v", p, err)
+			}
+			if !body.Success {
+				t.Errorf("Expected success = true for period %q", p)
+			}
+			// ActiveVolunteers must be non-negative (global count)
+			if body.Data.ActiveVolunteers < 0 {
+				t.Errorf("Active volunteers should be >= 0, got %d", body.Data.ActiveVolunteers)
+			}
 		}
 	})
 }

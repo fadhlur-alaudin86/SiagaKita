@@ -553,6 +553,54 @@ func (r *Repository) GetRanks() ([]MRank, error) {
 	return ranks, err
 }
 
+func (r *Repository) FindRankByID(id int) (*MRank, error) {
+	var rank MRank
+	if err := r.db.First(&rank, id).Error; err != nil {
+		return nil, err
+	}
+	return &rank, nil
+}
+
+func (r *Repository) FindRankByName(name string) (*MRank, error) {
+	var rank MRank
+	if err := r.db.Where("LOWER(rank_name) = LOWER(?)", name).First(&rank).Error; err != nil {
+		return nil, err
+	}
+	return &rank, nil
+}
+
+func (r *Repository) FindRankByMinExp(minExp int) (*MRank, error) {
+	var rank MRank
+	if err := r.db.Where("min_exp = ?", minExp).First(&rank).Error; err != nil {
+		return nil, err
+	}
+	return &rank, nil
+}
+
+func (r *Repository) FindRankByNameExcludingID(name string, excludeID int) (*MRank, error) {
+	var rank MRank
+	if err := r.db.Where("LOWER(rank_name) = LOWER(?) AND id != ?", name, excludeID).First(&rank).Error; err != nil {
+		return nil, err
+	}
+	return &rank, nil
+}
+
+func (r *Repository) FindRankByMinExpExcludingID(minExp int, excludeID int) (*MRank, error) {
+	var rank MRank
+	if err := r.db.Where("min_exp = ? AND id != ?", minExp, excludeID).First(&rank).Error; err != nil {
+		return nil, err
+	}
+	return &rank, nil
+}
+
+func (r *Repository) FindHighestRankBelowExp(minExp int) (*MRank, error) {
+	var rank MRank
+	if err := r.db.Where("min_exp < ?", minExp).Order("min_exp DESC").First(&rank).Error; err != nil {
+		return nil, err
+	}
+	return &rank, nil
+}
+
 func (r *Repository) CreateRank(req *RankRequest) (*MRank, error) {
 	rank := MRank{RankName: req.RankName, MinExp: req.MinExp, IconURL: req.IconURL}
 	err := r.db.Create(&rank).Error
@@ -568,6 +616,24 @@ func (r *Repository) UpdateRank(id int, req *RankRequest) (*MRank, error) {
 	rank.MinExp = req.MinExp
 	rank.IconURL = req.IconURL
 	return &rank, r.db.Save(&rank).Error
+}
+
+func (r *Repository) DeleteRankWithAutoDowngrade(targetRankID int, fallbackRankID int) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Reassign volunteers holding targetRankID to fallbackRankID
+		if err := tx.Exec("UPDATE volunteer_reputation SET rank_id = ? WHERE rank_id = ?", fallbackRankID, targetRankID).Error; err != nil {
+			return fmt.Errorf("gagal mendowngrade relawan: %w", err)
+		}
+		// 2. Delete the target rank
+		result := tx.Delete(&MRank{}, targetRankID)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("rank tidak ditemukan")
+		}
+		return nil
+	})
 }
 
 func (r *Repository) DeleteRank(id int) error {
