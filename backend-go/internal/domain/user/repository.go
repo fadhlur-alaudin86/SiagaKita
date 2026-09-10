@@ -100,76 +100,90 @@ func (r *Repository) UpdatePhoneNumber(userID, phone string) error {
 		}).Error
 }
 
+// buildProfileUpdateMap constructs the map of fields to update for a user profile.
+func buildProfileUpdateMap(req *UpdateProfileRequest) (map[string]interface{}, error) {
+	profileMap := map[string]interface{}{
+		fieldUpdatedAt: time.Now(),
+	}
+	if req.FullName != nil {
+		profileMap["full_name"] = *req.FullName
+	}
+	if req.NIK != nil {
+		profileMap["nik"] = *req.NIK
+	}
+	if req.PhoneNumber != nil {
+		profileMap["phone_number"] = *req.PhoneNumber
+		profileMap["is_phone_verified"] = false
+	}
+	if req.BloodType != nil {
+		profileMap["blood_type"] = *req.BloodType
+	}
+	if req.PlaceOfBirth != nil {
+		profileMap["place_of_birth"] = *req.PlaceOfBirth
+	}
+	if req.Allergies != nil {
+		profileMap["allergies"] = *req.Allergies
+	}
+	if req.MedicalConditions != nil {
+		profileMap["medical_conditions"] = *req.MedicalConditions
+	}
+	if req.HeightCm != nil {
+		profileMap["height_cm"] = *req.HeightCm
+	}
+	if req.WeightKg != nil {
+		profileMap["weight_kg"] = *req.WeightKg
+	}
+	if req.Domicile != nil {
+		profileMap["domicile"] = *req.Domicile
+	}
+	if req.Bio != nil {
+		profileMap["bio"] = *req.Bio
+	}
+	if req.DateOfBirth != nil {
+		parsed, err := time.Parse("02-01-2006", *req.DateOfBirth)
+		if err != nil {
+			return nil, fmt.Errorf("format date_of_birth tidak valid, gunakan DD-MM-YYYY: %w", err)
+		}
+		profileMap["date_of_birth"] = parsed
+	}
+	return profileMap, nil
+}
+
+// replaceEmergencyContacts soft-deletes existing contacts and inserts new ones within the transaction.
+func replaceEmergencyContacts(tx *gorm.DB, userID string, contacts []EmergencyContactInput) error {
+	now := time.Now()
+	if err := tx.Model(&EmergencyContact{}).Where("user_id = ? AND deleted_at IS NULL", userID).Update("deleted_at", now).Error; err != nil {
+		return err
+	}
+	for _, c := range contacts {
+		relation := c.Relation
+		contact := EmergencyContact{
+			UserID:       userID,
+			ContactName:  c.Name,
+			ContactPhone: c.Phone,
+			Relation:     &relation,
+		}
+		if err := tx.Create(&contact).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // UpdateProfile updates editable fields of user_profiles, replacing emergency contacts.
 func (r *Repository) UpdateProfile(userID string, req *UpdateProfileRequest) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		profileMap := map[string]interface{}{
-			fieldUpdatedAt: time.Now(),
-		}
-		if req.FullName != nil {
-			profileMap["full_name"] = *req.FullName
-		}
-		if req.NIK != nil {
-			profileMap["nik"] = *req.NIK
-		}
-		if req.PhoneNumber != nil {
-			profileMap["phone_number"] = *req.PhoneNumber
-			profileMap["is_phone_verified"] = false
-		}
-		if req.BloodType != nil {
-			profileMap["blood_type"] = *req.BloodType
-		}
-		if req.PlaceOfBirth != nil {
-			profileMap["place_of_birth"] = *req.PlaceOfBirth
-		}
-		if req.Allergies != nil {
-			profileMap["allergies"] = *req.Allergies
-		}
-		if req.MedicalConditions != nil {
-			profileMap["medical_conditions"] = *req.MedicalConditions
-		}
-		if req.HeightCm != nil {
-			profileMap["height_cm"] = *req.HeightCm
-		}
-		if req.WeightKg != nil {
-			profileMap["weight_kg"] = *req.WeightKg
-		}
-		if req.Domicile != nil {
-			profileMap["domicile"] = *req.Domicile
-		}
-		if req.Bio != nil {
-			profileMap["bio"] = *req.Bio
-		}
-		if req.DateOfBirth != nil {
-			parsed, err := time.Parse("02-01-2006", *req.DateOfBirth)
-			if err != nil {
-				return fmt.Errorf("format date_of_birth tidak valid, gunakan DD-MM-YYYY: %w", err)
-			}
-			profileMap["date_of_birth"] = parsed
-		}
+	profileMap, err := buildProfileUpdateMap(req)
+	if err != nil {
+		return err
+	}
 
+	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&UserProfile{}).Where("user_id = ?", userID).Updates(profileMap).Error; err != nil {
 			return err
 		}
 
-		// Replace emergency contacts: soft-delete existing, then insert new
 		if req.EmergencyContacts != nil {
-			now := time.Now()
-			if err := tx.Model(&EmergencyContact{}).Where("user_id = ? AND deleted_at IS NULL", userID).Update("deleted_at", now).Error; err != nil {
-				return err
-			}
-			for _, c := range req.EmergencyContacts {
-				relation := c.Relation
-				contact := EmergencyContact{
-					UserID:       userID,
-					ContactName:  c.Name,
-					ContactPhone: c.Phone,
-					Relation:     &relation,
-				}
-				if err := tx.Create(&contact).Error; err != nil {
-					return err
-				}
-			}
+			return replaceEmergencyContacts(tx, userID, req.EmergencyContacts)
 		}
 
 		return nil
