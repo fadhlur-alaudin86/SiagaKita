@@ -65,6 +65,7 @@ jobs:
 
             export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
             VERSION="${{ needs.build-and-push.outputs.version }}"
+            export IMAGE_TAG="$VERSION"
 
             echo "🚀 Starting deploy version: $VERSION"
 
@@ -74,17 +75,15 @@ jobs:
             # Tarik image terbaru
             docker compose -f docker-compose.prod.yml pull backend
 
-            # Restart backend
+            # Restart backend dengan versi rilis baru
             docker compose -f docker-compose.prod.yml up -d --no-deps backend
-
-            # Hapus image lama agar disk tidak penuh
-            docker image prune -f
 
             # Tunggu backend siap
             echo "⏳ Waiting for backend health check..."
             sleep 10
 
-            # Health check dengan retry
+            # Health check dengan retry terlindungi (set +e agar tidak keluar prematur)
+            set +e
             HEALTH=""
             for i in 1 2 3 4 5; do
               HEALTH=$(docker inspect --format='{{.State.Health.Status}}' siagakita_backend 2>/dev/null || echo "unknown")
@@ -94,6 +93,7 @@ jobs:
               fi
               sleep 5
             done
+            set -e
 
             if [ "$HEALTH" != "healthy" ]; then
               echo "❌ Health check FAILED — initiating rollback..."
@@ -110,10 +110,14 @@ jobs:
                 echo "⚠️ No previous image found for rollback."
               fi
 
+              echo "::error::Deployment failed health check. Automated container rollback executed. Run manual schema rollback if necessary: docker compose exec backend ./siagakita-migrate down 1"
               exit 1
             fi
 
             echo "✅ Deploy version $VERSION successful — backend is healthy"
+
+            # Hapus image lama hanya setelah deployment dinyatakan sehat
+            docker image prune -f
 
   # ─── Job 3: Auto-create GitHub Release dengan changelog ─────────────────────
   create-github-release:

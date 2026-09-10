@@ -122,6 +122,7 @@ flutter:
 
   assets:
     - assets/audio/
+    - assets/audio/alarm.mp3
     - assets/app_icon.png
     - assets/logo_siagakita_transparant.png
 
