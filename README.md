@@ -54,7 +54,7 @@ The SiagaKita system consists of three main components:
 *   `windows_console_flutter/`: Desktop console application source code for emergency agencies and admins.
 *   `infrastructure/`: Global environment configurations (`.env`) and Docker Compose files.
 *   `docs/`: Comprehensive technical documentation, architecture guides, database schemas, and developer skill guides (`docs/skills/`).
-*   `VERSION`: Plain-text file containing the current system release version (e.g., `1.0.24`).
+*   `VERSION`: Plain-text file containing the current system release version (e.g., `1.0.25`).
 
 ## Development & Git Workflow
 
@@ -85,24 +85,31 @@ To run the project locally:
    ```bash
    cd infrastructure && docker compose up -d postgres redis
    ```
-4. Run the backend server:
+4. Run database migrations to bring the schema up to date:
    ```bash
-   cd backend-go && go run cmd/api/main.go
+   cd backend-go && go run cmd/migrate/main.go up
    ```
-5. Run the mobile application:
+5. Run the backend server:
    ```bash
-   cd mobile-flutter && flutter run --dart-define-from-file=../infrastructure/.env
+   go run cmd/api/main.go
    ```
-6. Run the desktop console application:
+   Interactive Swagger UI documentation will be available at `http://localhost:8080/docs/*`.
+6. Run the mobile application:
    ```bash
-   cd windows_console_flutter && flutter run -d linux --dart-define-from-file=../infrastructure/.env
+   cd ../mobile-flutter && flutter run --dart-define-from-file=../infrastructure/.env
+   ```
+7. Run the desktop console application:
+   ```bash
+   cd ../windows_console_flutter && flutter run -d linux --dart-define-from-file=../infrastructure/.env
    ```
 
 ## Documentation & AI Agent Skills
 
 For comprehensive documentation and guides:
-*   [docs/README.md](docs/README.md): Main documentation directory index.
+*   [docs/README.md](docs/README.md): Main technical documentation catalog.
+*   [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md): Go Fiber backend architecture, DDD layout, and security guards.
+*   [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md): PostgreSQL schema v12 specifications and migration CLI runbook.
+*   [docs/design/README.md](docs/design/README.md): Living Mermaid visual architecture (Database ERD, Use Cases, Sequence Flows).
+*   [docs/api/openapi.yaml](docs/api/openapi.yaml): Modular OpenAPI 3.0 API contracts (served locally via Swagger UI).
+*   [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md): Production VPS deployment, Nginx reverse proxy, and automated CI/CD.
 *   [docs/skills/README.md](docs/skills/README.md): Human developer guide for AI Agent Skills.
-*   [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md): PostgreSQL schema v12 design and ERD.
-*   [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md): Production VPS deployment & automated CI/CD.
-*   [docs/PROGRESS_REPORT.md](docs/PROGRESS_REPORT.md): System changelogs and sprint progress tracking.
