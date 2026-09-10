@@ -1,0 +1,35 @@
+version: "2"
+
+run:
+  tests: false
+
+linters:
+  enable:
+    - cyclop
+    - goconst
+    - gosec
+  settings:
+    cyclop:
+      max-complexity: 16
+    goconst:
+      min-occurrences: 4
+    gosec:
+      excludes:
+        - G304
+        - G703
+  exclusions:
+    rules:
+      - linters:
+          - cyclop
+          - goconst
+        path: (.+)_test\.go
+      - linters:
+          - cyclop
+        path: ^cmd/
+      - linters:
+          - gosec
+        path: internal/i18n/i18n\.go
+        text: "G101"
+formatters:
+  exclusions:
+    generated: lax

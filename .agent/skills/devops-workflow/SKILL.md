@@ -133,6 +133,13 @@ All team members MUST follow Conventional Commits to ensure automated release no
   docker compose -f docker-compose.prod.yml exec backend ./siagakita-migrate force <version>
   ```
 
+## Dependency Governance Invariants
+
+1. **Lockfile & Build Determinism**: Feature branches and PRs must preserve lockfile determinism. Use `flutter pub get` and `go mod download` exclusively during development. Never run `flutter pub upgrade` or `go get -u` inside feature PRs to prevent lockfile drift and unreproducible builds.
+2. **Monthly Automated Maintenance (Dependabot)**: Minor and patch dependency upgrades are managed on an isolated, scheduled monthly cadence via `.github/dependabot.yml` targeting `dev`. Dependabot PRs carry `type: chore` and component labels, and must pass full CI before review.
+3. **Prohibition of Automated Major Upgrades**: Major version bumps (e.g. `flutter pub upgrade --major-versions` or breaking Go package version shifts) must NEVER be executed automatically in CI or routine maintenance PRs. Major upgrades represent breaking changes, platform SDK migrations, or peer dependency conflicts, and must always be executed as dedicated spike/migration tasks with explicit architectural alignment and regression testing.
+4. **Continuous Vulnerability Auditing**: Backend Go code must pass `govulncheck` in CI to prevent deploying packages with known CVEs.
+
 ## Agent Rules
 
 1. **Read stacks.md first** — before altering any workflow or project configuration.
@@ -145,4 +152,5 @@ All team members MUST follow Conventional Commits to ensure automated release no
 8. **Database Rollback Caution** — Never automate destructive database schema rollbacks in unattended CI/CD pipelines. Always verify backward-compatibility (Expand & Contract) and instruct developers to use `siagakita-migrate` for manual schema rollbacks.
 9. **Major Workflow Evolution Protocol** — Any proposed modifications to GitHub Actions workflows (`.github/workflows/*.yml`), branching models, or deployment automation are classified as Major Evolutions. Draft a structured proposal in `learning_proposal.md` and recommend `/grill-me` alignment before implementing changes. See `feature-dev-workflow/workflow-evolution.md`.
 10. **Update docs** — whenever workflow files or deployment architecture change, update `docs/skills/devops-workflow-docs.md`.
+11. **Enforce Dependency Invariants** — prohibit arbitrary dependency upgrades or major bumps within feature development branches.
 
