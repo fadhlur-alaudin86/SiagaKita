@@ -655,10 +655,10 @@ func (r *Repository) GetStats(period string) (*StatsResponse, error) {
 	// Tentukan rentang waktu berdasarkan period
 	var dateFormat, interval string
 	switch period {
-	case "week":
+	case PeriodWeek:
 		dateFormat = "YYYY-MM-DD" // daily dots for 7 days
 		interval = "7 days"
-	case "year":
+	case PeriodYear:
 		dateFormat = "YYYY-MM" // monthly dots for 12 months
 		interval = "12 months"
 	default: // month (default)

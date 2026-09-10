@@ -20,7 +20,15 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-const testJWTSecret = "test-secret-key-siagakita-minimum-32-chars-long"
+const (
+	testJWTSecret       = "test-secret-key-siagakita-minimum-32-chars-long"
+	roleCivilian        = "civilian"
+	roleVolunteer       = "volunteer"
+	roleAgency          = "agency"
+	roleAgencyPersonnel = "agency_personnel"
+	ranksBasePath       = "/api/v1/admin/ranks"
+	ranksIDPath         = "/api/v1/admin/ranks/1"
+)
 
 func setupTestApp(h *Handler, cfg *config.Config) *fiber.App {
 	app := fiber.New()
@@ -108,7 +116,7 @@ func TestKYC_RBAC_Forbidden_Roles(t *testing.T) {
 	h := NewHandler(nil, cfg)
 	app := setupTestApp(h, cfg)
 
-	forbiddenRoles := []string{"civilian", "volunteer", "agency", "agency_personnel"}
+	forbiddenRoles := []string{roleCivilian, roleVolunteer, roleAgency, roleAgencyPersonnel}
 
 	for _, role := range forbiddenRoles {
 		t.Run("Role_"+role, func(t *testing.T) {
@@ -294,7 +302,7 @@ func TestUserManagement_RBAC_Forbidden_Roles(t *testing.T) {
 	h := NewHandler(nil, cfg)
 	app := setupTestApp(h, cfg)
 
-	forbiddenRoles := []string{"civilian", "volunteer", "agency", "agency_personnel"}
+	forbiddenRoles := []string{roleCivilian, roleVolunteer, roleAgency, roleAgencyPersonnel}
 
 	for _, role := range forbiddenRoles {
 		t.Run("Role_"+role, func(t *testing.T) {
@@ -432,19 +440,19 @@ func TestAdmin_NormalizePeriod(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"week", "week"},
-		{"weekly", "week"},
-		{"WEEK", "week"},
-		{"  week  ", "week"},
-		{"year", "year"},
-		{"yearly", "year"},
-		{"YEAR", "year"},
-		{"month", "month"},
-		{"monthly", "month"},
-		{"MONTH", "month"},
-		{"", "month"},
-		{"   ", "month"},
-		{"unknown_period", "month"},
+		{PeriodWeek, PeriodWeek},
+		{"weekly", PeriodWeek},
+		{"WEEK", PeriodWeek},
+		{"  week  ", PeriodWeek},
+		{PeriodYear, PeriodYear},
+		{"yearly", PeriodYear},
+		{"YEAR", PeriodYear},
+		{PeriodMonth, PeriodMonth},
+		{"monthly", PeriodMonth},
+		{"MONTH", PeriodMonth},
+		{"", PeriodMonth},
+		{"   ", PeriodMonth},
+		{"unknown_period", PeriodMonth},
 	}
 
 	for _, tc := range tests {
@@ -468,10 +476,10 @@ func TestRanks_RBAC_Unauthorized(t *testing.T) {
 		method string
 		path   string
 	}{
-		{http.MethodGet, "/api/v1/admin/ranks"},
-		{http.MethodPost, "/api/v1/admin/ranks"},
-		{http.MethodPut, "/api/v1/admin/ranks/1"},
-		{http.MethodDelete, "/api/v1/admin/ranks/1"},
+		{http.MethodGet, ranksBasePath},
+		{http.MethodPost, ranksBasePath},
+		{http.MethodPut, ranksIDPath},
+		{http.MethodDelete, ranksIDPath},
 	}
 
 	for _, ep := range endpoints {
@@ -498,12 +506,12 @@ func TestRanks_RBAC_Forbidden_Roles(t *testing.T) {
 		method string
 		path   string
 	}{
-		{http.MethodPost, "/api/v1/admin/ranks"},
-		{http.MethodPut, "/api/v1/admin/ranks/1"},
-		{http.MethodDelete, "/api/v1/admin/ranks/1"},
+		{http.MethodPost, ranksBasePath},
+		{http.MethodPut, ranksIDPath},
+		{http.MethodDelete, ranksIDPath},
 	}
 
-	forbiddenWriteRoles := []string{"civilian", "volunteer", "agency", "agency_personnel"}
+	forbiddenWriteRoles := []string{roleCivilian, roleVolunteer, roleAgency, roleAgencyPersonnel}
 	for _, role := range forbiddenWriteRoles {
 		t.Run("Write_Forbidden_"+role, func(t *testing.T) {
 			token, _, err := utils.GenerateAccessToken("user-123", role, testJWTSecret, time.Hour)
@@ -525,14 +533,14 @@ func TestRanks_RBAC_Forbidden_Roles(t *testing.T) {
 	}
 
 	// Read endpoint GET /ranks requires ConsoleOnly (superadmin, admin, agency)
-	forbiddenReadRoles := []string{"civilian", "volunteer", "agency_personnel"}
+	forbiddenReadRoles := []string{roleCivilian, roleVolunteer, roleAgencyPersonnel}
 	for _, role := range forbiddenReadRoles {
 		t.Run("Read_Forbidden_"+role, func(t *testing.T) {
 			token, _, err := utils.GenerateAccessToken("user-123", role, testJWTSecret, time.Hour)
 			if err != nil {
 				t.Fatalf("Failed to generate token: %v", err)
 			}
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/ranks", nil)
+			req := httptest.NewRequest(http.MethodGet, ranksBasePath, nil)
 			req.Header.Set("Authorization", "Bearer "+token)
 			resp, err := app.Test(req)
 			if err != nil {
@@ -567,7 +575,7 @@ func TestStats_RBAC_Forbidden_Roles(t *testing.T) {
 	h := NewHandler(nil, cfg)
 	app := setupTestApp(h, cfg)
 
-	forbiddenRoles := []string{"civilian", "volunteer", "agency_personnel"}
+	forbiddenRoles := []string{roleCivilian, roleVolunteer, roleAgencyPersonnel}
 	for _, role := range forbiddenRoles {
 		t.Run("Role_"+role, func(t *testing.T) {
 			token, _, err := utils.GenerateAccessToken("user-123", role, testJWTSecret, time.Hour)

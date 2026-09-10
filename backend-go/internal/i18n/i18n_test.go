@@ -29,6 +29,8 @@ func TestParseAcceptLanguage(t *testing.T) {
 	}
 }
 
+const testMsgInvalidBody = "Body request tidak valid"
+
 func TestTranslate(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -39,14 +41,14 @@ func TestTranslate(t *testing.T) {
 		{
 			name:     "Static translation to English",
 			lang:     LocaleEN,
-			msg:      "Body request tidak valid",
+			msg:      testMsgInvalidBody,
 			expected: "Invalid request body",
 		},
 		{
 			name:     "Static translation to Indonesian (unchanged)",
 			lang:     LocaleID,
-			msg:      "Body request tidak valid",
-			expected: "Body request tidak valid",
+			msg:      testMsgInvalidBody,
+			expected: testMsgInvalidBody,
 		},
 		{
 			name:     "Dynamic false alarm strike message in English",

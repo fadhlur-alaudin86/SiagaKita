@@ -180,12 +180,12 @@ func (s *Service) GetStats(period string) (*StatsResponse, error) {
 
 func normalizePeriod(period string) string {
 	switch strings.ToLower(strings.TrimSpace(period)) {
-	case "week", "weekly":
-		return "week"
-	case "year", "yearly":
-		return "year"
+	case PeriodWeek, "weekly":
+		return PeriodWeek
+	case PeriodYear, "yearly":
+		return PeriodYear
 	default:
-		return "month"
+		return PeriodMonth
 	}
 }
 

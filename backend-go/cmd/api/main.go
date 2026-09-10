@@ -34,9 +34,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const envProduction = "production"
+
 func main() {
 	// ── 0. Init Logger ────────────────────────────────────────────────────────
-	utils.InitLogger(os.Getenv("GO_ENV") == "production")
+	utils.InitLogger(os.Getenv("GO_ENV") == envProduction)
 
 	// ── 1. Load Config ────────────────────────────────────────────────────────
 	cfg := config.Load()
@@ -111,7 +113,7 @@ func main() {
 	}))
 	corsOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
 	if corsOrigins == "" {
-		if os.Getenv("GO_ENV") == "production" {
+		if os.Getenv("GO_ENV") == envProduction {
 			corsOrigins = "https://siagakita.com,https://admin.siagakita.com,https://api.siagakita.com"
 		} else {
 			corsOrigins = "*"
@@ -150,7 +152,7 @@ func main() {
 	// ── Swagger UI (development only) ─────────────────────────────────────────
 	// Serves OpenAPI 3.0 YAML docs and Swagger UI at GET /docs/*
 	// Not mounted in production to avoid exposing API structure.
-	if os.Getenv("GO_ENV") != "production" {
+	if os.Getenv("GO_ENV") != envProduction {
 		// Serve static YAML files under /docs/api/
 		app.Static("/docs/api", "../docs/api")
 		// Mount Swagger UI pointing to the root OpenAPI spec

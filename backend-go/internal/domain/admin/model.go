@@ -2,6 +2,15 @@ package admin
 
 import "time"
 
+// Stats Period Constants
+const (
+	PeriodWeek  = "week"
+	PeriodMonth = "month"
+	PeriodYear  = "year"
+)
+
+const fieldMessage = "message"
+
 // ─── Response DTOs ────────────────────────────────────────────────────────────
 
 // VolunteerKYC adalah data relawan yang menunggu verifikasi KYC.

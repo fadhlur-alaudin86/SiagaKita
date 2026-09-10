@@ -14,8 +14,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+const testSecretKey = "test-secret-key"
+
 func TestAuth_MissingHeader(t *testing.T) {
-	cfg := &config.Config{JWTSecret: "test-secret-key"}
+	cfg := &config.Config{JWTSecret: testSecretKey}
 	app := fiber.New()
 	app.Get("/protected", Auth(cfg), func(c *fiber.Ctx) error {
 		return c.SendString("ok")
@@ -40,7 +42,7 @@ func TestAuth_MissingHeader(t *testing.T) {
 }
 
 func TestAuth_InvalidBearerPrefix(t *testing.T) {
-	cfg := &config.Config{JWTSecret: "test-secret-key"}
+	cfg := &config.Config{JWTSecret: testSecretKey}
 	app := fiber.New()
 	app.Get("/protected", Auth(cfg), func(c *fiber.Ctx) error {
 		return c.SendString("ok")
@@ -59,7 +61,7 @@ func TestAuth_InvalidBearerPrefix(t *testing.T) {
 }
 
 func TestAuth_InvalidOrExpiredToken(t *testing.T) {
-	cfg := &config.Config{JWTSecret: "test-secret-key"}
+	cfg := &config.Config{JWTSecret: testSecretKey}
 	app := fiber.New()
 	app.Get("/protected", Auth(cfg), func(c *fiber.Ctx) error {
 		return c.SendString("ok")
@@ -90,7 +92,7 @@ func TestAuth_InvalidOrExpiredToken(t *testing.T) {
 }
 
 func TestAuth_ValidToken(t *testing.T) {
-	cfg := &config.Config{JWTSecret: "test-secret-key"}
+	cfg := &config.Config{JWTSecret: testSecretKey}
 	app := fiber.New()
 
 	var extractedUserID, extractedRole, extractedJTI string

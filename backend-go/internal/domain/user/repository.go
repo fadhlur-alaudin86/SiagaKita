@@ -104,7 +104,7 @@ func (r *Repository) UpdatePhoneNumber(userID, phone string) error {
 func (r *Repository) UpdateProfile(userID string, req *UpdateProfileRequest) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		profileMap := map[string]interface{}{
-			"updated_at": time.Now(),
+			fieldUpdatedAt: time.Now(),
 		}
 		if req.FullName != nil {
 			profileMap["full_name"] = *req.FullName
@@ -201,7 +201,7 @@ func (r *Repository) SaveBiodata(userID string, req *BiodataRequest) error {
 			"height_cm":          req.HeightCm,
 			"weight_kg":          req.WeightKg,
 			"domicile":           req.Domicile,
-			"updated_at":         time.Now(),
+			fieldUpdatedAt:       time.Now(),
 		}
 		if req.PhoneNumber != nil {
 			profileMap["phone_number"] = *req.PhoneNumber
@@ -361,7 +361,7 @@ func (r *Repository) SubmitKYC(userID, nik, fullName, placeOfBirth, dateOfBirthS
 		"kyc_ktp_url":             ktpURL,
 		"profile_photo_url":       photoURL,
 		"nik_verification_status": KYCStatusPending,
-		"updated_at":              time.Now(),
+		fieldUpdatedAt:            time.Now(),
 	}
 
 	if dateOfBirthStr != "" {
