@@ -236,6 +236,7 @@ func main() {
 	incidents.Post("/:id/agency-review", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyReviewVolunteer)
 	incidents.Post("/:id/agency-resolve", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyResolveSOS)
 	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.MarkFalseAlarm)
+	incidents.Post("/:id/dispatch-broadcast", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.DispatchBroadcast)
 	// endpoint lama: incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve) // bisa tetap ada atau diganti, kita pakai agency-resolve sekarang
 
 	reports := v1.Group("/reports", authMw)
@@ -249,6 +250,7 @@ func main() {
 	telGroup := v1.Group("/telemetry", authMw)
 	telGroup.Put("/location", telemetryHandler.UpdateLocation)
 	telGroup.Post("/online-status", middleware.ConsoleOnly(), telemetryHandler.GetOnlineStatus)
+	telGroup.Get("/nearby-volunteers", middleware.ConsoleOnly(), telemetryHandler.GetNearbyVolunteers)
 
 	// ── Admin (protected - AdminOnly / ConsoleOnly) ───────────────────────────
 	admin := v1.Group("/admin", authMw)

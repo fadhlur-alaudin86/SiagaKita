@@ -15,6 +15,8 @@ enum MobileWsEvent {
   sosCancelled, // SOS_CANCELLED
   sosResolved, // SOS_RESOLVED
   sosFalseAlarm, // SOS_FALSE_ALARM
+  incidentAssignmentOffer, // INCIDENT_ASSIGNMENT_OFFER
+  incidentAssignmentClaimed, // INCIDENT_ASSIGNMENT_CLAIMED
   forceLogout, // FORCE_LOGOUT — sesi digantikan perangkat lain
   connected,
   unknown,
@@ -36,6 +38,8 @@ class MobileWsMessage {
       'SOS_CANCELLED' => MobileWsEvent.sosCancelled,
       'SOS_RESOLVED' => MobileWsEvent.sosResolved,
       'SOS_FALSE_ALARM' => MobileWsEvent.sosFalseAlarm,
+      'INCIDENT_ASSIGNMENT_OFFER' => MobileWsEvent.incidentAssignmentOffer,
+      'INCIDENT_ASSIGNMENT_CLAIMED' => MobileWsEvent.incidentAssignmentClaimed,
       'FORCE_LOGOUT' => MobileWsEvent.forceLogout,
       _ => MobileWsEvent.unknown,
     };

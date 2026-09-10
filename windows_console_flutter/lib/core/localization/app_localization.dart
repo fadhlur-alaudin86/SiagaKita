@@ -249,6 +249,40 @@ class AppLocalization {
     'RELAWAN': 'VOLUNTEERS',
     'Gagal memuat statistik. Silakan coba lagi.':
         'Failed to load statistics. Please try again.',
+
+    // ─── Dispatch Relawan ────────────────────────────────────────────────────
+    'Dispatch Relawan': 'Volunteer Dispatch',
+    'Radar & Antrean SOS Aktif': 'Radar & Active SOS Queue',
+    'Antrean SOS Aktif': 'Active SOS Queue',
+    'Pilih insiden SOS di sebelah kiri untuk melihat radar relawan dan melakukan penugasan.':
+        'Select an SOS incident on the left to view volunteer radar and dispatch responders.',
+    'Belum ada insiden SOS aktif': 'No active SOS incidents',
+    'Kandidat Relawan Terdekat': 'Nearest Volunteer Candidates',
+    'Tidak ada relawan online dalam radius':
+        'No online volunteers within radius',
+    'Broadcast ke 3 Terdekat': 'Broadcast to Top 3 Nearest',
+    'Kirim Penugasan': 'Send Dispatch',
+    'Relawan Terpilih': 'Selected Volunteers',
+    'Detail Penugasan': 'Dispatch Details',
+    'Urutan Jarak': 'Distance Ranking',
+    'km dari lokasi': 'km from location',
+    'ON DUTY': 'ON DUTY',
+    'OFFLINE': 'OFFLINE',
+    'Tugaskan': 'Dispatch',
+    'Misi Sedang Berjalan': 'Active Mission Tracking',
+    'Relawan Menuju Lokasi': 'Volunteer En Route to Scene',
+    'Diterima': 'Accepted',
+    'Menuju Lokasi': 'En Route',
+    'Tiba di Lokasi': 'On Scene',
+    'Broadcast ulang penugasan': 'Re-broadcast dispatch',
+    'Penugasan berhasil dikirim': 'Dispatch successfully sent',
+    'Gagal mengirim penugasan': 'Failed to send dispatch',
+    'Waktu penugasan habis (Timeout)': 'Dispatch offer timed out',
+    'Belum ada relawan yang menerima panggilan dalam 60 detik.':
+        'No volunteer has accepted the call within 60 seconds.',
+    'Relawan Penanggung Jawab': 'Responding Volunteer',
+    'Broadcast Ulang': 'Re-broadcast',
+    'Tangani oleh Petugas Instansi': 'Handle by Agency Personnel',
   };
 
   static String _translateInternal(String languageCode, String text) {

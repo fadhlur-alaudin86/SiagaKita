@@ -280,6 +280,8 @@ type AllActiveIncidentResponse struct {
 	AgencyStatus             *string     `json:"agency_status,omitempty"`
 	HandledByAgencyID        *string     `json:"handled_by_agency_id,omitempty"`
 	VolunteerResponseStatus  *string     `json:"volunteer_response_status,omitempty"`
+	ResponderID              *string     `json:"responder_id,omitempty"`
+	ResponderName            *string     `json:"responder_name,omitempty"`
 	CreatedAt                time.Time   `json:"created_at"`
 	UpdatedAt                time.Time   `json:"updated_at"`
 	CompletedAt              *time.Time  `json:"completed_at,omitempty"`

@@ -119,6 +119,66 @@ func (h *Handler) GetOnlineStatus(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, statusMap)
 }
 
+// NearbyVolunteerDTO represents a nearby volunteer with distance and coordinates.
+type NearbyVolunteerDTO struct {
+	UserID     string  `json:"user_id"`
+	Latitude   float64 `json:"latitude"`
+	Longitude  float64 `json:"longitude"`
+	DistanceKM float64 `json:"distance_km"`
+}
+
+// GetNearbyVolunteers handles GET /api/v1/telemetry/nearby-volunteers [ConsoleOnly]
+// Queries Redis GEO for volunteers within radius_km (default 15 km) from (lat, lng).
+func (h *Handler) GetNearbyVolunteers(c *fiber.Ctx) error {
+	latStr := c.Query("lat")
+	lngStr := c.Query("lng")
+	if latStr == "" || lngStr == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Parameter lat dan lng wajib diisi")
+	}
+
+	var lat, lng float64
+	if _, err := fmt.Sscanf(latStr, "%f", &lat); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Parameter lat tidak valid")
+	}
+	if _, err := fmt.Sscanf(lngStr, "%f", &lng); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Parameter lng tidak valid")
+	}
+
+	radiusKM := 15.0
+	if rStr := c.Query("radius_km"); rStr != "" {
+		var r float64
+		if _, err := fmt.Sscanf(rStr, "%f", &r); err == nil && r > 0 {
+			radiusKM = r
+		}
+	}
+
+	ctx, canceled := context.WithTimeout(context.Background(), 3*time.Second)
+	defer canceled()
+
+	locations, err := h.rdb.GeoRadius(ctx, relawanGeoKey, lng, lat, &redis.GeoRadiusQuery{ //nolint:staticcheck
+		Radius:    radiusKM,
+		Unit:      "km",
+		WithCoord: true,
+		WithDist:  true,
+		Sort:      "ASC",
+	}).Result()
+	if err != nil && err != redis.Nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal mengambil data relawan terdekat")
+	}
+
+	result := make([]NearbyVolunteerDTO, 0, len(locations))
+	for _, loc := range locations {
+		result = append(result, NearbyVolunteerDTO{
+			UserID:     loc.Name,
+			Latitude:   loc.Latitude,
+			Longitude:  loc.Longitude,
+			DistanceKM: loc.Dist,
+		})
+	}
+
+	return utils.SuccessResponse(c, result)
+}
+
 // SMSFallback handles POST /api/v1/incidents/sms-fallback  [API Key required]
 // Parses a raw SMS string, skips grace period, and immediately broadcasts
 // INCOMING_EMERGENCY to nearby online volunteers via the Hub.

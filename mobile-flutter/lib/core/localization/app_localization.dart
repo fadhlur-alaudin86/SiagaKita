@@ -250,6 +250,14 @@ class AppLocalization {
     'Aktifkan untuk menerima panggilan darurat':
         'Activate to receive emergency calls',
     'MISI SEDANG BERJALAN': 'MISSION IN PROGRESS',
+    'Penugasan Darurat dari Operator!': 'Emergency Dispatch from Operator!',
+    'Operator menugaskan Anda untuk merespons insiden ini secara langsung.':
+        'The operator has dispatched you directly to respond to this incident.',
+    'Lokasi insiden': 'Incident location',
+    'Terima Misi': 'Accept Mission',
+    'Tolak': 'Decline',
+    'Penugasan telah diambil oleh relawan lain atau waktu habis.':
+        'Dispatch offer was claimed by another responder or timed out.',
     'Lokasi korban: ': 'Victim location: ',
     'SELESAIKAN MISI': 'COMPLETE MISSION',
     'Detail': 'Detail',

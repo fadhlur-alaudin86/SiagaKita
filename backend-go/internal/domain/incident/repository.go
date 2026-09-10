@@ -161,7 +161,9 @@ func (r *Repository) FindAllActive() ([]AllActiveIncidentResponse, error) {
 			(SELECT contact_name || ' (' || contact_phone || ')' FROM emergency_contacts ec WHERE ec.user_id = i.reporter_id AND ec.deleted_at IS NULL LIMIT 1) AS reporter_emergency_contact,
 			array_to_json(COALESCE(i.photo_paths, ARRAY[]::text[]))::text AS photo_paths,
 			i.audio_path,
-			(SELECT status FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS volunteer_response_status
+			(SELECT status FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS volunteer_response_status,
+			(SELECT responder_id FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS responder_id,
+			(SELECT COALESCE(up2.full_name, u2.email, 'Relawan') FROM incident_responses ir LEFT JOIN users u2 ON u2.id = ir.responder_id LEFT JOIN user_profiles up2 ON up2.user_id = ir.responder_id WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS responder_name
 		FROM incidents i
 		LEFT JOIN users u ON u.id = i.reporter_id
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id
@@ -204,7 +206,9 @@ func (r *Repository) FindAgencyHistory() ([]AllActiveIncidentResponse, error) {
 			(SELECT contact_name || ' (' || contact_phone || ')' FROM emergency_contacts ec WHERE ec.user_id = i.reporter_id AND ec.deleted_at IS NULL LIMIT 1) AS reporter_emergency_contact,
 			array_to_json(COALESCE(i.photo_paths, ARRAY[]::text[]))::text AS photo_paths,
 			i.audio_path,
-			(SELECT status FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS volunteer_response_status
+			(SELECT status FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS volunteer_response_status,
+			(SELECT responder_id FROM incident_responses ir WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS responder_id,
+			(SELECT COALESCE(up2.full_name, u2.email, 'Relawan') FROM incident_responses ir LEFT JOIN users u2 ON u2.id = ir.responder_id LEFT JOIN user_profiles up2 ON up2.user_id = ir.responder_id WHERE ir.incident_id = i.id ORDER BY accepted_at DESC LIMIT 1) AS responder_name
 		FROM incidents i
 		LEFT JOIN users u ON u.id = i.reporter_id
 		LEFT JOIN user_profiles up ON up.user_id = i.reporter_id

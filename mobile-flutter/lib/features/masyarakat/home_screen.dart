@@ -215,6 +215,8 @@ class _HomeScreenState extends State<HomeScreen>
         }
         break;
       case MobileWsEvent.sosCancelled:
+      case MobileWsEvent.incidentAssignmentOffer:
+      case MobileWsEvent.incidentAssignmentClaimed:
       case MobileWsEvent.connected:
       case MobileWsEvent.unknown:
         break;
