@@ -3,6 +3,7 @@ package ws
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/hub"
@@ -28,7 +29,9 @@ func NewServer(h *hub.Hub, rdb *redis.Client, db *gorm.DB, cfg *config.Config) *
 	// Log removed, we log it in main.go
 
 	return &http.Server{
-		Addr:    addr,
-		Handler: mux,
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 }

@@ -279,7 +279,7 @@ func (s *Service) UpdateProfile(userID string, req *UpdateProfileRequest) error 
 
 func (s *Service) SubmitVolunteerRegistration(c *fiber.Ctx, userID string, experience string, specializations []string) error {
 	saveDir := s.cfg.UploadDir + "/certificates"
-	if err := os.MkdirAll(saveDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(saveDir, 0750); err != nil {
 		return fmt.Errorf("gagal membuat folder upload: %w", err)
 	}
 
@@ -567,7 +567,7 @@ func (s *Service) ResendOTP(ctx context.Context, email, otpContext string) error
 func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName, placeOfBirth, dateOfBirth string) error {
 	// Gunakan path absolut agar file disimpan di lokasi yang benar di VPS.
 	saveDir := s.cfg.UploadDir + "/kyc"
-	if err := os.MkdirAll(saveDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(saveDir, 0750); err != nil {
 		return fmt.Errorf("gagal membuat folder upload: %w", err)
 	}
 

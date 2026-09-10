@@ -299,8 +299,6 @@ class AppLocalization {
     'Saya menyatakan bahwa dokumen yang dilampirkan adalah benar, dan saya bersedia dipanggil dalam situasi darurat di area jangkauan saya sesuai standar operasional yang berlaku.':
         'I declare that attached documents are valid, and I agree to be called in emergencies within my coverage area according to applicable SOPs.',
     'SUBMIT PENGAJUAN': 'SUBMIT APPLICATION',
-    'Halaman ini sedang dalam pengembangan':
-        'This page is currently under development',
     'Lihat semua riwayat →': 'View all history →',
     'Selesaikan/batalkan misi yang sedang aktif':
         'Complete/cancel the currently active mission',
@@ -359,8 +357,6 @@ class AppLocalization {
     'Mengapa perlu verifikasi?': 'Why is verification needed?',
     'Verifikasi NIK dan wajah meningkatkan kepercayaan responden terhadap laporan darurat Anda dan akan digunakan sebagai foto profil resmi Anda di aplikasi.':
         'Identity and face verification increases respondent trust in your emergency reports and will be used as your official profile photo in the app.',
-    '• Data diproses dalam 1-3 hari kerja\n• Wajah harus terlihat jelas tanpa aksesoris penutup\n• NIK terenkripsi dan aman':
-        '• Data is processed in 1-3 working days\n• Face must be clearly visible without covering accessories\n• ID number is encrypted and secure',
     'NIK (16 digit)': 'ID Number (16 digits)',
     'Nama lengkap tidak boleh kosong': 'Full name cannot be empty',
     'Kata sandi tidak boleh kosong': 'Password cannot be empty',
@@ -514,7 +510,6 @@ class AppLocalization {
     'Panggilan darurat\nbebas pulsa': 'Toll-free\nemergency call',
     'Kirim bukti & titik\nlokasi': 'Send proof &\nlocation',
     'SOS AKTIF': 'SOS ACTIVE',
-    'Mencari Bantuan...': 'Searching for Help...',
     'Transmitting': 'Transmitting',
     'Signal Lost': 'Signal Lost',
     'Riwayat': 'History',
@@ -591,8 +586,6 @@ class AppLocalization {
         'OTP code has been sent to your email',
     'Lupa Password': 'Forgot Password',
     'Reset Password': 'Reset Password',
-    'MEMBATALKAN...': 'CANCELING...',
-    'RETRYING...': 'RETRYING...',
     'OK': 'OK',
 
     // ─── Form Validations & Profile ──────────────────────────────────────────
