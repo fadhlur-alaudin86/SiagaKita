@@ -1,406 +1,275 @@
-# 🏗️ SiagaKita - Arsitektur Backend
+# SiagaKita Backend Architecture
 
-> **Diperbarui:** 15 Mei 2026
-> **Versi Schema:** v3
-> **Stack:** Go 1.26 + Fiber v2 + Sonic + Zerolog + PostgreSQL 15 + Redis
+This document provides a comprehensive technical overview of the SiagaKita backend core, including domain modeling, authentication mechanics, session guards, WebSocket real-time systems, and operational runtime design.
 
 ---
 
-## Daftar Isi
+## Technical Stack Overview
 
-1. [Struktur Folder](#1-struktur-folder)
-2. [Domain-Driven Design](#2-domain-driven-design)
-3. [Alur Autentikasi](#3-alur-autentikasi)
-4. [RBAC - Role-Based Access Control](#4-rbac--role-based-access-control)
-5. [WebSocket Architecture](#5-websocket-architecture)
-6. [OTP System](#6-otp-system)
-7. [Superadmin Seeding](#7-superadmin-seeding)
-8. [Konfigurasi Environment](#8-konfigurasi-environment)
+| Component | Technology | Purpose |
+|---|---|---|
+| Language & Runtime | Go 1.26 | High-throughput backend runtime |
+| Web Framework | Go Fiber v2 | HTTP router and middleware pipeline |
+| JSON Engine | ByteDance Sonic | JIT-compiled high-performance JSON serialization |
+| Logging | Zerolog | Structured, zero-allocation logging (Console + Disk persistence) |
+| Relational Database | PostgreSQL 15 | Persistent relational storage via `pgx/v5` connection pool |
+| Cache & Coordination | Redis 7 | Session storage, JTI tokens, OTP rate limits, and real-time state |
+| Migrations | `golang-migrate` | Versioned, reversible database migrations (`cmd/migrate`) |
+| Real-Time Engine | Gorilla WebSocket | Dedicated WebSocket server on port 8081 with Hub registry |
+| API Contracts | OpenAPI 3.0 (Swagger) | Modular API specifications served at `/docs/*` |
 
 ---
 
-## 1. Struktur Folder
+## Directory Structure
 
 ```
 backend-go/
 ├── cmd/
-│   └── api/
-│       └── main.go          - Entry point, wiring semua domain, seedSuperAdmin()
+│   ├── api/
+│   │   └── main.go              - Server entry point, domain routing, middleware wiring, superadmin seed
+│   └── migrate/
+│       └── main.go              - Database migration CLI (up, down, status, version)
 ├── internal/
 │   ├── config/
-│   │   └── config.go        - Struct Config, Load() dari env vars
+│   │   └── config.go            - Environment variable loader and application configuration
 │   ├── database/
-│   │   ├── postgres.go      - GORM connection ke PostgreSQL
-│   │   └── redis.go         - Redis client
+│   │   ├── postgres.go          - PostgreSQL pgxpool initialization and connection management
+│   │   ├── redis.go             - Redis client initialization and helper methods
+│   │   └── migrate.go           - Programmatic migration runner wrapping golang-migrate
 │   ├── domain/
-│   │   ├── user/            - Auth gateway + profile management
-│   │   │   ├── model.go     - User, UserProfile, AdminProfile, AgencyPersonnel, DTOs
-│   │   │   ├── repository.go - DB queries
-│   │   │   ├── service.go   - Business logic (3 login methods)
-│   │   │   └── handler.go   - HTTP handlers
-│   │   ├── admin/           - Admin operations (KYC, ban, stats, ranks)
-│   │   │   ├── model.go
+│   │   ├── user/                - Authentication, profile management, KYC submission, session rotation
+│   │   │   ├── handler.go       - HTTP transport handlers
+│   │   │   ├── service.go       - Business logic, password hashing, JWT generation
+│   │   │   ├── repository.go    - Raw SQL queries via pgxpool
+│   │   │   └── model.go         - Data structures and request/response DTOs
+│   │   ├── incident/            - Emergency SOS (Jalur A) and community reports (Jalur B)
+│   │   │   ├── handler.go
+│   │   │   ├── service.go
 │   │   │   ├── repository.go
+│   │   │   └── model.go
+│   │   ├── admin/               - Admin operations, KYC approval, account bans, gamification, analytics
+│   │   │   ├── handler.go
 │   │   │   ├── service.go
-│   │   │   └── handler.go
-│   │   ├── incident/        - SOS & laporan warga
-│   │   │   ├── model.go
 │   │   │   ├── repository.go
+│   │   │   └── model.go
+│   │   ├── otp/                 - OTP distribution (Gmail REST API + Fonnte WhatsApp)
+│   │   │   ├── handler.go
 │   │   │   ├── service.go
-│   │   │   └── handler.go
-│   │   ├── otp/             - OTP via Email (SMTP) + WA (Fonnte)
-│   │   │   ├── gateway.go
-│   │   │   ├── service.go
-│   │   │   └── handler.go
-│   │   └── telemetry/       - GPS location update + SMS fallback
-│   │       └── handler.go
+│   │   │   └── gateway.go
+│   │   └── telemetry/           - Real-time GPS location updates and SMS fallback gateway
+│   │       ├── handler.go
+│   │       ├── service.go
+│   │       └── repository.go
 │   ├── hub/
-│   │   └── hub.go           - WebSocket connection registry (map[userID]conn)
+│   │   └── hub.go               - In-memory WebSocket connection registry and role broadcast engine
 │   ├── middleware/
-│   │   └── auth.go          - JWT Auth + RBAC middleware
+│   │   ├── auth.go              - JWT authentication and granular RBAC filters
+│   │   ├── i18n.go              - Transparent locale negotiation via Accept-Language header
+│   │   ├── logger.go            - HTTP access logger integrated with Zerolog
+│   │   └── recover.go           - Panic recovery middleware
 │   ├── utils/
-│   │   ├── logger.go        - Centralized Zerolog utility (Console + File)
-│   │   ├── response.go      - SuccessResponse, ErrorResponse, CreatedResponse
-│   │   └── jwt.go           - GenerateAccessToken, GenerateRefreshToken, ParseToken
+│   │   ├── jwt.go               - Token generation, claims validation, and JTI creation
+│   │   ├── logger.go            - Centralized Zerolog logger setup
+│   │   └── response.go          - Standardized JSON responses with i18n message translation
 │   └── ws/
-│       └── server.go        - WebSocket server, event broadcasting
+│       ├── handler.go           - WebSocket connection upgrader and lifecycle handler
+│       └── server.go            - Standalone WebSocket HTTP listener
 └── migrations/
-    ├── 001_init_schema.sql  (deprecated - jangan dijalankan)
-    └── 003_schema_v3.sql    ← Schema aktif, jalankan ini
+    ├── 001_init_schema.up.sql   - Sequential migration files (up/down pairs)
+    └── ...                      - Migrations up to 020_add_analytics_indexes
 ```
 
 ---
 
-## 2. Domain-Driven Design
+## Domain-Driven Design & Layering
 
-Backend menggunakan pola **Repository → Service → Handler** per domain:
+The backend enforces a strict 3-tier layering model across all domains:
 
 ```
 HTTP Request
     │
     ▼
-Handler (HTTP layer)
-    │  parsing body, validasi input dasar, return response
+Handler (HTTP Layer)
+    │  - Parse and validate request payloads
+    │  - Extract authenticated identity from fiber.Ctx Locals
+    │  - Call appropriate service method
+    │  - Return standardized JSON response via utils.SuccessResponse / utils.ErrorResponse
     ▼
-Service (Business logic)
-    │  validasi bisnis, transformasi data, transaksi
+Service (Business Logic Layer)
+    │  - Enforce domain rules, state transitions, and role constraints
+    │  - Coordinate transactional boundaries
+    │  - Trigger external gateways (SMS, WhatsApp, Gmail)
+    │  - Broadcast real-time events via WebSocket Hub
     ▼
-Repository (Data access)
-    │  query SQL via GORM
+Repository (Data Access Layer)
+    │  - Execute raw SQL queries using pgxpool.Pool
+    │  - Scan rows into domain structs
+    │  - Manage explicit database transactions (pgx.Tx)
     ▼
 PostgreSQL / Redis
 ```
 
-### Domain Map
-
-| Domain | Tanggung Jawab |
-|--------|---------------|
-| `user` | Autentikasi (register, login, JWT), manajemen profil citizen/volunteer, verifikasi phone OTP, update profil |
-| `admin` | KYC relawan, ban/unban user, master data rank, statistik sistem, buat akun admin |
-| `incident` | SOS (Jalur A): trigger, cancel, GPS update, resolve, false alarm; Laporan (Jalur B): CRUD + status |
-| `otp` | OTP via Gmail API (REST), OTP WA via Fonnte, rate limiting di Redis |
-| `telemetry` | Location update real-time, SMS fallback untuk area tanpa internet |
-| `agency` | Manajemen akun `agency_personnel` khusus untuk instansi terkait |
-
-### 2.1 Hierarki Role & Akses
-| Role | Keterangan |
-|------|------------|
-| **superadmin** | Akses root sistem (Web Console). **Hanya bertugas membuat akun admin.** Di-*seed* otomatis dari environment. |
-| **admin** | Administrator aplikasi (Web Console). Mendaftarkan instansi (`agency`), verifikasi KYC relawan, memblokir pengguna, manajemen rank. |
-| **agency** | Kantor Instansi (Polisi/Damkar/RS). Hanya dapat mengakses Web Console untuk manajemen dan mendaftarkan akun petugas lapangannya (**agency_personnel**). |
-| **agency_personnel** | Petugas lapangan (Mobile App). Menerima dispatch insiden. Didaftarkan oleh *agency*. |
-| **volunteer** | Relawan terlatih (Mobile App). Lolos KYC. Menerima dispatch. |
-| **civilian** | Warga biasa (Mobile App). Mengirim SOS, melihat laporan. |
-
-
 ---
 
-## 3. Alur Autentikasi
+## Role-Based Access Control (RBAC)
 
-### 3.1 Register (civilian/volunteer)
+SiagaKita defines six discrete roles in the PostgreSQL `user_role` ENUM:
 
-```
-POST /auth/register
-  { full_name, email, password }
-        │
-        ├── Cek duplikasi email 
-        │     └── [Email ada TAPI belum terverifikasi OTP] → Auto-hapus (cleanup ghost account)
-        ├── bcrypt hash password (cost: 12)
-        ├── [ATOMIC TRANSACTION MULAI]
-        │     ├── INSERT INTO users (email, password_hash, role='civilian')
-        │     └── INSERT INTO user_profiles (user_id, full_name)
-        ├── [ATOMIC TRANSACTION SELESAI]
-        └── kirim OTP ke email via SMTP
-              │
-              ├── [GAGAL/TIMEOUT] → Hapus akun (CASCADE) ← agar email bisa dipakai ulang
-              └── [OK]    → return { message, email }
+| Role | Target Platform | Scope & Capabilities |
+|---|---|---|
+| `superadmin` | Desktop Console | System initialization, admin provisioning. Created via startup environment seeding. |
+| `admin` | Desktop Console | Volunteer KYC validation, user moderation (bans/strikes), master rank management, system statistics. |
+| `agency` | Desktop Console | Emergency monitoring, dispatch management, report triage, live responder tracking. |
+| `agency_personnel` | Mobile Responder | Field responder personnel. Receives dispatches, updates mission status, streams GPS. |
+| `volunteer` | Mobile Citizen App | Verified civilian responders. Receives nearby SOS alerts, earns XP, and completes rescue missions. |
+| `civilian` | Mobile Citizen App | General public. Triggers instant SOS alerts, submits community reports, manages personal medical biodata. |
 
-POST /auth/verify-register-otp
-  { email, otp_code }
-        │
-        ├── verifyEmailOTP (Redis lookup)
-        ├── UPDATE user_profiles SET is_email_verified = true
-        └── return JWT (access_token + refresh_token)
-### B. Otentikasi & Registrasi (Anti-Ghost Account)
+### Middleware Hierarchy
 
-Alur registrasi telah diperkuat untuk memastikan **integritas data** dan **mencegah kebocoran akun tak terverifikasi** (*Ghost Account*).
-
-1. **Atomic Transaction (`domain/user/service.go:Register`)**
-   - Pembuatan `users` (credentials) dan `user_profiles` dibungkus dalam **1 transaksi GORM**.
-   - Jika ada langkah yang gagal, transaksi di-_rollback_ tanpa meninggalkan data sampah di database.
-
-2. **Ghost Account Prevention & Auto-Cleanup**
-   - Masalah: Terkadang server gagal mengirim OTP karena *network timeout* atau pemblokiran port SMTP.
-   - Solusi: Jika terjadi kegagalan _setelah_ transaksi DB berhasil di-_commit_, server secara otomatis **menghapus kembali** (*hard-delete*) row yang baru saja dibuat.
-   - Pengecekan Login: Fungsi `Login()` kini menolak akses untuk akun dengan `is_email_verified = false`. Akun seperti ini akan diminta melakukan registrasi ulang (yang akan menghapus akun rusak lama).
-
-3. **Email Gateway via Gmail REST API**
-   - VPS cloud modern (seperti DigitalOcean) secara default memblokir semua outbound *port* SMTP (25, 465, 587) untuk mencegah SPAM.
-   - Untuk menghindari *infinite loop / timeout* yang membekukan aplikasi klien, gateway email dipindahkan menggunakan **Gmail REST API via HTTPS (Port 443)** di `domain/otp/gmail_api_gateway.go`.
-   - Hal ini memastikan pengiriman email menggunakan protokol HTTPS yang aman dari pemblokiran firewall VPS, lengkap dengan implementasi *Refresh Token OAuth2* secara otomatis.
-
-
-### 3.2 Login - 3 Endpoint Terpisah
-
-| Endpoint | Role yang Diizinkan | App |
-|----------|---------------------|-----|
-| `POST /auth/login` | civilian, volunteer | Mobile Citizen |
-| `POST /auth/console/login` | superadmin, admin, agency | Desktop Console |
-| `POST /auth/personnel/login` | agency_personnel | Mobile Responder |
-
-> **Keamanan & Konsistensi:** 
-> 1. Jika role yang salah mencoba endpoint yang salah, semua endpoint mengembalikan "email atau password salah" - mencegah kebocoran informasi (role enumeration prevention).
-> 2. Untuk civilian/volunteer, sistem secara ketat memblokir login jika `IsEmailVerified = false`. Pengguna akan diminta mendaftar ulang, yang akan memicu proses "cleanup ghost account".
-
-
-### 3.3 JWT Token
+Authentication and authorization middleware are defined in `internal/middleware/auth.go`:
 
 ```go
-// Access Token - berumur pendek (default: 15 menit)
-Claims: { user_id, role, jti, exp }
-
-// Refresh Token - berumur panjang (default: 168 jam / 7 hari)
-Claims: { user_id, role, jti, exp }
+// Authentication precedes RBAC middleware:
+app.Get("/api/v1/admin/users", middleware.Auth(cfg), middleware.AdminOnly(), handler)
 ```
 
-Token dilewatkan via header:
-```
-Authorization: Bearer <access_token>
-```
-
-Setelah JWT divalidasi, middleware menyimpan ke `c.Locals`:
-- `c.Locals("userID")` - UUID user
-- `c.Locals("userRole")` - role string
-- `c.Locals("jti")` - Unique session ID (JWT ID)
-
-### 3.4 Session Management (SessionGuard)
-
-Backend menggunakan **Redis** sebagai *single source of truth* untuk validasi sesi aktif.
-
-1. **JTI (JWT ID)**: Setiap token yang diterbitkan memiliki `jti` unik. Saat login, `jti` disimpan di Redis dengan key `session:{userID}`.
-2. **SessionGuard Middleware**:
-   - Khusus untuk role `civilian`, `volunteer`, dan `agency_personnel` (Mobile).
-   - Memeriksa apakah `jti` di dalam token sama dengan yang ada di Redis.
-   - Jika berbeda (karena user login di perangkat baru), request ditolak dengan error `SESSION_REPLACED`.
-   - Hal ini memaksa **Single-Device Login** pada aplikasi mobile.
-3. **Force Logout**: Saat sesi digantikan, server mengirimkan event `FORCE_LOGOUT` via WebSocket ke koneksi lama agar aplikasi klien segera melakukan logout UI.
-
-### 3.5 Idempotensi (Console Only)
-
-Untuk mencegah eksekusi ganda pada aksi yang mengubah state (POST/PATCH/DELETE) dari banyak perangkat console yang tersinkron, backend menerapkan **Idempotency Guard**.
-
-- **Header**: Klien wajib mengirim `X-Idempotency-Key` (UUID v4).
-- **Mekanisme**:
-  - Backend menyimpan hash respons berdasarkan key tersebut di Redis selama 60 detik.
-  - Jika key yang sama dikirim dalam waktu singkat, backend akan mengembalikan respons yang sama tanpa menjalankan logika bisnis kembali.
+- `Auth(cfg)`: Validates JWT signature, expiration, and extracts claims (`userID`, `userRole`, `jti`) into `c.Locals`.
+- `SessionGuard(redis)`: Enforces single-device mobile sessions by validating active JTI against Redis.
+- `Idempotency(redis)`: Blocks duplicate state-altering requests for Console users using `X-Idempotency-Key`.
+- `SuperAdminOnly()`: Restricts access to `superadmin`.
+- `AdminOnly()`: Permits `admin` and `superadmin`.
+- `ConsoleOnly()`: Permits `superadmin`, `admin`, and `agency`.
+- `AgencyOnly()`: Permits `agency`, `admin`, and `superadmin`.
+- `CitizenVolunteer()`: Permits `civilian` and `volunteer`.
+- `PersonnelOnly()`: Permits `agency_personnel`.
+- `APIKeyGateway(cfg)`: Authenticates third-party or SMS gateway fallback requests via static API key.
 
 ---
 
-## 4. RBAC - Role-Based Access Control
+## Authentication & Session Security
 
-Middleware ada di `internal/middleware/auth.go`.
+### Multi-App Login Endpoints
 
-### Komposisi Middleware
+To prevent credential abuse and cross-platform access leakage, login endpoints are segmented by role group:
 
-```go
-// Pola umum:
-route.Method("/path", authMw, middleware.AdminOnly(), handler)
+1. `POST /api/v1/auth/login`: Restricted to `civilian` and `volunteer` (Mobile Citizen App).
+2. `POST /api/v1/auth/console/login`: Restricted to `superadmin`, `admin`, and `agency` (Desktop Console).
+3. `POST /api/v1/auth/personnel/login`: Restricted to `agency_personnel` (Mobile Responder App).
 
-// authMw harus selalu dijalankan SEBELUM RBAC middleware
-```
+All login endpoints return identical generic error messages (`invalid email or password`) upon mismatch to prevent role enumeration.
 
-### Daftar Middleware RBAC
+### Atomic Registration & Ghost Account Prevention
 
-| Middleware | Role yang Diizinkan | Digunakan untuk |
-|-----------|---------------------|-----------------|
-| `Auth(cfg)` | Semua (hanya validasi JWT) | Semua protected route |
-| `SessionGuard(redis)` | Mobile Roles | Enforce single-device login |
-| `Idempotency(redis)` | Console Roles | Cegah double-submit di multi-device |
-| `RequireRoles("x","y")` | Custom | Kasus spesifik |
-| `SuperAdminOnly()` | superadmin | Operasi paling sensitif |
-| `AdminOnly()` | admin, superadmin | KYC, ban user, rank CRUD |
-| `ConsoleOnly()` | superadmin, admin, agency | Stats, laporan, resolve SOS |
-| `AgencyOnly()` | agency, admin, superadmin | Data instansi |
-| `CitizenVolunteer()` | civilian, volunteer | Profile, biodata |
-| `PersonnelOnly()` | agency_personnel | Mobile responder ops |
-| `APIKeyGateway(cfg)` | - (API key) | SMS fallback endpoint |
+1. User registration creates credentials in `users` and an empty profile in `user_profiles` inside a single atomic database transaction.
+2. If the email gateway fails to deliver the verification OTP, the newly created records are immediately cleaned up.
+3. Login is strictly rejected for accounts with `is_email_verified = false`.
 
----
+### Single-Device Mobile Sessions (SessionGuard)
 
-## 5. WebSocket Architecture
+1. Each issued access and refresh token contains a unique `jti` (UUID v4) claim.
+2. Upon login, the active `jti` is stored in Redis under `session:{userID}`.
+3. Mobile requests processed by `SessionGuard` verify that the token's `jti` matches Redis.
+4. When a user logs in on a second device, the Redis key is overwritten with the new `jti`, immediately invalidating the previous session with error code `ERR_SESSION_REPLACED`.
+5. The server broadcasts a `FORCE_LOGOUT` event to the displaced client over WebSockets.
 
-### Server
+### Console Idempotency Guard
 
-WebSocket server berjalan terpisah di port `:8081`.
-
-```
-ws://<host>:8081/ws/connect?token=<jwt>
-```
-
-### Hub Pattern
-
-```go
-// hub.go - registry koneksi aktif
-type Client struct {
-    ConnID string
-    Conn   *websocket.Conn
-    Role   string
-}
-
-type Hub struct {
-    // userID → []Client (Mendukung banyak koneksi per user untuk Console)
-    clients map[string][]*Client
-    mu      sync.RWMutex
-}
-
-// Broadcast ke semua koneksi milik seorang user
-hub.BroadcastToUser(userID, event)
-
-// Broadcast ke role tertentu (contoh: "admin" atau "agency")
-hub.BroadcastToRole("agency", event)
-```
-
-> **Catatan Hub Multi-Connection**: Untuk role **Console** (`admin`, `superadmin`, `agency`), Hub mengizinkan lebih dari satu koneksi aktif per `userID`. Hal ini memungkinkan staf instansi membuka dashboard di PC dan tablet secara bersamaan dengan state yang tersinkronisasi. Sedangkan untuk role **Mobile**, koneksi baru akan memicu pemutusan koneksi lama.
-
-### Event dari Backend ke Client
-
-| Event | Dikirim ke | Trigger |
-|-------|-----------|---------|
-| `INCOMING_EMERGENCY` | Semua agency/admin | SOS baru masuk (status: broadcasting) |
-| `SOS_CANCELLED` | Semua agency/admin | User batalkan SOS |
-| `RESCUE_ACCEPTED` | Reporter | Responder en_route |
-| `INCIDENT_UPDATED` | Semua agency/admin | Perubahan status insiden (Handled/Resolved/dll) |
-| `FORCE_LOGOUT` | User spesifik | Sesi digantikan oleh login baru |
-| `LOCATION_UPDATE` | Agency | GPS reporter diperbarui |
-| `VOLUNTEER_LOCATION_UPDATE` | Agency/admin | Koordinat GPS relawan online diperbarui secara _real-time_ |
-
-### Event dari Client ke Backend
-
-| Event | Dari | Keterangan |
-|-------|------|-----------|
-| `TRIGGER_SOS` | Mobile | (Legacy - kini via REST) |
-| `LOCATION_PING` | Mobile | (Legacy - kini menggunakan HTTP REST untuk *update* GPS dan `TouchLastActive` Redis) |
+1. State-changing requests (POST, PATCH, DELETE) from Desktop Consoles include an `X-Idempotency-Key` header (UUID v4).
+2. The middleware hashes the key and checks Redis:
+   - If present, returns the cached response directly, preventing duplicate dispatches or status updates.
+   - If absent, executes the handler and caches the serialized response in Redis with a 60-second TTL.
 
 ---
 
-## 6. OTP System
+## WebSocket Hub Architecture
 
-### Email OTP (Register & Login masa depan)
+The WebSocket subsystem operates on a dedicated port (`:8081`) to isolate real-time event traffic from standard REST API workloads.
 
-```
-Redis key: otp:register:{email}    TTL: 180 detik
-Redis key: otp_cooldown:{email}    TTL: 60 detik  ← rate limit
-
-Flow:
-  1. Cek cooldown → 429 jika masih aktif
-  2. Generate kode 6 digit acak
-  3. Simpan ke Redis (TTL 3 menit)
-  4. Kirim via SMTP (Gmail / SMTP apapun)
-  5. Rollback Redis jika SMTP gagal
-```
-
-### WA OTP (Phone Verification)
+### Endpoint & Connection Flow
 
 ```
-Redis key: otp:{phone}             TTL: 180 detik
-Redis key: otp_cooldown:{phone}    TTL: 60 detik
-
-Flow sama, tapi dikirim via Fonnte API ke WhatsApp.
-Normalisasi nomor: 08xxx → 628xxx
+ws://<host>:8081/ws/connect?token=<access_token>
 ```
 
-### Verifikasi OTP
+1. Client initiates HTTP upgrade request with valid JWT passed as a query parameter.
+2. `ws.Handler` parses token, extracts user ID and role, and upgrades connection to WebSocket.
+3. Client connection is registered into `hub.Hub`.
 
-```
-1. Ambil kode dari Redis
-2. Bandingkan dengan input user (constant-time comparison)
-3. DELETE kode dari Redis (anti-replay - tidak bisa dipakai dua kali)
-4. Return error jika key tidak ada (berarti TTL habis)
-```
+### Multi-Connection Registry Pattern
+
+- **Console Users (`admin`, `superadmin`, `agency`)**: The Hub permits multiple concurrent connections per `userID`. This allows operators to run synchronized sessions across desktop workstations and field tablets simultaneously.
+- **Mobile Users (`civilian`, `volunteer`, `agency_personnel`)**: New connections automatically terminate previous connections for that user, reinforcing single-device usage.
+
+### Event Broadcasting
+
+The Hub provides methods for targeted broadcasting:
+
+- `hub.BroadcastToUser(userID, event)`: Sends event to all active connections of a specific user.
+- `hub.BroadcastToRole(role, event)`: Broadcasts event to all active clients of a given role (e.g., notifying all agencies of incoming SOS alerts).
+- `hub.Broadcast(event)`: Emits event to all connected clients globally.
+
+### Standard Server-to-Client Events
+
+| Event | Target Audience | Trigger Condition |
+|---|---|---|
+| `INCOMING_EMERGENCY` | Agency, Admin | A civilian triggers an active SOS alert |
+| `SOS_CANCELLED` | Agency, Admin | Reporter cancels SOS during grace period |
+| `RESCUE_ACCEPTED` | Reporter | Responder accepts mission and begins transit |
+| `INCIDENT_UPDATED` | Agency, Admin | Incident state transition (handled, resolved, false alarm) |
+| `LOCATION_UPDATE` | Agency, Responder | Real-time GPS coordinate stream from active SOS reporter |
+| `VOLUNTEER_LOCATION_UPDATE` | Agency, Admin | GPS telemetry stream from on-duty volunteers |
+| `FORCE_LOGOUT` | Displaced User | Session replaced by login from another device |
 
 ---
 
-## 7. Superadmin Seeding
+## OTP & External Gateways
 
-Saat server start, `seedSuperAdmin()` di `main.go` dipanggil:
+### Email OTP (Gmail REST API)
 
-```
-SUPERADMIN_EMAIL & SUPERADMIN_PASS di .env
-        │
-        ├── [Kosong] → skip, log WARNING
-        ├── [Superadmin sudah ada] → update email + password hash dari env
-        └── [Belum ada] → INSERT INTO users (role='superadmin')
-                          + log "[SuperAdmin] Akun berhasil dibuat: <email>"
-```
+Due to modern cloud VPS providers blocking outbound SMTP ports (25, 465, 587) by default, SiagaKita delivers email OTPs via the **Gmail REST API (HTTPS port 443)** using OAuth2 service tokens:
 
-> **Penting:** Setiap kali server start, password superadmin di-sync dari env. Ini berarti jika env berubah, akun superadmin otomatis terupdate - tidak perlu query manual ke DB.
+- Redis storage: `otp:register:{email}` (TTL: 180 seconds).
+- Rate limit: `otp_cooldown:{email}` (TTL: 60 seconds).
+- Token verification employs constant-time comparison to prevent timing attacks.
 
----
+### WhatsApp OTP (Fonnte Gateway)
 
-## 8. Konfigurasi Environment
-
-File: `infrastructure/.env` (lihat `infrastructure/.env-example` sebagai template)
-
-| Variable | Keterangan | Wajib |
-|----------|-----------|-------|
-| `DB_USER` | PostgreSQL username | ✅ |
-| `DB_PASSWORD` | PostgreSQL password | ✅ |
-| `DB_NAME` | Nama database (default: siagakita) | ✅ |
-| `DB_HOST` | Host PostgreSQL (default: postgres untuk Docker) | ✅ |
-| `DB_PORT` | Port PostgreSQL (default: 5432) | ✅ |
-| `REDIS_HOST` | Host Redis | ✅ |
-| `REDIS_PORT` | Port Redis (default: 6379) | ✅ |
-| `REDIS_PASSWORD` | Redis password | ✅ |
-| `JWT_SECRET` | Secret key JWT (buat string acak panjang) | ✅ |
-| `JWT_ACCESS_TTL` | Durasi access token (default: 15m) | - |
-| `JWT_REFRESH_TTL` | Durasi refresh token (default: 168h) | - |
-| `EMAIL_FROM` | Alamat pengirim tampil untuk OTP (ex: no-reply@) | ✅ |
-| `GMAIL_CLIENT_ID` | OAuth2 Client ID Gmail API | ✅ |
-| `GMAIL_CLIENT_SECRET`| OAuth2 Client Secret Gmail API | ✅ |
-| `GMAIL_REFRESH_TOKEN`| OAuth2 Refresh Token Gmail API | ✅ |
-| `FONNTE_TOKEN` | Token API Fonnte (WhatsApp gateway) | ✅ |
-| `HTTP_PORT` | Port REST API (default: 8080) | - |
-| `WS_PORT` | Port WebSocket (default: 8081) | - |
-| `SMS_GATEWAY_SECRET` | Secret key SMS fallback endpoint | - |
-| `SUPERADMIN_EMAIL` | Email akun superadmin pertama | ✅ |
-| `SUPERADMIN_PASS` | Password akun superadmin pertama | ✅ |
-| `GO_ENV` | Environment mode (`production` / `development`) | - |
-| `LOG_PATH` | Path file log (default: `logs/app.log`) | - |
+- Phone verification OTPs are transmitted via Fonnte REST API to verified WhatsApp numbers.
+- Phone numbers are automatically normalized to E.164 standard (converting `08...` to `628...`).
 
 ---
 
-## 9. Performance & Observability
+## Database Migrations
 
-### 9.1 Sonic JSON Engine
-Backend menggunakan **Sonic** sebagai JSON encoder/decoder default pada Fiber. Sonic menggunakan teknik JIT (Just-In-Time) compilation yang jauh lebih cepat daripada pustaka standar Go, terutama untuk payload WebSocket yang intensif dan parsing data insiden.
+Database schema management is governed by `backend-go/cmd/migrate` using `golang-migrate`:
 
-### 9.2 Zerolog (Structured Logging)
-Logging telah dimigrasikan dari `log` standar ke **Zerolog** untuk mendukung:
-- **Output Terstruktur (JSON):** Memudahkan integrasi dengan log aggregator (ELK, Loki).
-- **Log Persistence:** Secara otomatis menyimpan log ke file yang ditentukan di `LOG_PATH`.
-- **Leveling:** Mendukung Debug, Info, Warn, Error, dan Fatal dengan *field* tambahan (Contextual Logging).
-- **MultiWriter:** Output simultan ke terminal (Console) dan file disk.
+- Migrations reside in `backend-go/migrations/` as paired SQL files (`NNN_name.up.sql` and `NNN_name.down.sql`).
+- Running migrations locally:
+  ```bash
+  cd backend-go
+  go run cmd/migrate/main.go up
+  go run cmd/migrate/main.go down
+  go run cmd/migrate/main.go status
+  ```
+- Application startup executes pending migrations programmatically via `database.NewMigrator()`.
 
 ---
 
-> 📌 Untuk melihat semua endpoint API, lihat [PROGRESS_REPORT.md](./PROGRESS_REPORT.md#5-api-endpoint-lengkap)
+## Superadmin Startup Auto-Seeding
+
+During server initialization (`cmd/api/main.go`), the system invokes `seedSuperAdmin()`:
+
+1. Inspects `SUPERADMIN_EMAIL` and `SUPERADMIN_PASS` from environment variables.
+2. If absent, logs a warning and proceeds without seeding.
+3. If an account with the specified email exists, updates password hash to reflect current configuration.
+4. If the account does not exist, inserts a new user with role `superadmin`.
+
+---
+
+## Related Documentation
+
+- **Living Visual Design & Mermaid Diagrams**: [`docs/design/README.md`](./design/README.md)
+- **Database ERD (Schema v12)**: [`docs/design/database-erd.md`](./design/database-erd.md)
+- **Database Schema Reference**: [`docs/DATABASE_SCHEMA.md`](./DATABASE_SCHEMA.md)
+- **API Contracts & Swagger Documentation**: [`docs/api/openapi.yaml`](./api/openapi.yaml) (Interactive UI at `/docs/*`)
+- **Production Deployment Guide**: [`docs/DEPLOYMENT_GUIDE.md`](./DEPLOYMENT_GUIDE.md)
