@@ -199,5 +199,5 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 - **[workflow-evolution.md](workflow-evolution.md)** — Evolutionary workflow protocol, minor auto-update rules, and major proposal guidelines.
 - **[testing.md](testing.md)** — Testing conventions, Hybrid TDD (RED-GREEN), and plan sanitization.
 - **[gh-project-manager/SKILL.md](../gh-project-manager/SKILL.md)** — GitHub Issues, single-status rules, and sprint tracking.
-- **[docs/DATABASE_SCHEMA.md](../../docs/DATABASE_SCHEMA.md)** — Active schema v12 (always read before creating migrations).
-- **[docs/design/database-erd.md](../../docs/design/database-erd.md)** — Mermaid ERD living documentation.
+- **[docs/DATABASE_SCHEMA.md](../../../docs/DATABASE_SCHEMA.md)** — Active schema v12 (always read before creating migrations).
+- **[docs/design/database-erd.md](../../../docs/design/database-erd.md)** — Mermaid ERD living documentation.
