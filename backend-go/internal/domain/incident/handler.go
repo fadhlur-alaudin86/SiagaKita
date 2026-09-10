@@ -943,4 +943,3 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 		"sent_to": len(req.VolunteerIDs),
 	})
 }
-

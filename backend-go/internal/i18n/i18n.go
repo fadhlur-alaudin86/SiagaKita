@@ -88,7 +88,7 @@ var idToEn = map[string]string{
 	"Parameter lat tidak valid":                                                      "Invalid lat parameter",
 	"Parameter lng tidak valid":                                                      "Invalid lng parameter",
 	"Gagal mengambil data relawan terdekat":                                          "Failed to get nearby volunteers",
-	"Daftar volunteer_ids wajib diisi":                                              "volunteer_ids list is required",
+	"Daftar volunteer_ids wajib diisi":                                               "volunteer_ids list is required",
 	"Broadcast penugasan berhasil dikirim":                                           "Dispatch broadcast sent successfully",
 	"Gagal mengirim broadcast penugasan":                                             "Failed to send dispatch broadcast",
 	"Insiden sudah ditangani atau selesai":                                           "Incident already handled or completed",
