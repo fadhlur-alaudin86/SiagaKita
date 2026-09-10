@@ -114,3 +114,62 @@ func TestRefreshToken_Validation(t *testing.T) {
 		t.Errorf("expected expired token error, got %v", err)
 	}
 }
+
+func TestParseRefreshTokenClaims_Success(t *testing.T) {
+	cfg := &config.Config{
+		JWTSecret:     "test-jwt-secret-key-32-chars-long!",
+		JWTRefreshTTL: 7 * 24 * time.Hour,
+	}
+	svc := &Service{cfg: cfg}
+
+	refreshToken, jti, err := utils.GenerateRefreshToken("user-123", RoleCivilian, cfg.JWTSecret, cfg.JWTRefreshTTL)
+	if err != nil {
+		t.Fatalf("failed to generate refresh token: %v", err)
+	}
+
+	claims, err := svc.parseRefreshTokenClaims(refreshToken)
+	if err != nil {
+		t.Fatalf("unexpected error parsing refresh token claims: %v", err)
+	}
+
+	if claims.UserID != "user-123" {
+		t.Errorf("expected UserID 'user-123', got %q", claims.UserID)
+	}
+	if claims.Role != RoleCivilian {
+		t.Errorf("expected Role %q, got %q", RoleCivilian, claims.Role)
+	}
+	if claims.JTI != jti {
+		t.Errorf("expected JTI %q, got %q", jti, claims.JTI)
+	}
+	if claims.TokenType != "refresh" {
+		t.Errorf("expected TokenType 'refresh', got %q", claims.TokenType)
+	}
+}
+
+func TestCheckGracePeriod_NilRedis(t *testing.T) {
+	svc := &Service{rdb: nil}
+	resp, ok := svc.checkGracePeriod(context.Background(), "refresh_grace:test-jti")
+	if ok || resp != nil {
+		t.Errorf("expected false and nil when Redis client is nil, got ok=%v, resp=%v", ok, resp)
+	}
+}
+
+func TestVerifyRefreshTokenReplay_NilRedis(t *testing.T) {
+	svc := &Service{rdb: nil}
+
+	if err := svc.verifyRefreshTokenReplay(context.Background(), "user-1", RoleCivilian, "jti-1"); err != nil {
+		t.Errorf("expected nil error when Redis is nil, got %v", err)
+	}
+	if err := svc.verifyRefreshTokenReplay(context.Background(), "admin-1", RoleAdmin, "jti-2"); err != nil {
+		t.Errorf("expected nil error when Redis is nil, got %v", err)
+	}
+}
+
+func TestSaveRotatedSession_NilRedis(t *testing.T) {
+	svc := &Service{rdb: nil}
+	user := &User{ID: "user-1", Role: RoleCivilian}
+	resp := &AuthResponse{AccessToken: "acc", RefreshToken: "ref"}
+
+	// Should not panic when Redis is nil
+	svc.saveRotatedSession(context.Background(), user, resp, "graceKey", "accJTI", "refJTI")
+}
