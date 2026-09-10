@@ -21,6 +21,8 @@ func setupTestApp(h *Handler) *fiber.App {
 	return app
 }
 
+const fieldRefreshToken = "refresh_token"
+
 func TestRefreshToken_Handler(t *testing.T) {
 	cfg := &config.Config{
 		JWTSecret:     "test-jwt-secret-key-32-chars-long!",
@@ -44,7 +46,7 @@ func TestRefreshToken_Handler(t *testing.T) {
 	})
 
 	t.Run("BadRequest_EmptyRefreshToken", func(t *testing.T) {
-		body, _ := json.Marshal(map[string]string{"refresh_token": ""})
+		body, _ := json.Marshal(map[string]string{fieldRefreshToken: ""})
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh-token", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req)
@@ -57,7 +59,7 @@ func TestRefreshToken_Handler(t *testing.T) {
 	})
 
 	t.Run("Unauthorized_InvalidToken", func(t *testing.T) {
-		body, _ := json.Marshal(map[string]string{"refresh_token": "invalid.jwt.token"})
+		body, _ := json.Marshal(map[string]string{fieldRefreshToken: "invalid.jwt.token"})
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh-token", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req)
@@ -71,7 +73,7 @@ func TestRefreshToken_Handler(t *testing.T) {
 
 	t.Run("Unauthorized_AccessTokenPassed", func(t *testing.T) {
 		accessToken, _, _ := utils.GenerateAccessToken("user-1", "civilian", cfg.JWTSecret, cfg.JWTAccessTTL)
-		body, _ := json.Marshal(map[string]string{"refresh_token": accessToken})
+		body, _ := json.Marshal(map[string]string{fieldRefreshToken: accessToken})
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh-token", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req)

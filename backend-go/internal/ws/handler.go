@@ -26,6 +26,13 @@ const (
 	incidentGraceKey = "incident:%s:grace"
 	incidentLocKey   = "incident:%s:loc"
 	gracePeriod      = 10 * time.Second
+
+	fieldMessage    = "message"
+	fieldLatitude   = "latitude"
+	fieldLongitude  = "longitude"
+	fieldIncidentID = "incident_id"
+	fieldUserID     = "user_id"
+	statusEnRoute   = "en_route"
 )
 
 var upgrader = websocket.Upgrader{
@@ -119,7 +126,7 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	// Send welcome message
 	_ = h.hub.SendToUser(userID, hub.Message{
 		Event:   "CONNECTED",
-		Payload: map[string]string{"user_id": userID, "message": "Terhubung ke SiagaKita real-time engine"},
+		Payload: map[string]string{fieldUserID: userID, fieldMessage: "Terhubung ke SiagaKita real-time engine"},
 	})
 
 	h.readLoop(userID, conn)
@@ -180,8 +187,8 @@ func (h *Handler) handleEvent(userID string, msg hub.Message) {
 
 func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 	p := toMap(payload)
-	lat, _ := p["latitude"].(float64)
-	lng, _ := p["longitude"].(float64)
+	lat, _ := p[fieldLatitude].(float64)
+	lng, _ := p[fieldLongitude].(float64)
 
 	// Cek role user untuk menentukan update kemana
 	var role string
@@ -202,10 +209,10 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 			msg := hub.Message{
 				Event: "REPORTER_LOCATION_UPDATE",
 				Payload: map[string]interface{}{
-					"sos_id":    inc.ID,
-					"user_id":   userID,
-					"latitude":  lat,
-					"longitude": lng,
+					"sos_id":       inc.ID,
+					fieldUserID:    userID,
+					fieldLatitude:  lat,
+					fieldLongitude: lng,
 				},
 			}
 
@@ -215,7 +222,7 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 				utils.Error().Err(err).Str("incident_id", inc.ID).Msg("[WS] Failed to query incident responses")
 			} else {
 				for _, r := range responses {
-					if r.Status == "on_scene" || r.Status == "en_route" {
+					if r.Status == "on_scene" || r.Status == statusEnRoute {
 						_ = h.hub.SendToUser(r.ResponderID, msg)
 					}
 				}
@@ -238,10 +245,10 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 			msg := hub.Message{
 				Event: "VOLUNTEER_LOCATION_UPDATE",
 				Payload: map[string]interface{}{
-					"incident_id": resp.IncidentID,
-					"user_id":     userID,
-					"latitude":    lat,
-					"longitude":   lng,
+					fieldIncidentID: resp.IncidentID,
+					fieldUserID:     userID,
+					fieldLatitude:   lat,
+					fieldLongitude:  lng,
 				},
 			}
 
@@ -261,8 +268,8 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 
 func (h *Handler) onTriggerSOS(userID string, payload interface{}) {
 	p := toMap(payload)
-	lat, _ := p["latitude"].(float64)
-	lng, _ := p["longitude"].(float64)
+	lat, _ := p[fieldLatitude].(float64)
+	lng, _ := p[fieldLongitude].(float64)
 
 	ctx := context.Background()
 
@@ -294,7 +301,7 @@ func (h *Handler) onTriggerSOS(userID string, payload interface{}) {
 		Payload: map[string]interface{}{
 			"sos_id":       inc.ID,
 			"grace_period": int(gracePeriod.Seconds()),
-			"message":      "SOS diterima. Batalkan dalam 10 detik jika ini bukan darurat.",
+			fieldMessage:   "SOS diterima. Batalkan dalam 10 detik jika ini bukan darurat.",
 		},
 	})
 
@@ -322,7 +329,7 @@ func (h *Handler) onCancelSOS(userID string, payload interface{}) {
 
 	_ = h.hub.SendToUser(userID, hub.Message{
 		Event:   "SOS_CANCELLED",
-		Payload: map[string]string{"message": "SOS dibatalkan"},
+		Payload: map[string]string{fieldMessage: "SOS dibatalkan"},
 	})
 
 	utils.Info().Str("sos_id", sosID).Str("user_id", userID).Msg("[WS] SOS canceled")
@@ -336,7 +343,7 @@ func (h *Handler) onAcceptRescue(responderID string, payload interface{}) {
 	resp := &incident.IncidentResponse{
 		IncidentID:  sosID,
 		ResponderID: responderID,
-		Status:      "en_route",
+		Status:      statusEnRoute,
 	}
 	if err := h.incRepo.CreateResponse(resp); err != nil {
 		utils.Error().Err(err).Str("sos_id", sosID).Str("responder_id", responderID).Msg("[WS] Failed to create response")
@@ -360,8 +367,8 @@ func (h *Handler) onAcceptRescue(responderID string, payload interface{}) {
 		Payload: map[string]interface{}{
 			"responder_id":   responderID,
 			"responder_name": responderName,
-			"status":         "en_route",
-			"message":        fmt.Sprintf("Relawan %s sedang menuju lokasi kamu", responderName),
+			"status":         statusEnRoute,
+			fieldMessage:    fmt.Sprintf("Relawan %s sedang menuju lokasi kamu", responderName),
 		},
 	})
 
@@ -443,10 +450,10 @@ func (h *Handler) broadcastSOS(incidentID string) {
 	msg := hub.Message{
 		Event: "INCOMING_EMERGENCY",
 		Payload: map[string]interface{}{
-			"incident_id": incidentID,
-			"reporter_id": reporterID,
-			"latitude":    lat,
-			"longitude":   lng,
+			fieldIncidentID: incidentID,
+			"reporter_id":   reporterID,
+			fieldLatitude:   lat,
+			fieldLongitude:  lng,
 		},
 	}
 
@@ -504,8 +511,8 @@ func (h *Handler) BroadcastIncidentUpdated(incidentID, action string) {
 	msg := hub.Message{
 		Event: "INCIDENT_UPDATED",
 		Payload: map[string]interface{}{
-			"incident_id": incidentID,
-			"action":      action, // e.g. "agency_handle", "resolved", "volunteer_complete"
+			fieldIncidentID: incidentID,
+			"action":        action, // e.g. "agency_handle", "resolved", "volunteer_complete"
 		},
 	}
 

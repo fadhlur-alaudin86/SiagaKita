@@ -275,6 +275,22 @@ type ResendOTPRequest struct {
 	Context string `json:"context"` // "register", "login", "forgot_password"
 }
 
+// ─── User Roles ───────────────────────────────────────────────────────────────
+
+const (
+	RoleCivilian        = "civilian"
+	RoleVolunteer       = "volunteer"
+	RoleAgency          = "agency"
+	RoleAgencyPersonnel = "agency_personnel"
+	RoleAdmin           = "admin"
+	RoleSuperAdmin      = "superadmin"
+)
+
+const (
+	fieldMessage   = "message"
+	fieldUpdatedAt = "updated_at"
+)
+
 // ─── KYC Warga (Civilian Identity Verification) ────────────────────────────────
 
 // KYCStatus adalah status verifikasi identitas NIK warga.

@@ -80,7 +80,7 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 	user := &User{
 		Email:        req.Email,
 		PasswordHash: string(hash),
-		Role:         "civilian",
+		Role:         RoleCivilian,
 	}
 	profile := &UserProfile{
 		FullName: &req.FullName,
@@ -128,7 +128,7 @@ func (s *Service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 	if err != nil {
 		return nil, errors.New("email atau password salah")
 	}
-	if user.Role != "civilian" && user.Role != "volunteer" {
+	if user.Role != RoleCivilian && user.Role != RoleVolunteer {
 		return nil, errors.New("email atau password salah")
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
@@ -153,7 +153,7 @@ func (s *Service) ConsoleLogin(ctx context.Context, req *LoginRequest) (*AuthRes
 		return nil, errors.New("email atau password salah")
 	}
 
-	allowedRoles := map[string]bool{"superadmin": true, "admin": true, "agency": true}
+	allowedRoles := map[string]bool{RoleSuperAdmin: true, RoleAdmin: true, RoleAgency: true}
 	if !allowedRoles[user.Role] {
 		// Gunakan pesan generic agar tidak membocorkan role/keberadaan akun
 		return nil, errors.New("email atau password salah")
@@ -362,7 +362,7 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		if user.Role == "civilian" || user.Role == "volunteer" {
+		if user.Role == RoleCivilian || user.Role == RoleVolunteer {
 			sessionKey := "session:" + user.ID
 			refreshKey := "refresh_token:" + user.ID
 
@@ -371,8 +371,8 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 				_ = s.hub.SendToUser(user.ID, hub.Message{
 					Event: "FORCE_LOGOUT",
 					Payload: map[string]string{
-						"reason":  "session_replaced",
-						"message": "Akun ini telah login di perangkat lain. Anda telah dikeluarkan.",
+						"reason":     "session_replaced",
+						fieldMessage: "Akun ini telah login di perangkat lain. Anda telah dikeluarkan.",
 					},
 				})
 			}
@@ -432,7 +432,7 @@ func (s *Service) RefreshToken(ctx context.Context, refreshTokenStr string) (*Au
 
 	// 2. Cek validitas refresh token di Redis & deteksi replay attack
 	if s.rdb != nil {
-		if role == "civilian" || role == "volunteer" {
+		if role == RoleCivilian || role == RoleVolunteer {
 			refreshKey := "refresh_token:" + userID
 			storedJTI, err := s.rdb.Get(ctx, refreshKey).Result()
 			if err != nil || storedJTI != oldJTI {
@@ -461,17 +461,17 @@ func (s *Service) RefreshToken(ctx context.Context, refreshTokenStr string) (*Au
 	// 4. Ambil full_name berdasarkan role
 	var fullName *string
 	switch user.Role {
-	case "civilian", "volunteer":
+	case RoleCivilian, RoleVolunteer:
 		profile, _ := s.repo.FindProfile(user.ID)
 		if profile != nil {
 			fullName = profile.FullName
 		}
-	case "admin", "superadmin":
+	case RoleAdmin, RoleSuperAdmin:
 		var ap AdminProfile
 		if err := s.repo.db.Where("user_id = ?", user.ID).First(&ap).Error; err == nil {
 			fullName = ap.FullName
 		}
-	case "agency_personnel":
+	case RoleAgencyPersonnel:
 		personnel, err := s.repo.FindPersonnelByUserID(user.ID)
 		if err == nil {
 			fullName = &personnel.FullName
@@ -508,7 +508,7 @@ func (s *Service) RefreshToken(ctx context.Context, refreshTokenStr string) (*Au
 
 	// 6. Simpan token aktif baru di Redis dan daftarkan oldJTI ke grace cache 30 detik
 	if s.rdb != nil {
-		if user.Role == "civilian" || user.Role == "volunteer" {
+		if user.Role == RoleCivilian || user.Role == RoleVolunteer {
 			_ = s.rdb.Set(ctx, "session:"+user.ID, newAccessJTI, s.cfg.JWTAccessTTL)
 			_ = s.rdb.Set(ctx, "refresh_token:"+user.ID, newRefreshJTI, s.cfg.JWTRefreshTTL)
 		} else {

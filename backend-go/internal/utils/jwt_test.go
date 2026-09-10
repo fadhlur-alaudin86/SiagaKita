@@ -8,8 +8,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const testSecretKey = "test-jwt-secret-key-32-chars-long!"
+
 func TestGenerateAccessToken(t *testing.T) {
-	secret := "test-jwt-secret-key-32-chars-long!"
+	secret := testSecretKey
 	userID := "user-uuid-12345"
 	role := "volunteer"
 	ttl := 15 * time.Minute
@@ -42,7 +44,7 @@ func TestGenerateAccessToken(t *testing.T) {
 }
 
 func TestGenerateRefreshToken(t *testing.T) {
-	secret := "test-jwt-secret-key-32-chars-long!"
+	secret := testSecretKey
 	userID := "user-uuid-67890"
 	role := "civilian"
 	ttl := 7 * 24 * time.Hour
@@ -68,7 +70,7 @@ func TestGenerateRefreshToken(t *testing.T) {
 }
 
 func TestParseToken_Expired(t *testing.T) {
-	secret := "test-jwt-secret-key-32-chars-long!"
+	secret := testSecretKey
 	// Generate token that expired 1 hour ago
 	token, _, err := GenerateAccessToken("expired-user", "civilian", secret, -1*time.Hour)
 	if err != nil {

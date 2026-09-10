@@ -76,7 +76,7 @@ func (h *Handler) ApproveKYC(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "Relawan berhasil diverifikasi.",
+		fieldMessage: "Relawan berhasil diverifikasi.",
 	})
 }
 
@@ -96,7 +96,7 @@ func (h *Handler) RejectKYC(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "KYC relawan ditolak.",
+		fieldMessage: "KYC relawan ditolak.",
 	})
 }
 
@@ -116,7 +116,7 @@ func (h *Handler) CreateAdmin(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "Akun admin berhasil dibuat.",
+		fieldMessage: "Akun admin berhasil dibuat.",
 	})
 }
 
@@ -132,7 +132,7 @@ func (h *Handler) CreateAgency(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "Akun instansi berhasil dibuat.",
+		fieldMessage: "Akun instansi berhasil dibuat.",
 	})
 }
 
@@ -165,7 +165,7 @@ func (h *Handler) BanUser(c *fiber.Ctx) error {
 		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"message": "User berhasil di-ban dari fitur SOS."})
+	return utils.SuccessResponse(c, fiber.Map{fieldMessage: "User berhasil di-ban dari fitur SOS."})
 }
 
 // POST /api/v1/admin/users/:id/unban  [AdminOnly]
@@ -179,7 +179,7 @@ func (h *Handler) UnbanUser(c *fiber.Ctx) error {
 		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"message": "Ban pengguna berhasil dicabut."})
+	return utils.SuccessResponse(c, fiber.Map{fieldMessage: "Ban pengguna berhasil dicabut."})
 }
 
 // DELETE /api/v1/admin/users/:id/strike  [AdminOnly]
@@ -193,7 +193,7 @@ func (h *Handler) ResetStrike(c *fiber.Ctx) error {
 		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"message": "Strike pengguna berhasil direset."})
+	return utils.SuccessResponse(c, fiber.Map{fieldMessage: "Strike pengguna berhasil direset."})
 }
 
 // GET /api/v1/admin/users/:id/detail  [AdminOnly]
@@ -223,7 +223,7 @@ func (h *Handler) ApproveWargaKYC(c *fiber.Ctx) error {
 	if err := h.svc.ApproveWargaKYC(targetUserID); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"message": "Verifikasi NIK warga disetujui."})
+	return utils.SuccessResponse(c, fiber.Map{fieldMessage: "Verifikasi NIK warga disetujui."})
 }
 
 // POST /api/v1/admin/users/kyc/warga/:id/reject  [AdminOnly]
@@ -232,7 +232,7 @@ func (h *Handler) RejectWargaKYC(c *fiber.Ctx) error {
 	if err := h.svc.RejectWargaKYC(targetUserID); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"message": "Verifikasi NIK warga ditolak."})
+	return utils.SuccessResponse(c, fiber.Map{fieldMessage: "Verifikasi NIK warga ditolak."})
 }
 
 // ─── Agency & Admin Listings ──────────────────────────────────────────────────
@@ -311,7 +311,7 @@ func (h *Handler) DeleteRank(c *fiber.Ctx) error {
 		}
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"message": "Rank berhasil dihapus."})
+	return utils.SuccessResponse(c, fiber.Map{fieldMessage: "Rank berhasil dihapus."})
 }
 
 // ─── Statistics ───────────────────────────────────────────────────────────────
@@ -425,5 +425,5 @@ func (h *Handler) DeleteBadge(c *fiber.Ctx) error {
 	if err := h.svc.DeleteBadge(id); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"message": "Badge berhasil dihapus."})
+	return utils.SuccessResponse(c, fiber.Map{fieldMessage: "Badge berhasil dihapus."})
 }

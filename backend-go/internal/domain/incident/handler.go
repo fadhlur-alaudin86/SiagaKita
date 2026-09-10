@@ -72,7 +72,7 @@ func (h *Handler) UpdateType(c *fiber.Ctx) error {
 
 	if err := h.svc.UpdateType(incidentID, reporterID, req.IncidentType); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == "unauthorized" {
+		if err.Error() == errUnauthorized {
 			status = fiber.StatusForbidden
 		}
 		return utils.ErrorResponse(c, status, err.Error())
@@ -81,7 +81,7 @@ func (h *Handler) UpdateType(c *fiber.Ctx) error {
 	// Broadcast via WS setelah tipe diubah dan status menjadi broadcasting
 	go h.broadcastSOSViaREST(incidentID)
 
-	return utils.SuccessResponse(c, fiber.Map{"updated": true, "message": "Tipe insiden diperbarui, SOS sedang disiarkan."})
+	return utils.SuccessResponse(c, fiber.Map{FieldUpdated: true, FieldMessage: "Tipe insiden diperbarui, SOS sedang disiarkan."})
 }
 
 // POST /api/v1/incidents/:id/broadcast - grace period timeout, tipe tetap 'unknown'
@@ -91,7 +91,7 @@ func (h *Handler) Broadcast(c *fiber.Ctx) error {
 
 	if err := h.svc.PromoteToBroadcasting(incidentID, reporterID); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == "unauthorized" {
+		if err.Error() == errUnauthorized {
 			status = fiber.StatusForbidden
 		}
 		return utils.ErrorResponse(c, status, err.Error())
@@ -100,7 +100,7 @@ func (h *Handler) Broadcast(c *fiber.Ctx) error {
 	// Broadcast via WS setelah grace period berakhir (dipanggil dari REST)
 	go h.broadcastSOSViaREST(incidentID)
 
-	return utils.SuccessResponse(c, fiber.Map{"broadcasting": true, "message": "SOS sedang disiarkan ke relawan dan instansi terdekat."})
+	return utils.SuccessResponse(c, fiber.Map{"broadcasting": true, FieldMessage: "SOS sedang disiarkan ke relawan dan instansi terdekat."})
 }
 
 // POST /api/v1/incidents/:id/canceled
@@ -110,7 +110,7 @@ func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 
 	if err := h.svc.CancelSOS(incidentID, reporterID); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == "unauthorized" {
+		if err.Error() == errUnauthorized {
 			status = fiber.StatusForbidden
 		} else if len(err.Error()) >= 8 && err.Error()[:8] == "conflict" {
 			status = fiber.StatusConflict
@@ -121,11 +121,11 @@ func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 	go h.broadcastEventToAgencies(hub.Message{
 		Event: "SOS_CANCELLED",
 		Payload: map[string]interface{}{
-			"incident_id": incidentID,
+			FieldIncidentID: incidentID,
 		},
 	})
 
-	return utils.SuccessResponse(c, fiber.Map{"canceled": true})
+	return utils.SuccessResponse(c, fiber.Map{StatusCanceled: true})
 }
 
 // POST /api/v1/incidents/:id/evidence
@@ -154,7 +154,7 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 			if fh.Size <= 5<<20 {
 				ext := filepath.Ext(fh.Filename)
 				if ext == "" {
-					ext = ".jpg"
+					ext = extJPG
 				}
 				dir := filepath.Join(uploadDir, "incidents", "evidence", yearMonth, incidentID)
 				_ = os.MkdirAll(dir, 0750)
@@ -186,7 +186,7 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 
 	if err := h.svc.UploadEvidence(incidentID, reporterID, photoPaths, audioPath); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == "unauthorized" {
+		if err.Error() == errUnauthorized {
 			status = fiber.StatusForbidden
 		}
 		return utils.ErrorResponse(c, status, err.Error())
@@ -194,9 +194,9 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 
 	// Notifikasi ke console agar foto/audio baru langsung terlihat
 	go h.broadcastEventToAgencies(hub.Message{
-		Event: "SOS_STATUS_UPDATE",
+		Event: EventSOSStatusUpdate,
 		Payload: map[string]interface{}{
-			"incident_id": incidentID,
+			FieldIncidentID: incidentID,
 		},
 	})
 
@@ -219,14 +219,14 @@ func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 	go h.broadcastEventToAgencies(hub.Message{
 		Event: "LOCATION_UPDATE",
 		Payload: map[string]interface{}{
-			"incident_id": incidentID,
-			"latitude":    req.Latitude,
-			"longitude":   req.Longitude,
-			"updated_at":  time.Now().Format(time.RFC3339),
+			FieldIncidentID: incidentID,
+			FieldLatitude:   req.Latitude,
+			FieldLongitude:  req.Longitude,
+			FieldUpdatedAt:  time.Now().Format(time.RFC3339),
 		},
 	})
 
-	return utils.SuccessResponse(c, fiber.Map{"updated": true})
+	return utils.SuccessResponse(c, fiber.Map{FieldUpdated: true})
 }
 
 // GET /api/v1/incidents/active
@@ -284,13 +284,13 @@ func (h *Handler) MarkFalseAlarm(c *fiber.Ctx) error {
 	go h.broadcastEventToAgencies(hub.Message{
 		Event: "SOS_STATUS_UPDATE",
 		Payload: map[string]interface{}{
-			"incident_id": incidentID,
+			FieldIncidentID: incidentID,
 		},
 	})
 
 	// Notifikasi ke reporter (mobile) agar SOS reset dan vibration berhenti
 	go h.notifyReporter(incidentID, "SOS_FALSE_ALARM", map[string]interface{}{
-		"incident_id": incidentID,
+		FieldIncidentID: incidentID,
 	})
 
 	return utils.SuccessResponse(c, resp)
@@ -322,7 +322,7 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 		AddressDetail: c.FormValue("address_detail"),
 	}
 
-	if req.IncidentType == "" || req.IncidentType == "unknown" {
+	if req.IncidentType == "" || req.IncidentType == IncidentTypeUnknown {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "incident_type wajib diisi")
 	}
 	if req.Latitude == 0 && req.Longitude == 0 {
@@ -394,7 +394,7 @@ func (h *Handler) CancelReport(c *fiber.Ctx) error {
 
 	if err := h.svc.CancelReport(reportID, reporterID); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == "unauthorized" {
+		if err.Error() == errUnauthorized {
 			status = fiber.StatusForbidden
 		} else if err.Error() == "laporan tidak ditemukan" {
 			status = fiber.StatusNotFound
@@ -404,7 +404,7 @@ func (h *Handler) CancelReport(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, status, err.Error())
 	}
 
-	return utils.SuccessResponse(c, fiber.Map{"canceled": true})
+	return utils.SuccessResponse(c, fiber.Map{StatusCanceled: true})
 }
 
 // GET /api/v1/reports/my - riwayat laporan milik user yang sedang login
@@ -440,7 +440,7 @@ func (h *Handler) UpdateReportStatus(c *fiber.Ctx) error {
 	if err := h.svc.UpdateReportStatus(id, body.Status, body.UrgencyLevel); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"updated": true})
+	return utils.SuccessResponse(c, fiber.Map{FieldUpdated: true})
 }
 
 // GET /api/v1/incidents/agency/history
@@ -475,12 +475,12 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 	msg := hub.Message{
 		Event: "INCOMING_EMERGENCY",
 		Payload: map[string]interface{}{
-			"incident_id":   incidentID,
-			"reporter_id":   inc.ReporterID,
-			"latitude":      inc.Latitude,
-			"longitude":     inc.Longitude,
-			"incident_type": inc.IncidentType,
-			"status":        inc.Status,
+			FieldIncidentID:   incidentID,
+			"reporter_id":     inc.ReporterID,
+			FieldLatitude:     inc.Latitude,
+			FieldLongitude:    inc.Longitude,
+			FieldIncidentType: inc.IncidentType,
+			FieldStatus:       inc.Status,
 		},
 	}
 
@@ -567,11 +567,11 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 	go func() {
 		h.broadcastEventToAgencies(hub.Message{
 			Event:   "SOS_STATUS_UPDATE",
-			Payload: map[string]interface{}{"incident_id": incidentID},
+			Payload: map[string]interface{}{FieldIncidentID: incidentID},
 		})
 		// Notify reporter bahwa relawan sudah on the way
 		h.notifyReporter(incidentID, "VOLUNTEER_HANDLING", map[string]interface{}{
-			"incident_id":      incidentID,
+			FieldIncidentID:    incidentID,
 			"volunteer_status": "en_route",
 		})
 		// Notify candidate volunteers that the incident has been claimed
@@ -585,7 +585,7 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 					_ = h.hub.SendToUser(vID, hub.Message{
 						Event: "INCIDENT_ASSIGNMENT_CLAIMED",
 						Payload: map[string]interface{}{
-							"incident_id": incidentID,
+							FieldIncidentID: incidentID,
 							"claimed_by":  volunteerID,
 						},
 					})
@@ -633,29 +633,29 @@ func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
 
 	go func() {
 		h.broadcastEventToAgencies(hub.Message{
-			Event:   "SOS_STATUS_UPDATE",
-			Payload: map[string]interface{}{"incident_id": incidentID},
+			Event:   EventSOSStatusUpdate,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID},
 		})
 		h.hub.BroadcastToRole("agency", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionAgencyHandle},
 		})
 		h.hub.BroadcastToRole("admin", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionAgencyHandle},
 		})
 		h.hub.BroadcastToRole("superadmin", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_handle"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionAgencyHandle},
 		})
 		// Notify reporter bahwa instansi sudah handle
 		h.notifyReporter(incidentID, "AGENCY_HANDLING", map[string]interface{}{
-			"incident_id":   incidentID,
-			"agency_status": "handling",
+			FieldIncidentID:   incidentID,
+			FieldAgencyStatus: AgencyStatusHandling,
 		})
 	}()
 
-	return utils.SuccessResponse(c, fiber.Map{"message": "SOS sekarang ditangani instansi."})
+	return utils.SuccessResponse(c, fiber.Map{FieldMessage: "SOS sekarang ditangani instansi."})
 }
 
 // POST /api/v1/incidents/:id/volunteer-complete [VolunteerOnly] (Multipart)
@@ -674,7 +674,7 @@ func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
 		if fh.Size <= 5<<20 {
 			ext := filepath.Ext(fh.Filename)
 			if ext == "" {
-				ext = ".jpg"
+				ext = extJPG
 			}
 			now := time.Now()
 			yearMonth := fmt.Sprintf("%d/%02d", now.Year(), now.Month())
@@ -696,24 +696,24 @@ func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
 
 	go func() {
 		h.broadcastEventToAgencies(hub.Message{
-			Event:   "SOS_STATUS_UPDATE",
-			Payload: map[string]interface{}{"incident_id": incidentID},
+			Event:   EventSOSStatusUpdate,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID},
 		})
 		h.hub.BroadcastToRole("agency", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "volunteer_complete"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionVolunteerComplete},
 		})
 		h.hub.BroadcastToRole("admin", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "volunteer_complete"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionVolunteerComplete},
 		})
 		h.hub.BroadcastToRole("superadmin", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "volunteer_complete"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionVolunteerComplete},
 		})
 	}()
 
-	return utils.SuccessResponse(c, fiber.Map{"message": "Bukti berhasil diunggah. Menunggu review instansi."})
+	return utils.SuccessResponse(c, fiber.Map{FieldMessage: "Bukti berhasil diunggah. Menunggu review instansi."})
 }
 
 // POST /api/v1/incidents/:id/agency-review [ConsoleOnly]
@@ -735,20 +735,20 @@ func (h *Handler) AgencyReviewVolunteer(c *fiber.Ctx) error {
 
 	go func() {
 		h.broadcastEventToAgencies(hub.Message{
-			Event:   "SOS_STATUS_UPDATE",
-			Payload: map[string]interface{}{"incident_id": incidentID},
+			Event:   EventSOSStatusUpdate,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID},
 		})
 		h.hub.BroadcastToRole("agency", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_review"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionAgencyReview},
 		})
 		h.hub.BroadcastToRole("admin", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_review"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionAgencyReview},
 		})
 		h.hub.BroadcastToRole("superadmin", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "agency_review"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionAgencyReview},
 		})
 	}()
 
@@ -765,20 +765,20 @@ func (h *Handler) AgencyResolveSOS(c *fiber.Ctx) error {
 
 	go func() {
 		h.broadcastEventToAgencies(hub.Message{
-			Event:   "SOS_STATUS_UPDATE",
-			Payload: map[string]interface{}{"incident_id": incidentID},
+			Event:   EventSOSStatusUpdate,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID},
 		})
 		h.hub.BroadcastToRole("agency", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "resolved"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionResolved},
 		})
 		h.hub.BroadcastToRole("admin", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "resolved"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionResolved},
 		})
 		h.hub.BroadcastToRole("superadmin", hub.Message{
-			Event:   "INCIDENT_UPDATED",
-			Payload: map[string]interface{}{"incident_id": incidentID, "action": "resolved"},
+			Event:   EventIncidentUpdated,
+			Payload: map[string]interface{}{FieldIncidentID: incidentID, FieldAction: ActionResolved},
 		})
 	}()
 
@@ -824,11 +824,11 @@ func (h *Handler) UpdateResponseLocation(c *fiber.Ctx) error {
 	// Broadcast lokasi relawan ke agency dan reporter via WebSocket
 	go func() {
 		payload := map[string]interface{}{
-			"incident_id":  incidentID,
-			"volunteer_id": volunteerID,
-			"latitude":     req.Latitude,
-			"longitude":    req.Longitude,
-			"updated_at":   time.Now().Format(time.RFC3339),
+			FieldIncidentID: incidentID,
+			"volunteer_id":  volunteerID,
+			FieldLatitude:   req.Latitude,
+			FieldLongitude:  req.Longitude,
+			FieldUpdatedAt:  time.Now().Format(time.RFC3339),
 		}
 		if req.AddressDetail != nil {
 			payload["address_detail"] = *req.AddressDetail
@@ -840,7 +840,7 @@ func (h *Handler) UpdateResponseLocation(c *fiber.Ctx) error {
 		h.notifyReporter(incidentID, "VOLUNTEER_LOCATION_UPDATE", payload)
 	}()
 
-	return utils.SuccessResponse(c, fiber.Map{"updated": true})
+	return utils.SuccessResponse(c, fiber.Map{FieldUpdated: true})
 }
 
 // DispatchBroadcast handles POST /api/v1/incidents/:id/dispatch-broadcast [ConsoleOnly]
@@ -865,7 +865,7 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusNotFound, "Insiden tidak ditemukan")
 	}
-	if inc.Status == "resolved" || inc.Status == "canceled" || inc.Status == "false_alarm" {
+	if inc.Status == StatusResolved || inc.Status == StatusCanceled || inc.Status == StatusFalseAlarm {
 		return utils.ErrorResponse(c, fiber.StatusConflict, "Insiden sudah ditangani atau selesai")
 	}
 
@@ -890,10 +890,10 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 		offerMsg := hub.Message{
 			Event: "INCIDENT_ASSIGNMENT_OFFER",
 			Payload: map[string]interface{}{
-				"incident_id":     incidentID,
-				"incident_type":   inc.IncidentType,
-				"latitude":        inc.Latitude,
-				"longitude":       inc.Longitude,
+				FieldIncidentID:   incidentID,
+				FieldIncidentType: inc.IncidentType,
+				FieldLatitude:     inc.Latitude,
+				FieldLongitude:    inc.Longitude,
 				"address_detail":  address,
 				"reporter_id":     inc.ReporterID,
 				"timeout_seconds": 60,
@@ -922,7 +922,7 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 				h.broadcastEventToAgencies(hub.Message{
 					Event: "INCIDENT_DISPATCH_TIMEOUT",
 					Payload: map[string]interface{}{
-						"incident_id": incidentID,
+						FieldIncidentID: incidentID,
 					},
 				})
 				// Notify candidate volunteers that offer timed out
@@ -930,8 +930,8 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 					_ = h.hub.SendToUser(vid, hub.Message{
 						Event: "INCIDENT_ASSIGNMENT_CLAIMED",
 						Payload: map[string]interface{}{
-							"incident_id": incidentID,
-							"reason":      "timeout",
+							FieldIncidentID: incidentID,
+							"reason":        "timeout",
 						},
 					})
 				}
@@ -940,7 +940,7 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "Broadcast penugasan berhasil dikirim",
-		"sent_to": len(req.VolunteerIDs),
+		FieldMessage: "Broadcast penugasan berhasil dikirim",
+		"sent_to":    len(req.VolunteerIDs),
 	})
 }

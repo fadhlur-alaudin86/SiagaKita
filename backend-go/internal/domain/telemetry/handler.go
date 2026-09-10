@@ -52,34 +52,17 @@ func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal menyimpan lokasi")
 	}
 
-	// Broadcast lokasi terbaru ke admin & agency yang sedang online
-	h.h.BroadcastToRole("admin", hub.Message{
-		Event: "VOLUNTEER_LOCATION_UPDATE",
-		Payload: map[string]interface{}{
-			"user_id":   userID,
-			"latitude":  body.Latitude,
-			"longitude": body.Longitude,
-			"timestamp": time.Now().Unix(),
-		},
-	})
-	h.h.BroadcastToRole("agency", hub.Message{
-		Event: "VOLUNTEER_LOCATION_UPDATE",
-		Payload: map[string]interface{}{
-			"user_id":   userID,
-			"latitude":  body.Latitude,
-			"longitude": body.Longitude,
-			"timestamp": time.Now().Unix(),
-		},
-	})
-	h.h.BroadcastToRole("superadmin", hub.Message{
-		Event: "VOLUNTEER_LOCATION_UPDATE",
-		Payload: map[string]interface{}{
-			"user_id":   userID,
-			"latitude":  body.Latitude,
-			"longitude": body.Longitude,
-			"timestamp": time.Now().Unix(),
-		},
-	})
+	// Broadcast lokasi terbaru ke admin, agency, dan superadmin yang sedang online
+	payload := map[string]interface{}{
+		FieldUserID:    userID,
+		FieldLatitude:  body.Latitude,
+		FieldLongitude: body.Longitude,
+		FieldTimestamp: time.Now().Unix(),
+	}
+	h.h.BroadcastToRoles(hub.Message{
+		Event:   EventVolunteerLocationUpdate,
+		Payload: payload,
+	}, "", "admin", "agency", "superadmin")
 
 	return utils.SuccessResponse(c, fiber.Map{"message": "Lokasi diperbarui"})
 }

@@ -14,6 +14,11 @@ func NewHandler(svc Service) *Handler {
 	return &Handler{svc: svc}
 }
 
+const (
+	fieldSuccess = "success"
+	fieldMessage = "message"
+)
+
 // ─── Request / Response types ─────────────────────────────────────────────────
 
 type requestOTPRequest struct {
@@ -41,15 +46,15 @@ func (h *Handler) RequestOTP(c *fiber.Ctx) error {
 	var req requestOTPRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "Format request tidak valid",
+			fieldSuccess: false,
+			fieldMessage: "Format request tidak valid",
 		})
 	}
 
 	if req.PhoneNumber == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "phone_number tidak boleh kosong",
+			fieldSuccess: false,
+			fieldMessage: "phone_number tidak boleh kosong",
 		})
 	}
 
@@ -57,20 +62,20 @@ func (h *Handler) RequestOTP(c *fiber.Ctx) error {
 		// Bedakan rate-limit (429) vs error server (500)
 		if err.Error() == "Tunggu 1 menit sebelum meminta kode baru" {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
-				"success": false,
-				"message": err.Error(),
+				fieldSuccess: false,
+				fieldMessage: err.Error(),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"message": err.Error(),
+			fieldSuccess: false,
+			fieldMessage: err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"success": true,
+		fieldSuccess: true,
 		"data": fiber.Map{
-			"message": "Kode OTP telah dikirimkan ke WhatsApp Anda. Berlaku 3 menit.",
+			fieldMessage: "Kode OTP telah dikirimkan ke WhatsApp Anda. Berlaku 3 menit.",
 		},
 	})
 }
@@ -90,27 +95,27 @@ func (h *Handler) VerifyOTP(c *fiber.Ctx) error {
 	var req verifyOTPRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "Format request tidak valid",
+			fieldSuccess: false,
+			fieldMessage: "Format request tidak valid",
 		})
 	}
 
 	if req.PhoneNumber == "" || req.OTPCode == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "phone_number dan otp_code wajib diisi",
+			fieldSuccess: false,
+			fieldMessage: "phone_number dan otp_code wajib diisi",
 		})
 	}
 
 	if err := h.svc.VerifyOTP(c.Context(), req.PhoneNumber, req.OTPCode); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": err.Error(),
+			fieldSuccess: false,
+			fieldMessage: err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"success": true,
+		fieldSuccess: true,
 		"data": fiber.Map{
 			"verified": true,
 		},

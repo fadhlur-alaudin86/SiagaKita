@@ -33,22 +33,22 @@ func (r *Repository) FindByID(id string) (*Incident, error) {
 }
 
 func (r *Repository) UpdateStatus(id, status string) error {
-	updates := map[string]interface{}{"status": status, "updated_at": time.Now()}
-	if status == "resolved" || status == "handled" || status == "canceled" || status == "false_alarm" {
-		updates["completed_at"] = time.Now()
+	updates := map[string]interface{}{FieldStatus: status, FieldUpdatedAt: time.Now()}
+	if status == StatusResolved || status == StatusHandled || status == StatusCanceled || status == StatusFalseAlarm {
+		updates[FieldCompletedAt] = time.Now()
 	}
 	return r.db.Model(&Incident{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *Repository) UpdateType(id, incidentType string) error {
 	return r.db.Model(&Incident{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"incident_type": incidentType, "updated_at": time.Now()}).Error
+		Updates(map[string]interface{}{FieldIncidentType: incidentType, FieldUpdatedAt: time.Now()}).Error
 }
 
 func (r *Repository) MarkResolved(id string) (*Incident, error) {
 	now := time.Now()
 	if err := r.db.Model(&Incident{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"status": "resolved", "completed_at": now, "updated_at": now}).Error; err != nil {
+		Updates(map[string]interface{}{FieldStatus: StatusResolved, FieldCompletedAt: now, FieldUpdatedAt: now}).Error; err != nil {
 		return nil, err
 	}
 	return r.FindByID(id)
@@ -61,12 +61,12 @@ func (r *Repository) MarkCancelled(id string) error {
 		now := time.Now()
 		// 1. Update incident
 		db := tx.Model(&Incident{}).
-			Where("id = ? AND status IN (?, ?, ?)", id, "grace_period", "broadcasting", "handled").
+			Where("id = ? AND status IN (?, ?, ?)", id, StatusGracePeriod, "broadcasting", StatusHandled).
 			Updates(map[string]interface{}{
-				"status":        "canceled",
-				"agency_status": "canceled", // Supaya instansi tahu ini dibatalkan
-				"completed_at":  now,
-				"updated_at":    now,
+				FieldStatus:       StatusCanceled,
+				FieldAgencyStatus: AgencyStatusCanceled, // Supaya instansi tahu ini dibatalkan
+				FieldCompletedAt:  now,
+				FieldUpdatedAt:    now,
 			})
 
 		if db.Error != nil {
@@ -80,7 +80,7 @@ func (r *Repository) MarkCancelled(id string) error {
 		if err := tx.Model(&IncidentResponse{}).
 			Where("incident_id = ? AND status IN (?, ?, ?)", id, "en_route", "waiting_review", "on_scene").
 			Updates(map[string]interface{}{
-				"status": "canceled",
+				FieldStatus: StatusCanceled,
 			}).Error; err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func (r *Repository) MarkCancelled(id string) error {
 
 // UploadEvidence menyimpan URL foto dan audio bukti situasi SOS pasca broadcasting.
 func (r *Repository) UploadEvidence(id string, photoPaths []string, audioPath *string) error {
-	updates := map[string]interface{}{"updated_at": time.Now()}
+	updates := map[string]interface{}{FieldUpdatedAt: time.Now()}
 	if len(photoPaths) > 0 {
 		updates["photo_paths"] = pq.StringArray(photoPaths)
 	}
@@ -103,12 +103,12 @@ func (r *Repository) UploadEvidence(id string, photoPaths []string, audioPath *s
 
 func (r *Repository) MarkFalseAlarm(id string) error {
 	return r.db.Model(&Incident{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"status": "false_alarm", "completed_at": time.Now(), "updated_at": time.Now()}).Error
+		Updates(map[string]interface{}{FieldStatus: StatusFalseAlarm, FieldCompletedAt: time.Now(), FieldUpdatedAt: time.Now()}).Error
 }
 
 func (r *Repository) UpdateLocation(id string, lat, lng float64) error {
 	return r.db.Model(&Incident{}).Where("id = ?", id).
-		Updates(map[string]interface{}{"latitude": lat, "longitude": lng, "updated_at": time.Now()}).Error
+		Updates(map[string]interface{}{FieldLatitude: lat, FieldLongitude: lng, FieldUpdatedAt: time.Now()}).Error
 }
 
 func (r *Repository) FindActiveByReporter(reporterID string) (*Incident, error) {
@@ -259,14 +259,14 @@ func (r *Repository) hydrateReportPhotoPaths(reps []IncidentReportResponse) {
 }
 
 func (r *Repository) UpdateReportStatus(id, status string, urgency *int) error {
-	updates := map[string]interface{}{"status": status, "updated_at": time.Now()}
+	updates := map[string]interface{}{FieldStatus: status, FieldUpdatedAt: time.Now()}
 	if urgency != nil {
 		updates["urgency_level"] = *urgency
 	} else if status == "rejected" {
 		updates["urgency_level"] = gorm.Expr("NULL")
 	}
-	if status == "resolved" || status == "rejected" || status == "canceled" {
-		updates["completed_at"] = time.Now()
+	if status == StatusResolved || status == "rejected" || status == StatusCanceled {
+		updates[FieldCompletedAt] = time.Now()
 	}
 	return r.db.Model(&IncidentReport{}).Where("id = ?", id).Updates(updates).Error
 }
@@ -301,7 +301,7 @@ func (r *Repository) CancelReport(reportID, reporterID string) error {
 		return errors.New("hanya laporan dengan status 'sent' atau 'pending' yang dapat dibatalkan")
 	}
 	return r.db.Model(&IncidentReport{}).Where("id = ?", reportID).
-		Updates(map[string]interface{}{"status": "canceled", "updated_at": time.Now(), "completed_at": time.Now()}).Error
+		Updates(map[string]interface{}{FieldStatus: StatusCanceled, FieldUpdatedAt: time.Now(), FieldCompletedAt: time.Now()}).Error
 }
 
 // ─── Strike & Ban ─────────────────────────────────────────────────────────────
@@ -419,7 +419,7 @@ func (r *Repository) GetRankForXP(totalXP int) (*MRank, error) {
 
 func (r *Repository) UpdateRank(userID string, rankID uint) error {
 	return r.db.Model(&VolunteerReputation{}).Where("user_id = ?", userID).
-		Updates(map[string]interface{}{"rank_id": rankID, "updated_at": time.Now()}).Error
+		Updates(map[string]interface{}{"rank_id": rankID, FieldUpdatedAt: time.Now()}).Error
 }
 
 // ─── Nearby (untuk Relawan) ───────────────────────────────────────────────────
@@ -509,7 +509,7 @@ func (r *Repository) AcceptIncident(incidentID, volunteerID string) (*IncidentRe
 		// Update status incident ke 'handled' jika masih broadcasting
 		if inc.Status == "broadcasting" {
 			tx.Model(&Incident{}).Where("id = ?", incidentID).
-				Updates(map[string]interface{}{"status": "handled", "updated_at": time.Now()})
+				Updates(map[string]interface{}{FieldStatus: StatusHandled, FieldUpdatedAt: time.Now()})
 		}
 
 		return nil
@@ -522,10 +522,10 @@ func (r *Repository) AcceptIncident(incidentID, volunteerID string) (*IncidentRe
 func (r *Repository) AgencyHandleSOS(incidentID, agencyID string) error {
 	return r.db.Model(&Incident{}).Where("id = ? AND status NOT IN ('resolved','false_alarm','canceled')", incidentID).
 		Updates(map[string]interface{}{
-			"status":               "handled",
+			FieldStatus:            StatusHandled,
 			"handled_by_agency_id": agencyID,
-			"agency_status":        "handling",
-			"updated_at":           time.Now(),
+			FieldAgencyStatus:      AgencyStatusHandling,
+			FieldUpdatedAt:         time.Now(),
 		}).Error
 }
 
@@ -533,9 +533,9 @@ func (r *Repository) VolunteerCompleteSOS(incidentID, volunteerID, photoURL stri
 	return r.db.Model(&IncidentResponse{}).
 		Where("incident_id = ? AND responder_id = ?", incidentID, volunteerID).
 		Updates(map[string]interface{}{
-			"status":          "waiting_review",
+			FieldStatus:       "waiting_review",
 			"proof_photo_url": photoURL,
-			"completed_at":    time.Now(),
+			FieldCompletedAt:  time.Now(),
 		}).Error
 }
 
@@ -551,7 +551,7 @@ func (r *Repository) AgencyReviewVolunteer(incidentID, volunteerID string, appro
 			tx.Model(&IncidentResponse{}).Where("id = ?", resp.ID).Update("status", "completed")
 			// Selesaikan incident global
 			tx.Model(&Incident{}).Where("id = ?", incidentID).
-				Updates(map[string]interface{}{"status": "resolved", "completed_at": time.Now(), "updated_at": time.Now()})
+				Updates(map[string]interface{}{FieldStatus: StatusResolved, FieldCompletedAt: time.Now(), FieldUpdatedAt: time.Now()})
 		} else {
 			// Tolak pekerjaan relawan
 			tx.Model(&IncidentResponse{}).Where("id = ?", resp.ID).Update("status", "rejected")
@@ -616,8 +616,8 @@ func (r *Repository) GetActiveResponse(volunteerID string) (*ActiveResponseDTO, 
 // UpdateResponseLocation memperbarui koordinat relawan pada incident_response aktif.
 func (r *Repository) UpdateResponseLocation(incidentID, volunteerID string, lat, lng float64, address *string) error {
 	updates := map[string]interface{}{
-		"latitude":  lat,
-		"longitude": lng,
+		FieldLatitude:  lat,
+		FieldLongitude: lng,
 	}
 	if address != nil {
 		updates["address_detail"] = *address

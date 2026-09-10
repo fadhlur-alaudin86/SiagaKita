@@ -132,7 +132,7 @@ func (h *Handler) SaveBiodata(c *fiber.Ctx) error {
 	if err := h.svc.SaveBiodata(userID, &req); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.SuccessResponse(c, fiber.Map{"message": "Biodata berhasil disimpan"})
+	return utils.SuccessResponse(c, fiber.Map{fieldMessage: "Biodata berhasil disimpan"})
 }
 
 // ─── GET /api/v1/users/profile  [Auth required — civilian/volunteer] ──────────
@@ -179,7 +179,7 @@ func (h *Handler) RequestPhoneVerification(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "Kode OTP telah dikirimkan ke WhatsApp Anda. Berlaku 3 menit.",
+		fieldMessage: "Kode OTP telah dikirimkan ke WhatsApp Anda. Berlaku 3 menit.",
 	})
 }
 
@@ -197,8 +197,8 @@ func (h *Handler) ConfirmPhoneOTP(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{
-		"message":  "Nomor HP berhasil diverifikasi.",
-		"verified": true,
+		fieldMessage: "Nomor HP berhasil diverifikasi.",
+		"verified":   true,
 	})
 }
 
@@ -274,8 +274,8 @@ func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "Pengajuan verifikasi NIK berhasil dikirim. Tunggu proses verifikasi admin (1-3 hari kerja).",
-		"status":  string(KYCStatusPending),
+		fieldMessage: "Pengajuan verifikasi NIK berhasil dikirim. Tunggu proses verifikasi admin (1-3 hari kerja).",
+		"status":     string(KYCStatusPending),
 	})
 }
 
@@ -305,7 +305,7 @@ func (h *Handler) SubmitVolunteerRegistration(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, fiber.Map{
-		"message": "Pengajuan pendaftaran relawan berhasil dikirim. Tunggu proses verifikasi admin.",
-		"status":  "pending",
+		fieldMessage: "Pengajuan pendaftaran relawan berhasil dikirim. Tunggu proses verifikasi admin.",
+		"status":     string(KYCStatusPending),
 	})
 }
