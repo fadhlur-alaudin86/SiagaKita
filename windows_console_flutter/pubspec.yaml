@@ -65,7 +65,7 @@ dependencies:
   pdfrx: ^2.3.2
 
   # Network image dengan cache & placeholder
-  cached_network_image: ^3.4.1
+  cached_network_image: ^4.0.0
 
   # File picker
   file_picker: ^12.0.0-beta.3
