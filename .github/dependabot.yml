@@ -9,7 +9,15 @@ updates:
     labels:
       - "type: chore"
       - "component: backend"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    groups:
+      backend-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Monthly minor and patch updates for Flutter Mobile
   - package-ecosystem: "pub"
@@ -20,7 +28,15 @@ updates:
     labels:
       - "type: chore"
       - "component: mobile"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    groups:
+      mobile-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Monthly minor and patch updates for Flutter Windows Console Desktop
   - package-ecosystem: "pub"
@@ -31,4 +47,12 @@ updates:
     labels:
       - "type: chore"
       - "component: desktop"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    groups:
+      desktop-dependencies:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
