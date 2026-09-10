@@ -12,6 +12,9 @@ on:
       - dev
   issues:
     types: [closed, labeled]
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   update-issue-status:
@@ -130,9 +133,98 @@ jobs:
                   print(f"Closing issue #{issue_num} with reason: {reason}")
                   run_cmd(f'gh issue close "{issue_num}" --repo "{repo}" --reason {reason}')
 
+          def extract_issues(text, pr_num=None):
+              """Extracts closing issues and parent tracking issues from text."""
+              parent_clause_pattern = re.compile(
+                  r'(?:parent(?:\s+issues?)?|refs?|related\s+to)\s*:?\s*(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
+                  re.IGNORECASE
+              )
+              parent_issues = set()
+              for match in parent_clause_pattern.finditer(text):
+                  clause = match.group(1)
+                  parent_issues.update(re.findall(r'#(\d+)', clause))
+
+              closing_clause_pattern = re.compile(
+                  r'(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+(?:sub-?issues?|sub-?tasks?|issues?|tasks?|bugs?)?\s*:?\s*(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
+                  re.IGNORECASE
+              )
+              closing_issues = set()
+              for match in closing_clause_pattern.finditer(text):
+                  clause = match.group(1)
+                  closing_issues.update(re.findall(r'#(\d+)', clause))
+
+              standalone_colon_pattern = re.compile(
+                  r'(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved):?\s*(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
+                  re.IGNORECASE
+              )
+              for match in standalone_colon_pattern.finditer(text):
+                  clause = match.group(1)
+                  closing_issues.update(re.findall(r'#(\d+)', clause))
+
+              closing_issues = closing_issues - parent_issues
+              if pr_num:
+                  closing_issues.discard(str(pr_num))
+                  parent_issues.discard(str(pr_num))
+              return closing_issues, parent_issues
+
+          def reconcile_merged_prs(limit=25):
+              """Reconciles open issues that are referenced by already-merged PRs."""
+              print(f"--- Running Reconciliation on last {limit} merged PRs to dev ---")
+              code, out, err = run_cmd(f'gh pr list --repo "{repo}" --state merged --base dev --limit {limit} --json number,title,body,author,commits')
+              if code != 0:
+                  print(f"Failed to fetch merged PRs: {err}")
+                  return
+              try:
+                  prs = json.loads(out)
+              except Exception as e:
+                  print(f"Failed to parse PRs JSON: {e}")
+                  return
+
+              for pr in prs:
+                  curr_pr_num = pr.get("number")
+                  curr_pr_title = pr.get("title", "")
+                  curr_pr_body = pr.get("body", "") or ""
+                  curr_pr_author = pr.get("author", {}).get("login", "")
+
+                  full_text = f"{curr_pr_title}\n{curr_pr_body}"
+                  for c in pr.get("commits", []):
+                      full_text += f"\n{c.get('messageHeadline', '')}\n{c.get('messageBody', '')}"
+
+                  closing_issues, _ = extract_issues(full_text, curr_pr_num)
+                  for issue_num in closing_issues:
+                      code_issue, out_issue, _ = run_cmd(f'gh issue view "{issue_num}" --repo "{repo}" --json state,stateReason,labels')
+                      if code_issue != 0 or not out_issue:
+                          continue
+                      try:
+                          issue_data = json.loads(out_issue)
+                      except Exception:
+                          continue
+
+                      state = issue_data.get("state", "")
+                      state_reason = issue_data.get("stateReason", "")
+                      labels = [lbl.get("name") for lbl in issue_data.get("labels", []) if isinstance(lbl, dict)]
+
+                      # Skip if issue was closed as not planned
+                      if state_reason == "NOT_PLANNED":
+                          continue
+
+                      if state == "OPEN":
+                          print(f"[Reconciliation] Auto-completing open issue #{issue_num} from merged PR #{curr_pr_num}")
+                          set_issue_assignee(issue_num, curr_pr_author)
+                          autocomplete_and_close(issue_num)
+                          run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🎉 **Status Update (Auto-Reconciled):** PR #{curr_pr_num} ({curr_pr_title}) telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
+                      elif "status: done" not in labels:
+                          print(f"[Reconciliation] Ensuring status: done for closed issue #{issue_num}")
+                          set_issue_status(issue_num, "status: done")
+
           print(f"--- Processing Event: {event_name} (Action: {pr_action or issue_action}) ---")
 
-          # 1. Handle direct issue events
+          # 1. Handle schedule and workflow_dispatch triggers
+          if event_name in ["schedule", "workflow_dispatch"]:
+              reconcile_merged_prs(limit=25)
+              exit(0)
+
+          # 2. Handle direct issue events
           if event_name == "issues" and event_issue_num:
               if issue_action == "closed":
                   print(f"Direct issue closure detected for #{event_issue_num}")
@@ -147,7 +239,7 @@ jobs:
                   print(f"Issue event '{issue_action}' with label '{issue_label_name}' ignored.")
                   exit(0)
 
-          # 2. Extract commit / PR information
+          # 3. Extract commit / PR information
           full_text = ""
           if event_name == "push":
               code, commit_msg, _ = run_cmd("git log -1 --pretty=%B")
@@ -169,18 +261,13 @@ jobs:
           else:
               full_text = f"{pr_title}\n{pr_body}"
 
-          closing_pattern = re.compile(r'(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s*:?\s*#(\d+)', re.IGNORECASE)
-          parent_pattern = re.compile(r'(?:parent|parent\s+issue|ref|refs|related\s+to)\s*:?\s*#(\d+)', re.IGNORECASE)
-
-          closing_issues = set(closing_pattern.findall(full_text))
-          parent_issues = set(parent_pattern.findall(full_text))
-          closing_issues = closing_issues - parent_issues
+          closing_issues, parent_issues = extract_issues(full_text, pr_number)
 
           print(f"PR Number: #{pr_number}")
           print(f"Closing issues: {closing_issues}")
           print(f"Parent issues: {parent_issues}")
 
-          # 3. Process closing issues
+          # 4. Process closing issues
           for issue_num in closing_issues:
               if issue_num == pr_number:
                   continue
@@ -204,7 +291,11 @@ jobs:
                   autocomplete_and_close(issue_num)
                   run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🎉 **Status Update:** PR #{pr_number or ""} telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
 
-          # 4. Process parent tracker issues (Notification only, do NOT close or change status)
+          # 5. Fallback reconciliation on push to dev
+          if event_name == "push":
+              reconcile_merged_prs(limit=5)
+
+          # 6. Process parent tracker issues (Notification only, do NOT close or change status)
           for parent_num in parent_issues:
               if parent_num == pr_number:
                   continue
