@@ -42,6 +42,8 @@ Ensures the codebase is free of injection vulnerabilities, credential leakage, a
 | **Auth & RBAC** | Authentication middleware | Verifies user role (`civilian`, `volunteer`, `agency`, `admin`) | Sensitive endpoints accessible without JWT middleware or role validation |
 | **Mobile Storage** | Client-side session storage | Tokens stored in `flutter_secure_storage` | JWT tokens stored in plain `SharedPreferences` without hardware encryption |
 | **Network Security** | HTTP client configuration | HTTPS enforced with explicit `connectTimeout` / `receiveTimeout` | Allowing cleartext HTTP or unconfigured timeout defaults on Dio |
+| **Directory Permissions** | File & directory creation mode | Mode bits restricted to `0750` or `0700` (`gosec G301`) | Using `os.ModePerm` (0777) or permissive world-write modes on uploads |
+| **Server Timeouts** | HTTP / WebSocket server hardening | `ReadHeaderTimeout`, `ReadTimeout`, `WriteTimeout` set | Slowloris vulnerability from unconfigured server timeouts |
 
 ---
 
@@ -91,7 +93,10 @@ Adapted from ECC's *refactor-cleaner* role. Ensures that unused symbols, obsolet
 | **Dart Orphaned Widgets** | Widget and screen files | Every widget and screen file in `lib/features/` is imported and used | Leaving abandoned screen/widget files whose routes or callers have been removed |
 | **Dart Uncalled Methods** | Private class methods & helpers | Private members (`_foo()`, `_bar`) are actively invoked within their declaring class | Declaring private helper methods or controllers that are never invoked |
 | **Flutter Unused Assets** | Asset declarations in `pubspec.yaml` | Declared assets under `assets:` are referenced via `AssetImage` or `SvgPicture` | Retaining unused image/icon files or obsolete asset paths in `pubspec.yaml` |
-| **Localization Hygiene** | Active translation key references | All dictionary entries in `app_localization.dart` are referenced via `.tr(context)` | Retaining orphaned dictionary entries per Invariant 5 of `localization.md` |
+| **Localization Hygiene** | Active translation key references | `python3 scripts/check_localization_orphans.py --all` passes cleanly with 0 orphaned keys | Retaining orphaned dictionary entries per Invariant 5 of `localization.md` |
+| **Go Cyclomatic Complexity** | Function structural complexity | All domain functions have complexity <= 16 (`cyclop`), helpers <= 6 | Monolithic functions (> 16 branches/loops) lacking modular decomposition |
+| **Go String Constants** | Domain string literal repetition | String literals repeated 4+ times extracted to `constants.go` (`goconst`) | Scattering duplicate status, field, or event strings across handlers |
+| **Dependency Hygiene** | Lockfile & package determinism | Uses `flutter pub get` and `go mod download` only | Running `flutter pub upgrade` or `go get -u` inside feature PRs |
 
 ---
 
@@ -101,8 +106,9 @@ After completing the self-review at Step 7, record the summary in the feature lo
 
 ```markdown
 ### Pre-PR Review Gate
-- [x] Security Review: PASS (No SQL injection, secrets sanitized, role check verified)
+- [x] Security Review: PASS (No SQL injection, secrets sanitized, role check verified, 0750 permissions, WS timeouts set)
 - [x] Database Review: PASS (Migrations idempotent, FK indexed, ERD updated)
 - [x] Silent Failure Audit: PASS (No ignored errors, context.mounted checked, defer cancel present)
-- [x] Dead Code Elimination: PASS (No uncalled private symbols, orphaned widgets, or dead dictionary keys)
+- [x] Clean Code & Hygiene: PASS (No uncalled private symbols, cyclop <= 16, goconst extracted, 0 orphaned localization keys)
+- [x] Dependency Determinism: PASS (No unapproved dependency upgrades, lockfiles intact)
 ```

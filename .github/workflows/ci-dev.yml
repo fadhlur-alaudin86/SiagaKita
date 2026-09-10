@@ -57,7 +57,7 @@ jobs:
             echo "$unformatted"
             exit 1
           fi
-          echo "✅ All Go files are properly formatted"
+          echo "All Go files are properly formatted"
 
       - name: Vet
         run: go vet ./...
@@ -67,6 +67,14 @@ jobs:
         with:
           working-directory: backend-go
           args: --timeout=5m
+
+      - name: Vulnerability Check (govulncheck)
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: backend-go/go.mod
+          go-package: ./...
+          work-dir: backend-go
+          repo-checkout: false
 
       - name: Build
         run: go build ./...
@@ -97,6 +105,9 @@ jobs:
 
       - name: Check Format (dart format)
         run: dart format --set-exit-if-changed .
+
+      - name: Check Localization Orphans
+        run: python3 ../scripts/check_localization_orphans.py --mobile
 
       - name: Analyze
         run: flutter analyze --fatal-infos
@@ -130,6 +141,9 @@ jobs:
 
       - name: Check Format (dart format)
         run: dart format --set-exit-if-changed .
+
+      - name: Check Localization Orphans
+        run: python3 ../scripts/check_localization_orphans.py --desktop
 
       - name: Analyze
         run: flutter analyze --fatal-infos

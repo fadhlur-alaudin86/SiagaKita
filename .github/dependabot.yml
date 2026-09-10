@@ -1,0 +1,34 @@
+version: 2
+updates:
+  # Monthly minor and patch updates for Go backend
+  - package-ecosystem: "gomod"
+    directory: "/backend-go"
+    schedule:
+      interval: "monthly"
+    target-branch: "dev"
+    labels:
+      - "type: chore"
+      - "component: backend"
+    open-pull-requests-limit: 5
+
+  # Monthly minor and patch updates for Flutter Mobile
+  - package-ecosystem: "pub"
+    directory: "/mobile-flutter"
+    schedule:
+      interval: "monthly"
+    target-branch: "dev"
+    labels:
+      - "type: chore"
+      - "component: mobile"
+    open-pull-requests-limit: 5
+
+  # Monthly minor and patch updates for Flutter Windows Console Desktop
+  - package-ecosystem: "pub"
+    directory: "/windows_console_flutter"
+    schedule:
+      interval: "monthly"
+    target-branch: "dev"
+    labels:
+      - "type: chore"
+      - "component: desktop"
+    open-pull-requests-limit: 5
