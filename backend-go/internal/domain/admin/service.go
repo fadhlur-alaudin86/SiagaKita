@@ -1,6 +1,11 @@
 package admin
 
-import "gorm.io/gorm"
+import (
+	"errors"
+	"strings"
+
+	"gorm.io/gorm"
+)
 
 // Service contains business logic for the admin domain.
 type Service struct {
@@ -101,30 +106,87 @@ func (s *Service) GetRanks() ([]MRank, error) {
 }
 
 func (s *Service) CreateRank(req *RankRequest) (*MRank, error) {
-	if req.RankName == "" {
+	name := strings.TrimSpace(req.RankName)
+	if name == "" {
 		return nil, errorMsg("rank_name wajib diisi")
 	}
 	if req.MinExp < 0 {
 		return nil, errorMsg("min_exp tidak boleh negatif")
 	}
+	if existing, err := s.repo.FindRankByName(name); err == nil && existing != nil {
+		return nil, errorMsg("nama rank sudah digunakan")
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	if existing, err := s.repo.FindRankByMinExp(req.MinExp); err == nil && existing != nil {
+		return nil, errorMsg("ambang batas min_exp sudah digunakan oleh rank lain")
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	req.RankName = name
 	return s.repo.CreateRank(req)
 }
 
 func (s *Service) UpdateRank(id int, req *RankRequest) (*MRank, error) {
-	if req.RankName == "" {
+	name := strings.TrimSpace(req.RankName)
+	if name == "" {
 		return nil, errorMsg("rank_name wajib diisi")
 	}
+	if req.MinExp < 0 {
+		return nil, errorMsg("min_exp tidak boleh negatif")
+	}
+	existing, err := s.repo.FindRankByID(id)
+	if err != nil {
+		return nil, errorMsg("rank tidak ditemukan")
+	}
+	if existing.MinExp == 0 && req.MinExp != 0 {
+		return nil, errorMsg("min_exp untuk rank dasar harus tetap 0")
+	}
+	if other, err := s.repo.FindRankByNameExcludingID(name, id); err == nil && other != nil {
+		return nil, errorMsg("nama rank sudah digunakan")
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	if other, err := s.repo.FindRankByMinExpExcludingID(req.MinExp, id); err == nil && other != nil {
+		return nil, errorMsg("ambang batas min_exp sudah digunakan oleh rank lain")
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	req.RankName = name
 	return s.repo.UpdateRank(id, req)
 }
 
 func (s *Service) DeleteRank(id int) error {
-	return s.repo.DeleteRank(id)
+	rank, err := s.repo.FindRankByID(id)
+	if err != nil {
+		return errorMsg("rank tidak ditemukan")
+	}
+	if rank.MinExp == 0 {
+		return errorMsg("rank dasar (min_exp = 0) tidak dapat dihapus")
+	}
+	fallback, err := s.repo.FindHighestRankBelowExp(rank.MinExp)
+	if err != nil {
+		return errorMsg("tidak ada rank aktif yang lebih rendah untuk downgrade")
+	}
+	return s.repo.DeleteRankWithAutoDowngrade(rank.ID, fallback.ID)
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
 func (s *Service) GetStats(period string) (*StatsResponse, error) {
-	return s.repo.GetStats(period)
+	normalized := normalizePeriod(period)
+	return s.repo.GetStats(normalized)
+}
+
+func normalizePeriod(period string) string {
+	switch strings.ToLower(strings.TrimSpace(period)) {
+	case "week", "weekly":
+		return "week"
+	case "year", "yearly":
+		return "year"
+	default:
+		return "month"
+	}
 }
 
 // ─── Badges (Peringkat Relawan) ────────────────────────────────────────────────

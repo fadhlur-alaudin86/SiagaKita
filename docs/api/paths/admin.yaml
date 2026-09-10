@@ -689,6 +689,12 @@
           application/json:
             schema:
               $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+      '400':
+        description: Cannot delete base rank (min_exp = 0) or rank not found
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
 
 # ─── Master Data: Badges ──────────────────────────────────────────────────────
 

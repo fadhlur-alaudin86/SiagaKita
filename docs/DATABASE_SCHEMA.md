@@ -253,7 +253,7 @@ CREATE TABLE public.incidents (
 );
 ```
 
-**Index:** `idx_incidents_reporter`, `idx_incidents_status`
+**Index:** `idx_incidents_reporter`, `idx_incidents_status`, `idx_incidents_created_at`, `idx_incidents_status_created_at`, `idx_incidents_handled_by_agency_id`
 
 ---
 
@@ -323,6 +323,8 @@ CREATE TABLE public.m_ranks (
     icon_url  varchar(255)
 );
 ```
+
+**Index:** `idx_m_ranks_min_exp` (min_exp)
 
 ### `m_badges` — Master Data Badge
 
