@@ -309,11 +309,7 @@ func (h *Handler) Resolve(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, resp)
 }
 
-// POST /api/v1/reports - Jalur B laporan warga (multipart/form-data)
-func (h *Handler) CreateReport(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
-
-	// Parse form fields (works for both multipart and url-encoded)
+func parseReportRequest(c *fiber.Ctx) (*CreateReportRequest, string) {
 	req := CreateReportRequest{
 		IncidentType:  c.FormValue("incident_type"),
 		Description:   c.FormValue("description"),
@@ -323,63 +319,81 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 	}
 
 	if req.IncidentType == "" || req.IncidentType == IncidentTypeUnknown {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "incident_type wajib diisi")
+		return nil, "incident_type wajib diisi"
 	}
 	if req.Latitude == 0 && req.Longitude == 0 {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Koordinat GPS wajib diisi")
+		return nil, "Koordinat GPS wajib diisi"
 	}
 
-	uploadDir := h.cfg.UploadDir
-	baseURL := h.cfg.UploadBaseURL
-	now := time.Now()
-	yearMonth := fmt.Sprintf("%d/%02d", now.Year(), now.Month())
+	return &req, ""
+}
+
+func processReportPhotos(photos []*multipart.FileHeader, uploadDir, baseURL, reporterID, yearMonth string, now time.Time) []string {
+	if len(photos) > 3 {
+		photos = photos[:3]
+	}
+	var photoPaths []string
+	for i, fh := range photos {
+		if fh.Size > 2<<20 {
+			continue
+		}
+		ext := filepath.Ext(fh.Filename)
+		if ext == "" {
+			ext = extJPG
+		}
+		// Use reporterID as temp dir key before report is created
+		dir := filepath.Join(uploadDir, "reports", "photos", yearMonth, reporterID)
+		_ = os.MkdirAll(dir, 0750)
+		fileName := fmt.Sprintf("photo_%d_%d%s", now.UnixNano(), i, ext)
+		dst := filepath.Join(dir, fileName)
+		if err := saveFile(fh, dst); err == nil {
+			relPath := fmt.Sprintf("reports/photos/%s/%s/%s", yearMonth, reporterID, fileName)
+			photoPaths = append(photoPaths, baseURL+"/"+relPath)
+		}
+	}
+	return photoPaths
+}
+
+func processReportAudio(audioFiles []*multipart.FileHeader, uploadDir, baseURL, reporterID, yearMonth string, now time.Time) *string {
+	if len(audioFiles) == 0 {
+		return nil
+	}
+	fh := audioFiles[0]
+	if fh.Size > 5<<20 {
+		return nil
+	}
+	dir := filepath.Join(uploadDir, "reports", "audio", yearMonth, reporterID)
+	_ = os.MkdirAll(dir, 0750)
+	fileName := fmt.Sprintf("audio_%d.m4a", now.UnixNano())
+	dst := filepath.Join(dir, fileName)
+	if err := saveFile(fh, dst); err == nil {
+		relPath := fmt.Sprintf("reports/audio/%s/%s/%s", yearMonth, reporterID, fileName)
+		fullURL := baseURL + "/" + relPath
+		return &fullURL
+	}
+	return nil
+}
+
+// POST /api/v1/reports - Jalur B laporan warga (multipart/form-data)
+func (h *Handler) CreateReport(c *fiber.Ctx) error {
+	reporterID := c.Locals("userID").(string)
+
+	req, errMsg := parseReportRequest(c)
+	if errMsg != "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, errMsg)
+	}
 
 	var photoPaths []string
 	var audioPath *string
 
-	// Process photos (max 3, max 2 MB each)
 	if form, err := c.MultipartForm(); err == nil {
-		photos := form.File["photos[]"]
-		if len(photos) > 3 {
-			photos = photos[:3]
-		}
-		for i, fh := range photos {
-			if fh.Size > 2<<20 {
-				continue
-			}
-			ext := filepath.Ext(fh.Filename)
-			if ext == "" {
-				ext = ".jpg"
-			}
-			// Use reporterID as temp dir key before report is created
-			dir := filepath.Join(uploadDir, "reports", "photos", yearMonth, reporterID)
-			_ = os.MkdirAll(dir, 0750)
-			fileName := fmt.Sprintf("photo_%d_%d%s", now.UnixNano(), i, ext)
-			dst := filepath.Join(dir, fileName)
-			if err := saveFile(fh, dst); err == nil {
-				relPath := fmt.Sprintf("reports/photos/%s/%s/%s", yearMonth, reporterID, fileName)
-				photoPaths = append(photoPaths, baseURL+"/"+relPath)
-			}
-		}
-
-		// Process audio (max 1, max 5 MB)
-		if audioFiles := form.File["audio"]; len(audioFiles) > 0 {
-			fh := audioFiles[0]
-			if fh.Size <= 5<<20 {
-				dir := filepath.Join(uploadDir, "reports", "audio", yearMonth, reporterID)
-				_ = os.MkdirAll(dir, 0750)
-				fileName := fmt.Sprintf("audio_%d.m4a", now.UnixNano())
-				dst := filepath.Join(dir, fileName)
-				if err := saveFile(fh, dst); err == nil {
-					relPath := fmt.Sprintf("reports/audio/%s/%s/%s", yearMonth, reporterID, fileName)
-					fullURL := baseURL + "/" + relPath
-					audioPath = &fullURL
-				}
-			}
-		}
+		now := time.Now()
+		yearMonth := fmt.Sprintf("%d/%02d", now.Year(), now.Month())
+		photoPaths = processReportPhotos(form.File["photos[]"], h.cfg.UploadDir, h.cfg.UploadBaseURL, reporterID, yearMonth, now)
+		audioPath = processReportAudio(form.File["audio"], h.cfg.UploadDir, h.cfg.UploadBaseURL, reporterID, yearMonth, now)
 	}
 
-	rep, err := h.svc.CreateReport(reporterID, &req, photoPaths, audioPath)
+	rep, err := h.svc.CreateReport(reporterID, req, photoPaths, audioPath)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
@@ -843,6 +857,90 @@ func (h *Handler) UpdateResponseLocation(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, fiber.Map{FieldUpdated: true})
 }
 
+func isIncidentTerminal(status string) bool {
+	return status == StatusResolved || status == StatusCanceled || status == StatusFalseAlarm
+}
+
+func (h *Handler) cacheDispatchCandidates(incidentID string, volunteerIDs []string) {
+	if h.rdb == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	key := "dispatch:incident:" + incidentID + ":volunteers"
+	_ = h.rdb.Del(ctx, key)
+	for _, vid := range volunteerIDs {
+		_ = h.rdb.SAdd(ctx, key, vid)
+	}
+	_ = h.rdb.Expire(ctx, key, 120*time.Second)
+}
+
+func (h *Handler) handleDispatchTimeout(incidentID string, targetIDs []string) {
+	time.Sleep(60 * time.Second)
+	if h.rdb == nil {
+		return
+	}
+	checkCtx, checkCancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer checkCancel()
+
+	key := "dispatch:incident:" + incidentID + ":volunteers"
+	exists, _ := h.rdb.Exists(checkCtx, key).Result()
+	if exists > 0 {
+		_ = h.rdb.Del(checkCtx, key)
+		// Broadcast timeout event to console operators
+		h.broadcastEventToAgencies(hub.Message{
+			Event: "INCIDENT_DISPATCH_TIMEOUT",
+			Payload: map[string]interface{}{
+				FieldIncidentID: incidentID,
+			},
+		})
+		// Notify candidate volunteers that offer timed out
+		if h.hub != nil {
+			for _, vid := range targetIDs {
+				_ = h.hub.SendToUser(vid, hub.Message{
+					Event: "INCIDENT_ASSIGNMENT_CLAIMED",
+					Payload: map[string]interface{}{
+						FieldIncidentID: incidentID,
+						"reason":        "timeout",
+					},
+				})
+			}
+		}
+	}
+}
+
+func (h *Handler) broadcastAssignmentOffers(incidentID string, inc *Incident, volunteerIDs []string) {
+	if h.hub == nil {
+		return
+	}
+
+	var address string
+	if inc.AddressDetail != nil {
+		address = *inc.AddressDetail
+	}
+
+	offerMsg := hub.Message{
+		Event: "INCIDENT_ASSIGNMENT_OFFER",
+		Payload: map[string]interface{}{
+			FieldIncidentID:   incidentID,
+			FieldIncidentType: inc.IncidentType,
+			FieldLatitude:     inc.Latitude,
+			FieldLongitude:    inc.Longitude,
+			"address_detail":  address,
+			"reporter_id":     inc.ReporterID,
+			"timeout_seconds": 60,
+			"offered_at":      time.Now().Unix(),
+		},
+	}
+
+	for _, vid := range volunteerIDs {
+		_ = h.hub.SendToUser(vid, offerMsg)
+	}
+
+	// 60-second timeout handler in goroutine
+	go h.handleDispatchTimeout(incidentID, volunteerIDs)
+}
+
 // DispatchBroadcast handles POST /api/v1/incidents/:id/dispatch-broadcast [ConsoleOnly]
 // Dispatches incident offers to selected candidate volunteers via WebSocket broadcast.
 func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
@@ -865,79 +963,12 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusNotFound, "Insiden tidak ditemukan")
 	}
-	if inc.Status == StatusResolved || inc.Status == StatusCanceled || inc.Status == StatusFalseAlarm {
+	if isIncidentTerminal(inc.Status) {
 		return utils.ErrorResponse(c, fiber.StatusConflict, "Insiden sudah ditangani atau selesai")
 	}
 
-	// Store candidates in Redis Set with 120s TTL
-	if h.rdb != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		key := "dispatch:incident:" + incidentID + ":volunteers"
-		_ = h.rdb.Del(ctx, key)
-		for _, vid := range req.VolunteerIDs {
-			_ = h.rdb.SAdd(ctx, key, vid)
-		}
-		_ = h.rdb.Expire(ctx, key, 120*time.Second)
-	}
-
-	var address string
-	if inc.AddressDetail != nil {
-		address = *inc.AddressDetail
-	}
-
-	if h.hub != nil {
-		offerMsg := hub.Message{
-			Event: "INCIDENT_ASSIGNMENT_OFFER",
-			Payload: map[string]interface{}{
-				FieldIncidentID:   incidentID,
-				FieldIncidentType: inc.IncidentType,
-				FieldLatitude:     inc.Latitude,
-				FieldLongitude:    inc.Longitude,
-				"address_detail":  address,
-				"reporter_id":     inc.ReporterID,
-				"timeout_seconds": 60,
-				"offered_at":      time.Now().Unix(),
-			},
-		}
-
-		for _, vid := range req.VolunteerIDs {
-			_ = h.hub.SendToUser(vid, offerMsg)
-		}
-
-		// 60-second timeout handler in goroutine
-		go func(targetIDs []string) {
-			time.Sleep(60 * time.Second)
-			if h.rdb == nil {
-				return
-			}
-			checkCtx, checkCancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer checkCancel()
-
-			key := "dispatch:incident:" + incidentID + ":volunteers"
-			exists, _ := h.rdb.Exists(checkCtx, key).Result()
-			if exists > 0 {
-				_ = h.rdb.Del(checkCtx, key)
-				// Broadcast timeout event to console operators
-				h.broadcastEventToAgencies(hub.Message{
-					Event: "INCIDENT_DISPATCH_TIMEOUT",
-					Payload: map[string]interface{}{
-						FieldIncidentID: incidentID,
-					},
-				})
-				// Notify candidate volunteers that offer timed out
-				for _, vid := range targetIDs {
-					_ = h.hub.SendToUser(vid, hub.Message{
-						Event: "INCIDENT_ASSIGNMENT_CLAIMED",
-						Payload: map[string]interface{}{
-							FieldIncidentID: incidentID,
-							"reason":        "timeout",
-						},
-					})
-				}
-			}
-		}(req.VolunteerIDs)
-	}
+	h.cacheDispatchCandidates(incidentID, req.VolunteerIDs)
+	h.broadcastAssignmentOffers(incidentID, inc, req.VolunteerIDs)
 
 	return utils.SuccessResponse(c, fiber.Map{
 		FieldMessage: "Broadcast penugasan berhasil dikirim",
