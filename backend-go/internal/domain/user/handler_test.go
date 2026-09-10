@@ -21,11 +21,14 @@ func setupTestApp(h *Handler) *fiber.App {
 	return app
 }
 
-const fieldRefreshToken = "refresh_token"
+const (
+	fieldRefreshToken = "refresh_token"
+	testJWTSecret     = "test-jwt-secret-key-32-chars-long!"
+)
 
 func TestRefreshToken_Handler(t *testing.T) {
 	cfg := &config.Config{
-		JWTSecret:     "test-jwt-secret-key-32-chars-long!",
+		JWTSecret:     testJWTSecret,
 		JWTAccessTTL:  15 * time.Minute,
 		JWTRefreshTTL: 7 * 24 * time.Hour,
 	}
