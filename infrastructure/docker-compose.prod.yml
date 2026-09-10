@@ -52,7 +52,7 @@ services:
 
   # 3. Backend Go — image dari Docker Hub (di-push oleh GitHub Actions)
   backend:
-    image: ${DOCKERHUB_USERNAME}/siagakita-api:latest
+    image: ${DOCKERHUB_USERNAME}/siagakita-api:${IMAGE_TAG:-latest}
     container_name: siagakita_backend
     restart: always
     env_file:

@@ -161,6 +161,7 @@ Every migration file in `backend-go/migrations/` MUST strictly comply with the r
 ### 2. Expand & Contract (Parallel Run) Pattern
 - **Forward-Compatible Schema Changes**: All schema modifications MUST be designed backward-compatible with the immediately preceding backend release.
 - **Phase 1 (Expand)**: Add new nullable columns or tables with default values. Both old and new backend code can execute concurrently against the same schema.
+- **Column Renames & Breaking Changes**: Never rename an active column directly (e.g. `RENAME COLUMN old TO new`). Instead, add the new column (Expand), sync writes in backend code, and drop the old column only in a subsequent release (Contract). This guarantees that rolling back to the previous container image never fails due to missing columns.
 - **Phase 2 (Contract)**: Deprecated columns or tables are purged in a subsequent migration only after the new code release has stabilized in production.
 
 ### 3. Production Rollback Safety Rule

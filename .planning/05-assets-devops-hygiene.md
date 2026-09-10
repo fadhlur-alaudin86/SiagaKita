@@ -47,15 +47,15 @@
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Audio Asset Tasks ([#34](https://github.com/fadhlur-alaudin86/SiagaKita/issues/34))
-- [ ] Provide valid, royalty-free audio file and overwrite `windows_console_flutter/assets/audio/alarm.mp3`.
-- [ ] Verify `pubspec.yaml` assets configuration in `windows_console_flutter`.
-- [ ] Test audio playback and mute control in `windows_console_flutter/lib/core/services/audio_service.dart`.
+- [x] Provide valid, royalty-free audio file and overwrite `windows_console_flutter/assets/audio/alarm.mp3`.
+- [x] Verify `pubspec.yaml` assets configuration in `windows_console_flutter`.
+- [x] Test audio playback and mute control in `windows_console_flutter/lib/core/services/audio_service.dart`.
 
 ### 3.2 DevOps & Deployment Verification Tasks ([#35](https://github.com/fadhlur-alaudin86/SiagaKita/issues/35))
-- [ ] Audit `.github/workflows/release-deploy.yml` steps for syntax and error handling.
-- [ ] Verify health-check polling loop and rollback trap in the deployment script.
-- [ ] Prepare production `.env.prod.example` template with all required keys documented.
-- [ ] Verify that `seedSuperAdmin` handles existing vs new superadmin credentials without race conditions.
+- [x] Audit `.github/workflows/release-deploy.yml` steps for syntax and error handling.
+- [x] Verify health-check polling loop and rollback trap in the deployment script.
+- [x] Prepare production `.env.prod.example` template with all required keys documented.
+- [x] Verify that `seedSuperAdmin` handles existing vs new superadmin credentials without race conditions.
 
 ---
 
