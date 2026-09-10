@@ -586,7 +586,7 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 						Event: "INCIDENT_ASSIGNMENT_CLAIMED",
 						Payload: map[string]interface{}{
 							FieldIncidentID: incidentID,
-							"claimed_by":  volunteerID,
+							"claimed_by":    volunteerID,
 						},
 					})
 				}

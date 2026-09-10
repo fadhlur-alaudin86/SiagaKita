@@ -15,13 +15,13 @@ import (
 )
 
 var incidentTypeMultiplier = map[string]float64{
-	"medical":  1.5,
-	"fire":     1.3,
-	"rescue":   1.4,
-	"crime":    1.2,
-	"accident": 1.3,
-	"disaster": 1.4,
-	"general":            1.0,
+	"medical":           1.5,
+	"fire":              1.3,
+	"rescue":            1.4,
+	"crime":             1.2,
+	"accident":          1.3,
+	"disaster":          1.4,
+	"general":           1.0,
 	IncidentTypeUnknown: 1.0,
 }
 

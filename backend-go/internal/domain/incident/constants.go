@@ -37,21 +37,20 @@ const (
 
 // Map and JSON field keys
 const (
-	FieldIncidentID    = "incident_id"
-	FieldStatus        = "status"
-	FieldAction        = "action"
-	FieldLatitude      = "latitude"
-	FieldLongitude     = "longitude"
-	FieldCompletedAt   = "completed_at"
-	FieldUpdatedAt     = "updated_at"
-	FieldAgencyStatus  = "agency_status"
-	FieldIncidentType  = "incident_type"
-	FieldMessage       = "message"
-	FieldUpdated       = "updated"
+	FieldIncidentID   = "incident_id"
+	FieldStatus       = "status"
+	FieldAction       = "action"
+	FieldLatitude     = "latitude"
+	FieldLongitude    = "longitude"
+	FieldCompletedAt  = "completed_at"
+	FieldUpdatedAt    = "updated_at"
+	FieldAgencyStatus = "agency_status"
+	FieldIncidentType = "incident_type"
+	FieldMessage      = "message"
+	FieldUpdated      = "updated"
 )
 
 const (
 	errUnauthorized = "unauthorized"
 	extJPG          = ".jpg"
 )
-

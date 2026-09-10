@@ -368,7 +368,7 @@ func (h *Handler) onAcceptRescue(responderID string, payload interface{}) {
 			"responder_id":   responderID,
 			"responder_name": responderName,
 			"status":         statusEnRoute,
-			fieldMessage:    fmt.Sprintf("Relawan %s sedang menuju lokasi kamu", responderName),
+			fieldMessage:     fmt.Sprintf("Relawan %s sedang menuju lokasi kamu", responderName),
 		},
 	})
 
