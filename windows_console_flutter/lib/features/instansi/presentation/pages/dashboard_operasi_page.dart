@@ -51,7 +51,7 @@ class _DashboardOperasiPageState extends State<DashboardOperasiPage> {
     final incidents = await IncidentApiService.getActiveIncidents(widget.token);
     if (mounted) {
       setState(() {
-        _stats = stats;
+        _stats = stats ?? StatsModel.empty();
         _recentSOS = incidents;
         _loading = false;
       });
