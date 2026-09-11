@@ -118,7 +118,7 @@ func getEnv(key, fallback string) string {
 
 func getEnvInt32(key string, fallback int32) int32 {
 	if v := os.Getenv(key); v != "" {
-		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+		if n, err := strconv.ParseInt(v, 10, 32); err == nil && n > 0 {
 			return int32(n)
 		}
 	}
