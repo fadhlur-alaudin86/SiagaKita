@@ -15,7 +15,6 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'location_service.dart';
 
-
 class PermissionService {
   /// Checks whether high-accuracy GPS/location permission is granted.
   static Future<bool> hasLocationPermission() async {

@@ -13,49 +13,52 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('flutter.baseflow.com/permissions/methods'),
-      (MethodCall methodCall) async {
-        if (methodCall.method == 'checkPermissionStatus') {
-          return 1; // PermissionStatus.granted (enum index 1)
-        }
-        return 1;
-      },
-    );
+          const MethodChannel('flutter.baseflow.com/permissions/methods'),
+          (MethodCall methodCall) async {
+            if (methodCall.method == 'checkPermissionStatus') {
+              return 1; // PermissionStatus.granted (enum index 1)
+            }
+            return 1;
+          },
+        );
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('flutter.baseflow.com/geolocator'),
-      (MethodCall methodCall) async {
-        if (methodCall.method == 'isLocationServiceEnabled') {
-          return true;
-        }
-        if (methodCall.method == 'checkPermission') {
-          return 3; // LocationPermission.always / whileInUse
-        }
-        return true;
-      },
-    );
+          const MethodChannel('flutter.baseflow.com/geolocator'),
+          (MethodCall methodCall) async {
+            if (methodCall.method == 'isLocationServiceEnabled') {
+              return true;
+            }
+            if (methodCall.method == 'checkPermission') {
+              return 3; // LocationPermission.always / whileInUse
+            }
+            return true;
+          },
+        );
   });
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('flutter.baseflow.com/permissions/methods'),
-      null,
-    );
+          const MethodChannel('flutter.baseflow.com/permissions/methods'),
+          null,
+        );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('flutter.baseflow.com/geolocator'),
-      null,
-    );
+          const MethodChannel('flutter.baseflow.com/geolocator'),
+          null,
+        );
   });
 
   group('Onboarding & FTUE State Tests', () {
-    test('Initial state has_completed_onboarding is false by default', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final hasCompleted = prefs.getBool('has_completed_onboarding') ?? false;
-      expect(hasCompleted, isFalse);
-    });
+    test(
+      'Initial state has_completed_onboarding is false by default',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final hasCompleted = prefs.getBool('has_completed_onboarding') ?? false;
+        expect(hasCompleted, isFalse);
+      },
+    );
 
     test('has_completed_onboarding can be persisted as true', () async {
       final prefs = await SharedPreferences.getInstance();

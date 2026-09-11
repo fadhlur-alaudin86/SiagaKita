@@ -692,7 +692,8 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'SiagaKita memerlukan koordinat GPS presisi untuk menyiarkan posisi darurat Anda kepada relawan dan pos komando tanggap bencana.'.tr(ctx),
+                  'SiagaKita memerlukan koordinat GPS presisi untuk menyiarkan posisi darurat Anda kepada relawan dan pos komando tanggap bencana.'
+                      .tr(ctx),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white70,
@@ -1380,7 +1381,8 @@ class _HomeScreenState extends State<HomeScreen>
                                     ),
                                   ),
                                   Text(
-                                    'SOS dan pelaporan membutuhkan akses lokasi. Ketuk untuk mengaktifkan.'.tr(context),
+                                    'SOS dan pelaporan membutuhkan akses lokasi. Ketuk untuk mengaktifkan.'
+                                        .tr(context),
                                     style: TextStyle(
                                       color: Colors.white70,
                                       fontSize: 11.sp(context),

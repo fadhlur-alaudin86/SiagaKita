@@ -21,13 +21,7 @@ import '../../../core/services/location_service.dart';
 import '../../auth/login_screen.dart';
 import '../../masyarakat/main_screen.dart';
 
-
-enum PermissionPrimerTarget {
-  login,
-  mainScreen,
-  returnOnly,
-}
-
+enum PermissionPrimerTarget { login, mainScreen, returnOnly }
 
 class PermissionPrimerScreen extends StatefulWidget {
   final PermissionPrimerTarget target;
@@ -44,7 +38,6 @@ class PermissionPrimerScreen extends StatefulWidget {
   @override
   State<PermissionPrimerScreen> createState() => _PermissionPrimerScreenState();
 }
-
 
 class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
     with WidgetsBindingObserver {
@@ -140,9 +133,7 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF162A5A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Izin Ditolak Permanen'.tr(ctx),
           style: const TextStyle(
@@ -152,10 +143,7 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
         ),
         content: Text(
           '$permissionName: ${'Izin ini telah dinonaktifkan secara permanen. Silakan aktifkan melalui Pengaturan Aplikasi pada perangkat Anda.'.tr(ctx)}',
-          style: const TextStyle(
-            color: Colors.white70,
-            height: 1.4,
-          ),
+          style: const TextStyle(color: Colors.white70, height: 1.4),
         ),
         actions: [
           TextButton(
@@ -297,7 +285,8 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
                           const SizedBox(height: 8),
                           Center(
                             child: Text(
-                              'Aktifkan izin berikut untuk memastikan fitur perlindungan darurat, notifikasi evakuasi, dan pelaporan bencana berfungsi optimal.'.tr(context),
+                              'Aktifkan izin berikut untuk memastikan fitur perlindungan darurat, notifikasi evakuasi, dan pelaporan bencana berfungsi optimal.'
+                                  .tr(context),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Colors.white70,
@@ -315,7 +304,9 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
                             title: 'Lokasi & GPS Presisi'.tr(context),
                             badgeText: 'Wajib'.tr(context),
                             badgeColor: const Color(0xFFFF4D4D),
-                            description: 'Menentukan titik koordinat akurat saat tombol SOS ditekan agar relawan dan armada bantuan dapat segera diarahkan ke lokasi Anda.'.tr(context),
+                            description:
+                                'Menentukan titik koordinat akurat saat tombol SOS ditekan agar relawan dan armada bantuan dapat segera diarahkan ke lokasi Anda.'
+                                    .tr(context),
                             isGranted: _isLocationGranted,
                             onRequest: _handleLocationRequest,
                           ),
@@ -328,7 +319,9 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
                             title: 'Akses Mikrofon'.tr(context),
                             badgeText: 'Disarankan'.tr(context),
                             badgeColor: const Color(0xFF18A3FF),
-                            description: 'Merekam audio darurat secara otomatis saat sinyal SOS aktif untuk memberikan bukti situasi bahaya kepada posko siaga.'.tr(context),
+                            description:
+                                'Merekam audio darurat secara otomatis saat sinyal SOS aktif untuk memberikan bukti situasi bahaya kepada posko siaga.'
+                                    .tr(context),
                             isGranted: _isMicGranted,
                             onRequest: _handleMicRequest,
                           ),
@@ -341,7 +334,9 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
                             title: 'Notifikasi Peringatan'.tr(context),
                             badgeText: 'Disarankan'.tr(context),
                             badgeColor: const Color(0xFFFFB300),
-                            description: 'Menerima lansiran darurat seketika, peringatan perimeter keluarga, serta pembaruan status penanganan evakuasi.'.tr(context),
+                            description:
+                                'Menerima lansiran darurat seketika, peringatan perimeter keluarga, serta pembaruan status penanganan evakuasi.'
+                                    .tr(context),
                             isGranted: _isNotifGranted,
                             onRequest: _handleNotifRequest,
                           ),
@@ -354,7 +349,9 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
                             title: 'Kamera Foto'.tr(context),
                             badgeText: 'Opsional'.tr(context),
                             badgeColor: const Color(0xFF00C853),
-                            description: 'Mengambil foto bukti kejadian bencana di tempat saat Anda mengirimkan formulir pelaporan situasi darurat.'.tr(context),
+                            description:
+                                'Mengambil foto bukti kejadian bencana di tempat saat Anda mengirimkan formulir pelaporan situasi darurat.'
+                                    .tr(context),
                             isGranted: _isCameraGranted,
                             onRequest: _handleCameraRequest,
                           ),
@@ -396,7 +393,8 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
                           ),
                         ),
                         if (!_isLocationGranted &&
-                            widget.target != PermissionPrimerTarget.returnOnly) ...[
+                            widget.target !=
+                                PermissionPrimerTarget.returnOnly) ...[
                           const SizedBox(height: 10),
                           TextButton(
                             onPressed: _navigateNext,
@@ -418,7 +416,6 @@ class _PermissionPrimerScreenState extends State<PermissionPrimerScreen>
     );
   }
 }
-
 
 class _PermissionCard extends StatelessWidget {
   final IconData icon;
@@ -500,9 +497,7 @@ class _PermissionCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: badgeColor.withAlpha(30),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: badgeColor.withAlpha(80),
-                            ),
+                            border: Border.all(color: badgeColor.withAlpha(80)),
                           ),
                           child: Text(
                             badgeText,
@@ -529,9 +524,7 @@ class _PermissionCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF00C853).withAlpha(30),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFF00C853),
-                    ),
+                    border: Border.all(color: const Color(0xFF00C853)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

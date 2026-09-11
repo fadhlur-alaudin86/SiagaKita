@@ -21,14 +21,12 @@ import '../../../core/services/location_service.dart';
 import '../../auth/login_screen.dart';
 import '../../permissions/presentation/permission_primer_screen.dart';
 
-
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
-
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
@@ -93,9 +91,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       );
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
   }
 
@@ -295,7 +293,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
-
 
 class _OnboardingSlide {
   final IconData icon;
