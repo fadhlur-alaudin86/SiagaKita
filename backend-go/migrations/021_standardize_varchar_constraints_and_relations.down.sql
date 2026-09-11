@@ -8,7 +8,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
-    CREATE TYPE public.incident_status AS ENUM ('grace_period', 'broadcasting', 'handled', 'resolved', 'false_alarm', 'canceled');
+    CREATE TYPE public.incident_status AS ENUM ('grace_period', 'broadcasting', 'handling', 'handled', 'resolved', 'false_alarm', 'canceled');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

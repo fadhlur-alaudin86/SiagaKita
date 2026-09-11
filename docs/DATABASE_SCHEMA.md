@@ -97,20 +97,21 @@ cd backend-go && go run cmd/migrate/main.go up
 - Standardized across both SOS alerts (Jalur A) and community reports (Jalur B).
 
 ### SOS Incident Status (`incidents.status` — Jalur A)
-- **Column**: `varchar(30)` with `CHECK (status IN ('grace_period', 'broadcasting', 'handled', 'resolved', 'false_alarm', 'canceled'))`
+- **Column**: `varchar(30)` with `CHECK (status IN ('grace_period', 'broadcasting', 'handling', 'handled', 'resolved', 'false_alarm', 'canceled'))`
 - `grace_period`: Initial 10-second cancellation window.
 - `broadcasting`: Active SOS alert broadcasted to nearby responders and dispatchers.
+- `handling`: Currently being responded to or actively coordinated.
 - `handled`: Accepted by a responder or assigned by an emergency agency.
 - `resolved`: Handled and marked resolved.
 - `false_alarm`: Designated as false alarm with strike logged.
 - `canceled`: Canceled by the citizen before responder arrival.
 
 ### Agency Handling Status (`incidents.agency_status`)
-- **Column**: `varchar(20)` with `CHECK (agency_status IS NULL OR agency_status IN ('pending', 'accepted', 'declined', 'completed'))`
+- **Column**: `varchar(20)` with `CHECK (agency_status IS NULL OR agency_status IN ('pending', 'accepted', 'declined', 'handling', 'completed', 'canceled'))`
 - Status of agency coordination for an SOS incident.
 
 ### Reporter Trust Label (`incidents.reporter_trust_label`)
-- **Column**: `varchar(20)` with `CHECK (reporter_trust_label IS NULL OR reporter_trust_label IN ('standard', 'trusted', 'untrusted', 'verified'))`
+- **Column**: `varchar(20)` with `CHECK (reporter_trust_label IS NULL OR reporter_trust_label IN ('standard', 'trusted', 'untrusted', 'verified', 'unverified'))`
 - Reputation level assigned dynamically to reporting citizens.
 
 ### Community Report Status (`incident_reports.status` — Jalur B)
