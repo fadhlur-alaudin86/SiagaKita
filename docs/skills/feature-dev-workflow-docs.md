@@ -27,9 +27,11 @@ Backlog Overview → Discovery → Issue → Branch → Contract → Backend →
 
 ---
 
-## Feature Log
+## Feature Log & Architectural Plans
 
 Every feature maintains a dedicated log file at `docs/backlog/features/F-XXX-name.md` serving as the **single source of truth** for that feature's lifecycle across agent restarts and team handoffs.
+
+If the feature belongs to an overarching epic or architectural roadmap in `.planning/`, the feature log explicitly references its parent plan (e.g. `Parent Plan: .planning/04-desktop-dispatch-mvp.md`), ensuring bidirectional traceability between strategic architecture and tactical execution.
 
 ---
 

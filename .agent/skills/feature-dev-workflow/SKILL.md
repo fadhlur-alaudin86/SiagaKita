@@ -18,7 +18,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 |------|--------|-----------|
 | -3 | **Backlog Overview** — Fetch issues via `gh` + read `DATABASE_SCHEMA.md` + read `stacks.md`. Print compact summary. User picks target. | Inline summary |
 | -2 | **Discovery** — Explore codebase, inspect target domain, ask **5 clarifying questions**. Formulate plan and get user confirmation. | Discovery notes, 5 Q&A, Plan (in memory) |
-| -1 | **Resolve Backlog** — Match/create GitHub Issue. Create `docs/backlog/features/F-XXX-name.md` using full template. | Feature log file |
+| -1 | **Resolve Backlog** — Match/create GitHub Issue. Check parent plan in `.planning/`. Create `docs/backlog/features/F-XXX-name.md` using full template linking to parent plan. | Feature log file |
 | 0 | **Branch & Assign** — Create `feature/F-XXX-name` from `dev`. Update issue label to `status: in-progress`, assign to active account (`--add-assignee "@me"`), and add comment to issue. | Git branch |
 | 1 | **Read Mapping** — Inspect Go domain handler, DB schema (`docs/DATABASE_SCHEMA.md`), ERD (`docs/design/database-erd.md`), Activity/State diagrams (`docs/design/activity-diagrams.md`), API endpoints, and Flutter screens. | Discovery notes |
 | 2 | **API Contract** — Extend `docs/api/paths/<domain>.yaml` with new endpoint(s) (OpenAPI 3.0). Add new schemas to `docs/api/components/schemas.yaml` if needed. Verify at `http://localhost:8080/docs`. | Updated domain YAML |
@@ -34,7 +34,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 ### General
 0. **Backlog Overview First** — Run Step -3 before Step -2 on first skill activation per session.
 1. **Check Backlog First** — Run `gh issue list` before starting work to avoid duplicates.
-2. **Create Feature Log at Step -1** — Write full log template to `docs/backlog/features/F-XXX-name.md`.
+2. **Create Feature Log at Step -1** — Write full log template to `docs/backlog/features/F-XXX-name.md` and link to parent plan in `.planning/` if part of an epic.
 3. **Update Log per Step** — Mark progress ✅ with timestamp and decision rationale.
 4. **Confirm Before Writing** — Ask user approval before modifying backend, DB, or Flutter files.
 5. **Decision Logging** — Document every non-trivial design choice in the Decisions Log.
@@ -88,6 +88,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 35. **Step 8 → Done & Closed**:
     - Merging into `dev` automatically updates the issue to `status: done`, removes previous status labels, auto-checks any remaining checkboxes, and closes the issue.
     - **Parent Tracker Sync**: If working under a parent issue, mark off the corresponding subtask checkbox (`- [ ]` to `- [x]`) in the parent issue body.
+    - **Parent Plan Progress Sync**: If this feature belongs to a parent plan in `.planning/`, update the status of target issues and mark the plan `Merged` if all associated issues and PRs are completed.
     - **Close Log & Record Evolution**: Mark all steps ✅ and record applied minor skill changes or major proposals in `docs/backlog/features/F-XXX-name.md`.
 36. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
 37. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
@@ -115,6 +116,7 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 | Requestor | |
 | Date Created | |
 | GitHub Issue | # |
+| Parent Plan | .planning/NN-name.md (or N/A) |
 | Status | Backlog / In Progress / In Review / Done |
 
 ## Discovery (Step -2)
