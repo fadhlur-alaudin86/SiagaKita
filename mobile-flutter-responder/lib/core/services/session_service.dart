@@ -37,7 +37,8 @@ class SessionService {
       _storage.write(key: _keyUserId, value: userId),
       _storage.write(key: _keyRole, value: role),
       if (fullName != null) _storage.write(key: _keyFullName, value: fullName),
-      if (badgeNumber != null) _storage.write(key: _keyBadgeNumber, value: badgeNumber),
+      if (badgeNumber != null)
+        _storage.write(key: _keyBadgeNumber, value: badgeNumber),
     ]);
   }
 
@@ -58,11 +59,13 @@ class SessionService {
     return _cachedAccessToken;
   }
 
-  static Future<String?> getRefreshToken() => _storage.read(key: _keyRefreshToken);
+  static Future<String?> getRefreshToken() =>
+      _storage.read(key: _keyRefreshToken);
   static Future<String?> getUserId() => _storage.read(key: _keyUserId);
   static Future<String?> getRole() => _storage.read(key: _keyRole);
   static Future<String?> getFullName() => _storage.read(key: _keyFullName);
-  static Future<String?> getBadgeNumber() => _storage.read(key: _keyBadgeNumber);
+  static Future<String?> getBadgeNumber() =>
+      _storage.read(key: _keyBadgeNumber);
 
   static Future<bool> isLoggedIn() async {
     final token = await getToken();
@@ -103,9 +106,6 @@ class SessionService {
 
   static Future<void> clear() async {
     _cachedAccessToken = null;
-    await Future.wait([
-      _storage.deleteAll(),
-      setActiveIncidentId(null),
-    ]);
+    await Future.wait([_storage.deleteAll(), setActiveIncidentId(null)]);
   }
 }

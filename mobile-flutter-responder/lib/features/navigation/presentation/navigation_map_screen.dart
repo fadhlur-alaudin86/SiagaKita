@@ -34,22 +34,26 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
       final initialPos = await Geolocator.getCurrentPosition();
       if (mounted) {
         setState(() {
-          _responderPosition = LatLng(initialPos.latitude, initialPos.longitude);
+          _responderPosition = LatLng(
+            initialPos.latitude,
+            initialPos.longitude,
+          );
         });
       }
 
-      _positionStreamSub = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 5,
-        ),
-      ).listen((pos) {
-        if (mounted) {
-          setState(() {
-            _responderPosition = LatLng(pos.latitude, pos.longitude);
+      _positionStreamSub =
+          Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 5,
+            ),
+          ).listen((pos) {
+            if (mounted) {
+              setState(() {
+                _responderPosition = LatLng(pos.latitude, pos.longitude);
+              });
+            }
           });
-        }
-      });
     } catch (_) {}
   }
 
@@ -64,7 +68,9 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
     final lat = widget.mission.latitude;
     final lng = widget.mission.longitude;
     final googleMapsAppUrl = Uri.parse('google.navigation:q=$lat,$lng&mode=d');
-    final googleMapsWebUrl = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    final googleMapsWebUrl = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng',
+    );
 
     if (await canLaunchUrl(googleMapsAppUrl)) {
       await launchUrl(googleMapsAppUrl);
@@ -77,7 +83,9 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
     final lat = widget.mission.latitude;
     final lng = widget.mission.longitude;
     final wazeAppUrl = Uri.parse('waze://?ll=$lat,$lng&navigate=yes');
-    final wazeWebUrl = Uri.parse('https://www.waze.com/ul?ll=$lat,$lng&navigate=yes');
+    final wazeWebUrl = Uri.parse(
+      'https://www.waze.com/ul?ll=$lat,$lng&navigate=yes',
+    );
 
     if (await canLaunchUrl(wazeAppUrl)) {
       await launchUrl(wazeAppUrl);
@@ -88,11 +96,15 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final incidentLatLng = LatLng(widget.mission.latitude, widget.mission.longitude);
+    final incidentLatLng = LatLng(
+      widget.mission.latitude,
+      widget.mission.longitude,
+    );
 
     double distanceKm = 0.0;
     if (_responderPosition != null) {
-      distanceKm = Geolocator.distanceBetween(
+      distanceKm =
+          Geolocator.distanceBetween(
             _responderPosition!.latitude,
             _responderPosition!.longitude,
             incidentLatLng.latitude,
@@ -108,11 +120,17 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
         elevation: 0,
         title: Text(
           'Navigasi Lapangan'.tr(context),
-          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.my_location, color: AppColors.operationalBlue),
+            icon: const Icon(
+              Icons.my_location,
+              color: AppColors.operationalBlue,
+            ),
             onPressed: () {
               if (_responderPosition != null) {
                 _mapController.move(_responderPosition!, 15);
@@ -198,11 +216,17 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
                 color: AppColors.surface.withAlpha(240),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
-                boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 8)],
+                boxShadow: const [
+                  BoxShadow(color: Colors.black38, blurRadius: 8),
+                ],
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.navigation, color: AppColors.warningAmber, size: 28),
+                  const Icon(
+                    Icons.navigation,
+                    color: AppColors.warningAmber,
+                    size: 28,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -218,8 +242,12 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
                           ),
                         ),
                         Text(
-                          widget.mission.addressDetail ?? 'Lokasi Kejadian'.tr(context),
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          widget.mission.addressDetail ??
+                              'Lokasi Kejadian'.tr(context),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -227,7 +255,10 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.warningAmber.withAlpha(30),
                       borderRadius: BorderRadius.circular(8),
@@ -259,7 +290,9 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.border),
-                boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10)],
+                boxShadow: const [
+                  BoxShadow(color: Colors.black45, blurRadius: 10),
+                ],
               ),
               child: Row(
                 children: [
@@ -269,7 +302,9 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
                         backgroundColor: AppColors.operationalBlue,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       icon: const Icon(Icons.map, size: 18),
                       label: Text('Buka di Google Maps'.tr(context)),
@@ -288,7 +323,11 @@ class _NavigationMapScreenState extends State<NavigationMapScreen> {
                           side: const BorderSide(color: AppColors.border),
                         ),
                       ),
-                      icon: const Icon(Icons.near_me, size: 18, color: AppColors.warningAmber),
+                      icon: const Icon(
+                        Icons.near_me,
+                        size: 18,
+                        color: AppColors.warningAmber,
+                      ),
                       label: Text('Buka di Waze'.tr(context)),
                       onPressed: _launchWaze,
                     ),

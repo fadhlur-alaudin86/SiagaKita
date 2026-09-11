@@ -1014,8 +1014,8 @@ func (h *Handler) PersonnelUpdateStatus(c *fiber.Ctx) error {
 	}()
 
 	return utils.SuccessResponse(c, fiber.Map{
-		"updated":      true,
-		"status":       req.Status,
+		"updated":    true,
+		"status":     req.Status,
 		FieldMessage: "Status misi berhasil diperbarui",
 	})
 }

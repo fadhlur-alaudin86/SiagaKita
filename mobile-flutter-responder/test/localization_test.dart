@@ -9,17 +9,31 @@ void main() {
       expect(map.isNotEmpty, isTrue);
 
       for (final entry in map.entries) {
-        expect(entry.key.trim().isNotEmpty, isTrue, reason: 'Key cannot be blank');
-        expect(entry.value.trim().isNotEmpty, isTrue, reason: 'Translation cannot be blank for ${entry.key}');
+        expect(
+          entry.key.trim().isNotEmpty,
+          isTrue,
+          reason: 'Key cannot be blank',
+        );
+        expect(
+          entry.value.trim().isNotEmpty,
+          isTrue,
+          reason: 'Translation cannot be blank for ${entry.key}',
+        );
       }
     });
 
     test('Translates to English correctly', () {
       const localeEn = Locale('en');
-      final translated = AppLocalization.translateWithLocale('Papan Misi', localeEn);
+      final translated = AppLocalization.translateWithLocale(
+        'Papan Misi',
+        localeEn,
+      );
       expect(translated, equals('Mission Board'));
 
-      final loginTitle = AppLocalization.translateWithLocale('Masuk Petugas Lapangan', localeEn);
+      final loginTitle = AppLocalization.translateWithLocale(
+        'Masuk Petugas Lapangan',
+        localeEn,
+      );
       expect(loginTitle, equals('Field Responder Login'));
     });
 
@@ -40,7 +54,11 @@ void main() {
       ];
 
       for (final key in criticalKeys) {
-        expect(AppLocalization.hasKey(key), isTrue, reason: 'Missing key: $key');
+        expect(
+          AppLocalization.hasKey(key),
+          isTrue,
+          reason: 'Missing key: $key',
+        );
       }
     });
   });

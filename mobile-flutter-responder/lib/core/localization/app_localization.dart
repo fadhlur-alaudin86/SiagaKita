@@ -16,9 +16,12 @@ class AppLocalization {
     'Nomor Lencana atau Email': 'Badge Number or Email',
     'Kata Sandi': 'Password',
     'Masuk': 'Log In',
-    'Nomor Lencana / Email dan Kata Sandi wajib diisi': 'Badge Number / Email and Password are required',
-    'Role tidak diizinkan. Aplikasi ini khusus Petugas Instansi.': 'Role unauthorized. This application is restricted to Agency Personnel.',
-    'Gagal masuk. Periksa kredensial Anda.': 'Login failed. Please verify your credentials.',
+    'Nomor Lencana / Email dan Kata Sandi wajib diisi':
+        'Badge Number / Email and Password are required',
+    'Role tidak diizinkan. Aplikasi ini khusus Petugas Instansi.':
+        'Role unauthorized. This application is restricted to Agency Personnel.',
+    'Gagal masuk. Periksa kredensial Anda.':
+        'Login failed. Please verify your credentials.',
     'Terjadi kesalahan': 'An error occurred',
 
     // Mission Board & Shell
@@ -28,11 +31,13 @@ class AppLocalization {
     'Petugas Lapangan': 'Field Officer',
     'Aktif': 'Active',
     'Menghubungkan ke Markas Komando...': 'Connecting to Command Center...',
-    'Tidak ada misi darurat aktif saat ini.': 'No active emergency missions at this time.',
+    'Tidak ada misi darurat aktif saat ini.':
+        'No active emergency missions at this time.',
     'Tarik untuk memuat ulang': 'Pull to refresh',
     'Keluar': 'Log Out',
     'Konfirmasi Keluar': 'Confirm Logout',
-    'Apakah Anda yakin ingin keluar dari akun petugas?': 'Are you sure you want to log out of your personnel account?',
+    'Apakah Anda yakin ingin keluar dari akun petugas?':
+        'Are you sure you want to log out of your personnel account?',
 
     // Mission Detail & Evidence
     'Detail Misi': 'Mission Detail',
@@ -56,7 +61,8 @@ class AppLocalization {
     'Status misi berhasil diperbarui': 'Mission status successfully updated',
     'Gagal memperbarui status misi': 'Failed to update mission status',
     'Konfirmasi Selesai': 'Confirm Completion',
-    'Pastikan situasi di lapangan telah terkendali sebelum menyelesaikan misi.': 'Ensure the on-scene situation is resolved before closing the mission.',
+    'Pastikan situasi di lapangan telah terkendali sebelum menyelesaikan misi.':
+        'Ensure the on-scene situation is resolved before closing the mission.',
     'Batal': 'Cancel',
     'Ya, Selesai': 'Yes, Resolve',
 

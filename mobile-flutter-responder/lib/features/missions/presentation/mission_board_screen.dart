@@ -138,9 +138,9 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
       await BackgroundTelemetryService.stop();
       await SessionService.clear();
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
   }
 
@@ -175,14 +175,20 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
             ),
             Text(
               '${_officerName ?? "Petugas Lapangan".tr(context)} (${_badgeNumber ?? "UNIT"})',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
             ),
           ],
         ),
         actions: [
           // Telemetry Indicator Pill
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(
+              vertical: 14.0,
+              horizontal: 4.0,
+            ),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
@@ -193,7 +199,11 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.gps_fixed, color: AppColors.successGreen, size: 12),
+                  const Icon(
+                    Icons.gps_fixed,
+                    color: AppColors.successGreen,
+                    size: 12,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Aktif'.tr(context),
@@ -211,7 +221,9 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
           IconButton(
             icon: Icon(
               _sirenActive ? Icons.volume_up : Icons.volume_off,
-              color: _sirenActive ? AppColors.warningAmber : AppColors.textSecondary,
+              color: _sirenActive
+                  ? AppColors.warningAmber
+                  : AppColors.textSecondary,
             ),
             onPressed: () {
               setState(() {
@@ -237,7 +249,11 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
               child: Text(
                 'Menghubungkan ke Markas Komando...'.tr(context),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           // Filter Tabs
@@ -252,7 +268,9 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
                     selected: _selectedFilterIndex == 0,
                     selectedColor: AppColors.operationalBlue,
                     labelStyle: TextStyle(
-                      color: _selectedFilterIndex == 0 ? Colors.white : AppColors.textSecondary,
+                      color: _selectedFilterIndex == 0
+                          ? Colors.white
+                          : AppColors.textSecondary,
                       fontWeight: FontWeight.bold,
                     ),
                     onSelected: (selected) {
@@ -267,7 +285,9 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
                     selected: _selectedFilterIndex == 1,
                     selectedColor: AppColors.operationalBlue,
                     labelStyle: TextStyle(
-                      color: _selectedFilterIndex == 1 ? Colors.white : AppColors.textSecondary,
+                      color: _selectedFilterIndex == 1
+                          ? Colors.white
+                          : AppColors.textSecondary,
                       fontWeight: FontWeight.bold,
                     ),
                     onSelected: (selected) {
@@ -286,40 +306,54 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
               onRefresh: _onRefresh,
               child: missionSvc.isLoading && missionSvc.missions.isEmpty
                   ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.operationalBlue),
+                      child: CircularProgressIndicator(
+                        color: AppColors.operationalBlue,
+                      ),
                     )
                   : filteredMissions.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.check_circle_outline, color: AppColors.textMuted, size: 56),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Tidak ada misi darurat aktif saat ini.'.tr(context),
-                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Tarik untuk memuat ulang'.tr(context),
-                                style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline,
+                            color: AppColors.textMuted,
+                            size: 56,
                           ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: filteredMissions.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 12),
-                          itemBuilder: (ctx, index) {
-                            final mission = filteredMissions[index];
-                            final distance = mission.formattedDistance(
-                              _currentPosition?.latitude,
-                              _currentPosition?.longitude,
-                            );
-                            return _buildMissionCard(context, mission, distance);
-                          },
-                        ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Tidak ada misi darurat aktif saat ini.'.tr(
+                              context,
+                            ),
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Tarik untuk memuat ulang'.tr(context),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredMissions.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (ctx, index) {
+                        final mission = filteredMissions[index];
+                        final distance = mission.formattedDistance(
+                          _currentPosition?.latitude,
+                          _currentPosition?.longitude,
+                        );
+                        return _buildMissionCard(context, mission, distance);
+                      },
+                    ),
             ),
           ),
         ],
@@ -327,7 +361,11 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
     );
   }
 
-  Widget _buildMissionCard(BuildContext context, MissionModel mission, String distance) {
+  Widget _buildMissionCard(
+    BuildContext context,
+    MissionModel mission,
+    String distance,
+  ) {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -357,7 +395,10 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
               children: [
                 // Type badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.emergencyRed.withAlpha(30),
                     borderRadius: BorderRadius.circular(6),
@@ -374,13 +415,17 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
                 ),
                 // Status pill
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.statusColor(mission.status).withAlpha(30),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    mission.agencyStatus?.toUpperCase() ?? mission.status.toUpperCase(),
+                    mission.agencyStatus?.toUpperCase() ??
+                        mission.status.toUpperCase(),
                     style: TextStyle(
                       color: AppColors.statusColor(mission.status),
                       fontSize: 11,
@@ -404,14 +449,25 @@ class _MissionBoardScreenState extends State<MissionBoardScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.person_outline, color: AppColors.textSecondary, size: 16),
+                const Icon(
+                  Icons.person_outline,
+                  color: AppColors.textSecondary,
+                  size: 16,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   mission.reporterName,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
                 const Spacer(),
-                const Icon(Icons.near_me, color: AppColors.warningAmber, size: 16),
+                const Icon(
+                  Icons.near_me,
+                  color: AppColors.warningAmber,
+                  size: 16,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   distance,

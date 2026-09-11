@@ -63,7 +63,8 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
             style: const TextStyle(color: AppColors.textPrimary),
           ),
           content: Text(
-            'Pastikan situasi di lapangan telah terkendali sebelum menyelesaikan misi.'.tr(ctx),
+            'Pastikan situasi di lapangan telah terkendali sebelum menyelesaikan misi.'
+                .tr(ctx),
             style: const TextStyle(color: AppColors.textSecondary),
           ),
           actions: [
@@ -130,7 +131,10 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
         elevation: 0,
         title: Text(
           'Detail Misi'.tr(context),
-          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -153,7 +157,10 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.emergencyRed.withAlpha(30),
                           borderRadius: BorderRadius.circular(6),
@@ -169,13 +176,19 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppColors.statusColor(_mission.status).withAlpha(30),
+                          color: AppColors.statusColor(
+                            _mission.status,
+                          ).withAlpha(30),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          _mission.agencyStatus?.toUpperCase() ?? _mission.status.toUpperCase(),
+                          _mission.agencyStatus?.toUpperCase() ??
+                              _mission.status.toUpperCase(),
                           style: TextStyle(
                             color: AppColors.statusColor(_mission.status),
                             fontSize: 12,
@@ -197,11 +210,18 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, color: AppColors.textMuted, size: 16),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        color: AppColors.textMuted,
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${_mission.latitude.toStringAsFixed(5)}, ${_mission.longitude.toStringAsFixed(5)}',
-                        style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -220,7 +240,11 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.map_outlined, color: AppColors.operationalBlue, size: 32),
+                  const Icon(
+                    Icons.map_outlined,
+                    color: AppColors.operationalBlue,
+                    size: 32,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -236,7 +260,10 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                         ),
                         Text(
                           'Arahkan Navigasi'.tr(context),
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -251,7 +278,8 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => NavigationMapScreen(mission: _mission),
+                          builder: (_) =>
+                              NavigationMapScreen(mission: _mission),
                         ),
                       );
                     },
@@ -283,10 +311,22 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                   const Divider(color: AppColors.border),
                   _buildInfoRow('Nama'.tr(context), _mission.reporterName),
                   if (_mission.reporterPhone != null)
-                    _buildInfoRow('Telepon'.tr(context), _mission.reporterPhone!),
-                  _buildInfoRow('Golongan Darah'.tr(context), _mission.bloodType ?? '-'),
-                  _buildInfoRow('Alergi'.tr(context), _mission.allergies ?? '-'),
-                  _buildInfoRow('Label Kepercayaan'.tr(context), _mission.reporterTrustLabel.toUpperCase()),
+                    _buildInfoRow(
+                      'Telepon'.tr(context),
+                      _mission.reporterPhone!,
+                    ),
+                  _buildInfoRow(
+                    'Golongan Darah'.tr(context),
+                    _mission.bloodType ?? '-',
+                  ),
+                  _buildInfoRow(
+                    'Alergi'.tr(context),
+                    _mission.allergies ?? '-',
+                  ),
+                  _buildInfoRow(
+                    'Label Kepercayaan'.tr(context),
+                    _mission.reporterTrustLabel.toUpperCase(),
+                  ),
                 ],
               ),
             ),
@@ -303,17 +343,26 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.mic, color: AppColors.warningAmber, size: 28),
+                    const Icon(
+                      Icons.mic,
+                      color: AppColors.warningAmber,
+                      size: 28,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Bukti Rekaman Suara'.tr(context),
-                        style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     IconButton(
                       icon: Icon(
-                        _isPlayingAudio ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                        _isPlayingAudio
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_filled,
                         color: AppColors.warningAmber,
                         size: 36,
                       ),
@@ -332,7 +381,9 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
           child: _isUpdating
               ? const Center(
                   heightFactor: 1,
-                  child: CircularProgressIndicator(color: AppColors.operationalBlue),
+                  child: CircularProgressIndicator(
+                    color: AppColors.operationalBlue,
+                  ),
                 )
               : Row(
                   children: [
@@ -343,7 +394,9 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                           backgroundColor: AppColors.operationalBlue,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onPressed: () => _updateStatus('en_route'),
                         child: Text(
@@ -362,7 +415,9 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                           backgroundColor: AppColors.warningAmber,
                           foregroundColor: Colors.black87,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onPressed: () => _updateStatus('on_scene'),
                         child: Text(
@@ -379,7 +434,9 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                           backgroundColor: AppColors.successGreen,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onPressed: () => _updateStatus('resolved'),
                         child: Text(
@@ -401,10 +458,20 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
           Text(
             value,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),

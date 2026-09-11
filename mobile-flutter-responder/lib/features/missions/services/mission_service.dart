@@ -41,9 +41,9 @@ class MissionService extends ChangeNotifier {
         final activeId = await SessionService.getActiveIncidentId();
         if (activeId != null) {
           _activeMission = _missions.cast<MissionModel?>().firstWhere(
-                (m) => m?.id == activeId,
-                orElse: () => null,
-              );
+            (m) => m?.id == activeId,
+            orElse: () => null,
+          );
         }
       } else {
         _errorMessage = 'Gagal memuat daftar misi';
@@ -65,10 +65,7 @@ class MissionService extends ChangeNotifier {
     try {
       final res = await ApiClient.post(
         ApiConfig.personnelStatus(incidentId),
-        body: {
-          'status': status,
-          'proof_photo_url': ?proofPhotoUrl,
-        },
+        body: {'status': status, 'proof_photo_url': ?proofPhotoUrl},
       );
 
       if (res.statusCode == 200) {

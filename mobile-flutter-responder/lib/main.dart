@@ -106,7 +106,9 @@ class _ResponderAppState extends State<ResponderApp> {
           ),
         ),
       ),
-      home: widget.isLoggedIn ? const MissionBoardScreen() : const LoginScreen(),
+      home: widget.isLoggedIn
+          ? const MissionBoardScreen()
+          : const LoginScreen(),
     );
   }
 }

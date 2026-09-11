@@ -49,13 +49,17 @@ class ApiClient {
     String? explicitToken,
   }) async {
     final activeToken = explicitToken ?? await SessionService.getToken();
-    final response = await sendFn(activeToken).timeout(timeout ?? _defaultTimeout);
+    final response = await sendFn(
+      activeToken,
+    ).timeout(timeout ?? _defaultTimeout);
 
     if (response.statusCode != 401) {
       return response;
     }
 
-    debugPrint('[ApiClient] 401 Unauthorized detected. Attempting transparent token rotation...');
+    debugPrint(
+      '[ApiClient] 401 Unauthorized detected. Attempting transparent token rotation...',
+    );
     final newToken = await _acquireRefreshedToken();
 
     if (newToken == null) {
@@ -83,14 +87,16 @@ class ApiClient {
         return null;
       }
 
-      final res = await http.post(
-        Uri.parse(ApiConfig.refreshToken),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'refresh_token': refreshToken}),
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .post(
+            Uri.parse(ApiConfig.refreshToken),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'refresh_token': refreshToken}),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body) as Map<String, dynamic>;
@@ -129,9 +135,16 @@ class ApiClient {
   }
 
   // HTTP Method Verbs
-  static Future<http.Response> get(String url, {Map<String, String>? headers, Duration? timeout}) {
+  static Future<http.Response> get(
+    String url, {
+    Map<String, String>? headers,
+    Duration? timeout,
+  }) {
     return _executeWithRetry((token) async {
-      final reqHeaders = await _buildHeaders(token: token, extraHeaders: headers);
+      final reqHeaders = await _buildHeaders(
+        token: token,
+        extraHeaders: headers,
+      );
       return http.get(Uri.parse(url), headers: reqHeaders);
     }, timeout: timeout);
   }
@@ -143,8 +156,13 @@ class ApiClient {
     Duration? timeout,
   }) {
     return _executeWithRetry((token) async {
-      final reqHeaders = await _buildHeaders(token: token, extraHeaders: headers);
-      final encodedBody = body is String ? body : (body != null ? jsonEncode(body) : null);
+      final reqHeaders = await _buildHeaders(
+        token: token,
+        extraHeaders: headers,
+      );
+      final encodedBody = body is String
+          ? body
+          : (body != null ? jsonEncode(body) : null);
       return http.post(Uri.parse(url), headers: reqHeaders, body: encodedBody);
     }, timeout: timeout);
   }
@@ -156,8 +174,13 @@ class ApiClient {
     Duration? timeout,
   }) {
     return _executeWithRetry((token) async {
-      final reqHeaders = await _buildHeaders(token: token, extraHeaders: headers);
-      final encodedBody = body is String ? body : (body != null ? jsonEncode(body) : null);
+      final reqHeaders = await _buildHeaders(
+        token: token,
+        extraHeaders: headers,
+      );
+      final encodedBody = body is String
+          ? body
+          : (body != null ? jsonEncode(body) : null);
       return http.put(Uri.parse(url), headers: reqHeaders, body: encodedBody);
     }, timeout: timeout);
   }
@@ -169,8 +192,13 @@ class ApiClient {
     Duration? timeout,
   }) {
     return _executeWithRetry((token) async {
-      final reqHeaders = await _buildHeaders(token: token, extraHeaders: headers);
-      final encodedBody = body is String ? body : (body != null ? jsonEncode(body) : null);
+      final reqHeaders = await _buildHeaders(
+        token: token,
+        extraHeaders: headers,
+      );
+      final encodedBody = body is String
+          ? body
+          : (body != null ? jsonEncode(body) : null);
       return http.patch(Uri.parse(url), headers: reqHeaders, body: encodedBody);
     }, timeout: timeout);
   }

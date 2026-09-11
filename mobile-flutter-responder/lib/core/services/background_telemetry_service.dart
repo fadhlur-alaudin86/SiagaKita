@@ -26,7 +26,8 @@ class BackgroundTelemetryService {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       notificationChannelId,
       'SiagaKita Responder Fleet Telemetry',
-      description: 'Menjaga pelacakan koordinat armada lapangan ke Markas Komando',
+      description:
+          'Menjaga pelacakan koordinat armada lapangan ke Markas Komando',
       importance: Importance.low,
     );
 
@@ -35,7 +36,8 @@ class BackgroundTelemetryService {
 
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
 
     await service.configure(
@@ -143,24 +145,27 @@ class BackgroundTelemetryService {
 
           // Stream to backend hot path PUT /api/v1/telemetry/location
           final url = Uri.parse(ApiConfig.telemetryLocation);
-          await http.put(
-            url,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode({
-              'latitude': position.latitude,
-              'longitude': position.longitude,
-            }),
-          ).timeout(const Duration(seconds: 3));
+          await http
+              .put(
+                url,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'Authorization': 'Bearer $token',
+                },
+                body: jsonEncode({
+                  'latitude': position.latitude,
+                  'longitude': position.longitude,
+                }),
+              )
+              .timeout(const Duration(seconds: 3));
 
           // Update foreground notification
           final title = hasActiveMission
               ? 'SiagaKita: Merespons Misi Darurat'
               : 'SiagaKita: Standby Lapangan';
-          final content = 'GPS: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}';
+          final content =
+              'GPS: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}';
 
           if (service is AndroidServiceInstance) {
             service.setForegroundNotificationInfo(
@@ -170,7 +175,9 @@ class BackgroundTelemetryService {
           }
         }
       } catch (e) {
-        debugPrint('[BackgroundTelemetryService] Error streaming telemetry: $e');
+        debugPrint(
+          '[BackgroundTelemetryService] Error streaming telemetry: $e',
+        );
       }
     });
   }

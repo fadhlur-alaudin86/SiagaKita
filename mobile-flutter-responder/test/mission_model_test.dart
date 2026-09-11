@@ -25,7 +25,7 @@ void main() {
       'is_phone_verified': true,
       'photo_paths': [
         'http://localhost:8080/uploads/evidence1.jpg',
-        'http://localhost:8080/uploads/evidence2.jpg'
+        'http://localhost:8080/uploads/evidence2.jpg',
       ],
       'audio_path': 'http://localhost:8080/uploads/evidence.m4a',
     };

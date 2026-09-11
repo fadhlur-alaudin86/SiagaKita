@@ -49,9 +49,6 @@ jobs:
   # ─── Full Flutter Mobile CI ────────────────────────────────────────────────
   ci-mobile:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./mobile-flutter
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -62,16 +59,49 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install Dependencies
+      # ─── Mobile Flutter (Citizen / Volunteer) ───
+      - name: Install Dependencies (mobile-flutter)
+        working-directory: ./mobile-flutter
         run: flutter pub get
 
-      - name: Check Format (dart format)
+      - name: Check Format (mobile-flutter)
+        working-directory: ./mobile-flutter
         run: dart format --set-exit-if-changed .
 
-      - name: Analyze
+      - name: Check Localization Orphans (mobile-flutter)
+        working-directory: ./mobile-flutter
+        run: python3 ../scripts/check_localization_orphans.py --mobile
+
+      - name: Analyze (mobile-flutter)
+        working-directory: ./mobile-flutter
         run: flutter analyze --fatal-infos
 
-      - name: Test
+      - name: Test (mobile-flutter)
+        working-directory: ./mobile-flutter
+        run: |
+          if [ -d "test" ]; then
+            flutter test
+          fi
+
+      # ─── Mobile Flutter Responder (Emergency Personnel) ───
+      - name: Install Dependencies (mobile-flutter-responder)
+        working-directory: ./mobile-flutter-responder
+        run: flutter pub get
+
+      - name: Check Format (mobile-flutter-responder)
+        working-directory: ./mobile-flutter-responder
+        run: dart format --set-exit-if-changed .
+
+      - name: Check Localization Orphans (mobile-flutter-responder)
+        working-directory: ./mobile-flutter-responder
+        run: python3 ../scripts/check_localization_orphans.py --responder
+
+      - name: Analyze (mobile-flutter-responder)
+        working-directory: ./mobile-flutter-responder
+        run: flutter analyze --fatal-infos
+
+      - name: Test (mobile-flutter-responder)
+        working-directory: ./mobile-flutter-responder
         run: |
           if [ -d "test" ]; then
             flutter test

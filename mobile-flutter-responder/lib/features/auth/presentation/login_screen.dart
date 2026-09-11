@@ -64,7 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
         if (role != 'agency_personnel') {
           setState(() {
             _isLoading = false;
-            _errorMessage = 'Role tidak diizinkan. Aplikasi ini khusus Petugas Instansi.'.tr(context);
+            _errorMessage =
+                'Role tidak diizinkan. Aplikasi ini khusus Petugas Instansi.'
+                    .tr(context);
           });
           return;
         }
@@ -87,7 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         final body = jsonDecode(res.body) as Map<String, dynamic>?;
-        final msg = body?['message'] as String? ??
+        final msg =
+            body?['message'] as String? ??
             'Gagal masuk. Periksa kredensial Anda.'.tr(context);
         setState(() {
           _isLoading = false;
@@ -110,7 +113,10 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -167,22 +173,32 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: const TextStyle(color: AppColors.textPrimary),
                           decoration: InputDecoration(
                             labelText: 'Nomor Lencana atau Email'.tr(context),
-                            labelStyle: const TextStyle(color: AppColors.textSecondary),
-                            prefixIcon: const Icon(Icons.badge_outlined, color: AppColors.textSecondary),
+                            labelStyle: const TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.badge_outlined,
+                              color: AppColors.textSecondary,
+                            ),
                             filled: true,
                             fillColor: AppColors.surfaceHighlight,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
                             ),
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Nomor Lencana / Email dan Kata Sandi wajib diisi'.tr(context);
+                              return 'Nomor Lencana / Email dan Kata Sandi wajib diisi'
+                                  .tr(context);
                             }
                             return null;
                           },
@@ -194,11 +210,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: const TextStyle(color: AppColors.textPrimary),
                           decoration: InputDecoration(
                             labelText: 'Kata Sandi'.tr(context),
-                            labelStyle: const TextStyle(color: AppColors.textSecondary),
-                            prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary),
+                            labelStyle: const TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.lock_outline,
+                              color: AppColors.textSecondary,
+                            ),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                                 color: AppColors.textSecondary,
                               ),
                               onPressed: () {
@@ -211,16 +234,21 @@ class _LoginScreenState extends State<LoginScreen> {
                             fillColor: AppColors.surfaceHighlight,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: AppColors.border),
+                              borderSide: const BorderSide(
+                                color: AppColors.border,
+                              ),
                             ),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Nomor Lencana / Email dan Kata Sandi wajib diisi'.tr(context);
+                              return 'Nomor Lencana / Email dan Kata Sandi wajib diisi'
+                                  .tr(context);
                             }
                             return null;
                           },
@@ -236,12 +264,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.error_outline, color: AppColors.emergencyRed, size: 20),
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: AppColors.emergencyRed,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _errorMessage!,
-                                    style: const TextStyle(color: AppColors.emergencyRed, fontSize: 13),
+                                    style: const TextStyle(
+                                      color: AppColors.emergencyRed,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -271,7 +306,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   )
                                 : Text(
                                     'Masuk'.tr(context),
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                           ),
                         ),

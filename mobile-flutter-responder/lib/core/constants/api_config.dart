@@ -6,8 +6,14 @@ class ApiConfig {
   ApiConfig._();
 
   static const String _envHost = String.fromEnvironment('API_HOST');
-  static const String _envPort = String.fromEnvironment('API_PORT', defaultValue: '8080');
-  static const String _envWsPort = String.fromEnvironment('WS_PORT', defaultValue: '8081');
+  static const String _envPort = String.fromEnvironment(
+    'API_PORT',
+    defaultValue: '8080',
+  );
+  static const String _envWsPort = String.fromEnvironment(
+    'WS_PORT',
+    defaultValue: '8081',
+  );
 
   static String get defaultHost {
     if (_envHost.isNotEmpty) return _envHost;
@@ -24,11 +30,15 @@ class ApiConfig {
 
   // Incident & Mission endpoints
   static String get allActiveIncidents => '$baseUrl/incidents/all-active';
-  static String get activeMission => '$baseUrl/incidents/responder/active-mission';
+  static String get activeMission =>
+      '$baseUrl/incidents/responder/active-mission';
   static String incidentDetail(String id) => '$baseUrl/incidents/$id';
-  static String agencyHandle(String id) => '$baseUrl/incidents/$id/agency-handle';
-  static String agencyResolve(String id) => '$baseUrl/incidents/$id/agency-resolve';
-  static String personnelStatus(String id) => '$baseUrl/incidents/$id/personnel-status';
+  static String agencyHandle(String id) =>
+      '$baseUrl/incidents/$id/agency-handle';
+  static String agencyResolve(String id) =>
+      '$baseUrl/incidents/$id/agency-resolve';
+  static String personnelStatus(String id) =>
+      '$baseUrl/incidents/$id/personnel-status';
 
   // Telemetry endpoint
   static String get telemetryLocation => '$baseUrl/telemetry/location';
