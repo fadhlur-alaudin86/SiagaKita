@@ -24,8 +24,8 @@ Before the agent opens a Pull Request to `dev`, the agent MUST conduct a self-re
  └────────────────────────────────────────┘
               │
       (All Passed?)
-       ├── ❌ Findings Found ──► Fix code & rerun tests
-       └── ✅ Passed          ──► Sync Issue Checklists ──► Open PR to dev
+       ├── Findings Found ──► Fix code & rerun tests
+       └── Passed          ──► Sync Issue Checklists ──► Open PR to dev
 ```
 
 ---

@@ -209,7 +209,7 @@ class AppLocalization {
     'Edit Rank': 'Edit Rank',
     'Nama Rank': 'Rank Name',
     'Minimum XP': 'Minimum XP',
-    'Icon URL / Emoji': 'Icon URL / Emoji',
+    'Icon URL': 'Icon URL',
     'Hapus Rank?': 'Delete Rank?',
     'Tindakan ini tidak bisa dibatalkan.': 'This action cannot be undone.',
     'Rank dasar (min_exp = 0) tidak dapat dihapus.':

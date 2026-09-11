@@ -89,7 +89,7 @@ void main() {
         'id': 'r-base',
         'rank_name': 'Relawan Pemula',
         'min_exp': 0,
-        'icon_url': '🌱',
+        'icon_url': 'https://example.com/icons/base_rank.png',
       });
       expect(baseRank.minExp, equals(0));
       expect(
@@ -101,7 +101,7 @@ void main() {
         'id': 'r-adv',
         'rank_name': 'Relawan Ahli',
         'min_exp': 1500,
-        'icon_url': '🏅',
+        'icon_url': 'https://example.com/icons/adv_rank.png',
       });
       expect(advancedRank.minExp, equals(1500));
       expect(advancedRank.minExp == 0, isFalse);

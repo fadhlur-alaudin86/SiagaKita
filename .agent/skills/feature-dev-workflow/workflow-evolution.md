@@ -43,11 +43,11 @@ graph TD
 
 ### Evaluation Questions
 1. **Gotchas & Quirks**: Did we encounter unexpected framework behavior (e.g. Fiber context handling, Postgres enum limitations, Flutter keyboard padding)?  
-   👉 *Action*: Add a 1–3 line bullet point to the corresponding standards file.
+   - *Action*: Add a 1–3 line bullet point to the corresponding standards file.
 2. **Command & Flags**: Did a CLI command require specific flags or environment settings to succeed (e.g. `golangci-lint --timeout=5m`, `dart format --set-exit-if-changed`)?  
-   👉 *Action*: Update the command runbook in `testing.md` or `devops-workflow/SKILL.md`.
+   - *Action*: Update the command runbook in `testing.md` or `devops-workflow/SKILL.md`.
 3. **Architecture / CI / Governance**: Did we notice a deficiency in automated CI/CD checks, missing review dimensions, or safety gaps?  
-   👉 *Action*: Formulate a **Major Workflow Proposal**. Do NOT alter `.github/workflows/` directly.
+   - *Action*: Formulate a **Major Workflow Proposal**. Do NOT alter `.github/workflows/` directly.
 
 ---
 

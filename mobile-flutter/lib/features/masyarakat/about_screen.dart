@@ -170,9 +170,7 @@ class AboutScreen extends StatelessWidget {
 
             const SizedBox(height: 48),
             Text(
-              '© 2026 Tim SiagaKita\nDibuat dengan ❤️ untuk Kemanusiaan'.tr(
-                context,
-              ),
+              '© 2026 Tim SiagaKita\nDibuat untuk Kemanusiaan'.tr(context),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,

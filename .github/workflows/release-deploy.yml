@@ -67,7 +67,7 @@ jobs:
             VERSION="${{ needs.build-and-push.outputs.version }}"
             export IMAGE_TAG="$VERSION"
 
-            echo "🚀 Starting deploy version: $VERSION"
+            echo "Starting deploy version: $VERSION"
 
             # Simpan nama image lama untuk rollback
             OLD_IMAGE=$(docker inspect --format='{{.Image}}' siagakita_backend 2>/dev/null || echo "")
@@ -79,7 +79,7 @@ jobs:
             docker compose -f docker-compose.prod.yml up -d --no-deps backend
 
             # Tunggu backend siap
-            echo "⏳ Waiting for backend health check..."
+            echo "Waiting for backend health check..."
             sleep 10
 
             # Health check dengan retry terlindungi (set +e agar tidak keluar prematur)
@@ -96,7 +96,7 @@ jobs:
             set -e
 
             if [ "$HEALTH" != "healthy" ]; then
-              echo "❌ Health check FAILED — initiating rollback..."
+              echo "Health check FAILED — initiating rollback..."
 
               # Rollback: jalankan ulang image versi sebelumnya.
               # Catatan: Skema database sengaja tidak di-rollback otomatis demi mencegah permanent data loss.
@@ -105,16 +105,16 @@ jobs:
                 docker compose -f docker-compose.prod.yml stop backend
                 docker pull "$OLD_IMAGE" 2>/dev/null || true
                 docker compose -f docker-compose.prod.yml up -d --no-deps backend
-                echo "⚠️ Rollback complete. Deployed image: $OLD_IMAGE"
+                echo "Rollback complete. Deployed image: $OLD_IMAGE"
               else
-                echo "⚠️ No previous image found for rollback."
+                echo "No previous image found for rollback."
               fi
 
               echo "::error::Deployment failed health check. Automated container rollback executed. Run manual schema rollback if necessary: docker compose exec backend ./siagakita-migrate down 1"
               exit 1
             fi
 
-            echo "✅ Deploy version $VERSION successful — backend is healthy"
+            echo "Deploy version $VERSION successful — backend is healthy"
 
             # Hapus image lama hanya setelah deployment dinyatakan sehat
             docker image prune -f
@@ -138,7 +138,7 @@ jobs:
           name: Release ${{ needs.build-and-push.outputs.version }}
           generate_release_notes: true
           body: |
-            ## 🚀 Release ${{ needs.build-and-push.outputs.version }}
+            ## Release ${{ needs.build-and-push.outputs.version }}
 
             **Docker Image:** `${{ secrets.DOCKERHUB_USERNAME }}/siagakita-api:${{ needs.build-and-push.outputs.version }}`
 

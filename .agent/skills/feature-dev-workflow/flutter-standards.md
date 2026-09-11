@@ -67,12 +67,12 @@ windows_console_flutter/lib/
 
 - **Always Check `context.mounted`**: Never use `BuildContext` (for `Navigator`, `ScaffoldMessenger`, or `Theme.of`) across an `await` boundary without checking `context.mounted`:
   ```dart
-  // ✅ GOOD: Safe navigation after async call
+  // GOOD: Safe navigation after async call
   final success = await authService.login(email, password);
   if (!context.mounted) return;
   Navigator.pushReplacementNamed(context, '/dashboard');
 
-  // ❌ BAD: Can crash or cause memory leak if user navigated away
+  // BAD: Can crash or cause memory leak if user navigated away
   await authService.login(email, password);
   Navigator.pushReplacementNamed(context, '/dashboard');
   ```

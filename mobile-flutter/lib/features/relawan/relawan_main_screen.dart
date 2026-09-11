@@ -643,7 +643,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Text(inc.typeEmoji, style: const TextStyle(fontSize: 32)),
+                Icon(inc.typeIcon, size: 32, color: const Color(0xFFFF7418)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -721,7 +721,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
               Icons.shield_outlined,
               'Kepercayaan'.tr(context),
               inc.trustLabel == 'verified'
-                  ? '✓ Terverifikasi'.tr(context)
+                  ? 'Terverifikasi'.tr(context)
                   : 'Standard'.tr(context),
               primaryText,
               secondaryText,

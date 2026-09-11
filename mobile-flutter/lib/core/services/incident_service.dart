@@ -5,7 +5,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_config.dart';
 import 'local_storage_service.dart';
@@ -728,17 +728,29 @@ class NearbyIncident {
   }
 
   /// Ikon tipe insiden
-  String get typeEmoji {
-    const emojis = {
-      'medical': '🚑',
-      'fire': '🔥',
-      'crime': '🚨',
-      'rescue': '🆘',
-      'accident': '🚗',
-      'disaster': '🌊',
-      'general': '⚠️',
+  IconData get typeIcon {
+    return switch (incidentType) {
+      'medical' => Icons.medical_services,
+      'fire' => Icons.local_fire_department,
+      'crime' => Icons.local_police,
+      'rescue' => Icons.emergency,
+      'accident' => Icons.car_crash,
+      'disaster' => Icons.flood,
+      _ => Icons.warning_amber,
     };
-    return emojis[incidentType] ?? '⚠️';
+  }
+
+  /// Kode tipe insiden
+  String get typeCode {
+    return switch (incidentType) {
+      'medical' => '[Medis]',
+      'fire' => '[Kebakaran]',
+      'crime' => '[Kriminal]',
+      'rescue' => '[SAR]',
+      'accident' => '[Kecelakaan]',
+      'disaster' => '[Bencana]',
+      _ => '[Umum]',
+    };
   }
 
   String get distanceLabel {
@@ -777,6 +789,32 @@ class MissionHistory {
     acceptedAt: json['accepted_at'] as String,
     xpEarned: json['xp_earned'] as int? ?? 0,
   );
+
+  /// Ikon tipe insiden
+  IconData get typeIcon {
+    return switch (incidentType) {
+      'medical' => Icons.medical_services,
+      'fire' => Icons.local_fire_department,
+      'crime' => Icons.local_police,
+      'rescue' => Icons.emergency,
+      'accident' => Icons.car_crash,
+      'disaster' => Icons.flood,
+      _ => Icons.warning_amber,
+    };
+  }
+
+  /// Kode tipe insiden
+  String get typeCode {
+    return switch (incidentType) {
+      'medical' => '[Medis]',
+      'fire' => '[Kebakaran]',
+      'crime' => '[Kriminal]',
+      'rescue' => '[SAR]',
+      'accident' => '[Kecelakaan]',
+      'disaster' => '[Bencana]',
+      _ => '[Umum]',
+    };
+  }
 }
 
 // ─── Exceptions ───────────────────────────────────────────────────────────────

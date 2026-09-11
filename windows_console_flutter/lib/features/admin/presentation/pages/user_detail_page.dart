@@ -583,11 +583,11 @@ class _UserDetailPageState extends State<UserDetailPage>
   }
 
   String _incidentLabel(String type) => switch (type) {
-    'fire' => '🔥 Kebakaran',
-    'medical' => '🚑 Medis',
-    'crime' => '🔪 Kriminal',
-    'rescue' => '💥 Kecelakaan',
-    'general' => '📋 Umum',
+    'fire' => 'Kebakaran',
+    'medical' => 'Medis',
+    'crime' => 'Kriminal',
+    'rescue' => 'Kecelakaan',
+    'general' => 'Umum',
     _ => type.toUpperCase(),
   };
 }

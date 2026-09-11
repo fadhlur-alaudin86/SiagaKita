@@ -46,7 +46,7 @@ class NearbyIncidentCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(inc.typeEmoji, style: const TextStyle(fontSize: 22)),
+              Icon(inc.typeIcon, size: 22, color: const Color(0xFFFF7418)),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -174,16 +174,6 @@ class MissionHistoryCard extends StatelessWidget {
       _ => inc.responseStatus,
     };
 
-    const typeEmojis = {
-      'medical': '🚑',
-      'fire': '🔥',
-      'crime': '🚨',
-      'rescue': '🆘',
-      'accident': '🚗',
-      'disaster': '🌊',
-    };
-    final emoji = typeEmojis[inc.incidentType] ?? '⚠️';
-
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -196,7 +186,7 @@ class MissionHistoryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
+          Icon(inc.typeIcon, size: 20, color: const Color(0xFFFF7418)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

@@ -40,8 +40,8 @@ sequenceDiagram
     - Search & filter: Filter by incident type (medical, fire, natural disaster, search & rescue).
   - **Right Panel (Flex)**: Interactive OpenStreetMap Radar.
     - Base layer: OpenStreetMap tile provider.
-    - Target marker: Selected SOS location (🔴 pulsing red pin).
-    - Volunteer markers: All on-duty volunteers (🟢 green markers with user avatars/initials).
+    - Target marker: Selected SOS location (pulsing red pin).
+    - Volunteer markers: All on-duty volunteers (green markers with user avatars/initials).
     - Proximity candidate list: Auto-sorted cards displaying the top-3 nearest available volunteers with distance in kilometers.
 
 ### 2.2 Live Telemetry Tracking ([#19](https://github.com/fadhlur-alaudin86/SiagaKita/issues/19))

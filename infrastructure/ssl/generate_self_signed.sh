@@ -18,4 +18,4 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 chmod 600 "$SSL_DIR/key.pem"
 chmod 644 "$SSL_DIR/cert.pem"
 
-echo "✅ Self-signed SSL certificate generated at $SSL_DIR"
+echo "Self-signed SSL certificate generated at $SSL_DIR"

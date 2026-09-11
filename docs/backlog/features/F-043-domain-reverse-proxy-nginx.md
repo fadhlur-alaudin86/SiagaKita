@@ -36,18 +36,18 @@
 
 | Step | Action | Status | Date | Notes |
 |------|--------|--------|------|-------|
-| -3 | Backlog Overview | ✅ Done | 2026-09-06 | Review Issue #43 dan dependensi arsitektur |
-| -2 | Discovery | ✅ Done | 2026-09-06 | CodeGraph preview pada `ApiConfig`, `ApiConstants`, dan compose files |
-| -1 | Resolve backlog | ✅ Done | 2026-09-06 | Dokumen F-043-domain-reverse-proxy-nginx.md dibuat |
-| 0 | Branch | ✅ Done | 2026-09-06 | Branch `feature/F-043-domain-reverse-proxy-nginx` & label `status: in-progress` |
-| 1 | Read mapping | ✅ Done | 2026-09-06 | Pemetaan port, env vars, dan routing upstream |
-| 2 | Nginx & Docker Setup | ✅ Done | 2026-09-06 | Buat `nginx.conf`, placeholder SSL, dan update `docker-compose.prod.yml` |
-| 3 | Multi-Env Configuration | ✅ Done | 2026-09-06 | Buat `.env.dev`, `.env.prod`, dan update `.env.example` |
-| 4 | Client Refactoring | ✅ Done | 2026-09-06 | Refaktor `api_config.dart` dan `api_constants.dart` |
-| 5 | Documentation Update | ✅ Done | 2026-09-06 | Update `DEPLOYMENT_GUIDE.md` |
-| 6 | Verification | ✅ Done | 2026-09-06 | `nginx -t`, `flutter analyze`, `go test -v -race ./...` lulus tanpa kendala |
-| 7 | CI + Review | ✅ Done | 2026-09-06 | Validasi dan persiapan status ready |
-| 8 | Close Log | ✅ Done | 2026-09-06 | Finalisasi feature log F-043 |
+| -3 | Backlog Overview | Done | 2026-09-06 | Review Issue #43 dan dependensi arsitektur |
+| -2 | Discovery | Done | 2026-09-06 | CodeGraph preview pada `ApiConfig`, `ApiConstants`, dan compose files |
+| -1 | Resolve backlog | Done | 2026-09-06 | Dokumen F-043-domain-reverse-proxy-nginx.md dibuat |
+| 0 | Branch | Done | 2026-09-06 | Branch `feature/F-043-domain-reverse-proxy-nginx` & label `status: in-progress` |
+| 1 | Read mapping | Done | 2026-09-06 | Pemetaan port, env vars, dan routing upstream |
+| 2 | Nginx & Docker Setup | Done | 2026-09-06 | Buat `nginx.conf`, placeholder SSL, dan update `docker-compose.prod.yml` |
+| 3 | Multi-Env Configuration | Done | 2026-09-06 | Buat `.env.dev`, `.env.prod`, dan update `.env.example` |
+| 4 | Client Refactoring | Done | 2026-09-06 | Refaktor `api_config.dart` dan `api_constants.dart` |
+| 5 | Documentation Update | Done | 2026-09-06 | Update `DEPLOYMENT_GUIDE.md` |
+| 6 | Verification | Done | 2026-09-06 | `nginx -t`, `flutter analyze`, `go test -v -race ./...` lulus tanpa kendala |
+| 7 | CI + Review | Done | 2026-09-06 | Validasi dan persiapan status ready |
+| 8 | Close Log | Done | 2026-09-06 | Finalisasi feature log F-043 |
 
 ## Decisions Log
 

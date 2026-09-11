@@ -516,7 +516,7 @@ class _KycScreenState extends State<KycScreen> {
           _buildPhotoSelector(
             label: _ktpPhoto == null
                 ? 'Ambil / Pilih Foto KTP'.tr(context)
-                : 'KTP terpilih ✓'.tr(context),
+                : 'KTP terpilih'.tr(context),
             photo: _ktpPhoto,
             color: _ktpPhoto != null ? Colors.green : primary,
             icon: Icons.badge_outlined,
@@ -540,7 +540,7 @@ class _KycScreenState extends State<KycScreen> {
           _buildPhotoSelector(
             label: _selfiePhoto == null
                 ? 'Ambil Selfie Wajah'.tr(context)
-                : 'Selfie terpilih ✓'.tr(context),
+                : 'Selfie terpilih'.tr(context),
             photo: _selfiePhoto,
             color: _selfiePhoto != null ? Colors.green : Colors.blueGrey,
             icon: Icons.camera_front,

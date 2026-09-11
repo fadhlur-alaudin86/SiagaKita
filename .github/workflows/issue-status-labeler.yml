@@ -212,7 +212,7 @@ jobs:
                           print(f"[Reconciliation] Auto-completing open issue #{issue_num} from merged PR #{curr_pr_num}")
                           set_issue_assignee(issue_num, curr_pr_author)
                           autocomplete_and_close(issue_num)
-                          run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🎉 **Status Update (Auto-Reconciled):** PR #{curr_pr_num} ({curr_pr_title}) telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
+                          run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update (Auto-Reconciled):** PR #{curr_pr_num} ({curr_pr_title}) telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
                       elif "status: done" not in labels:
                           print(f"[Reconciliation] Ensuring status: done for closed issue #{issue_num}")
                           set_issue_status(issue_num, "status: done")
@@ -276,20 +276,20 @@ jobs:
                   if pr_action in ["opened", "reopened", "ready_for_review"]:
                       set_issue_status(issue_num, "status: in-review")
                       set_issue_assignee(issue_num, pr_author)
-                      run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🔄 **Status Update:** PR #{pr_number} ({pr_title}) telah diajukan untuk review."')
+                      run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number} ({pr_title}) telah diajukan untuk review."')
                   
                   elif pr_action == "closed" and pr_merged:
                       set_issue_assignee(issue_num, pr_author)
                       autocomplete_and_close(issue_num)
-                      run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🎉 **Status Update:** PR #{pr_number} telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
+                      run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number} telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
 
               elif event_name == "pull_request_review" and review_state == "approved":
                   set_issue_status(issue_num, "status: ready")
-                  run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "✅ **Status Update:** PR #{pr_number} telah diapprove oleh @{reviewer} dan siap dimerge (`status: ready`)."')
+                  run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number} telah diapprove oleh @{reviewer} dan siap dimerge (`status: ready`)."')
 
               elif event_name == "push":
                   autocomplete_and_close(issue_num)
-                  run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "🎉 **Status Update:** PR #{pr_number or ""} telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
+                  run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number or ""} telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
 
           # 5. Fallback reconciliation on push to dev
           if event_name == "push":

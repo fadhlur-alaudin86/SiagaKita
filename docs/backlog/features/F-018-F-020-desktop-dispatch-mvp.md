@@ -29,16 +29,16 @@
 
 | Step | Action | Status | Date | Notes |
 |---|---|---|---|---|
-| -3 | Backlog Overview | ✅ Done | 2026-09-10 | Plan 04 selected to build Real-Time Dispatch MVP |
-| -2 | Discovery | ✅ Done | 2026-09-10 | Inspected Flutter maps, WS events, and Go incident domain |
-| -1 | Resolve Backlog | ✅ Done | 2026-09-10 | Created feature log `F-018-F-020-desktop-dispatch-mvp.md` |
-| 0 | Branch & Assign | ✅ Done | 2026-09-10 | Created branch `feature/F-018-F-020-desktop-dispatch-mvp` |
-| 1 | Read Mapping | ✅ Done | 2026-09-10 | Review existing UI state management and WS message flow |
-| 2 | API Contract | ✅ Done | 2026-09-10 | Defined `POST /api/v1/incidents/:id/dispatch-broadcast` and `GET /api/v1/telemetry/nearby-volunteers` |
-| 3 | DB Migration | ⏩ Skipped | 2026-09-10 | Existing `incident_responses` schema supports `en_route` status |
-| 4 | Backend Implementation | ✅ Done | 2026-09-10 | Implemented dispatch broadcast, Redis GEO query, FCFS claiming, and 60s timeout |
-| 5 | Flutter Implementation | ✅ Done | 2026-09-10 | Built split-view radar, live telemetry markers, active mission stepper, polyline layer, and mobile offer modal |
-| 6 | Tests | ✅ Done | 2026-09-10 | Backend race tests, Flutter analyze (0 issues) and unit tests (6/6 passed) |
-| 7 | CI + Review | ✅ Done | 2026-09-10 | Multi-client quality gates, CodeGraph sync, issues set to in-review |
-| 8 | Close Log | ✅ Done | 2026-09-10 | PR to `dev` |
+| -3 | Backlog Overview | Done | 2026-09-10 | Plan 04 selected to build Real-Time Dispatch MVP |
+| -2 | Discovery | Done | 2026-09-10 | Inspected Flutter maps, WS events, and Go incident domain |
+| -1 | Resolve Backlog | Done | 2026-09-10 | Created feature log `F-018-F-020-desktop-dispatch-mvp.md` |
+| 0 | Branch & Assign | Done | 2026-09-10 | Created branch `feature/F-018-F-020-desktop-dispatch-mvp` |
+| 1 | Read Mapping | Done | 2026-09-10 | Review existing UI state management and WS message flow |
+| 2 | API Contract | Done | 2026-09-10 | Defined `POST /api/v1/incidents/:id/dispatch-broadcast` and `GET /api/v1/telemetry/nearby-volunteers` |
+| 3 | DB Migration | Skipped | 2026-09-10 | Existing `incident_responses` schema supports `en_route` status |
+| 4 | Backend Implementation | Done | 2026-09-10 | Implemented dispatch broadcast, Redis GEO query, FCFS claiming, and 60s timeout |
+| 5 | Flutter Implementation | Done | 2026-09-10 | Built split-view radar, live telemetry markers, active mission stepper, polyline layer, and mobile offer modal |
+| 6 | Tests | Done | 2026-09-10 | Backend race tests, Flutter analyze (0 issues) and unit tests (6/6 passed) |
+| 7 | CI + Review | Done | 2026-09-10 | Multi-client quality gates, CodeGraph sync, issues set to in-review |
+| 8 | Close Log | Done | 2026-09-10 | PR to `dev` |
 

@@ -33,15 +33,15 @@
 
 | Step | Action | Status | Date | Notes |
 |---|---|---|---|---|
-| -3 | Backlog Overview | ✅ Done | 2026-09-10 | Plan 02 selected to finalize Admin APIs |
-| -2 | Discovery & Grill-Me | ✅ Done | 2026-09-10 | Aligned on base rank protection, volunteer auto-downgrade, and query indexing |
-| -1 | Resolve Backlog | ✅ Done | 2026-09-10 | Created feature log `F-012-F-013-backend-admin-finalization.md` |
-| 0 | Branch & Assign | ✅ Done | 2026-09-10 | Created branch `feature/F-012-F-013-backend-admin-finalization`, assigned Issues #12 & #13 |
-| 1 | Read Mapping | ✅ Done | 2026-09-10 | Inspected existing admin domain models, repository, service, and handler |
-| 2 | API Contract | ✅ Done | 2026-09-10 | Updated `docs/api/paths/admin.yaml` |
-| 3 | DB Migration | ✅ Done | 2026-09-10 | Added migration `020_add_analytics_indexes` and updated `DATABASE_SCHEMA.md` |
-| 4 | Backend Implementation | ✅ Done | 2026-09-10 | Implemented rank domain validations, auto-downgrade transaction, and stats normalization |
-| 5 | Flutter Implementation | ⏩ Skipped | 2026-09-10 | Desktop UI already built; backend contract parity verified |
-| 6 | Tests | ✅ Done | 2026-09-10 | Unit and live DB tests for ranks CRUD and stats analytics in `handler_test.go` and `migrate_test.go` |
-| 7 | CI + Review | ✅ Done | 2026-09-10 | Format checks (`gofmt`), `golangci-lint`, and test suite verification (`go test -race ./...`) |
-| 8 | Close Log | ✅ Done | 2026-09-10 | All quality gates pass; ready for PR |
+| -3 | Backlog Overview | Done | 2026-09-10 | Plan 02 selected to finalize Admin APIs |
+| -2 | Discovery & Grill-Me | Done | 2026-09-10 | Aligned on base rank protection, volunteer auto-downgrade, and query indexing |
+| -1 | Resolve Backlog | Done | 2026-09-10 | Created feature log `F-012-F-013-backend-admin-finalization.md` |
+| 0 | Branch & Assign | Done | 2026-09-10 | Created branch `feature/F-012-F-013-backend-admin-finalization`, assigned Issues #12 & #13 |
+| 1 | Read Mapping | Done | 2026-09-10 | Inspected existing admin domain models, repository, service, and handler |
+| 2 | API Contract | Done | 2026-09-10 | Updated `docs/api/paths/admin.yaml` |
+| 3 | DB Migration | Done | 2026-09-10 | Added migration `020_add_analytics_indexes` and updated `DATABASE_SCHEMA.md` |
+| 4 | Backend Implementation | Done | 2026-09-10 | Implemented rank domain validations, auto-downgrade transaction, and stats normalization |
+| 5 | Flutter Implementation | Skipped | 2026-09-10 | Desktop UI already built; backend contract parity verified |
+| 6 | Tests | Done | 2026-09-10 | Unit and live DB tests for ranks CRUD and stats analytics in `handler_test.go` and `migrate_test.go` |
+| 7 | CI + Review | Done | 2026-09-10 | Format checks (`gofmt`), `golangci-lint`, and test suite verification (`go test -race ./...`) |
+| 8 | Close Log | Done | 2026-09-10 | All quality gates pass; ready for PR |

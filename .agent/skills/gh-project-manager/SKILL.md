@@ -95,7 +95,7 @@ gh issue edit <number> --repo fadhlur-alaudin86/SiagaKita \
 ```bash
 gh issue comment <number> \
   --repo fadhlur-alaudin86/SiagaKita \
-  --body "🚀 Starting implementation of F-014. Branch: feature/F-014-dispatch-volunteer"
+  --body "Starting implementation of F-014. Branch: feature/F-014-dispatch-volunteer"
 ```
 
 ### Assign Issue

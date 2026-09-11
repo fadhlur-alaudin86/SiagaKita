@@ -29,14 +29,14 @@
 
 | Step | Action | Status | Date | Notes |
 |---|---|---|---|---|
-| -3 | Backlog Overview | ✅ Done | 2026-09-10 | Plan 05 selected from `.planning/05-assets-devops-hygiene.md` |
-| -2 | Discovery | ✅ Done | 2026-09-10 | Audited `alarm.mp3`, `AudioService`, `release-deploy.yml`, and `seedSuperAdmin` |
-| -1 | Resolve Backlog | ✅ Done | 2026-09-10 | Created feature backlog log `F-034-F-035-production-assets-devops.md` |
-| 0 | Branch & Assign | ✅ Done | 2026-09-10 | Created branch `feature/F-034-F-035-production-assets-devops` |
-| 1 | Read Mapping | ✅ Done | 2026-09-10 | Aligned architectural decisions via `/grill-me` |
-| 2 | API Contract | ⏩ Skipped | 2026-09-10 | No new HTTP endpoints; infrastructure & asset hardening |
-| 3 | DB Migration | ⏩ Skipped | 2026-09-10 | Codified Expand & Contract rule in `postgres-patterns.md` |
-| 4 | Implementation | ✅ Done | 2026-09-10 | Hardened AudioService, release-deploy.yml, docker-compose, and .env.example |
-| 5 | Tests | ✅ Done | 2026-09-10 | AudioService tests (5/5), seedSuperAdmin tests (passed), Flutter analyze (0 issues) |
-| 6 | CI + Review | ⏳ In Progress | 2026-09-10 | CodeGraph sync, issue status update to in-review |
-| 7 | Close Log | ⏳ Pending | 2026-09-10 | Pull Request to `dev` |
+| -3 | Backlog Overview | Done | 2026-09-10 | Plan 05 selected from `.planning/05-assets-devops-hygiene.md` |
+| -2 | Discovery | Done | 2026-09-10 | Audited `alarm.mp3`, `AudioService`, `release-deploy.yml`, and `seedSuperAdmin` |
+| -1 | Resolve Backlog | Done | 2026-09-10 | Created feature backlog log `F-034-F-035-production-assets-devops.md` |
+| 0 | Branch & Assign | Done | 2026-09-10 | Created branch `feature/F-034-F-035-production-assets-devops` |
+| 1 | Read Mapping | Done | 2026-09-10 | Aligned architectural decisions via `/grill-me` |
+| 2 | API Contract | Skipped | 2026-09-10 | No new HTTP endpoints; infrastructure & asset hardening |
+| 3 | DB Migration | Skipped | 2026-09-10 | Codified Expand & Contract rule in `postgres-patterns.md` |
+| 4 | Implementation | Done | 2026-09-10 | Hardened AudioService, release-deploy.yml, docker-compose, and .env.example |
+| 5 | Tests | Done | 2026-09-10 | AudioService tests (5/5), seedSuperAdmin tests (passed), Flutter analyze (0 issues) |
+| 6 | CI + Review | In Progress | 2026-09-10 | CodeGraph sync, issue status update to in-review |
+| 7 | Close Log | Pending | 2026-09-10 | Pull Request to `dev` |
