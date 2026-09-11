@@ -60,7 +60,19 @@ This document serves as the living single-source-of-truth matrix linking fronten
 
 ---
 
-## 6. Living Maintenance Rules
+## 6. Official Agency Responder Tactical Operations
+
+| Feature | Mobile Responder Flutter (Agency Personnel) | Windows Console Flutter (Agency Dispatcher) | Go Fiber Endpoint & Handler | DB Table & Query | State, WS & Security |
+|---|---|---|---|---|---|
+| **Personnel Authentication** | `mobile-flutter-responder/lib/features/auth/login_screen.dart` | — | `POST /api/v1/auth/login` (`domain/user.Login`) | `users`, `user_profiles` (SELECT) | Enforces role `agency`; validates badge number or official email |
+| **Tactical Mission Board** | `mobile-flutter-responder/lib/features/mission/mission_board_screen.dart` | `windows_console_flutter/lib/features/dispatch/presentation/pages/dispatch_screen.dart` | `GET /api/v1/incidents/assigned` (`domain/incident.GetAssignedIncidents`) | `incidents`, `users`, `locations` (SELECT JOIN) | WS: `MISSION_ASSIGNED` broadcast on dispatcher unit assignment |
+| **Mission Progression Workflow** | `mobile-flutter-responder/lib/features/mission/mission_detail_screen.dart` | `windows_console_flutter/lib/features/dispatch/presentation/pages/dispatch_screen.dart` | `PUT /api/v1/incidents/:id/status` (`domain/incident.UpdateIncidentStatus`) | `incidents` (UPDATE status, timestamps) | Sequential status states: `assigned` -> `en_route` -> `on_scene` -> `resolved` |
+| **High-Frequency GPS Telemetry** | Background location streamer in `mobile-flutter-responder` | `windows_console_flutter/lib/features/dispatch/presentation/pages/dispatch_screen.dart` | `PUT /api/v1/telemetry/location` (`domain/telemetry.UpdateLocation`) | Redis geospatial cache (`GEOADD`), `sync.Pool` | Low memory churn payload reuse; WS broadcast to victim and dispatcher |
+| **Tactical Map & External Navigation** | `mobile-flutter-responder/lib/features/mission/tactical_map_screen.dart` | — | OpenStreetMap / External Map Launcher | — | Deep-linking to Google Maps / Waze with coordinates handoff |
+
+---
+
+## 7. Living Maintenance Rules
 1. **Contract Parity**: When modifying an endpoint in `docs/api/*.yaml`, update corresponding rows in this table.
-2. **Client Symmetry**: Check whether a newly added backend feature requires a mobile interface, a console interface, or both.
+2. **Client Symmetry**: Check whether a newly added backend feature requires a mobile citizen interface, a responder interface, a console interface, or all three.
 3. **Database Integrity**: Ensure every DB table documented here matches `docs/DATABASE_SCHEMA.md`.

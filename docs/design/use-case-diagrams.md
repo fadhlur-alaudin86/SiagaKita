@@ -11,6 +11,7 @@
 |---|---|---|
 | **Civilian (Warga)** | Mobile Flutter App | Trigger emergency SOS, manage 10s grace period, cancel SOS, submit community reports (Jalur B), manage personal medical biodata, and emergency contacts. |
 | **Volunteer (Relawan)** | Mobile Flutter App | Receive real-time nearby emergency radar alerts, accept rescue missions, stream GPS coordinates, upload on-scene proof of resolution, and gain XP/Ranks. |
+| **Agency Responder (Petugas Lapangan)** | Mobile Responder Flutter App | Authenticate with official badge number, monitor tactical mission board, update response status (`en_route` -> `on_scene` -> `resolved`), stream zero-churn background GPS telemetry, and navigate via OpenStreetMap/external maps. |
 | **Agency (Instansi)** | Desktop Flutter Console | Monitor live municipal emergencies, dispatch field personnel, review volunteer completion evidence, resolve incidents, and penalize false alarms. |
 | **Admin** | Desktop Flutter Console | Review civilian NIK KYC and volunteer certifications, manage user accounts, ban/unban abusive users, and inspect operational metrics. |
 | **Superadmin** | Desktop Flutter Console / CLI | Seed and manage regional admin accounts, register emergency agencies, and configure global system settings. |
@@ -26,6 +27,7 @@ flowchart TB
     subgraph Actors["System Actors"]
         Warga["Civilian (Warga)"]
         Relawan["Volunteer (Relawan)"]
+        Petugas["Agency Responder (Petugas)"]
         Instansi["Agency (Instansi / Dispatcher)"]
         Admin["Admin & Superadmin"]
         System["System Background Worker"]
@@ -65,8 +67,17 @@ flowchart TB
         UC_EarnRep["Earn XP, Ranks & Badges"]
     end
 
+    %% Use Cases: Agency Responder Tactical Operations
+    subgraph UC_Responder["5. Agency Responder Tactical Operations"]
+        UC_BadgeLogin["Login with Badge / Official Credentials"]
+        UC_MissionBoard["Inspect Assigned Incident Missions"]
+        UC_ProgressStatus["Progress Response Status (En Route, On Scene)"]
+        UC_StreamTelemetry["Stream Live GPS Telemetry (sync.Pool)"]
+        UC_TacticalNav["Open Turn-by-Turn External Navigation"]
+    end
+
     %% Use Cases: Agency Dispatch
-    subgraph UC_Agency["5. Agency Dispatch & Incident Command"]
+    subgraph UC_Agency["6. Agency Dispatch & Incident Command"]
         UC_LiveMap["Monitor Citywide Live Map"]
         UC_AgencyHandle["Mark SOS Handled by Agency"]
         UC_ReviewVol["Review & Approve Volunteer Response"]
@@ -76,7 +87,7 @@ flowchart TB
     end
 
     %% Use Cases: Administration
-    subgraph UC_Admin["6. Administration & Security"]
+    subgraph UC_Admin["7. Administration & Security"]
         UC_ApproveKYC["Review & Approve Volunteer / NIK KYC"]
         UC_ManageAgency["Register Agency & Personnel Accounts"]
         UC_ManageAdmin["Create Regional Admin Accounts"]
@@ -86,7 +97,7 @@ flowchart TB
     end
 
     %% Use Cases: Background System
-    subgraph UC_System["7. Automated System Operations"]
+    subgraph UC_System["8. Automated System Operations"]
         UC_AutoBroadcast["Auto-Promote Grace Period to Broadcasting"]
         UC_WSBroadcast["Broadcast WS Event (INCOMING_EMERGENCY)"]
         UC_SMSFallback["Parse Inbound SMS Fallback Coordinates"]
@@ -116,6 +127,13 @@ flowchart TB
     Relawan --> UC_NavLocation
     Relawan --> UC_CompleteMission
     Relawan --> UC_EarnRep
+
+    %% Connections: Agency Responder
+    Petugas --> UC_BadgeLogin
+    Petugas --> UC_MissionBoard
+    Petugas --> UC_ProgressStatus
+    Petugas --> UC_StreamTelemetry
+    Petugas --> UC_TacticalNav
 
     %% Connections: Instansi
     Instansi --> UC_Login
@@ -158,8 +176,11 @@ flowchart LR
         A5 --> A6["Volunteer Accepts Mission"]
         A6 --> A7["Volunteer: On-Scene Navigation & Evidence Upload"]
         A7 --> A8["Agency: Review Evidence & Mark Resolved"]
-        A5 --> A9["Agency Handles Directly"]
-        A9 --> A8
+        A5 --> A9["Agency Dispatches Field Responder"]
+        A9 --> A11["Responder: Accept Mission & En Route"]
+        A11 --> A12["Responder: Stream Background GPS Telemetry"]
+        A12 --> A13["Responder: Arrive On-Scene & Mitigate"]
+        A13 --> A8
         A4 -.->|If False Emergency| A10["Agency: Mark False Alarm (Strike +1)"]
     end
 

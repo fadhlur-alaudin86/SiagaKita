@@ -4,11 +4,12 @@ SiagaKita is a comprehensive emergency response and reporting system designed to
 
 ## System Architecture
 
-The SiagaKita system consists of three main components:
+The SiagaKita system consists of four main components:
 
 1. **Backend Server (Go Fiber)**: The core engine that handles business logic, real-time WebSockets, JWT authentication, background processing, and interaction with PostgreSQL and Redis databases.
-2. **Citizen & Volunteer Mobile App (Flutter)**: A mobile application built for the general public and registered volunteers. Features include one-tap SOS triggering, incident reporting (with multi-photo and audio support), real-time volunteer tracking, and gamification to encourage community participation.
+2. **Citizen & Volunteer Mobile App (Flutter)**: A mobile application built for the general public and registered volunteers. Features include first-time visual onboarding, contextual permission priming, one-tap SOS triggering with offline guard, incident reporting (with multi-photo and audio support), real-time volunteer tracking, and gamification to encourage community participation.
 3. **Agency & Admin Console (Flutter Desktop)**: A desktop application utilized by emergency agencies and central administrators to monitor live SOS alerts, dispatch responders, verify volunteer identities, and track operational statistics.
+4. **Official Agency Responder Mobile App (Flutter)**: A dedicated tactical mobile application built specifically for official agency field personnel (police, firefighters, paramedics, disaster response teams). Features include badge-number credential authentication, tactical mission board, rapid status progression (`en_route` -> `on_scene` -> `resolved`), zero-churn background GPS telemetry, and integrated turn-by-turn navigation.
 
 ## Key Features
 
@@ -32,6 +33,13 @@ The SiagaKita system consists of three main components:
 *   **Analytics Dashboard**: Real-time statistical aggregation of incidents with dynamic filtering periods (Week, Month, Year).
 *   **Agency Customization**: Dynamic profiles integrated natively into the dashboard UI for respective emergency agencies.
 
+### For Agency Responders
+*   **Dual Authentication**: Secure sign-in utilizing agency personnel credentials (badge number or official email) validated against official agency rosters.
+*   **Tactical Mission Board**: Real-time incoming incident assignments, priority level indicators, victim contact details, and incident history.
+*   **Rapid Status Progression**: Clear step-by-step mission workflow transitions (`assigned` -> `en_route` -> `on_scene` -> `resolved`) synchronized with the central desktop console and victim app.
+*   **Adaptive Background Telemetry**: Zero-churn GPS telemetry streaming via `sync.Pool` backend ingestion, updating dispatchers in real time while preserving mobile battery life.
+*   **Tactical Map & Navigation**: Interactive OpenStreetMap tracking incident epicenter, victim location, and external map routing handoff (Google Maps / Waze).
+
 ### System Reliability
 *   **Single-Device Mobile Session**: Prevents account sharing and enhances security by enforcing one active session per mobile user via Redis-backed JTI validation.
 *   **Idempotent Operations**: Ensures consistency for critical state changes using `X-Idempotency-Key` headers, preventing duplicate actions from synchronized devices.
@@ -51,6 +59,7 @@ The SiagaKita system consists of three main components:
 *   `.github/workflows/`: GitHub Actions CI/CD automation pipelines (`ci-dev.yml`, `ci-main.yml`, `release-deploy.yml`, `auto-tag.yml`).
 *   `backend-go/`: Go server source code, migrations, and domain logic.
 *   `mobile-flutter/`: Mobile application source code for citizens and volunteers.
+*   `mobile-flutter-responder/`: Tactical mobile application source code for official emergency agency responders.
 *   `windows_console_flutter/`: Desktop console application source code for emergency agencies and admins.
 *   `infrastructure/`: Global environment configurations (`.env`) and Docker Compose files.
 *   `docs/`: Comprehensive technical documentation, architecture guides, database schemas, and developer skill guides (`docs/skills/`).
@@ -101,6 +110,10 @@ To run the project locally:
 7. Run the desktop console application:
    ```bash
    cd ../windows_console_flutter && flutter run -d linux --dart-define-from-file=../infrastructure/.env
+   ```
+8. Run the official agency responder mobile application:
+   ```bash
+   cd ../mobile-flutter-responder && flutter run --dart-define-from-file=../infrastructure/.env
    ```
 
 ## Documentation & AI Agent Skills
