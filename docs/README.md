@@ -10,6 +10,7 @@ This directory contains the central technical documentation for the SiagaKita pl
 |---|---|---|
 | [BACKEND_ARCHITECTURE.md](./BACKEND_ARCHITECTURE.md) | Go Fiber architecture, DDD structure, Redis JTI SessionGuard, WebSocket Hub, and security guards | Backend Engineers |
 | [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) | PostgreSQL schema specification, table models, triggers, and automated migration CLI (`cmd/migrate`) | DBAs, Backend Developers |
+| [COMPONENT_MAPPING.md](./COMPONENT_MAPPING.md) | Multi-Client mapping: Flutter Mobile & Desktop screens <-> Go routes <-> DB tables & WS events | Full-Stack, Mobile, Desktop Engineers |
 | [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Production VPS provisioning, Nginx reverse proxy, Cloudflare SSL, and automated CI/CD deployment | DevOps, Infrastructure Engineers |
 | [design/README.md](./design/README.md) | Living Mermaid diagram catalog (Database ERD, Use Case diagrams, Activity & State sequences) | Full-Stack Engineers, Architects |
 | [api/openapi.yaml](./api/openapi.yaml) | Modular OpenAPI 3.0 API specifications (Interactive Swagger UI served at `/docs/*`) | Frontend & Backend Developers |
