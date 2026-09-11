@@ -1,10 +1,10 @@
 package hub
 
 import (
-	"encoding/json"
 	"siagakita-backend/internal/utils"
 	"sync"
 
+	"github.com/bytedance/sonic"
 	"github.com/gorilla/websocket"
 )
 
@@ -100,7 +100,7 @@ func (h *Hub) Unregister(userID, connID string) {
 // SendToUser sends a Message to ALL connections of a specific user.
 // Returns nil if user is offline. Silently skips failed sends.
 func (h *Hub) SendToUser(userID string, msg Message) error {
-	data, err := json.Marshal(msg)
+	data, err := sonic.Marshal(msg)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (h *Hub) OnlineUsers() []string {
 // BroadcastToRole sends a Message to all connected clients with the specified role.
 // Returns the number of successful sends.
 func (h *Hub) BroadcastToRole(role string, msg Message) int {
-	data, err := json.Marshal(msg)
+	data, err := sonic.Marshal(msg)
 	if err != nil {
 		return 0
 	}
@@ -175,7 +175,7 @@ func (h *Hub) BroadcastToRole(role string, msg Message) int {
 // optionally excluding a specific user ID (e.g. the incident reporter).
 // Returns the number of successful sends without database or Redis round-trips.
 func (h *Hub) BroadcastToRoles(msg Message, excludeUserID string, roles ...string) int {
-	data, err := json.Marshal(msg)
+	data, err := sonic.Marshal(msg)
 	if err != nil {
 		return 0
 	}

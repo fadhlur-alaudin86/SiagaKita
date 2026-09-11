@@ -48,6 +48,8 @@ func main() {
 
 	// ── 2. Connect to PostgreSQL & Redis ─────────────────────────────────────
 	db := database.NewPostgres(cfg)
+	pgxPool := database.NewPgxPool(context.Background(), cfg)
+	defer pgxPool.Close()
 	rdb := database.NewRedis(cfg)
 
 	// ── 2b. Auto-Migrate Database Schema ──────────────────────────────────────
@@ -84,7 +86,7 @@ func main() {
 	userHandler := userDomain.NewHandler(userSvc)
 
 	// Incident domain
-	incidentRepo := incidentDomain.NewRepository(db)
+	incidentRepo := incidentDomain.NewRepository(db, pgxPool)
 	incidentSvc := incidentDomain.NewService(incidentRepo, rdb)
 	incidentHandler := incidentDomain.NewHandler(incidentSvc, cfg, wsHub, rdb)
 
