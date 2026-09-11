@@ -3,6 +3,7 @@ import '../../core/localization/app_localization.dart';
 import 'login_screen.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/user_service.dart';
+import '../../core/constants/relation_constants.dart';
 
 class BiodataScreen extends StatefulWidget {
   final String accessToken;
@@ -565,48 +566,72 @@ class _BiodataScreenState extends State<BiodataScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller:
-                                      TextEditingController(
-                                          text: _contacts[index]['relation'],
-                                        )
-                                        ..selection = TextSelection.collapsed(
-                                          offset: _contacts[index]['relation']
-                                              .length,
-                                        ),
-                                  onChanged: (val) =>
-                                      _contacts[index]['relation'] = val,
-                                  decoration: InputDecoration(
-                                    labelText: 'Hubungan'.tr(context),
-                                    isDense: true,
+                          TextField(
+                            controller:
+                                TextEditingController(
+                                    text: _contacts[index]['phone'],
+                                  )
+                                  ..selection = TextSelection.collapsed(
+                                    offset: _contacts[index]['phone'].length,
+                                  ),
+                            onChanged: (val) => _contacts[index]['phone'] = val,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              labelText: 'No Hp'.tr(context),
+                              isDense: true,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Hubungan'.tr(context),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: colors.onSurface.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: EmergencyRelation.all.map((rel) {
+                              final currentRel = _contacts[index]['relation'];
+                              final isSelected =
+                                  currentRel == rel ||
+                                  (rel == EmergencyRelation.other &&
+                                      currentRel != null &&
+                                      currentRel.isNotEmpty &&
+                                      !EmergencyRelation.all.contains(
+                                        currentRel,
+                                      ));
+                              return ChoiceChip(
+                                label: Text(
+                                  EmergencyRelation.getLabel(rel, context),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected
+                                        ? colors.primary
+                                        : colors.onSurface.withValues(
+                                            alpha: 0.8,
+                                          ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 2,
-                                child: TextField(
-                                  controller:
-                                      TextEditingController(
-                                          text: _contacts[index]['phone'],
-                                        )
-                                        ..selection = TextSelection.collapsed(
-                                          offset:
-                                              _contacts[index]['phone'].length,
-                                        ),
-                                  onChanged: (val) =>
-                                      _contacts[index]['phone'] = val,
-                                  keyboardType: TextInputType.phone,
-                                  decoration: InputDecoration(
-                                    labelText: 'No Hp'.tr(context),
-                                    isDense: true,
-                                  ),
-                                ),
-                              ),
-                            ],
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() {
+                                      _contacts[index]['relation'] = rel;
+                                    });
+                                  }
+                                },
+                              );
+                            }).toList(),
                           ),
                         ],
                       ),

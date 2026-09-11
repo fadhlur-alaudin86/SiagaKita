@@ -5,158 +5,16 @@
 package sqlc
 
 import (
-	"database/sql/driver"
-	"fmt"
-
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-type IncidentCategory string
-
-const (
-	IncidentCategoryMedical  IncidentCategory = "medical"
-	IncidentCategoryFire     IncidentCategory = "fire"
-	IncidentCategoryCrime    IncidentCategory = "crime"
-	IncidentCategoryRescue   IncidentCategory = "rescue"
-	IncidentCategoryGeneral  IncidentCategory = "general"
-	IncidentCategoryDisaster IncidentCategory = "disaster"
-	IncidentCategoryUnknown  IncidentCategory = "unknown"
-)
-
-func (e *IncidentCategory) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = IncidentCategory(s)
-	case string:
-		*e = IncidentCategory(s)
-	default:
-		return fmt.Errorf("unsupported scan type for IncidentCategory: %T", src)
-	}
-	return nil
-}
-
-type NullIncidentCategory struct {
-	IncidentCategory IncidentCategory
-	Valid            bool // Valid is true if IncidentCategory is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullIncidentCategory) Scan(value interface{}) error {
-	if value == nil {
-		ns.IncidentCategory, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.IncidentCategory.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullIncidentCategory) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.IncidentCategory), nil
-}
-
-type IncidentStatus string
-
-const (
-	IncidentStatusGracePeriod  IncidentStatus = "grace_period"
-	IncidentStatusBroadcasting IncidentStatus = "broadcasting"
-	IncidentStatusHandled      IncidentStatus = "handled"
-	IncidentStatusResolved     IncidentStatus = "resolved"
-	IncidentStatusFalseAlarm   IncidentStatus = "false_alarm"
-	IncidentStatusCanceled     IncidentStatus = "canceled"
-)
-
-func (e *IncidentStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = IncidentStatus(s)
-	case string:
-		*e = IncidentStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for IncidentStatus: %T", src)
-	}
-	return nil
-}
-
-type NullIncidentStatus struct {
-	IncidentStatus IncidentStatus
-	Valid          bool // Valid is true if IncidentStatus is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullIncidentStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.IncidentStatus, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.IncidentStatus.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullIncidentStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.IncidentStatus), nil
-}
-
-type ResponseStatus string
-
-const (
-	ResponseStatusEnRoute       ResponseStatus = "en_route"
-	ResponseStatusOnScene       ResponseStatus = "on_scene"
-	ResponseStatusWaitingReview ResponseStatus = "waiting_review"
-	ResponseStatusCompleted     ResponseStatus = "completed"
-	ResponseStatusRejected      ResponseStatus = "rejected"
-	ResponseStatusCanceled      ResponseStatus = "canceled"
-)
-
-func (e *ResponseStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = ResponseStatus(s)
-	case string:
-		*e = ResponseStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for ResponseStatus: %T", src)
-	}
-	return nil
-}
-
-type NullResponseStatus struct {
-	ResponseStatus ResponseStatus
-	Valid          bool // Valid is true if ResponseStatus is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullResponseStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.ResponseStatus, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.ResponseStatus.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullResponseStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.ResponseStatus), nil
-}
 
 type Incident struct {
 	ID                 pgtype.UUID
 	ReporterID         pgtype.UUID
-	IncidentType       IncidentCategory
+	IncidentType       string
 	Latitude           pgtype.Numeric
 	Longitude          pgtype.Numeric
-	Status             NullIncidentStatus
+	Status             pgtype.Text
 	UrgencyLevel       pgtype.Text
 	ReporterTrustLabel pgtype.Text
 	AddressDetail      pgtype.Text
@@ -171,7 +29,7 @@ type IncidentResponse struct {
 	ID            pgtype.UUID
 	IncidentID    pgtype.UUID
 	ResponderID   pgtype.UUID
-	Status        NullResponseStatus
+	Status        pgtype.Text
 	AcceptedAt    pgtype.Timestamptz
 	ArrivedAt     pgtype.Timestamptz
 	CompletedAt   pgtype.Timestamptz

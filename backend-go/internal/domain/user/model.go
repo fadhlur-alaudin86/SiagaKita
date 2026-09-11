@@ -1,6 +1,9 @@
 package user
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // ─── DB Models ────────────────────────────────────────────────────────────────
 
@@ -273,6 +276,58 @@ type ResetPasswordRequest struct {
 type ResendOTPRequest struct {
 	Email   string `json:"email"`
 	Context string `json:"context"` // "register", "login", "forgot_password"
+}
+
+// ─── Emergency Contact Relations ──────────────────────────────────────────────
+
+const (
+	RelationParent  = "parent"
+	RelationSpouse  = "spouse"
+	RelationChild   = "child"
+	RelationSibling = "sibling"
+	RelationFriend  = "friend"
+	RelationOther   = "other"
+)
+
+var ValidRelations = map[string]bool{
+	RelationParent:  true,
+	RelationSpouse:  true,
+	RelationChild:   true,
+	RelationSibling: true,
+	RelationFriend:  true,
+	RelationOther:   true,
+}
+
+// IsValidRelation checks if the given relation code is one of the standard supported codes.
+func IsValidRelation(rel string) bool {
+	return ValidRelations[rel]
+}
+
+// NormalizeRelation converts human/legacy relation inputs into standardized relation codes.
+func NormalizeRelation(rel string) string {
+	cleaned := strings.ToLower(strings.TrimSpace(rel))
+	switch cleaned {
+	case "ayah", "ibu", "orang tua", "bapak", "mama", "papa", "father", "mother", "parent", "orangtua", "wali":
+		return RelationParent
+	case "suami", "istri", "pasangan", "husband", "wife", "spouse":
+		return RelationSpouse
+	case "anak", "anak kandung", "son", "daughter", "child":
+		return RelationChild
+	case "kakak", "adik", "saudara", "saudara kandung", "brother", "sister", "sibling", "abang":
+		return RelationSibling
+	case "teman", "sahabat", "kawan", "tetangga", "kerabat", "friend":
+		return RelationFriend
+	case "other", "lainnya":
+		return RelationOther
+	default:
+		if cleaned == "" {
+			return ""
+		}
+		if ValidRelations[cleaned] {
+			return cleaned
+		}
+		return RelationOther
+	}
 }
 
 // ─── User Roles ───────────────────────────────────────────────────────────────

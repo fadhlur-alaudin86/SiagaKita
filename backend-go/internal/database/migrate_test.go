@@ -25,8 +25,8 @@ func TestMigrationsEmbeddedDiscovery(t *testing.T) {
 		t.Errorf("expected first migration version to be 1, got %d", firstVersion)
 	}
 
-	// Verify all sequential migrations exist from 1 to 20
-	for i := 1; i <= 20; i++ {
+	// Verify all sequential migrations exist from 1 to 21
+	for i := 1; i <= 21; i++ {
 		upName := fmt.Sprintf("%03d_*.up.sql", i)
 		matches, err := fs.Glob(migrations.FS, upName)
 		if err != nil {
