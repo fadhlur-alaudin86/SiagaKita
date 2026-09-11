@@ -10,6 +10,7 @@ import (
 	"siagakita-backend/internal/hub"
 	"siagakita-backend/internal/utils"
 
+	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 )
@@ -30,15 +31,22 @@ func NewHandler(rdb *redis.Client, h *hub.Hub, cfg *config.Config) *Handler {
 
 // UpdateLocation handles PUT /api/v1/telemetry/location  [Auth required]
 // Stores the volunteer's GPS position in Redis GEO (no PostgreSQL write).
+// Utilizes sync.Pool for zero-allocation JSON parsing and typed WebSocket broadcast payload.
 func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
-
-	var body struct {
-		Latitude  float64 `json:"latitude"`
-		Longitude float64 `json:"longitude"`
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Unauthorized")
 	}
-	if err := c.BodyParser(&body); err != nil {
+
+	req := AcquireLocationUpdateRequest()
+	defer ReleaseLocationUpdateRequest(req)
+
+	if err := sonic.Unmarshal(c.Body(), req); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	if req.Latitude == 0 && req.Longitude == 0 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Koordinat latitude dan longitude tidak valid")
 	}
 
 	ctx, canceled := context.WithTimeout(context.Background(), 3*time.Second)
@@ -46,18 +54,18 @@ func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 
 	if err := h.rdb.GeoAdd(ctx, relawanGeoKey, &redis.GeoLocation{
 		Name:      userID,
-		Latitude:  body.Latitude,
-		Longitude: body.Longitude,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
 	}).Err(); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal menyimpan lokasi")
 	}
 
-	// Broadcast lokasi terbaru ke admin, agency, dan superadmin yang sedang online
-	payload := map[string]interface{}{
-		FieldUserID:    userID,
-		FieldLatitude:  body.Latitude,
-		FieldLongitude: body.Longitude,
-		FieldTimestamp: time.Now().Unix(),
+	// Broadcast lokasi terbaru ke admin, agency, dan superadmin yang sedang online via typed struct
+	payload := LocationBroadcastPayload{
+		UserID:    userID,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
+		Timestamp: time.Now().Unix(),
 	}
 	h.h.BroadcastToRoles(hub.Message{
 		Event:   EventVolunteerLocationUpdate,

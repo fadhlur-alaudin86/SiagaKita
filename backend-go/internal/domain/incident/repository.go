@@ -1,21 +1,35 @@
 package incident
 
 import (
+	"context"
 	"errors"
 	"time"
 
+	"siagakita-backend/internal/database/sqlc"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
-// Repository handles all DB operations for the incident domain.
+// Repository handles all DB operations for the incident domain, utilizing a dual-driver
+// pattern with GORM for relational models and pgxpool+sqlc for latency-critical queries.
 type Repository struct {
-	db *gorm.DB
+	db      *gorm.DB
+	pgxPool *pgxpool.Pool
+	queries *sqlc.Queries
 }
 
-// NewRepository creates a new incident Repository.
-func NewRepository(db *gorm.DB) *Repository {
-	return &Repository{db: db}
+// NewRepository creates a new incident Repository with dual-driver support.
+func NewRepository(db *gorm.DB, pgxPool ...*pgxpool.Pool) *Repository {
+	repo := &Repository{db: db}
+	if len(pgxPool) > 0 && pgxPool[0] != nil {
+		repo.pgxPool = pgxPool[0]
+		repo.queries = sqlc.New(pgxPool[0])
+	}
+	return repo
 }
 
 // ─── Incident (Jalur A - SOS Darurat) ─────────────────────────────────────────
@@ -427,7 +441,55 @@ func (r *Repository) UpdateRank(userID string, rankID uint) error {
 // FindNearby mengembalikan SOS aktif dalam radius `radiusKm` kilometer dari koordinat (lat, lng).
 // Menggunakan formula haversine dengan PostgreSQL native functions.
 // volunteerID digunakan untuk mengecualikan SOS milik relawan sendiri.
+// Reroutes through sqlc.Queries via pgxpool when configured for zero-reflection performance.
 func (r *Repository) FindNearby(lat, lng, radiusKm float64, volunteerID string) ([]NearbyIncidentResponse, error) {
+	if r.queries != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		var volUUID pgtype.UUID
+		if err := volUUID.Scan(volunteerID); err != nil {
+			return nil, err
+		}
+
+		rows, err := r.queries.FindNearbyIncidents(ctx, sqlc.FindNearbyIncidentsParams{
+			Lat:         lat,
+			Lng:         lng,
+			RadiusKm:    radiusKm,
+			VolunteerID: volUUID,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		results := make([]NearbyIncidentResponse, 0, len(rows))
+		for _, row := range rows {
+			var addr *string
+			if row.AddressDetail.Valid {
+				addr = &row.AddressDetail.String
+			}
+			var audio *string
+			if row.AudioPath.Valid {
+				audio = &row.AudioPath.String
+			}
+
+			results = append(results, NearbyIncidentResponse{
+				ID:                 row.ID,
+				IncidentType:       row.IncidentType,
+				Status:             row.Status,
+				Latitude:           row.Latitude,
+				Longitude:          row.Longitude,
+				AddressDetail:      addr,
+				ReporterTrustLabel: row.ReporterTrustLabel,
+				CreatedAt:          row.CreatedAt,
+				DistanceKm:         row.DistanceKm,
+				PhotoPaths:         StringSlice(row.PhotoPaths),
+				AudioPath:          audio,
+			})
+		}
+		return results, nil
+	}
+
 	var results []NearbyIncidentResponse
 	err := r.db.Raw(`
 		SELECT
@@ -585,7 +647,42 @@ func (r *Repository) GetMissionHistory(volunteerID string) ([]MissionHistoryResp
 }
 
 // GetActiveResponse mengembalikan misi aktif relawan (status on_scene).
+// Reroutes through sqlc.Queries via pgxpool when configured for zero-reflection performance.
 func (r *Repository) GetActiveResponse(volunteerID string) (*ActiveResponseDTO, error) {
+	if r.queries != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		var volUUID pgtype.UUID
+		if err := volUUID.Scan(volunteerID); err != nil {
+			return nil, err
+		}
+
+		row, err := r.queries.GetActiveResponseByVolunteer(ctx, volUUID)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil, nil // tidak ada misi aktif
+			}
+			return nil, err
+		}
+
+		var addr *string
+		if row.AddressDetail.Valid {
+			addr = &row.AddressDetail.String
+		}
+
+		return &ActiveResponseDTO{
+			ResponseID:    row.ResponseID,
+			IncidentID:    row.IncidentID,
+			IncidentType:  row.IncidentType,
+			Status:        row.Status,
+			Latitude:      row.ReporterLatitude,
+			Longitude:     row.ReporterLongitude,
+			AddressDetail: addr,
+			AcceptedAt:    row.AcceptedAt,
+		}, nil
+	}
+
 	var result ActiveResponseDTO
 	err := r.db.Raw(`
 		SELECT

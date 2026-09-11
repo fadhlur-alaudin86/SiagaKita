@@ -2,17 +2,22 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"time"
 )
 
 // Config holds all application configuration loaded from environment variables.
 type Config struct {
 	// PostgreSQL
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
+	DBHost            string
+	DBPort            string
+	DBUser            string
+	DBPassword        string
+	DBName            string
+	DBMaxConns        int32
+	DBMinConns        int32
+	DBMaxConnLifetime time.Duration
+	DBMaxConnIdleTime time.Duration
 
 	// Redis
 	RedisHost     string
@@ -63,12 +68,26 @@ func Load() *Config {
 		refreshTTL = 168 * time.Hour
 	}
 
+	maxConnLifetime, err := time.ParseDuration(getEnv("DB_MAX_CONN_LIFETIME", "1h"))
+	if err != nil {
+		maxConnLifetime = 1 * time.Hour
+	}
+
+	maxConnIdleTime, err := time.ParseDuration(getEnv("DB_MAX_CONN_IDLE_TIME", "30m"))
+	if err != nil {
+		maxConnIdleTime = 30 * time.Minute
+	}
+
 	return &Config{
 		DBHost:            getEnv("DB_HOST", "localhost"),
 		DBPort:            getEnv("DB_PORT", "5432"),
 		DBUser:            getEnv("DB_USER", ""),
 		DBPassword:        getEnv("DB_PASSWORD", ""),
 		DBName:            getEnv("DB_NAME", ""),
+		DBMaxConns:        getEnvInt32("DB_MAX_CONNS", 50),
+		DBMinConns:        getEnvInt32("DB_MIN_CONNS", 10),
+		DBMaxConnLifetime: maxConnLifetime,
+		DBMaxConnIdleTime: maxConnIdleTime,
 		RedisHost:         getEnv("REDIS_HOST", "localhost"),
 		RedisPort:         getEnv("REDIS_PORT", "6379"),
 		RedisPassword:     getEnv("REDIS_PASSWORD", ""),
@@ -93,6 +112,15 @@ func Load() *Config {
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
+	}
+	return fallback
+}
+
+func getEnvInt32(key string, fallback int32) int32 {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 32); err == nil && n > 0 {
+			return int32(n)
+		}
 	}
 	return fallback
 }

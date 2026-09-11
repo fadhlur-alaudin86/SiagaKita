@@ -1,11 +1,14 @@
 package database
 
 import (
+	"context"
 	"fmt"
-	"siagakita-backend/internal/utils"
+	"time"
 
 	"siagakita-backend/internal/config"
+	"siagakita-backend/internal/utils"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -34,4 +37,39 @@ func NewPostgres(cfg *config.Config) *gorm.DB {
 
 	utils.Info().Msg("[DB] PostgreSQL connected successfully")
 	return db
+}
+
+// NewPgxPool creates and returns a native pgx connection pool (jackc/pgx/v5/pgxpool).
+// Dedicated to high-throughput raw queries (e.g. FindNearby, GPS telemetry hotpaths)
+// operating alongside GORM in a dual-driver architecture.
+func NewPgxPool(ctx context.Context, cfg *config.Config) *pgxpool.Pool {
+	connStr := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName,
+	)
+
+	poolConfig, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		utils.Fatal().Err(err).Msg("[DB] Failed to parse pgxpool config")
+	}
+
+	poolConfig.MaxConns = cfg.DBMaxConns
+	poolConfig.MinConns = cfg.DBMinConns
+	poolConfig.MaxConnLifetime = cfg.DBMaxConnLifetime
+	poolConfig.MaxConnIdleTime = cfg.DBMaxConnIdleTime
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
+	if err != nil {
+		utils.Fatal().Err(err).Msg("[DB] Failed to initialize pgxpool")
+	}
+
+	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if err := pool.Ping(pingCtx); err != nil {
+		utils.Warn().Err(err).Msg("[DB] Initial pgxpool ping failed (will retry on demand)")
+	} else {
+		utils.Info().Msg("[DB] pgxpool connected successfully")
+	}
+
+	return pool
 }

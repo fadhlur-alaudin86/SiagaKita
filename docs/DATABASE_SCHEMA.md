@@ -442,6 +442,7 @@ For the comprehensive interactive Mermaid ERD diagram, see [`docs/design/databas
 2. **Denormalized Counters for Performance**: `sos_strike_count` is stored directly on `user_profiles` and updated atomically alongside `sos_strikes`. This allows O(1) permission checks during SOS triggering without aggregating historical rows.
 3. **Audit Trail via Soft Deletions**: Sensitive accounts (`users`) and emergency contacts employ `deleted_at` timestamps to preserve investigative history in the event of platform abuse.
 4. **Mandatory Foreign Key Indexing**: Migration 019 introduced explicit B-Tree indexes across all 13 relational foreign keys, guaranteeing zero sequential table scans during joins and cascade deletions.
+5. **Dual-Driver Coexistence Architecture**: High-frequency, latency-critical read and spatial queries (e.g., `FindNearby` Haversine bounding distance, active volunteer dispatch lookups) execute through native `jackc/pgx/v5` connection pools (`pgxpool.Pool`) and compile-time generated `sqlc` models, eliminating ORM reflection. GORM is retained for standard relational CRUD and schema auto-migrations.
 
 ---
 
