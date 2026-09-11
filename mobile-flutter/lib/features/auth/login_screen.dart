@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/services/permission_service.dart';
+import '../../core/services/location_service.dart';
 import '../../core/services/session_service.dart';
+import '../permissions/presentation/permission_primer_screen.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 import '../masyarakat/main_screen.dart';
@@ -80,19 +81,31 @@ class _LoginScreenState extends State<LoginScreen> {
             : UserRole.masyarakat,
       );
 
-      // Minta semua izin (GPS, Camera, Mic) setelah auth berhasil
+      // Smart Transition Check: periksa apakah izin lokasi sudah aktif
       if (!mounted) return;
-      await PermissionService.requestAllPermissions(context);
+      final hasLocation = await LocationService.hasPermission();
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => MainScreen(
-            accessToken: result.accessToken,
-            userId: result.user.id,
+      if (!hasLocation) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => PermissionPrimerScreen(
+              target: PermissionPrimerTarget.mainScreen,
+              accessToken: result.accessToken,
+              userId: result.user.id,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => MainScreen(
+              accessToken: result.accessToken,
+              userId: result.user.id,
+            ),
+          ),
+        );
+      }
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
