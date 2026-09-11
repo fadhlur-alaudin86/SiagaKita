@@ -506,9 +506,7 @@ class _TopHeader extends StatelessWidget {
                   Icon(
                     Icons.circle,
                     size: 10,
-                    color: isConnected
-                        ? const Color(0xFF2EAF60)
-                        : Colors.red,
+                    color: isConnected ? const Color(0xFF2EAF60) : Colors.red,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -516,9 +514,7 @@ class _TopHeader extends StatelessWidget {
                       context,
                     ),
                     style: TextStyle(
-                      color: isConnected
-                          ? const Color(0xFF2EAF60)
-                          : Colors.red,
+                      color: isConnected ? const Color(0xFF2EAF60) : Colors.red,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),

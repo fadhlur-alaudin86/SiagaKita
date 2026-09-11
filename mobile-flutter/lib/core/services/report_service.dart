@@ -216,9 +216,7 @@ class ReportService {
 
   static Future<List<ReportModel>> getFailedReports() async {
     final currentFailed = LocalStorageService.getFailedReports();
-    return currentFailed
-        .map((e) => ReportModel.fromJson(e))
-        .toList();
+    return currentFailed.map((e) => ReportModel.fromJson(e)).toList();
   }
 
   static Future<void> removeFailedReport(String id) async {

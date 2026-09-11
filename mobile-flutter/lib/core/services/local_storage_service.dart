@@ -24,7 +24,6 @@ class LocalStorageService {
   static bool _initialized = false;
   static bool get isInitialized => _initialized;
 
-
   /// Initialize Hive Flutter and open standard storage boxes.
   static Future<void> init({String? storagePath}) async {
     if (_initialized) return;
@@ -45,7 +44,6 @@ class LocalStorageService {
     await _migrateFromSharedPreferences();
   }
 
-
   @visibleForTesting
   static Future<void> resetForTesting() async {
     if (_initialized) {
@@ -56,7 +54,6 @@ class LocalStorageService {
       _initialized = false;
     }
   }
-
 
   // ─── SOS Queue (Offline SOS) ────────────────────────────────────────────────
 
@@ -141,10 +138,12 @@ class LocalStorageService {
     await _sosQueueBox?.delete(_keyCooldownEndTime);
   }
 
-
   // ─── Incident Cache ─────────────────────────────────────────────────────────
 
-  static Future<void> cacheIncidents(String cacheKey, List<dynamic> data) async {
+  static Future<void> cacheIncidents(
+    String cacheKey,
+    List<dynamic> data,
+  ) async {
     final payload = <String, dynamic>{
       'data': data,
       'cached_at': DateTime.now().toIso8601String(),
@@ -179,7 +178,6 @@ class LocalStorageService {
   static Future<void> clearIncidentCache(String cacheKey) async {
     await _incidentCacheBox?.delete(cacheKey);
   }
-
 
   // ─── Telemetry Ring Buffer (Offline GPS Breadcrumbs) ───────────────────────
 
@@ -217,10 +215,19 @@ class LocalStorageService {
       final lastLat = (lastPoint['latitude'] as num?)?.toDouble() ?? 0.0;
       final lastLng = (lastPoint['longitude'] as num?)?.toDouble() ?? 0.0;
       final lastTimeStr = lastPoint['timestamp'] as String?;
-      final lastTime = lastTimeStr != null ? DateTime.tryParse(lastTimeStr) : null;
+      final lastTime = lastTimeStr != null
+          ? DateTime.tryParse(lastTimeStr)
+          : null;
 
-      final distMeters = _calculateHaversineMeters(lastLat, lastLng, latitude, longitude);
-      final secondsDiff = lastTime != null ? now.difference(lastTime).inSeconds.abs() : 999;
+      final distMeters = _calculateHaversineMeters(
+        lastLat,
+        lastLng,
+        latitude,
+        longitude,
+      );
+      final secondsDiff = lastTime != null
+          ? now.difference(lastTime).inSeconds.abs()
+          : 999;
 
       if (distMeters < minDistanceMeters && secondsDiff < minTimeDeltaSeconds) {
         return false; // Point skipped by decimation
@@ -269,7 +276,8 @@ class LocalStorageService {
     const r = 6371000.0; // Earth radius in meters
     final dLat = (lat2 - lat1) * (math.pi / 180.0);
     final dLon = (lon2 - lon1) * (math.pi / 180.0);
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * (math.pi / 180.0)) *
             math.cos(lat2 * (math.pi / 180.0)) *
             math.sin(dLon / 2) *
@@ -277,7 +285,6 @@ class LocalStorageService {
     final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     return r * c;
   }
-
 
   // ─── Citizen Report Queue ───────────────────────────────────────────────────
 
@@ -330,7 +337,6 @@ class LocalStorageService {
     await _reportQueueBox?.delete(_keyCachedMyReports);
   }
 
-
   // ─── Legacy SharedPreferences Migration ─────────────────────────────────────
 
   static const String migrationFlag = 'hive_migrated_v1';
@@ -342,7 +348,8 @@ class LocalStorageService {
 
       // 1. Pending SOS
       final legacyPendingSos = prefs.getString(_keyPendingSos);
-      if (legacyPendingSos != null && _sosQueueBox?.get(_keyPendingSos) == null) {
+      if (legacyPendingSos != null &&
+          _sosQueueBox?.get(_keyPendingSos) == null) {
         try {
           final decoded = jsonDecode(legacyPendingSos) as Map<String, dynamic>;
           await _sosQueueBox?.put(_keyPendingSos, decoded);
@@ -352,28 +359,32 @@ class LocalStorageService {
 
       // 2. Pending Cancel SOS
       final legacyCancelSos = prefs.getString(_keyPendingCancelSos);
-      if (legacyCancelSos != null && _sosQueueBox?.get(_keyPendingCancelSos) == null) {
+      if (legacyCancelSos != null &&
+          _sosQueueBox?.get(_keyPendingCancelSos) == null) {
         await _sosQueueBox?.put(_keyPendingCancelSos, legacyCancelSos);
         await prefs.remove(_keyPendingCancelSos);
       }
 
       // 3. Pending Incident Type
       final legacyType = prefs.getString(_keyPendingIncidentType);
-      if (legacyType != null && _sosQueueBox?.get(_keyPendingIncidentType) == null) {
+      if (legacyType != null &&
+          _sosQueueBox?.get(_keyPendingIncidentType) == null) {
         await _sosQueueBox?.put(_keyPendingIncidentType, legacyType);
         await prefs.remove(_keyPendingIncidentType);
       }
 
       // 4. Cooldown End Time
       final legacyCooldown = prefs.getString(_keyCooldownEndTime);
-      if (legacyCooldown != null && _sosQueueBox?.get(_keyCooldownEndTime) == null) {
+      if (legacyCooldown != null &&
+          _sosQueueBox?.get(_keyCooldownEndTime) == null) {
         await _sosQueueBox?.put(_keyCooldownEndTime, legacyCooldown);
         await prefs.remove(_keyCooldownEndTime);
       }
 
       // 5. Cached My History
       final legacyHistory = prefs.getString('cached_my_history');
-      if (legacyHistory != null && _incidentCacheBox?.get('cached_my_history') == null) {
+      if (legacyHistory != null &&
+          _incidentCacheBox?.get('cached_my_history') == null) {
         try {
           final decoded = jsonDecode(legacyHistory) as List<dynamic>;
           await cacheIncidents('cached_my_history', decoded);
@@ -383,7 +394,8 @@ class LocalStorageService {
 
       // 6. Cached Reporter History
       final legacyReporterHistory = prefs.getString('cached_reporter_history');
-      if (legacyReporterHistory != null && _incidentCacheBox?.get('cached_reporter_history') == null) {
+      if (legacyReporterHistory != null &&
+          _incidentCacheBox?.get('cached_reporter_history') == null) {
         try {
           final decoded = jsonDecode(legacyReporterHistory) as List<dynamic>;
           await cacheIncidents('cached_reporter_history', decoded);
@@ -393,7 +405,8 @@ class LocalStorageService {
 
       // 7. Failed Reports
       final legacyFailedReports = prefs.getStringList(_keyFailedReports);
-      if (legacyFailedReports != null && _reportQueueBox?.get(_keyFailedReports) == null) {
+      if (legacyFailedReports != null &&
+          _reportQueueBox?.get(_keyFailedReports) == null) {
         final list = <Map<String, dynamic>>[];
         for (final item in legacyFailedReports) {
           try {
@@ -406,7 +419,8 @@ class LocalStorageService {
 
       // 8. Cached My Reports
       final legacyMyReports = prefs.getString(_keyCachedMyReports);
-      if (legacyMyReports != null && _reportQueueBox?.get(_keyCachedMyReports) == null) {
+      if (legacyMyReports != null &&
+          _reportQueueBox?.get(_keyCachedMyReports) == null) {
         try {
           final decoded = jsonDecode(legacyMyReports) as List<dynamic>;
           await cacheMyReports(decoded);

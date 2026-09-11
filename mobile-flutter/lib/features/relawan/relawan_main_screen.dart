@@ -432,7 +432,6 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     }
   }
 
-
   Future<void> _flushBufferedTelemetry() async {
     final buffer = LocalStorageService.getTelemetryBuffer();
     if (buffer.isEmpty || _activeMission == null) return;
@@ -455,7 +454,6 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
       }
     }
   }
-
 
   DateTime? _lastLocationUpdate;
 

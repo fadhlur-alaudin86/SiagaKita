@@ -33,8 +33,9 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
     95.32,
   ); // Banda Aceh default fallback
   LatLng? _agencyLocation; // Lokasi agency sendiri
-  final ValueNotifier<Map<String, LatLng>> _volunteersNotifier =
-      ValueNotifier({}); // Lokasi relawan online
+  final ValueNotifier<Map<String, LatLng>> _volunteersNotifier = ValueNotifier(
+    {},
+  ); // Lokasi relawan online
 
   @override
   void initState() {
@@ -176,7 +177,8 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.siagakita.console',
                   ),
                   MarkerLayer(
@@ -228,7 +230,9 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.red.withValues(alpha: 0.5),
+                                        color: Colors.red.withValues(
+                                          alpha: 0.5,
+                                        ),
                                         blurRadius: 10,
                                         spreadRadius: 3,
                                       ),
@@ -253,8 +257,10 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
                       if (widget.targetLocation != null &&
                           !_incidents.any(
                             (inc) =>
-                                inc.latitude == widget.targetLocation!.latitude &&
-                                inc.longitude == widget.targetLocation!.longitude,
+                                inc.latitude ==
+                                    widget.targetLocation!.latitude &&
+                                inc.longitude ==
+                                    widget.targetLocation!.longitude,
                           ))
                         Marker(
                           point: widget.targetLocation!,

@@ -29,7 +29,6 @@ class OfflineService {
     await LocalStorageService.clearPendingSOS();
   }
 
-
   // ─── Pending Cancel SOS ──────────────────────────────────────────────────
 
   static Future<void> savePendingCancelSOS(String incidentId) async {
@@ -44,7 +43,6 @@ class OfflineService {
     await LocalStorageService.clearPendingCancelSOS();
   }
 
-
   // ─── Pending Incident Type ───────────────────────────────────────────────
 
   static Future<void> savePendingIncidentType(String type) async {
@@ -58,7 +56,6 @@ class OfflineService {
   static Future<void> clearPendingIncidentType() async {
     await LocalStorageService.clearPendingIncidentType();
   }
-
 
   // ─── Cooldown End Time ───────────────────────────────────────────────────
 

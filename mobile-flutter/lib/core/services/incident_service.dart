@@ -273,8 +273,9 @@ class IncidentService {
           .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      final cached =
-          LocalStorageService.getCachedIncidents('cached_my_history');
+      final cached = LocalStorageService.getCachedIncidents(
+        'cached_my_history',
+      );
       if (cached != null) {
         try {
           return cached
@@ -320,8 +321,9 @@ class IncidentService {
           .map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      final cached =
-          LocalStorageService.getCachedIncidents('cached_reporter_history');
+      final cached = LocalStorageService.getCachedIncidents(
+        'cached_reporter_history',
+      );
       if (cached != null) {
         try {
           return cached
@@ -359,8 +361,9 @@ class IncidentService {
           )
           .timeout(_defaultTimeout);
       if (response.statusCode != 200) {
-        final cached =
-            LocalStorageService.getCachedIncidents('cached_nearby_sos');
+        final cached = LocalStorageService.getCachedIncidents(
+          'cached_nearby_sos',
+        );
         if (cached != null) {
           return cached
               .map(
@@ -382,14 +385,14 @@ class IncidentService {
           .map((e) => NearbyIncident.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (_) {
-      final cached =
-          LocalStorageService.getCachedIncidents('cached_nearby_sos');
+      final cached = LocalStorageService.getCachedIncidents(
+        'cached_nearby_sos',
+      );
       if (cached != null) {
         return cached
             .map(
-              (e) => NearbyIncident.fromJson(
-                Map<String, dynamic>.from(e as Map),
-              ),
+              (e) =>
+                  NearbyIncident.fromJson(Map<String, dynamic>.from(e as Map)),
             )
             .toList();
       }

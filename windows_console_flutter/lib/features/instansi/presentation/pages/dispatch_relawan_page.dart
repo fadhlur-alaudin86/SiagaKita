@@ -91,12 +91,10 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
           final lat = msg.payload['latitude'] as num?;
           final lng = msg.payload['longitude'] as num?;
           if (userId != null && lat != null && lng != null) {
-            final updated =
-                Map<String, LatLng>.from(_volunteerLocationsNotifier.value);
-            updated[userId] = LatLng(
-              lat.toDouble(),
-              lng.toDouble(),
+            final updated = Map<String, LatLng>.from(
+              _volunteerLocationsNotifier.value,
             );
+            updated[userId] = LatLng(lat.toDouble(), lng.toDouble());
             _volunteerLastSeen[userId] = DateTime.now();
             _volunteerLocationsNotifier.value = updated;
           }
@@ -125,8 +123,9 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
         }
       });
       if (staleKeys.isNotEmpty) {
-        final updated =
-            Map<String, LatLng>.from(_volunteerLocationsNotifier.value);
+        final updated = Map<String, LatLng>.from(
+          _volunteerLocationsNotifier.value,
+        );
         bool candidateRemoved = false;
         for (final key in staleKeys) {
           updated.remove(key);
@@ -182,17 +181,15 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
         incident.longitude,
       );
       if (!mounted) return;
-      final updated =
-          Map<String, LatLng>.from(_volunteerLocationsNotifier.value);
+      final updated = Map<String, LatLng>.from(
+        _volunteerLocationsNotifier.value,
+      );
       for (final v in volunteers) {
         final userId = v['user_id'] as String?;
         final lat = v['latitude'] as num?;
         final lng = v['longitude'] as num?;
         if (userId != null && lat != null && lng != null) {
-          updated[userId] = LatLng(
-            lat.toDouble(),
-            lng.toDouble(),
-          );
+          updated[userId] = LatLng(lat.toDouble(), lng.toDouble());
           _volunteerLastSeen[userId] = DateTime.now();
         }
       }
@@ -255,9 +252,7 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Left Panel: Active SOS Incident Queue (380px) ──────────────────
-        RepaintBoundary(
-          child: SizedBox(width: 380, child: _buildQueuePanel()),
-        ),
+        RepaintBoundary(child: SizedBox(width: 380, child: _buildQueuePanel())),
         const SizedBox(width: 16),
 
         // ── Right Panel: OpenStreetMap Radar & Candidate Drawer ────────────
@@ -734,7 +729,9 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
                     builder: (context, volunteerLocations, _) {
                       final dynamicPolylines = <Polyline>[];
                       if (incident.responderId != null &&
-                          volunteerLocations.containsKey(incident.responderId)) {
+                          volunteerLocations.containsKey(
+                            incident.responderId,
+                          )) {
                         dynamicPolylines.add(
                           Polyline(
                             points: [
@@ -819,7 +816,10 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
                           foregroundColor: Colors.white,
                           onPressed: () {
                             final z = _mapController.camera.zoom + 1;
-                            _mapController.move(_mapController.camera.center, z);
+                            _mapController.move(
+                              _mapController.camera.center,
+                              z,
+                            );
                           },
                           child: const Icon(Icons.add),
                         ),
@@ -830,7 +830,10 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
                           foregroundColor: Colors.white,
                           onPressed: () {
                             final z = _mapController.camera.zoom - 1;
-                            _mapController.move(_mapController.camera.center, z);
+                            _mapController.move(
+                              _mapController.camera.center,
+                              z,
+                            );
                           },
                           child: const Icon(Icons.remove),
                         ),

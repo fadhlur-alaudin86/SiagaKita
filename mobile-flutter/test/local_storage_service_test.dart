@@ -26,7 +26,6 @@ void main() {
     }
   });
 
-
   group('SOS Queue CRUD', () {
     test('savePendingSOS, getPendingSOS, and clearPendingSOS', () async {
       expect(LocalStorageService.getPendingSOS(), isNull);
@@ -49,41 +48,57 @@ void main() {
       expect(LocalStorageService.getPendingSOS(), isNull);
     });
 
-    test('savePendingCancelSOS, getPendingCancelSOS, and clearPendingCancelSOS', () async {
-      expect(LocalStorageService.getPendingCancelSOS(), isNull);
+    test(
+      'savePendingCancelSOS, getPendingCancelSOS, and clearPendingCancelSOS',
+      () async {
+        expect(LocalStorageService.getPendingCancelSOS(), isNull);
 
-      await LocalStorageService.savePendingCancelSOS('incident-to-cancel-123');
-      expect(LocalStorageService.getPendingCancelSOS(), equals('incident-to-cancel-123'));
+        await LocalStorageService.savePendingCancelSOS(
+          'incident-to-cancel-123',
+        );
+        expect(
+          LocalStorageService.getPendingCancelSOS(),
+          equals('incident-to-cancel-123'),
+        );
 
-      await LocalStorageService.clearPendingCancelSOS();
-      expect(LocalStorageService.getPendingCancelSOS(), isNull);
-    });
+        await LocalStorageService.clearPendingCancelSOS();
+        expect(LocalStorageService.getPendingCancelSOS(), isNull);
+      },
+    );
 
-    test('savePendingIncidentType, getPendingIncidentType, and clearPendingIncidentType', () async {
-      expect(LocalStorageService.getPendingIncidentType(), isNull);
+    test(
+      'savePendingIncidentType, getPendingIncidentType, and clearPendingIncidentType',
+      () async {
+        expect(LocalStorageService.getPendingIncidentType(), isNull);
 
-      await LocalStorageService.savePendingIncidentType('medical');
-      expect(LocalStorageService.getPendingIncidentType(), equals('medical'));
+        await LocalStorageService.savePendingIncidentType('medical');
+        expect(LocalStorageService.getPendingIncidentType(), equals('medical'));
 
-      await LocalStorageService.clearPendingIncidentType();
-      expect(LocalStorageService.getPendingIncidentType(), isNull);
-    });
+        await LocalStorageService.clearPendingIncidentType();
+        expect(LocalStorageService.getPendingIncidentType(), isNull);
+      },
+    );
 
-    test('saveCooldownEndTime, getCooldownEndTime, and clearCooldownEndTime', () async {
-      expect(LocalStorageService.getCooldownEndTime(), isNull);
+    test(
+      'saveCooldownEndTime, getCooldownEndTime, and clearCooldownEndTime',
+      () async {
+        expect(LocalStorageService.getCooldownEndTime(), isNull);
 
-      final targetTime = DateTime.now().add(const Duration(minutes: 5));
-      await LocalStorageService.saveCooldownEndTime(targetTime);
+        final targetTime = DateTime.now().add(const Duration(minutes: 5));
+        await LocalStorageService.saveCooldownEndTime(targetTime);
 
-      final retrieved = LocalStorageService.getCooldownEndTime();
-      expect(retrieved, isNotNull);
-      expect(retrieved!.difference(targetTime).inSeconds.abs(), lessThanOrEqualTo(1));
+        final retrieved = LocalStorageService.getCooldownEndTime();
+        expect(retrieved, isNotNull);
+        expect(
+          retrieved!.difference(targetTime).inSeconds.abs(),
+          lessThanOrEqualTo(1),
+        );
 
-      await LocalStorageService.clearCooldownEndTime();
-      expect(LocalStorageService.getCooldownEndTime(), isNull);
-    });
+        await LocalStorageService.clearCooldownEndTime();
+        expect(LocalStorageService.getCooldownEndTime(), isNull);
+      },
+    );
   });
-
 
   group('Incident Cache & TTL', () {
     test('caches and retrieves incident feed', () async {
@@ -93,7 +108,9 @@ void main() {
       ];
 
       await LocalStorageService.cacheIncidents('test_cache_key', sampleFeed);
-      final retrieved = LocalStorageService.getCachedIncidents('test_cache_key');
+      final retrieved = LocalStorageService.getCachedIncidents(
+        'test_cache_key',
+      );
 
       expect(retrieved, isNotNull);
       expect(retrieved!.length, equals(2));
@@ -101,7 +118,9 @@ void main() {
     });
 
     test('returns null when cached incident feed exceeds maxAge TTL', () async {
-      final sampleFeed = [{'id': 'expired-inc'}];
+      final sampleFeed = [
+        {'id': 'expired-inc'},
+      ];
       await LocalStorageService.cacheIncidents('expired_key', sampleFeed);
 
       // Verify normal access
@@ -116,15 +135,18 @@ void main() {
     });
 
     test('clearIncidentCache removes specific cache key', () async {
-      await LocalStorageService.cacheIncidents('key_a', [{'id': '1'}]);
-      await LocalStorageService.cacheIncidents('key_b', [{'id': '2'}]);
+      await LocalStorageService.cacheIncidents('key_a', [
+        {'id': '1'},
+      ]);
+      await LocalStorageService.cacheIncidents('key_b', [
+        {'id': '2'},
+      ]);
 
       await LocalStorageService.clearIncidentCache('key_a');
       expect(LocalStorageService.getCachedIncidents('key_a'), isNull);
       expect(LocalStorageService.getCachedIncidents('key_b'), isNotNull);
     });
   });
-
 
   group('Telemetry Ring Buffer & Decimation', () {
     test('buffers point and applies distance/temporal decimation', () async {
@@ -167,30 +189,33 @@ void main() {
       expect(LocalStorageService.getTelemetryBuffer().length, equals(3));
     });
 
-    test('enforces ring buffer capacity capping at 1000 points with FIFO eviction', () async {
-      final t0 = DateTime(2026, 9, 11, 10, 0, 0);
+    test(
+      'enforces ring buffer capacity capping at 1000 points with FIFO eviction',
+      () async {
+        final t0 = DateTime(2026, 9, 11, 10, 0, 0);
 
-      // Pre-fill buffer to 1005 points
-      for (var i = 0; i < 1005; i++) {
-        await LocalStorageService.bufferTelemetryPoint(
-          latitude: -6.200000 + (i * 0.001), // > 15m each time
-          longitude: 106.816666,
-          timestamp: t0.add(Duration(seconds: i * 35)),
+        // Pre-fill buffer to 1005 points
+        for (var i = 0; i < 1005; i++) {
+          await LocalStorageService.bufferTelemetryPoint(
+            latitude: -6.200000 + (i * 0.001), // > 15m each time
+            longitude: 106.816666,
+            timestamp: t0.add(Duration(seconds: i * 35)),
+          );
+        }
+
+        final buffer = LocalStorageService.getTelemetryBuffer();
+        expect(buffer.length, equals(LocalStorageService.maxTelemetryPoints));
+        expect(buffer.length, equals(1000));
+
+        // Oldest points should have been evicted (indices 0..4 evicted, oldest point should be i=5)
+        final oldestPoint = buffer.first;
+        final expectedOldestLat = -6.200000 + (5 * 0.001);
+        expect(
+          ((oldestPoint['latitude'] as double) - expectedOldestLat).abs(),
+          lessThan(0.00001),
         );
-      }
-
-      final buffer = LocalStorageService.getTelemetryBuffer();
-      expect(buffer.length, equals(LocalStorageService.maxTelemetryPoints));
-      expect(buffer.length, equals(1000));
-
-      // Oldest points should have been evicted (indices 0..4 evicted, oldest point should be i=5)
-      final oldestPoint = buffer.first;
-      final expectedOldestLat = -6.200000 + (5 * 0.001);
-      expect(
-        ((oldestPoint['latitude'] as double) - expectedOldestLat).abs(),
-        lessThan(0.00001),
-      );
-    });
+      },
+    );
 
     test('clearTelemetryBuffer empties the buffer', () async {
       await LocalStorageService.bufferTelemetryPoint(
@@ -203,7 +228,6 @@ void main() {
       expect(LocalStorageService.getTelemetryBuffer().isEmpty, isTrue);
     });
   });
-
 
   group('Citizen Report Queue CRUD', () {
     test('addFailedReport, getFailedReports, and clearFailedReports', () async {
@@ -223,84 +247,103 @@ void main() {
       expect(LocalStorageService.getFailedReports().isEmpty, isTrue);
     });
 
-    test('cacheMyReports, getCachedMyReports, and clearCachedMyReports', () async {
-      expect(LocalStorageService.getCachedMyReports(), isNull);
+    test(
+      'cacheMyReports, getCachedMyReports, and clearCachedMyReports',
+      () async {
+        expect(LocalStorageService.getCachedMyReports(), isNull);
 
-      final myReports = [
-        {'id': 'r-1', 'status': 'investigating'},
-        {'id': 'r-2', 'status': 'resolved'},
-      ];
-      await LocalStorageService.cacheMyReports(myReports);
+        final myReports = [
+          {'id': 'r-1', 'status': 'investigating'},
+          {'id': 'r-2', 'status': 'resolved'},
+        ];
+        await LocalStorageService.cacheMyReports(myReports);
 
-      final cached = LocalStorageService.getCachedMyReports();
-      expect(cached, isNotNull);
-      expect(cached!.length, equals(2));
+        final cached = LocalStorageService.getCachedMyReports();
+        expect(cached, isNotNull);
+        expect(cached!.length, equals(2));
 
-      await LocalStorageService.clearCachedMyReports();
-      expect(LocalStorageService.getCachedMyReports(), isNull);
-    });
+        await LocalStorageService.clearCachedMyReports();
+        expect(LocalStorageService.getCachedMyReports(), isNull);
+      },
+    );
   });
 
-
   group('Legacy SharedPreferences Migration', () {
-    test('migrates existing SharedPreferences data into Hive and cleans legacy keys', () async {
-      // 1. Reset LocalStorageService
-      await LocalStorageService.resetForTesting();
+    test(
+      'migrates existing SharedPreferences data into Hive and cleans legacy keys',
+      () async {
+        // 1. Reset LocalStorageService
+        await LocalStorageService.resetForTesting();
 
-      // 2. Populate mock SharedPreferences with legacy keys
-      SharedPreferences.setMockInitialValues({
-        'pending_sos': jsonEncode({
-          'local_id': 'legacy-sos-999',
-          'latitude': -6.175392,
-          'longitude': 106.827153,
-          'address_detail': 'Monas Jakarta',
-        }),
-        'pending_cancel_sos': 'legacy-cancel-sos-888',
-        'pending_incident_type': 'kebakaran',
-        'sos_cooldown_end_time': DateTime.now().add(const Duration(minutes: 3)).toIso8601String(),
-        'cached_my_history': jsonEncode([{'id': 'hist-1', 'type': 'medis'}]),
-        'failed_reports': [
-          jsonEncode({'local_id': 'fail-1', 'title': 'Laporan Banjir'})
-        ],
-        'cached_my_reports': jsonEncode([{'id': 'rep-1', 'title': 'Pohon Tumbang'}]),
-      });
+        // 2. Populate mock SharedPreferences with legacy keys
+        SharedPreferences.setMockInitialValues({
+          'pending_sos': jsonEncode({
+            'local_id': 'legacy-sos-999',
+            'latitude': -6.175392,
+            'longitude': 106.827153,
+            'address_detail': 'Monas Jakarta',
+          }),
+          'pending_cancel_sos': 'legacy-cancel-sos-888',
+          'pending_incident_type': 'kebakaran',
+          'sos_cooldown_end_time': DateTime.now()
+              .add(const Duration(minutes: 3))
+              .toIso8601String(),
+          'cached_my_history': jsonEncode([
+            {'id': 'hist-1', 'type': 'medis'},
+          ]),
+          'failed_reports': [
+            jsonEncode({'local_id': 'fail-1', 'title': 'Laporan Banjir'}),
+          ],
+          'cached_my_reports': jsonEncode([
+            {'id': 'rep-1', 'title': 'Pohon Tumbang'},
+          ]),
+        });
 
-      // 3. Re-initialize LocalStorageService (triggers _migrateFromSharedPreferences)
-      await LocalStorageService.init(storagePath: tempDir.path);
+        // 3. Re-initialize LocalStorageService (triggers _migrateFromSharedPreferences)
+        await LocalStorageService.init(storagePath: tempDir.path);
 
-      // 4. Assert data successfully migrated into Hive
-      final sos = LocalStorageService.getPendingSOS();
-      expect(sos, isNotNull);
-      expect(sos!['local_id'], equals('legacy-sos-999'));
+        // 4. Assert data successfully migrated into Hive
+        final sos = LocalStorageService.getPendingSOS();
+        expect(sos, isNotNull);
+        expect(sos!['local_id'], equals('legacy-sos-999'));
 
-      expect(LocalStorageService.getPendingCancelSOS(), equals('legacy-cancel-sos-888'));
-      expect(LocalStorageService.getPendingIncidentType(), equals('kebakaran'));
-      expect(LocalStorageService.getCooldownEndTime(), isNotNull);
+        expect(
+          LocalStorageService.getPendingCancelSOS(),
+          equals('legacy-cancel-sos-888'),
+        );
+        expect(
+          LocalStorageService.getPendingIncidentType(),
+          equals('kebakaran'),
+        );
+        expect(LocalStorageService.getCooldownEndTime(), isNotNull);
 
-      final cachedHist = LocalStorageService.getCachedIncidents('cached_my_history');
-      expect(cachedHist, isNotNull);
-      expect(cachedHist!.length, equals(1));
-      expect(cachedHist.first['id'], equals('hist-1'));
+        final cachedHist = LocalStorageService.getCachedIncidents(
+          'cached_my_history',
+        );
+        expect(cachedHist, isNotNull);
+        expect(cachedHist!.length, equals(1));
+        expect(cachedHist.first['id'], equals('hist-1'));
 
-      final failedReps = LocalStorageService.getFailedReports();
-      expect(failedReps.length, equals(1));
-      expect(failedReps.first['local_id'], equals('fail-1'));
+        final failedReps = LocalStorageService.getFailedReports();
+        expect(failedReps.length, equals(1));
+        expect(failedReps.first['local_id'], equals('fail-1'));
 
-      final cachedReps = LocalStorageService.getCachedMyReports();
-      expect(cachedReps, isNotNull);
-      expect(cachedReps!.length, equals(1));
-      expect(cachedReps.first['id'], equals('rep-1'));
+        final cachedReps = LocalStorageService.getCachedMyReports();
+        expect(cachedReps, isNotNull);
+        expect(cachedReps!.length, equals(1));
+        expect(cachedReps.first['id'], equals('rep-1'));
 
-      // 5. Assert legacy keys are removed from SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('pending_sos'), isNull);
-      expect(prefs.getString('pending_cancel_sos'), isNull);
-      expect(prefs.getString('pending_incident_type'), isNull);
-      expect(prefs.getString('sos_cooldown_end_time'), isNull);
-      expect(prefs.getString('cached_my_history'), isNull);
-      expect(prefs.getStringList('failed_reports'), isNull);
-      expect(prefs.getString('cached_my_reports'), isNull);
-      expect(prefs.getBool(LocalStorageService.migrationFlag), isTrue);
-    });
+        // 5. Assert legacy keys are removed from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('pending_sos'), isNull);
+        expect(prefs.getString('pending_cancel_sos'), isNull);
+        expect(prefs.getString('pending_incident_type'), isNull);
+        expect(prefs.getString('sos_cooldown_end_time'), isNull);
+        expect(prefs.getString('cached_my_history'), isNull);
+        expect(prefs.getStringList('failed_reports'), isNull);
+        expect(prefs.getString('cached_my_reports'), isNull);
+        expect(prefs.getBool(LocalStorageService.migrationFlag), isTrue);
+      },
+    );
   });
 }
