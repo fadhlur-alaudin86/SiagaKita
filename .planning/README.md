@@ -22,6 +22,7 @@ graph TD
     P6 --> P9["09: Push Notifications FCM (#30, #31)"]
     P2 --> P10["10: Gamification Badges (#32, #33)"]
     P1 --> P11["11: Email OTP Gateway Resend (#45)"]
+    P1 --> P12["12: Mobile FTUE & Permissions (#107)"]
 ```
 
 | Plan | Document | Target Issues | Parent | Primary Stack | Status | Core Objective |
@@ -33,10 +34,11 @@ graph TD
 | **05** | [`05-assets-devops-hygiene.md`](./05-assets-devops-hygiene.md) | [#34](https://github.com/fadhlur-alaudin86/SiagaKita/issues/34), [#35](https://github.com/fadhlur-alaudin86/SiagaKita/issues/35) | [#9](https://github.com/fadhlur-alaudin86/SiagaKita/issues/9) | Assets, CI/CD | Merged (`PR #67`) | Replace placeholder siren audio, verify automated release deployment & rollback. |
 | **06** | [`06-backend-performance-pgx-syncpool.md`](./06-backend-performance-pgx-syncpool.md) | [#24](https://github.com/fadhlur-alaudin86/SiagaKita/issues/24), [#25](https://github.com/fadhlur-alaudin86/SiagaKita/issues/25) | [#38](https://github.com/fadhlur-alaudin86/SiagaKita/issues/38) | Go, pgx, sqlc | Merged (`PR #97`) | Eliminate telemetry memory churn via `sync.Pool` and compile Haversine queries with `sqlc`. |
 | **07** | [`07-frontend-performance-selector-offline-cache.md`](./07-frontend-performance-selector-offline-cache.md) | [#26](https://github.com/fadhlur-alaudin86/SiagaKita/issues/26), [#27](https://github.com/fadhlur-alaudin86/SiagaKita/issues/27) | [#5](https://github.com/fadhlur-alaudin86/SiagaKita/issues/5) | Flutter Desktop, Mobile | Backlog (P1) | Granular state selectors for 60+ FPS and Hive/Isar embedded NoSQL offline SOS queue. |
-| **08** | [`08-mobile-responder-app.md`](./08-mobile-responder-app.md) | [#21](https://github.com/fadhlur-alaudin86/SiagaKita/issues/21), [#22](https://github.com/fadhlur-alaudin86/SiagaKita/issues/22), [#23](https://github.com/fadhlur-alaudin86/SiagaKita/issues/23) | [#4](https://github.com/fadhlur-alaudin86/SiagaKita/issues/4) | Flutter Mobile | Backlog (P1) | Scaffolding `mobile-flutter-responder/`, personnel auth, mission board, and GPS navigation. |
+| **08** | [`08-mobile-responder-app.md`](./08-mobile-responder-app.md) | [#21](https://github.com/fadhlur-alaudin86/SiagaKita/issues/21), [#22](https://github.com/fadhlur-alaudin86/SiagaKita/issues/22), [#23](https://github.com/fadhlur-alaudin86/SiagaKita/issues/23) | [#4](https://github.com/fadhlur-alaudin86/SiagaKita/issues/4) | Flutter Mobile | In Review (`PR #104`) | Scaffolding `mobile-flutter-responder/`, personnel auth, mission board, and GPS navigation. |
 | **09** | [`09-push-notifications-fcm.md`](./09-push-notifications-fcm.md) | [#30](https://github.com/fadhlur-alaudin86/SiagaKita/issues/30), [#31](https://github.com/fadhlur-alaudin86/SiagaKita/issues/31) | [#7](https://github.com/fadhlur-alaudin86/SiagaKita/issues/7) | Go, FCM, Flutter | Backlog (P2) | High-priority emergency broadcast push notifications waking terminated mobile devices. |
 | **10** | [`10-gamification-badges.md`](./10-gamification-badges.md) | [#32](https://github.com/fadhlur-alaudin86/SiagaKita/issues/32), [#33](https://github.com/fadhlur-alaudin86/SiagaKita/issues/33) | [#8](https://github.com/fadhlur-alaudin86/SiagaKita/issues/8) | Go, Flutter Mobile | Backlog (P2) | Automated badge evaluation engine upon incident resolution and mobile profile badge grid. |
 | **11** | [`11-email-otp-gateway-migration.md`](./11-email-otp-gateway-migration.md) | [#45](https://github.com/fadhlur-alaudin86/SiagaKita/issues/45) | - | Go, REST API | Backlog (P2) | Migrate email OTP gateway to Resend HTTPS REST API (port 443) with verified domain SPF/DKIM. |
+| **12** | [`12-mobile-ftue-onboarding-permissions.md`](./12-mobile-ftue-onboarding-permissions.md) | [#107](https://github.com/fadhlur-alaudin86/SiagaKita/issues/107) | - | Flutter Mobile | Backlog (P1) | First-launch visual onboarding carousel, contextual permission primer, and offline SOS guard. |
 
 ---
 
