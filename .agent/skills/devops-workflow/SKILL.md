@@ -153,4 +153,5 @@ All team members MUST follow Conventional Commits to ensure automated release no
 9. **Major Workflow Evolution Protocol** — Any proposed modifications to GitHub Actions workflows (`.github/workflows/*.yml`), branching models, or deployment automation are classified as Major Evolutions. Draft a structured proposal in `learning_proposal.md` and recommend `/grill-me` alignment before implementing changes. See `feature-dev-workflow/workflow-evolution.md`.
 10. **Update docs** — whenever workflow files or deployment architecture change, update `docs/skills/devops-workflow-docs.md`.
 11. **Enforce Dependency Invariants** — prohibit arbitrary dependency upgrades or major bumps within feature development branches.
+12. **Automated Pre-Flight Verification** — Run `python3 scripts/verify_pipeline.py` (or `--fast` for intermediate iterations) before opening or recommending PR merges to ensure schema, contract, localization, and test suite health.
 

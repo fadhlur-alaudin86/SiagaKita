@@ -57,6 +57,23 @@ Full details are documented in [`.agent/rules/localization.md`](.agent/rules/loc
 - **Rationale**: Schema drift between SQL migrations and documentation leads to invalid joins and broken services.
 - **Rule**: Always review `docs/DATABASE_SCHEMA.md` before authoring new `.sql` migrations in `backend-go/migrations/`. Update `docs/DATABASE_SCHEMA.md` immediately upon introducing schema changes.
 
+### Rule E — Karpathy Behavioral Guidelines
+- **Rationale**: Unrestrained AI modifications, speculative code, and non-surgical edits cause cascading regressions and hidden bugs.
+- **Rule**: Every AI worker and human contributor must adhere to the 4 Karpathy invariants documented in `.agent/skills/karpathy-guidelines/SKILL.md`:
+  1. **Think Before Coding**: Surface assumptions explicitly, inspect the codebase autonomously before asking questions, and explain trade-offs.
+  2. **Simplicity First (KISS & YAGNI)**: Implement the minimum code that solves the problem. Forbid speculative abstractions, unrequested features, or deep nesting.
+  3. **Surgical Changes**: Restrict code edits strictly to target symbols. Never modify adjacent lines, reformat untouched code, or refactor unrelated files. Prune only self-created orphaned imports or symbols.
+  4. **Goal-Driven Execution**: Define objective verification commands (unit tests, static analysis, linters) before applying changes and loop until all criteria pass.
+
+### Rule F — Code File Hygiene & Architecture Headers
+- **Rationale**: Uniform file headers and visual breathing room accelerate code reviews and data-flow comprehension across Go and Flutter.
+- **Rule**:
+  1. **Top-of-File Architecture Header**: Non-trivial source files (`.go`, `.dart`) should feature an architectural header comment detailing:
+     - `Purpose`: Why the file exists and its primary responsibility.
+     - `Data & Logic Flow`: High-level summary of inputs, processing pipeline, and outputs.
+     - `Key Components`: Primary structs, classes, handlers, or services.
+  2. **Visual Breathing Room**: Maintain 2 blank lines between major functions, structs, endpoint handlers, and distinct logic sections to ensure readable separation between execution phases.
+
 ---
 
 ## 3. Git & Operational Constraints

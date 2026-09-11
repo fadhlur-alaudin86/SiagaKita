@@ -13,6 +13,11 @@ This directory contains human-readable documentation explaining the AI agent ski
 | **devops-workflow** | CI/CD, branching, deployments, rollbacks, release strategy | [devops-workflow-docs.md](devops-workflow-docs.md) |
 | **gh-project-manager** | GitHub issues, sprint planning, backlogs, progress reporting | [gh-project-manager-docs.md](gh-project-manager-docs.md) |
 | **feature-dev-workflow** | Contract-first feature implementation (Go + Flutter) | [feature-dev-workflow-docs.md](feature-dev-workflow-docs.md) |
+| **karpathy-guidelines** | Surgical edits, simplicity (KISS), think before coding, hygiene | [karpathy-guidelines-docs.md](karpathy-guidelines-docs.md) |
+| **grill-me** | Relentless architectural alignment interview via Design Tree Frontier | [grill-me-docs.md](grill-me-docs.md) |
+| **component-mapping** | Multi-client contract parity: Mobile vs Console vs Go Fiber vs DB | [component-mapping-docs.md](component-mapping-docs.md) |
+| **cavecrew** | Subagent delegation guide with compact outputs to conserve context | [cavecrew-docs.md](cavecrew-docs.md) |
+| **caveman** | Token-efficient communication mode cutting token usage while preserving technical accuracy | [caveman-docs.md](caveman-docs.md) |
 
 ---
 

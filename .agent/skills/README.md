@@ -15,6 +15,16 @@ This directory contains all **agent skills** available for the SiagaKita project
 ├── gh-project-manager/
 │   ├── SKILL.md                         ← Agent instructions: Issues, sprints, progress
 │   └── gh-proj-manager.md               ← Command reference for gh CLI
+├── karpathy-guidelines/
+│   └── SKILL.md                         ← Behavioral guidelines: Think before coding, surgical edits
+├── grill-me/
+│   └── SKILL.md                         ← Architectural alignment: Design tree frontier interviews
+├── component-mapping/
+│   └── SKILL.md                         ← Multi-client parity: Flutter Mobile & Console <-> Go <-> DB
+├── cavecrew/
+│   └── SKILL.md                         ← Subagent delegation: compact outputs, context conservation
+├── caveman/
+│   └── SKILL.md                         ← Token-efficient communication: zero fluff, technical substance
 └── feature-dev-workflow/
     ├── SKILL.md                         ← Agent instructions: Feature pipeline
     ├── stacks.md                        ← Specific stack config (Go + Flutter)
@@ -41,6 +51,12 @@ This directory contains all **agent skills** available for the SiagaKita project
 | **devops-workflow** | `deploy`, `CI/CD`, `workflow`, `pipeline`, `rollback`, `VPS`, `branch protection` | [`devops-workflow/`](devops-workflow/SKILL.md) | Manage CI/CD, branching strategy, VPS deployments & rollbacks |
 | **gh-project-manager** | `backlog`, `issue`, `sprint`, `task`, `milestone`, `progress report`, `assign` | [`gh-project-manager/`](gh-project-manager/SKILL.md) | Manage GitHub Issues, milestones, labels, and sprints via `gh` CLI |
 | **feature-dev-workflow** | `new feature`, `feature`, `implementation`, `new endpoint`, `new screen`, `API` | [`feature-dev-workflow/`](feature-dev-workflow/SKILL.md) | Contract-first pipeline for Go + Flutter feature development |
+| **karpathy-guidelines** | `karpathy`, `surgical change`, `coding standards`, `clean code`, `simplicity` | [`karpathy-guidelines/`](karpathy-guidelines/SKILL.md) | Behavioral guidelines for surgical, non-speculative, goal-driven coding |
+| **grill-me** | `grill-me`, `grill`, `interview`, `architecture review`, `stress test plan` | [`grill-me/`](grill-me/SKILL.md) | Relentless architectural alignment interview via Design Tree Frontier |
+| **component-mapping** | `component mapping`, `multi-client parity`, `endpoint mapping`, `screen mapping` | [`component-mapping/`](component-mapping/SKILL.md) | Maps Mobile & Desktop screens to Go Fiber routes, DB tables, and WS events |
+| **cavecrew** | `delegate to subagent`, `cavecrew`, `spawn investigator`, `spawn builder`, `spawn reviewer` | [`cavecrew/`](cavecrew/SKILL.md) | Subagent delegation guide with compact outputs to conserve context |
+| **caveman** | `caveman mode`, `token efficient`, `be brief`, `less tokens`, `/caveman` | [`caveman/`](caveman/SKILL.md) | Terse communication mode cutting token usage while preserving technical accuracy |
+
 
 ---
 

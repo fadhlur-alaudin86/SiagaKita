@@ -100,7 +100,21 @@ Adapted from ECC's *refactor-cleaner* role. Ensures that unused symbols, obsolet
 
 ---
 
-## 5. Verification Report Format in Feature Log
+## 5. Karpathy Behavioral Review Checklist
+
+Ensures that code changes remain strictly scoped, surgical, free of speculative abstractions, and conform to coding hygiene.
+
+| Category | Verification Item | PASS Criteria | FAIL Criteria |
+|---|---|---|---|
+| **Surgical Scope** | Diff lines traceability | 100% of modified lines trace directly to the requirement | "Improving" or reformatting adjacent untouched functions or lines |
+| **Simplicity & YAGNI** | Code complexity | Minimal direct implementation without speculative interfaces/generics | Adding speculative configuration options or unused helper wrappers |
+| **Orphan Cleanup** | Self-created dead code | All imports, variables, and helpers made obsolete by the change are pruned | Leaving self-created orphaned imports or unused symbols |
+| **Architecture Headers** | File documentation | Newly added/refactored files start with Purpose, Data Flow, and Components header | Creating source files without architectural header comments |
+| **Visual Breathing Room** | Code formatting spacing | 2 blank lines between major functions, structs, and handlers | Cramped code lacking visual breathing room between execution phases |
+
+---
+
+## 6. Verification Report Format in Feature Log
 
 After completing the self-review at Step 7, record the summary in the feature log (`docs/backlog/features/F-XXX-name.md`):
 
@@ -110,5 +124,6 @@ After completing the self-review at Step 7, record the summary in the feature lo
 - [x] Database Review: PASS (Migrations idempotent, FK indexed, ERD updated)
 - [x] Silent Failure Audit: PASS (No ignored errors, context.mounted checked, defer cancel present)
 - [x] Clean Code & Hygiene: PASS (No uncalled private symbols, cyclop <= 16, goconst extracted, 0 orphaned localization keys)
+- [x] Karpathy & Surgical Review: PASS (Diff is 100% surgical, no speculative over-engineering, architecture headers present)
 - [x] Dependency Determinism: PASS (No unapproved dependency upgrades, lockfiles intact)
 ```
