@@ -38,15 +38,15 @@ ALTER TABLE public.incidents ALTER COLUMN status TYPE varchar(30) USING status::
 ALTER TABLE public.incidents ALTER COLUMN status SET DEFAULT 'grace_period';
 ALTER TABLE public.incidents DROP CONSTRAINT IF EXISTS chk_incidents_status;
 ALTER TABLE public.incidents ADD CONSTRAINT chk_incidents_status
-    CHECK (status IN ('grace_period', 'broadcasting', 'handled', 'resolved', 'false_alarm', 'canceled'));
+    CHECK (status IN ('grace_period', 'broadcasting', 'handling', 'handled', 'resolved', 'false_alarm', 'canceled'));
 
 ALTER TABLE public.incidents DROP CONSTRAINT IF EXISTS chk_incidents_agency_status;
 ALTER TABLE public.incidents ADD CONSTRAINT chk_incidents_agency_status
-    CHECK (agency_status IS NULL OR agency_status IN ('pending', 'accepted', 'declined', 'completed'));
+    CHECK (agency_status IS NULL OR agency_status IN ('pending', 'accepted', 'declined', 'handling', 'completed', 'canceled'));
 
 ALTER TABLE public.incidents DROP CONSTRAINT IF EXISTS chk_incidents_reporter_trust_label;
 ALTER TABLE public.incidents ADD CONSTRAINT chk_incidents_reporter_trust_label
-    CHECK (reporter_trust_label IS NULL OR reporter_trust_label IN ('standard', 'trusted', 'untrusted', 'verified'));
+    CHECK (reporter_trust_label IS NULL OR reporter_trust_label IN ('standard', 'trusted', 'untrusted', 'verified', 'unverified'));
 
 -- 3. Standardize incident_reports table (Jalur B)
 ALTER TABLE public.incident_reports DROP CONSTRAINT IF EXISTS chk_incident_reports_status;
