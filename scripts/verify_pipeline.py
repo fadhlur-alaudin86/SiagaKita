@@ -200,6 +200,17 @@ def run_code_tests_and_analysis(repo_root):
         else:
             print("[PASS] Flutter Desktop Console static analysis passed with 0 issues.")
 
+    # 4.4 Flutter Responder Mobile Analysis
+    responder_dir = os.path.join(repo_root, "mobile-flutter-responder")
+    if os.path.exists(responder_dir) and os.path.exists(os.path.join(responder_dir, "pubspec.yaml")):
+        print("\n[INFO] Running Flutter Responder static analysis (flutter analyze --fatal-infos)...")
+        resp_res = subprocess.run(["flutter", "analyze", "--fatal-infos"], cwd=responder_dir)
+        if resp_res.returncode != 0:
+            print("[FAIL] Flutter Responder static analysis failed.")
+            all_passed = False
+        else:
+            print("[PASS] Flutter Responder static analysis passed with 0 issues.")
+
     return all_passed
 
 

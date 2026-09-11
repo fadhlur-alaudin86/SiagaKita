@@ -18,6 +18,7 @@ func setupTestApp(h *Handler) *fiber.App {
 	app := fiber.New()
 	auth := app.Group("/api/v1/auth")
 	auth.Post("/refresh-token", h.RefreshToken)
+	auth.Post("/personnel/login", h.PersonnelLogin)
 	return app
 }
 
@@ -78,6 +79,42 @@ func TestRefreshToken_Handler(t *testing.T) {
 		accessToken, _, _ := utils.GenerateAccessToken("user-1", "civilian", cfg.JWTSecret, cfg.JWTAccessTTL)
 		body, _ := json.Marshal(map[string]string{fieldRefreshToken: accessToken})
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh-token", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected 401, got %d", resp.StatusCode)
+		}
+	})
+}
+
+func TestPersonnelLogin_Handler(t *testing.T) {
+	cfg := &config.Config{
+		JWTSecret:     testJWTSecret,
+		JWTAccessTTL:  15 * time.Minute,
+		JWTRefreshTTL: 7 * 24 * time.Hour,
+	}
+	svc := &Service{cfg: cfg}
+	h := NewHandler(svc)
+	app := setupTestApp(h)
+
+	t.Run("BadRequest_InvalidJSON", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/personnel/login", bytes.NewReader([]byte("{invalid-json")))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected 400, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("Unauthorized_EmptyCredentials", func(t *testing.T) {
+		body, _ := json.Marshal(map[string]string{"email": "", "password": ""})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/personnel/login", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req)
 		if err != nil {

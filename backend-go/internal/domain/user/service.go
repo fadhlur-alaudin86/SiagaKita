@@ -178,12 +178,42 @@ func (s *Service) ConsoleLogin(ctx context.Context, req *LoginRequest) (*AuthRes
 
 // ─── Personnel Login (agency_personnel via mobile responder) ─────────────────
 
-// PersonnelLogin hanya mengizinkan role agency_personnel.
+// PersonnelLogin mengizinkan role agency_personnel login dengan email atau badge_number.
 func (s *Service) PersonnelLogin(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
-	user, err := s.repo.FindByEmail(req.Email)
-	if err != nil {
+	identifier := strings.TrimSpace(req.Email)
+	if identifier == "" || req.Password == "" {
 		return nil, errors.New("email atau password salah")
 	}
+
+	var user *User
+	var fullName *string
+	var badgeNumber *string
+
+	if strings.Contains(identifier, "@") {
+		u, err := s.repo.FindByEmail(identifier)
+		if err != nil {
+			return nil, errors.New("email atau password salah")
+		}
+		user = u
+		personnel, err := s.repo.FindPersonnelByUserID(user.ID)
+		if err == nil {
+			fullName = &personnel.FullName
+			badgeNumber = &personnel.BadgeNumber
+		}
+	} else {
+		personnel, err := s.repo.FindPersonnelByBadgeNumber(identifier)
+		if err != nil {
+			return nil, errors.New("email atau password salah")
+		}
+		u, err := s.repo.FindByID(personnel.UserID)
+		if err != nil {
+			return nil, errors.New("email atau password salah")
+		}
+		user = u
+		fullName = &personnel.FullName
+		badgeNumber = &personnel.BadgeNumber
+	}
+
 	if user.Role != "agency_personnel" {
 		return nil, errors.New("email atau password salah")
 	}
@@ -191,14 +221,7 @@ func (s *Service) PersonnelLogin(ctx context.Context, req *LoginRequest) (*AuthR
 		return nil, errors.New("email atau password salah")
 	}
 
-	// Ambil full_name dari agency_personnels
-	var fullName *string
-	personnel, err := s.repo.FindPersonnelByUserID(user.ID)
-	if err == nil {
-		fullName = &personnel.FullName
-	}
-
-	return s.buildAuthResponseWithName(user, fullName)
+	return s.buildAuthResponseWithName(user, fullName, badgeNumber)
 }
 
 // ─── VerifyLoginOTP ───────────────────────────────────────────────────────────
@@ -347,7 +370,7 @@ func (s *Service) buildAuthResponse(user *User, profile *UserProfile) (*AuthResp
 	return s.buildAuthResponseWithName(user, fullName)
 }
 
-func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*AuthResponse, error) {
+func (s *Service) buildAuthResponseWithName(user *User, fullName *string, badgeNumber ...*string) (*AuthResponse, error) {
 	accessToken, jti, err := utils.GenerateAccessToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTAccessTTL)
 	if err != nil {
 		return nil, err
@@ -362,7 +385,7 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		if user.Role == RoleCivilian || user.Role == RoleVolunteer {
+		if user.Role == RoleCivilian || user.Role == RoleVolunteer || user.Role == "agency_personnel" {
 			sessionKey := "session:" + user.ID
 			refreshKey := "refresh_token:" + user.ID
 
@@ -386,14 +409,20 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string) (*Auth
 		}
 	}
 
+	var badge *string
+	if len(badgeNumber) > 0 {
+		badge = badgeNumber[0]
+	}
+
 	return &AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		User: UserInfo{
-			ID:       user.ID,
-			Email:    user.Email,
-			Role:     user.Role,
-			FullName: fullName,
+			ID:          user.ID,
+			Email:       user.Email,
+			Role:        user.Role,
+			FullName:    fullName,
+			BadgeNumber: badge,
 		},
 	}, nil
 }

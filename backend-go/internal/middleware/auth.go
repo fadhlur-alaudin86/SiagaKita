@@ -137,6 +137,11 @@ func PersonnelOnly() fiber.Handler {
 	return RequireRoles("agency_personnel")
 }
 
+// AgencyOrPersonnelOnly mengizinkan agency, agency_personnel, admin, dan superadmin.
+func AgencyOrPersonnelOnly() fiber.Handler {
+	return RequireRoles("agency", "agency_personnel", "admin", "superadmin")
+}
+
 // CitizenVolunteer hanya mengizinkan civilian dan volunteer (mobile app utama).
 func CitizenVolunteer() fiber.Handler {
 	return RequireRoles("civilian", "volunteer")

@@ -18,6 +18,10 @@ func setupTestApp(h *Handler) *fiber.App {
 	app := fiber.New()
 	incidents := app.Group("/api/v1/incidents")
 	incidents.Post("/:id/dispatch-broadcast", h.DispatchBroadcast)
+	incidents.Post("/:id/personnel-status", func(c *fiber.Ctx) error {
+		c.Locals("userID", "test-personnel-id")
+		return h.PersonnelUpdateStatus(c)
+	})
 	return app
 }
 
@@ -103,6 +107,39 @@ func TestCreateReport_Validation(t *testing.T) {
 	t.Run("BadRequest_ZeroCoordinates", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/reports", strings.NewReader("incident_type=medical&latitude=0&longitude=0"))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected 400, got %d", resp.StatusCode)
+		}
+	})
+}
+
+func TestPersonnelUpdateStatus_Validation(t *testing.T) {
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:9999"})
+	wsHub := hub.New()
+	cfg := &config.Config{}
+	svc := &Service{repo: nil, rdb: rdb}
+	h := NewHandler(svc, cfg, wsHub, rdb)
+	app := setupTestApp(h)
+
+	t.Run("BadRequest_InvalidJSON", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/incidents/inc-123/personnel-status", bytes.NewReader([]byte("{invalid-json")))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected 400, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("BadRequest_EmptyStatus", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/incidents/inc-123/personnel-status", bytes.NewReader([]byte(`{"status": ""}`)))
+		req.Header.Set("Content-Type", "application/json")
 		resp, err := app.Test(req)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)

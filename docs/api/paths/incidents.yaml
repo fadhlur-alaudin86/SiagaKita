@@ -888,3 +888,59 @@
           application/json:
             schema:
               $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/{id}/personnel-status:
+  post:
+    tags:
+      - Incidents
+    summary: Update responder mission status
+    description: |
+      Updates mission lifecycle status by agency personnel:
+      - `en_route`: Rolling to the incident
+      - `on_scene`: Arrived at the location
+      - `resolved`: Mission completed
+    security:
+      - BearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status]
+            properties:
+              status:
+                type: string
+                enum: [en_route, on_scene, resolved]
+              proof_photo_url:
+                type: string
+    responses:
+      '200':
+        description: Mission status updated
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+
+/api/v1/incidents/responder/active-mission:
+  get:
+    tags:
+      - Incidents
+    summary: Get responder active mission
+    description: Retrieves the current active mission assigned to the authenticated personnel.
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Active mission details
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'

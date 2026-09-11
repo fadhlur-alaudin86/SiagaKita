@@ -202,10 +202,11 @@ type AuthResponse struct {
 // UserInfo adalah payload ringkas yang disertakan dalam response login/register.
 // FullName diisi dari tabel profil yang sesuai dengan role.
 type UserInfo struct {
-	ID       string  `json:"id"`
-	Email    string  `json:"email"`
-	Role     string  `json:"role"`
-	FullName *string `json:"full_name,omitempty"`
+	ID          string  `json:"id"`
+	Email       string  `json:"email"`
+	Role        string  `json:"role"`
+	FullName    *string `json:"full_name,omitempty"`
+	BadgeNumber *string `json:"badge_number,omitempty"`
 }
 
 // ProfileResponse untuk GET /users/profile (civilian/volunteer).

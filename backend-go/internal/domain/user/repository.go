@@ -359,6 +359,13 @@ func (r *Repository) FindPersonnelByUserID(userID string) (*AgencyPersonnel, err
 	return &p, err
 }
 
+// FindPersonnelByBadgeNumber retrieves an agency_personnels row by badge_number.
+func (r *Repository) FindPersonnelByBadgeNumber(badge string) (*AgencyPersonnel, error) {
+	var p AgencyPersonnel
+	err := r.db.Where("badge_number = ?", badge).First(&p).Error
+	return &p, err
+}
+
 // FindPersonnelByAgencyID retrieves all personnels belonging to an agency.
 func (r *Repository) FindPersonnelByAgencyID(agencyID string) ([]AgencyPersonnel, error) {
 	var ps []AgencyPersonnel
