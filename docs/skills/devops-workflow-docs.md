@@ -47,9 +47,10 @@ The `VERSION` file at the repository root holds the active release version (e.g.
 
 ### Release Procedure:
 1. Update the `VERSION` file (e.g., `1.0.25`).
-2. Create a PR from `dev` to `main` including the updated `VERSION` file.
-3. Upon PR approval and merge to `main`, `auto-tag.yml` automatically creates git tag `v1.0.25`.
-4. The tag creation triggers `release-deploy.yml` which builds the Docker image, deploys to VPS, verifies health, and creates a GitHub Release.
+2. Move completed plans in `.planning/` (`Merged`) to `.planning/archive/v<VERSION>/` and update `.planning/README.md`.
+3. Create a PR from `dev` to `main` including the updated `VERSION` file and archived plans.
+4. Upon PR approval and merge to `main`, `auto-tag.yml` automatically creates git tag `v1.0.25`.
+5. The tag creation triggers `release-deploy.yml` which builds the Docker image, deploys to VPS, verifies health, and creates a GitHub Release.
 
 ---
 

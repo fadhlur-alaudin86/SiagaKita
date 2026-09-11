@@ -74,6 +74,18 @@ Full details are documented in [`.agent/rules/localization.md`](.agent/rules/loc
      - `Key Components`: Primary structs, classes, handlers, or services.
   2. **Visual Breathing Room**: Maintain 2 blank lines between major functions, structs, endpoint handlers, and distinct logic sections to ensure readable separation between execution phases.
 
+### Rule G — Persistent Planning & Archiving Lifecycle
+- **Rationale**: Ephemeral chat histories and transient agent contexts degrade across sessions. Preserving architectural plans in the repository creates a permanent single source of truth and prevents redundant rediscovery.
+- **Rule**:
+  1. **Hybrid Planning Hierarchy**:
+     - `.planning/`: Reserved for high-level architectural roadmaps, domain epic specifications, and cross-cutting technical designs (`NN-name.md`), cataloged in `.planning/README.md`.
+     - `docs/backlog/features/`: Reserved for task-level feature execution logs (`F-XXX-name.md`) tied to specific GitHub issues. Every feature log must link to its corresponding parent plan in `.planning/` when applicable.
+  2. **Active Frontier in Root**:
+     - All plans under active consideration (`Draft`, `Backlog`, `In Progress`) or completed within the current milestone cycle (`Merged`) remain in the root `.planning/` directory to maintain team visibility.
+  3. **Milestone Release Archiving Trigger**:
+     - When preparing a release pull request to `main` and incrementing the `VERSION` file (e.g. tag `v1.0.0` or `v1.1.0`), all plans marked `Merged` during that release cycle MUST be archived into `.planning/archive/<version>/` (e.g., `.planning/archive/v1.0/`).
+     - Update `.planning/README.md` to reflect the archive path and preserve a clean, focused active planning frontier.
+
 ---
 
 ## 3. Git & Operational Constraints

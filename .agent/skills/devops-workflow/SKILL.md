@@ -71,10 +71,11 @@ feature/F-XXX/sub-mobile  ─┘                                ↓
 
 ```
 1. Developer updates the VERSION file (e.g., 1.0.25).
-2. Create PR from `dev` to `main` including the updated VERSION file.
-3. Once merged to `main`, `auto-tag.yml` creates tag `v1.0.25`.
-4. Tag `v1.0.25` triggers `release-deploy.yml`.
-5. `release-deploy.yml` builds Docker image (tagged v1.0.25 & latest), pushes to Docker Hub, deploys to VPS, verifies health, and creates GitHub Release.
+2. Archive Completed Plans: Move completed plans in `.planning/` (marked `Merged`) into `.planning/archive/v<VERSION>/` and update `.planning/README.md`.
+3. Create PR from `dev` to `main` including the updated VERSION file and archived plans.
+4. Once merged to `main`, `auto-tag.yml` creates tag `v1.0.25`.
+5. Tag `v1.0.25` triggers `release-deploy.yml`.
+6. `release-deploy.yml` builds Docker image (tagged v1.0.25 & latest), pushes to Docker Hub, deploys to VPS, verifies health, and creates GitHub Release.
 ```
 
 **Version Increment Rules:**
@@ -154,4 +155,5 @@ All team members MUST follow Conventional Commits to ensure automated release no
 10. **Update docs** — whenever workflow files or deployment architecture change, update `docs/skills/devops-workflow-docs.md`.
 11. **Enforce Dependency Invariants** — prohibit arbitrary dependency upgrades or major bumps within feature development branches.
 12. **Automated Pre-Flight Verification** — Run `python3 scripts/verify_pipeline.py` (or `--fast` for intermediate iterations) before opening or recommending PR merges to ensure schema, contract, localization, and test suite health.
+13. **Milestone Planning Archiving** — When preparing a release PR to `main` with a bumped `VERSION`, move all completed plans in `.planning/` (`Merged`) to `.planning/archive/v<VERSION>/` and update `.planning/README.md`.
 
