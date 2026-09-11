@@ -32,7 +32,6 @@ class EmergencyRelation {
     other,
   ];
 
-
   static String getLabel(String? code, BuildContext context) {
     switch (code?.toLowerCase()) {
       case parent:
@@ -51,7 +50,6 @@ class EmergencyRelation {
         return code ?? '';
     }
   }
-
 
   static String getIndonesianLabel(String code) {
     switch (code.toLowerCase()) {

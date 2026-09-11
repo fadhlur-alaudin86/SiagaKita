@@ -572,11 +572,9 @@ class _BiodataScreenState extends State<BiodataScreen> {
                                     text: _contacts[index]['phone'],
                                   )
                                   ..selection = TextSelection.collapsed(
-                                    offset:
-                                        _contacts[index]['phone'].length,
+                                    offset: _contacts[index]['phone'].length,
                                   ),
-                            onChanged: (val) =>
-                                _contacts[index]['phone'] = val,
+                            onChanged: (val) => _contacts[index]['phone'] = val,
                             keyboardType: TextInputType.phone,
                             decoration: InputDecoration(
                               labelText: 'No Hp'.tr(context),
@@ -601,11 +599,14 @@ class _BiodataScreenState extends State<BiodataScreen> {
                             runSpacing: 8,
                             children: EmergencyRelation.all.map((rel) {
                               final currentRel = _contacts[index]['relation'];
-                              final isSelected = currentRel == rel ||
+                              final isSelected =
+                                  currentRel == rel ||
                                   (rel == EmergencyRelation.other &&
                                       currentRel != null &&
                                       currentRel.isNotEmpty &&
-                                      !EmergencyRelation.all.contains(currentRel));
+                                      !EmergencyRelation.all.contains(
+                                        currentRel,
+                                      ));
                               return ChoiceChip(
                                 label: Text(
                                   EmergencyRelation.getLabel(rel, context),
@@ -616,7 +617,9 @@ class _BiodataScreenState extends State<BiodataScreen> {
                                         : FontWeight.normal,
                                     color: isSelected
                                         ? colors.primary
-                                        : colors.onSurface.withValues(alpha: 0.8),
+                                        : colors.onSurface.withValues(
+                                            alpha: 0.8,
+                                          ),
                                   ),
                                 ),
                                 selected: isSelected,

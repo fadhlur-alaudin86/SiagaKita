@@ -512,8 +512,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           const SizedBox(height: 12),
                           TextFormField(
                             initialValue: _contacts[index]['phone'],
-                            onChanged: (val) =>
-                                _contacts[index]['phone'] = val,
+                            onChanged: (val) => _contacts[index]['phone'] = val,
                             keyboardType: TextInputType.phone,
                             maxLength: 20,
                             decoration: InputDecoration(
@@ -529,10 +528,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.7),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                           ),
@@ -542,11 +540,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             runSpacing: 8,
                             children: EmergencyRelation.all.map((rel) {
                               final currentRel = _contacts[index]['relation'];
-                              final isSelected = currentRel == rel ||
+                              final isSelected =
+                                  currentRel == rel ||
                                   (rel == EmergencyRelation.other &&
                                       currentRel != null &&
                                       currentRel.isNotEmpty &&
-                                      !EmergencyRelation.all.contains(currentRel));
+                                      !EmergencyRelation.all.contains(
+                                        currentRel,
+                                      ));
                               return ChoiceChip(
                                 label: Text(
                                   EmergencyRelation.getLabel(rel, context),
@@ -558,9 +559,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     color: isSelected
                                         ? Colors.orange
                                         : Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.8),
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.8),
                                   ),
                                 ),
                                 selected: isSelected,
