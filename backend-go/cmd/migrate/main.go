@@ -64,14 +64,14 @@ func main() {
 		if err := database.AutoMigrate(sqlDB); err != nil {
 			utils.Fatal().Err(err).Msg("[Migrate-CLI] Up migration failed")
 		}
-		fmt.Println("✅ Database schema migrated up successfully.")
+		fmt.Println("Database schema migrated up successfully.")
 
 	case "down":
 		steps := 1
 		if len(os.Args) >= 3 {
 			parsedSteps, err := strconv.Atoi(os.Args[2])
 			if err != nil || parsedSteps <= 0 {
-				fmt.Printf("❌ Invalid steps count '%s'. Must be a positive integer.\n", os.Args[2])
+				fmt.Printf("Error: Invalid steps count '%s'. Must be a positive integer.\n", os.Args[2])
 				os.Exit(1)
 			}
 			steps = parsedSteps
@@ -80,7 +80,7 @@ func main() {
 		if err := database.MigrateDown(sqlDB, steps); err != nil {
 			utils.Fatal().Err(err).Msg("[Migrate-CLI] Rollback failed")
 		}
-		fmt.Printf("✅ Rolled back %d migration step(s) successfully.\n", steps)
+		fmt.Printf("Rolled back %d migration step(s) successfully.\n", steps)
 
 	case "version":
 		version, dirty, err := database.GetMigrationVersion(sqlDB)
@@ -91,22 +91,22 @@ func main() {
 
 	case "force":
 		if len(os.Args) < 3 {
-			fmt.Println("❌ Usage: siagakita-migrate force <version>")
+			fmt.Println("Usage: siagakita-migrate force <version>")
 			os.Exit(1)
 		}
 		targetVersion, err := strconv.Atoi(os.Args[2])
 		if err != nil || targetVersion < 0 {
-			fmt.Printf("❌ Invalid version '%s'. Must be a non-negative integer.\n", os.Args[2])
+			fmt.Printf("Error: Invalid version '%s'. Must be a non-negative integer.\n", os.Args[2])
 			os.Exit(1)
 		}
 
 		if err := database.MigrateForce(sqlDB, targetVersion); err != nil {
 			utils.Fatal().Err(err).Msg("[Migrate-CLI] Force version failed")
 		}
-		fmt.Printf("✅ Forced migration version to %d.\n", targetVersion)
+		fmt.Printf("Forced migration version to %d.\n", targetVersion)
 
 	default:
-		fmt.Printf("❌ Unknown command '%s'\n\n", command)
+		fmt.Printf("Error: Unknown command '%s'\n\n", command)
 		printUsage()
 		os.Exit(1)
 	}

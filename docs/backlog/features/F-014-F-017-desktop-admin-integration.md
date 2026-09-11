@@ -27,15 +27,15 @@
 
 | Step | Action | Status | Date | Notes |
 |---|---|---|---|---|
-| -3 | Backlog Overview | ✅ Done | 2026-09-10 | Plan 03 selected to finalize Desktop Admin Shell |
-| -2 | Discovery | ✅ Done | 2026-09-10 | Inspected Flutter pages, model serialization, and API services |
-| -1 | Resolve Backlog | ✅ Done | 2026-09-10 | Created feature log `F-014-F-017-desktop-admin-integration.md` |
-| 0 | Branch & Assign | ✅ Done | 2026-09-10 | Created branch `feature/F-014-F-017-desktop-admin-integration`, assigned Issues #14-#17 |
-| 1 | Read Mapping | ✅ Done | 2026-09-10 | Reviewed existing UI state management and endpoint parameter contracts |
-| 2 | API Contract | ✅ Done | 2026-09-10 | Verified multi-client API contract parity with backend Go Fiber |
-| 3 | DB Migration | ⏩ Skipped | 2026-09-10 | No schema changes needed (frontend integration) |
-| 4 | Backend Implementation | ⏩ Skipped | 2026-09-10 | Backend admin endpoints already finalized in Plan 02 |
-| 5 | Flutter Implementation | ✅ Done | 2026-09-10 | Implemented UI dialogs, parameter queries, url_launcher/pdfrx, base rank rules, and localization |
-| 6 | Tests | ✅ Done | 2026-09-10 | flutter analyze (0 issues), 16/16 test suites passed |
-| 7 | CI + Review | ✅ Done | 2026-09-10 | Format checks (dart format) and static analysis verification passed |
-| 8 | Close Log | ✅ Done | 2026-09-10 | Ready for PR to dev |
+| -3 | Backlog Overview | Done | 2026-09-10 | Plan 03 selected to finalize Desktop Admin Shell |
+| -2 | Discovery | Done | 2026-09-10 | Inspected Flutter pages, model serialization, and API services |
+| -1 | Resolve Backlog | Done | 2026-09-10 | Created feature log `F-014-F-017-desktop-admin-integration.md` |
+| 0 | Branch & Assign | Done | 2026-09-10 | Created branch `feature/F-014-F-017-desktop-admin-integration`, assigned Issues #14-#17 |
+| 1 | Read Mapping | Done | 2026-09-10 | Reviewed existing UI state management and endpoint parameter contracts |
+| 2 | API Contract | Done | 2026-09-10 | Verified multi-client API contract parity with backend Go Fiber |
+| 3 | DB Migration | Skipped | 2026-09-10 | No schema changes needed (frontend integration) |
+| 4 | Backend Implementation | Skipped | 2026-09-10 | Backend admin endpoints already finalized in Plan 02 |
+| 5 | Flutter Implementation | Done | 2026-09-10 | Implemented UI dialogs, parameter queries, url_launcher/pdfrx, base rank rules, and localization |
+| 6 | Tests | Done | 2026-09-10 | flutter analyze (0 issues), 16/16 test suites passed |
+| 7 | CI + Review | Done | 2026-09-10 | Format checks (dart format) and static analysis verification passed |
+| 8 | Close Log | Done | 2026-09-10 | Ready for PR to dev |

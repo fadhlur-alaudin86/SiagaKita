@@ -166,7 +166,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
     if (result.ok) {
       final msg =
           result.message ?? 'Pendaftaran berhasil disetujui'.tr(context);
-      _showSnack('✅ $msg', Colors.green);
+      _showSnack(msg, Colors.green);
       setState(() {
         _volunteers.removeWhere((v) => v.id == volunteer.id);
         _selected = null;
@@ -175,7 +175,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
     } else {
       final errorMsg =
           result.message ?? 'Gagal menyetujui. Coba lagi.'.tr(context);
-      _showSnack('❌ $errorMsg', Colors.red);
+      _showSnack(errorMsg, Colors.red);
     }
   }
 
@@ -252,7 +252,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
     if (!mounted) return;
     if (result.ok) {
       final msg = result.message ?? 'Pendaftaran relawan ditolak'.tr(context);
-      _showSnack('❌ $msg', Colors.orange);
+      _showSnack(msg, Colors.orange);
       setState(() {
         _volunteers.removeWhere((v) => v.id == volunteer.id);
         _selected = null;
@@ -261,7 +261,7 @@ class _KycRelawanPageState extends State<KycRelawanPage> {
     } else {
       final errorMsg =
           result.message ?? 'Gagal menolak. Coba lagi.'.tr(context);
-      _showSnack('❌ $errorMsg', Colors.red);
+      _showSnack(errorMsg, Colors.red);
     }
   }
 

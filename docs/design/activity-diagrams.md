@@ -1,4 +1,4 @@
-# 🔄 Activity & State Machine Diagrams — SiagaKita
+# Activity & State Machine Diagrams — SiagaKita
 
 > **Operational Workflows:** Real-Time Emergency Response, Incident Lifecycles, and Verification State Machines.
 
@@ -11,10 +11,10 @@ The diagram below details the entire end-to-end lifecycle across the 4 key parti
 ```mermaid
 sequenceDiagram
     autonumber
-    actor W as 👤 Reporter (Warga)
-    participant B as ⚙️ Backend (Fiber + Redis + WS)
-    actor V as ⛑️ Volunteer (Relawan)
-    actor A as 🏢 Agency (Console)
+    actor W as Reporter (Warga)
+    participant B as Backend (Fiber + Redis + WS)
+    actor V as Volunteer (Relawan)
+    actor A as Agency (Console)
 
     %% 1. Trigger SOS
     Note over W, B: Step 1 — Emergency Trigger & Grace Period (10s)

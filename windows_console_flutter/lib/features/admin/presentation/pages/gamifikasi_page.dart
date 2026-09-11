@@ -145,8 +145,8 @@ class _RankTabState extends State<_RankTab> {
                 const SizedBox(height: 12),
                 _FormField(
                   controller: iconCtrl,
-                  label: 'Icon URL / Emoji'.tr(context),
-                  hint: '🏅 atau URL gambar',
+                  label: 'Icon URL'.tr(context),
+                  hint: 'URL gambar',
                 ),
               ],
             ),
@@ -193,9 +193,7 @@ class _RankTabState extends State<_RankTab> {
                   id: existing?.id ?? '',
                   rankName: name,
                   minExp: minExp,
-                  iconUrl: iconCtrl.text.trim().isEmpty
-                      ? '🏅'
-                      : iconCtrl.text.trim(),
+                  iconUrl: iconCtrl.text.trim(),
                 );
 
                 Navigator.pop(dialogCtx);
@@ -381,10 +379,23 @@ class _RankTabState extends State<_RankTab> {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  r.iconUrl.length <= 4 ? r.iconUrl : '🏅',
-                                  style: const TextStyle(fontSize: 28),
-                                ),
+                                if (r.iconUrl.startsWith('http'))
+                                  Image.network(
+                                    r.iconUrl,
+                                    width: 28,
+                                    height: 28,
+                                    errorBuilder: (_, _, _) => const Icon(
+                                      Icons.military_tech,
+                                      size: 28,
+                                      color: Color(0xFFFF7418),
+                                    ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.military_tech,
+                                    size: 28,
+                                    color: Color(0xFFFF7418),
+                                  ),
                                 if (r.minExp == 0) ...[
                                   const SizedBox(width: 8),
                                   Container(

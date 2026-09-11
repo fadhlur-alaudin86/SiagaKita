@@ -775,14 +775,14 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
                           // Markers Layer
                           MarkerLayer(
                             markers: [
-                              // Target SOS Marker (🔴)
+                              // Target SOS Marker (Red)
                               Marker(
                                 point: sosLocation,
                                 width: 46,
                                 height: 46,
                                 child: const _PulsingSosMarker(),
                               ),
-                              // Live Volunteer Markers (🟢)
+                              // Live Volunteer Markers (Green)
                               ...volunteerLocations.entries.map((entry) {
                                 final isTopCandidate = rankedCandidates
                                     .take(3)

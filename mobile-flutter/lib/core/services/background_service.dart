@@ -154,7 +154,7 @@ void onStart(ServiceInstance service) async {
 
     if (service is AndroidServiceInstance) {
       service.setForegroundNotificationInfo(
-        title: '🆘 SOS Aktif — Berbagi Lokasi',
+        title: 'SOS Aktif — Berbagi Lokasi',
         content: 'Lokasi Anda sedang dikirim ke tim respons',
       );
     }

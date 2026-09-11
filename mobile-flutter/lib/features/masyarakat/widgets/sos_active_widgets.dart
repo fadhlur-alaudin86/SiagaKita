@@ -435,7 +435,7 @@ class ActiveSOSBanner extends StatelessWidget {
                       child: Text(
                         volunteerPosition!.address != null
                             ? 'Relawan di: ${volunteerPosition!.address}'
-                            : '🏃 ${volunteerPosition!.lat.toStringAsFixed(5)}, ${volunteerPosition!.lng.toStringAsFixed(5)}',
+                            : '${volunteerPosition!.lat.toStringAsFixed(5)}, ${volunteerPosition!.lng.toStringAsFixed(5)}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,

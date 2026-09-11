@@ -1,4 +1,4 @@
-# 👥 Use Case Diagrams — SiagaKita
+# Use Case Diagrams — SiagaKita
 
 > **System Architecture Reference:** SiagaKita Emergency Management Platform  
 > **Target Actors:** Civilian, Volunteer, Agency Dispatcher, Admin, Superadmin, and System Background Workers.
@@ -24,11 +24,11 @@
 flowchart TB
     %% Actors
     subgraph Actors["System Actors"]
-        Warga["👤 Civilian (Warga)"]
-        Relawan["⛑️ Volunteer (Relawan)"]
-        Instansi["🏢 Agency (Instansi / Dispatcher)"]
-        Admin["🛡️ Admin & Superadmin"]
-        System["⚙️ System Background Worker"]
+        Warga["Civilian (Warga)"]
+        Relawan["Volunteer (Relawan)"]
+        Instansi["Agency (Instansi / Dispatcher)"]
+        Admin["Admin & Superadmin"]
+        System["System Background Worker"]
     end
 
     %% Use Cases: Auth & Identity

@@ -27,7 +27,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
 | 6 | **Tests & Hybrid TDD** — Write Go unit tests (`_test.go`) with RED-GREEN cycle for critical logic + Flutter tests. Document test outcomes in feature log. | Test files + test docs |
 | 7 | **Review Gate & Retrospective** — Run Pre-PR verification (Security, Database, Silent-Failure, and Dead-Code audits). Execute Step 7.5 Workflow Retrospective (apply minor skill updates or draft major proposals). Ensure CI passes. Sync issue checklist. Open PR targeting `dev`. | Pre-PR audit report + workflow updates + Pull Request |
-| 8 | **Close Log & Evolution** — Update feature log (all steps ✅). Record applied workflow evolutions. Link PR. Move issue to Done. | Updated feature log |
+| 8 | **Close Log & Evolution** — Update feature log (all steps completed). Record applied workflow evolutions. Link PR. Move issue to Done. | Updated feature log |
 
 ## Agent Rules
 
@@ -35,10 +35,10 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 0. **Backlog Overview First** — Run Step -3 before Step -2 on first skill activation per session.
 1. **Check Backlog First** — Run `gh issue list` before starting work to avoid duplicates.
 2. **Create Feature Log at Step -1** — Write full log template to `docs/backlog/features/F-XXX-name.md` and link to parent plan in `.planning/` if part of an epic.
-3. **Update Log per Step** — Mark progress ✅ with timestamp and decision rationale.
+3. **Update Log per Step** — Mark progress completed with timestamp and decision rationale.
 4. **Confirm Before Writing** — Ask user approval before modifying backend, DB, or Flutter files.
 5. **Decision Logging** — Document every non-trivial design choice in the Decisions Log.
-6. **Resume Protocol** — If interrupted or handing off, read feature log first → resume at first pending ⬜ step.
+6. **Resume Protocol** — If interrupted or handing off, read feature log first → resume at first pending step.
 
 ### Backend (Go Fiber)
 7. **Read Schema First** — Read `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md` before writing migrations.
@@ -89,7 +89,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
     - Merging into `dev` automatically updates the issue to `status: done`, removes previous status labels, auto-checks any remaining checkboxes, and closes the issue.
     - **Parent Tracker Sync**: If working under a parent issue, mark off the corresponding subtask checkbox (`- [ ]` to `- [x]`) in the parent issue body.
     - **Parent Plan Progress Sync**: If this feature belongs to a parent plan in `.planning/`, update the status of target issues and mark the plan `Merged` if all associated issues and PRs are completed.
-    - **Close Log & Record Evolution**: Mark all steps ✅ and record applied minor skill changes or major proposals in `docs/backlog/features/F-XXX-name.md`.
+    - **Close Log & Record Evolution**: Mark all steps completed and record applied minor skill changes or major proposals in `docs/backlog/features/F-XXX-name.md`.
 36. **Dev → Main MANUAL ONLY** — The agent MUST NOT merge `dev` to `main`. This is reserved for manual user action.
 37. **PR to `dev` = Squash Merge MANDATORY** — All PRs from topic branches (`feature/*`, `fix/*`) targeting `dev` MUST use **Squash Merge**. All WIP/micro commits are squashed into 1 atomic Conventional Commit on `dev` (e.g., `feat(incident): add volunteer dispatch endpoint`).
 38. **PR to `main` = Rebase Merge MANDATORY** — All PRs from `dev` targeting `main` MUST use **Rebase Merge** to preserve a clean, linear history for automated release notes.
@@ -143,18 +143,18 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 
 | Step | Action | Status | Date | Notes |
 |------|--------|--------|------|-------|
-| -3 | Backlog Overview | ⬜ Pending | | |
-| -2 | Discovery | ⬜ Pending | | |
-| -1 | Resolve backlog | ⬜ Pending | | |
-| 0 | Branch | ⬜ Pending | | |
-| 1 | Read mapping | ⬜ Pending | | |
-| 2 | API Contract | ⬜ Pending | | |
-| 3 | DB Migration | ⬜ Pending | | |
-| 4 | Backend Implementation | ⬜ Pending | | |
-| 5 | Flutter Implementation | ⬜ Pending | | |
-| 6 | Tests | ⬜ Pending | | |
-| 7 | CI + Review | ⬜ Pending | | |
-| 8 | Close Log | ⬜ Pending | | |
+| -3 | Backlog Overview | Pending | | |
+| -2 | Discovery | Pending | | |
+| -1 | Resolve backlog | Pending | | |
+| 0 | Branch | Pending | | |
+| 1 | Read mapping | Pending | | |
+| 2 | API Contract | Pending | | |
+| 3 | DB Migration | Pending | | |
+| 4 | Backend Implementation | Pending | | |
+| 5 | Flutter Implementation | Pending | | |
+| 6 | Tests | Pending | | |
+| 7 | CI + Review | Pending | | |
+| 8 | Close Log | Pending | | |
 
 ## Test Cases
 
@@ -179,17 +179,17 @@ Every feature gets a dedicated log file at `docs/backlog/features/F-XXX-name.md`
 
 | # | Artifact | Status |
 |---|----------|:------:|
-| 1 | Feature log (`docs/backlog/features/F-XXX-name.md`) | ⬜ |
-| 2 | API Contract (`docs/api/paths/<domain>.yaml`) | ⬜ |
-| 3 | DB Migration (`backend-go/migrations/NNN_*.up.sql` & `*.down.sql`) | ⬜ |
-| 4 | Updated `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md` | ⬜ |
-| 5 | Updated `docs/design/activity-diagrams.md` (if workflow/state changed) | ⬜ |
-| 6 | Backend code (`backend-go/internal/domain/<name>/`) | ⬜ |
-| 7 | Flutter code (`mobile-flutter/` / `windows_console_flutter/`) | ⬜ |
-| 8 | Unit & widget tests (`*_test.go`, `*_test.dart`) | ⬜ |
-| 9 | Pre-PR Review Audit (Security, DB, Silent-Failure, Dead-Code) | ⬜ |
-| 10 | Pull request to `dev` (Squash Merge) | ⬜ |
-| 11 | Workflow Retrospective (Minor updates / Major proposals logged) | ⬜ |
+| 1 | Feature log (`docs/backlog/features/F-XXX-name.md`) | [ ] |
+| 2 | API Contract (`docs/api/paths/<domain>.yaml`) | [ ] |
+| 3 | DB Migration (`backend-go/migrations/NNN_*.up.sql` & `*.down.sql`) | [ ] |
+| 4 | Updated `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md` | [ ] |
+| 5 | Updated `docs/design/activity-diagrams.md` (if workflow/state changed) | [ ] |
+| 6 | Backend code (`backend-go/internal/domain/<name>/`) | [ ] |
+| 7 | Flutter code (`mobile-flutter/` / `windows_console_flutter/`) | [ ] |
+| 8 | Unit & widget tests (`*_test.go`, `*_test.dart`) | [ ] |
+| 9 | Pre-PR Review Audit (Security, DB, Silent-Failure, Dead-Code) | [ ] |
+| 10 | Pull request to `dev` (Squash Merge) | [ ] |
+| 11 | Workflow Retrospective (Minor updates / Major proposals logged) | [ ] |
 ```
 
 ## Detailed References

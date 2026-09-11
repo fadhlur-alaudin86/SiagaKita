@@ -36,10 +36,10 @@ When creating composite indexes on multiple columns `(col_a, col_b)`, follow the
 -- Target Query:
 -- SELECT * FROM incidents WHERE status = 'ACTIVE' AND created_at >= NOW() - INTERVAL '1 day' ORDER BY created_at DESC;
 
--- ✅ GOOD: equality (status) first, range/sort (created_at) second:
+-- GOOD: equality (status) first, range/sort (created_at) second:
 CREATE INDEX idx_incidents_status_created ON incidents (status, created_at DESC);
 
--- ❌ BAD: range column first makes the index inefficient for status filtering:
+-- BAD: range column first makes the index inefficient for status filtering:
 CREATE INDEX idx_incidents_created_status ON incidents (created_at DESC, status);
 ```
 
@@ -73,7 +73,7 @@ WHERE status IN ('PENDING', 'DISPATCHED', 'IN_PROGRESS');
 Never execute database queries without an explicit timeout bound to the request context:
 
 ```go
-// ✅ GOOD: Timeout bound to request context
+// GOOD: Timeout bound to request context
 ctx, cancel := context.WithTimeout(c.Context(), 3*time.Second)
 defer cancel()
 
@@ -127,20 +127,20 @@ Migration files live in `backend-go/migrations/` with format `NNN_description.sq
 
 1. **SQL Injection via String Interpolation**:
    ```go
-   // ❌ PROHIBITED: Vulnerable to SQL Injection
+   // PROHIBITED: Vulnerable to SQL Injection
    query := fmt.Sprintf("SELECT * FROM users WHERE phone = '%s'", phone)
    
-   // ✅ MANDATORY: Use parameterized placeholders ($1, $2, ...)
+   // MANDATORY: Use parameterized placeholders ($1, $2, ...)
    query := "SELECT * FROM users WHERE phone = $1"
    ```
 2. **Foreign Keys Without Indexes**:
    - Adding `REFERENCES other_table(id)` without a corresponding B-Tree index causes sequential table locks when the parent record is modified or deleted.
 3. **Ignoring Scan Errors**:
    ```go
-   // ❌ PROHIBITED: Swallowing scan errors
+   // PROHIBITED: Swallowing scan errors
    _ = rows.Scan(&id, &name)
    
-   // ✅ MANDATORY: Always check and wrap scan errors
+   // MANDATORY: Always check and wrap scan errors
    if err := rows.Scan(&id, &name); err != nil {
        return fmt.Errorf("scan incident row: %w", err)
    }

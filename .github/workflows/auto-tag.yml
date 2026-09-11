@@ -24,7 +24,7 @@ jobs:
         run: |
           VERSION=$(cat VERSION | tr -d '[:space:]')
           echo "version=v$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Read version: v$VERSION"
+          echo "Read version: v$VERSION"
 
       - name: Check if tag already exists
         id: check_tag
@@ -32,10 +32,10 @@ jobs:
           TAG="${{ steps.read_version.outputs.version }}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "⚠️ Tag $TAG already exists — skipping"
+            echo "Tag $TAG already exists — skipping"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "✅ Tag $TAG does not exist — will create"
+            echo "Tag $TAG does not exist — will create"
           fi
 
       - name: Create and Push Tag
@@ -46,4 +46,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "$TAG" -m "Release $TAG (auto-tagged from VERSION file)"
           git push origin "$TAG"
-          echo "🏷️ Tag $TAG created and pushed — release-deploy.yml will trigger automatically"
+          echo "Tag $TAG created and pushed — release-deploy.yml will trigger automatically"

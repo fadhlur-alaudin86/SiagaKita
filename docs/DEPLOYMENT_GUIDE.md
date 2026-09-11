@@ -1,4 +1,4 @@
-# 🚀 SiagaKita — Production Deployment Guide
+# SiagaKita — Production Deployment Guide
 
 > **Production Server IP:** `<YOUR_VPS_IP>` (Ubuntu 22.04 / 24.04 LTS VPS)  
 > **Production Domain:** `api.siagakita.com` (or `<YOUR_DOMAIN>`)  

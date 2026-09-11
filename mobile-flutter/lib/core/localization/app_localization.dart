@@ -45,7 +45,7 @@ class AppLocalization {
         'This action cannot be undone. All blood donation history, volunteer points, and emergency medical records will be permanently deleted.',
     'Batal': 'Cancel',
     'Lemah': 'Weak',
-    'Kuat ✓': 'Strong ✓',
+    'Kuat': 'Strong',
     'Hapus Permanen': 'Delete Permanently',
     'Selamat Datang': 'Welcome',
     'Masuk untuk mengakses sistem pelaporan darurat SiagaKita.':
@@ -387,10 +387,10 @@ class AppLocalization {
     'Nama wajib diisi': 'Name is required',
     'Nama terlalu pendek': 'Name is too short',
     'Ambil / Pilih Foto KTP': 'Take / Choose ID Photo',
-    'KTP terpilih ✓': 'ID Photo selected ✓',
+    'KTP terpilih': 'ID Photo selected',
     'Foto Profil (Selfie)': 'Profile Photo (Selfie)',
     'Ambil Selfie Wajah': 'Take Face Selfie',
-    'Selfie terpilih ✓': 'Selfie selected ✓',
+    'Selfie terpilih': 'Selfie selected',
     'Mengirim...': 'Sending...',
     'Ajukan Verifikasi NIK': 'Submit ID Verification',
     'Kamera': 'Camera',
@@ -529,8 +529,8 @@ class AppLocalization {
     'Masukkan kode OTP 6 digit': 'Enter 6-digit OTP code',
     'Konfirmasi Kata Sandi Baru': 'Confirm New Password',
     'Konfirmasi kata sandi wajib diisi': 'Password confirmation is required',
-    '© 2026 Tim SiagaKita\nDibuat dengan ❤️ untuk Kemanusiaan':
-        '© 2026 SiagaKita Team\nMade with ❤️ for Humanity',
+    '© 2026 Tim SiagaKita\nDibuat untuk Kemanusiaan':
+        '© 2026 SiagaKita Team\nMade for Humanity',
     'Akun Anda diblokir dari fitur SOS. Hubungi admin.':
         'Your account is banned from the SOS feature. Contact admin.',
     'Gagal mengirim SOS: GPS perangkat Anda dimatikan.':
@@ -576,7 +576,6 @@ class AppLocalization {
     'Buka Kamera': 'Open Camera',
     'Foto Bukti Penyelesaian': 'Completion Proof Photo',
     'Standard': 'Standard',
-    '✓ Terverifikasi': '✓ Verified',
     'Lokasi korban sedang diperbarui...': 'Victim location is being updated...',
     'MENUNGGU REVIEW INSTANSI': 'AWAITING AGENCY REVIEW',
     'Menunggu konfirmasi instansi': 'Awaiting agency confirmation',

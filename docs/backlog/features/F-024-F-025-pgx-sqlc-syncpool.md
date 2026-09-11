@@ -27,17 +27,17 @@
 
 | Step | Action | Status | Date | Notes |
 |---|---|---|---|---|
-| -3 | Backlog Overview | ✅ Done | 2026-09-11 | Selected Parent #38, Sub-issues #24 and #25 |
-| -2 | Discovery | ✅ Done | 2026-09-11 | Explored telemetry and incident query hotpaths |
-| -1 | Resolve Backlog | ✅ Done | 2026-09-11 | Created feature backlog log `F-024-F-025-pgx-sqlc-syncpool.md` |
-| 0 | Branch & Assign | ✅ Done | 2026-09-11 | Branch `feature/F-024-F-025-pgx-sqlc-syncpool`, assigned @me, status in-progress |
-| 1 | Read Mapping | ✅ Done | 2026-09-11 | Aligned architecture via `/grill-me` (dual-driver + request/broadcast pool) |
-| 2 | API Contract | ⏩ Skipped | 2026-09-11 | Internal performance refactor; external API contracts unchanged |
-| 3 | DB Migration | ⏩ Skipped | 2026-09-11 | No schema change; documented dual-driver strategy in `DATABASE_SCHEMA.md` |
-| 4 | Implementation | ✅ Done | 2026-09-11 | Implemented sync.Pool, pgxpool, sqlc code generation, and repository wiring |
-| 5 | Tests | ✅ Done | 2026-09-11 | Benchmarks passed (67% speedup, 81% alloc reduction), race audit passed |
-| 6 | CI + Review | ⏳ In Progress | 2026-09-11 | Pre-PR audit, checklist sync, CodeGraph sync |
-| 7 | Close Log | ⏳ Pending | 2026-09-11 | Pull Request to `dev` |
+| -3 | Backlog Overview | Done | 2026-09-11 | Selected Parent #38, Sub-issues #24 and #25 |
+| -2 | Discovery | Done | 2026-09-11 | Explored telemetry and incident query hotpaths |
+| -1 | Resolve Backlog | Done | 2026-09-11 | Created feature backlog log `F-024-F-025-pgx-sqlc-syncpool.md` |
+| 0 | Branch & Assign | Done | 2026-09-11 | Branch `feature/F-024-F-025-pgx-sqlc-syncpool`, assigned @me, status in-progress |
+| 1 | Read Mapping | Done | 2026-09-11 | Aligned architecture via `/grill-me` (dual-driver + request/broadcast pool) |
+| 2 | API Contract | Skipped | 2026-09-11 | Internal performance refactor; external API contracts unchanged |
+| 3 | DB Migration | Skipped | 2026-09-11 | No schema change; documented dual-driver strategy in `DATABASE_SCHEMA.md` |
+| 4 | Implementation | Done | 2026-09-11 | Implemented sync.Pool, pgxpool, sqlc code generation, and repository wiring |
+| 5 | Tests | Done | 2026-09-11 | Benchmarks passed (67% speedup, 81% alloc reduction), race audit passed |
+| 6 | CI + Review | In Progress | 2026-09-11 | Pre-PR audit, checklist sync, CodeGraph sync |
+| 7 | Close Log | Pending | 2026-09-11 | Pull Request to `dev` |
 
 ## Benchmark Metrics & Performance Validation
 

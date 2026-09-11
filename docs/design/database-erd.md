@@ -1,4 +1,4 @@
-# 🗄️ Database Entity-Relationship Diagram (ERD) — SiagaKita
+# Database Entity-Relationship Diagram (ERD) — SiagaKita
 
 > **Active Schema:** Schema v12 (PostgreSQL 15)  
 > **Documentation Source:** [`docs/DATABASE_SCHEMA.md`](../DATABASE_SCHEMA.md)

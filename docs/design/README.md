@@ -1,4 +1,4 @@
-# 📐 SiagaKita System Architecture & Visual Design Catalog
+# SiagaKita System Architecture & Visual Design Catalog
 
 Welcome to the central visual architecture and design specification catalog for **SiagaKita**.
 
@@ -6,7 +6,7 @@ All diagrams in this directory are authored in **Mermaid.js** directly within ma
 
 ---
 
-## 📚 Diagram Catalog
+## Diagram Catalog
 
 | Document | Format | Description | Target Audience |
 |---|:---:|---|---|
@@ -16,13 +16,13 @@ All diagrams in this directory are authored in **Mermaid.js** directly within ma
 
 ---
 
-## 🏛️ High-Level System Architecture
+## High-Level System Architecture
 
 ```mermaid
 flowchart TB
     subgraph Clients["Client Applications"]
-        CitizenApp["📱 Mobile Flutter App<br/>(Civilian & Volunteer)"]
-        ConsoleApp["🖥️ Desktop Flutter Console<br/>(Admin & Agency Dispatcher)"]
+        CitizenApp["Mobile Flutter App<br/>(Civilian & Volunteer)"]
+        ConsoleApp["Desktop Flutter Console<br/>(Admin & Agency Dispatcher)"]
     end
 
     subgraph Gateway["Network & Edge Layer"]
@@ -38,15 +38,15 @@ flowchart TB
     end
 
     subgraph Data["Persistence & In-Memory Layer"]
-        Postgres[("🐘 PostgreSQL 15<br/>(15 Tables, Schema v12)")]
-        RedisStore[("⚡ Redis 7<br/>(Sessions, Coordinates, Expiry Events)")]
-        LocalStorage["📁 File Storage<br/>(Uploads: Evidence & Documents)"]
+        Postgres[("PostgreSQL 15<br/>(15 Tables, Schema v12)")]
+        RedisStore[("Redis 7<br/>(Sessions, Coordinates, Expiry Events)")]
+        LocalStorage["File Storage<br/>(Uploads: Evidence & Documents)"]
     end
 
     subgraph External["External Integrations"]
-        FonnteAPI["💬 WhatsApp Gateway (Fonnte API)"]
-        GmailAPI["📧 Email Gateway (Gmail REST API)"]
-        SMSFallback["📡 SMS Gateway Fallback"]
+        FonnteAPI["WhatsApp Gateway (Fonnte API)"]
+        GmailAPI["Email Gateway (Gmail REST API)"]
+        SMSFallback["SMS Gateway Fallback"]
     end
 
     %% Client traffic
@@ -77,7 +77,7 @@ flowchart TB
 
 ---
 
-## 🔄 Living Documentation Protocol
+## Living Documentation Protocol
 
 To prevent **documentation drift**, this directory operates under the **Living Documentation** rule governed by `.agent/skills/feature-dev-workflow/SKILL.md`:
 

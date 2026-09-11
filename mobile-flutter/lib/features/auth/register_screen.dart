@@ -82,7 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     '',
     'Lemah'.tr(context),
     'Sedang'.tr(context),
-    'Kuat ✓'.tr(context),
+    'Kuat'.tr(context),
   ][_passwordStrength];
 
   // ─── Validators ────────────────────────────────────────────────────────────

@@ -576,9 +576,10 @@ class _MapScreenState extends State<MapScreen>
                                       ],
                                     ),
                                     child: Center(
-                                      child: Text(
-                                        inc.typeEmoji,
-                                        style: const TextStyle(fontSize: 18),
+                                      child: Icon(
+                                        inc.typeIcon,
+                                        size: 18,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
@@ -782,7 +783,7 @@ class _MapScreenState extends State<MapScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${inc.typeEmoji} ${inc.typeLabel.tr(context)} - ${inc.distanceLabel.tr(context)} - ${'Buka tab Operasi untuk terima misi'.tr(context)}',
+          '${inc.typeLabel.tr(context)} - ${inc.distanceLabel.tr(context)} - ${'Buka tab Operasi untuk terima misi'.tr(context)}',
         ),
         action: SnackBarAction(label: 'OK', onPressed: () {}),
         duration: const Duration(seconds: 4),

@@ -34,15 +34,15 @@
 
 | Step | Action | Status | Date | Notes |
 |---|---|---|---|---|
-| -3 | Backlog Overview | ✅ Done | 2026-09-09 | Plan 01 selected as foundational blocker for Phase 1 MVP |
-| -2 | Discovery & Grill-Me | ✅ Done | 2026-09-09 | Aligned on 30s grace period and client request queueing |
-| -1 | Resolve Backlog | ✅ Done | 2026-09-09 | Created feature log `F-028-F-029-auth-session-resilience.md` |
-| 0 | Branch & Assign | ✅ Done | 2026-09-09 | Created branch `feature/F-028-F-029-auth-session-resilience`, updated Issues #28 & #29 to `in-progress` |
-| 1 | Read Mapping | ✅ Done | 2026-09-09 | Inspected token generation in `utils/jwt.go`, `user/service.go`, `middleware/auth.go` |
-| 2 | API Contract | ✅ Done | 2026-09-09 | Updated `docs/api/paths/auth.yaml` with `/api/v1/auth/refresh-token` |
-| 3 | DB Migration | ⏩ Skipped | 2026-09-09 | No DB schema change needed; Redis handles token rotation state |
-| 4 | Backend Implementation | ✅ Done | 2026-09-09 | Implemented `RefreshToken` service, handler, routes, 30s Redis grace window |
-| 5 | Flutter Implementation | ✅ Done | 2026-09-09 | Implemented `ApiClient` interceptor in mobile and `AuthService`/`api_services.dart` in desktop |
-| 6 | Tests | ✅ Done | 2026-09-09 | Unit tests added in Go (`service_test.go`, `handler_test.go`), Mobile (`session_service_test.dart`), Desktop (`auth_service_test.dart`) |
-| 7 | CI + Review | ✅ Done | 2026-09-09 | Verified `go test -race` (all pass), Mobile `flutter test` + `flutter analyze` (clean), Desktop `flutter test` + `flutter analyze` (clean) |
+| -3 | Backlog Overview | Done | 2026-09-09 | Plan 01 selected as foundational blocker for Phase 1 MVP |
+| -2 | Discovery & Grill-Me | Done | 2026-09-09 | Aligned on 30s grace period and client request queueing |
+| -1 | Resolve Backlog | Done | 2026-09-09 | Created feature log `F-028-F-029-auth-session-resilience.md` |
+| 0 | Branch & Assign | Done | 2026-09-09 | Created branch `feature/F-028-F-029-auth-session-resilience`, updated Issues #28 & #29 to `in-progress` |
+| 1 | Read Mapping | Done | 2026-09-09 | Inspected token generation in `utils/jwt.go`, `user/service.go`, `middleware/auth.go` |
+| 2 | API Contract | Done | 2026-09-09 | Updated `docs/api/paths/auth.yaml` with `/api/v1/auth/refresh-token` |
+| 3 | DB Migration | Skipped | 2026-09-09 | No DB schema change needed; Redis handles token rotation state |
+| 4 | Backend Implementation | Done | 2026-09-09 | Implemented `RefreshToken` service, handler, routes, 30s Redis grace window |
+| 5 | Flutter Implementation | Done | 2026-09-09 | Implemented `ApiClient` interceptor in mobile and `AuthService`/`api_services.dart` in desktop |
+| 6 | Tests | Done | 2026-09-09 | Unit tests added in Go (`service_test.go`, `handler_test.go`), Mobile (`session_service_test.dart`), Desktop (`auth_service_test.dart`) |
+| 7 | CI + Review | Done | 2026-09-09 | Verified `go test -race` (all pass), Mobile `flutter test` + `flutter analyze` (clean), Desktop `flutter test` + `flutter analyze` (clean) |
 | 8 | Close Log | ⏳ Ready | 2026-09-09 | Awaiting user command to create PR and merge |
