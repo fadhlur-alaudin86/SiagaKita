@@ -115,9 +115,9 @@ All team members MUST follow Conventional Commits to ensure automated release no
 `auth`, `incident`, `user`, `admin`, `telemetry`, `otp`, `ws`, `mobile`, `desktop`, `infra`, `ci`, `docs`
 
 ### Plain-Text Commit Body Rules
+- **Short & Concise (Singkat dan Padat)**: Git commit messages MUST be brief. Provide an imperative subject line (`<type>(<scope>): <subject>`) and an optional 1-3 line plain-text explanation of WHY. Never bloat commit messages with full issue task checklists or detailed component inventories.
 - **No Markdown Formatting Syntax**: Git commit messages are displayed in monospace plain text in terminal pagers (`git log`) and GitHub commit detail blocks (`<pre>`). Never include Markdown headings (`#`, `##`), bold/italic markers (`**`, `*`), markdown links (`[text](url)`), or code fences (```` ``` ````).
-- **Clean Structure**: Use Conventional Commits for the subject line (`<type>(<scope>): <subject>`), capitalized section titles followed by colons (`Changes:`, `Components:`, `Verification:`), 2-space indentation, and plain hyphens (`- `) for list items.
-- **Rich Markdown in PRs Only**: Reserve full GitHub Flavored Markdown (GFM) (headings, bold, tables, links, code blocks) for Pull Request descriptions.
+- **Details Belong in PRs**: Reserve exhaustive technical descriptions, architectural decision trees, component change matrices, and test verification tables for GitHub Pull Request descriptions where rich GFM is fully rendered.
 
 ## Database Migrations & Rollback Operations
 
@@ -153,7 +153,7 @@ All team members MUST follow Conventional Commits to ensure automated release no
 3. **Use path filters** — `ci-dev.yml` should only execute checks relevant to changed paths.
 4. **Never merge dev to main directly** — merging `dev` into `main` must always be executed manually by the user (release gate).
 5. **Update VERSION** — remind developers to update `VERSION` when creating a release PR to `main`.
-6. **Enforce Conventional Commits** — if commit messages break standard format or contain Markdown syntax (`##`, `**`), point it out and request plain-text formatting.
+6. **Enforce Conventional Commits** — if commit messages break standard format, are overly verbose with full issue task lists, or contain Markdown syntax (`##`, `**`), point it out and enforce short, plain-text commit formatting.
 7. **Automated Rollback awareness** — deployment workflows include automated health check rollbacks. If a deployment fails, inspect container logs and report findings.
 8. **Database Rollback Caution** — Never automate destructive database schema rollbacks in unattended CI/CD pipelines. Always verify backward-compatibility (Expand & Contract) and instruct developers to use `siagakita-migrate` for manual schema rollbacks.
 9. **Major Workflow Evolution Protocol** — Any proposed modifications to GitHub Actions workflows (`.github/workflows/*.yml`), branching models, or deployment automation are classified as Major Evolutions. Draft a structured proposal in `learning_proposal.md` and recommend `/grill-me` alignment before implementing changes. See `feature-dev-workflow/workflow-evolution.md`.

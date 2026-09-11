@@ -76,6 +76,6 @@ All developers and AI workers MUST follow Conventional Commits:
 [footer: Closes #N]
 ```
 
-### Formatting Policy: Plain-Text Commit Messages vs Rich Markdown PRs
-- **Git Commit Messages**: Git commits are viewed in terminal logs (`git log`) and GitHub monospace `<pre>` blocks. They MUST be written in clean plain text without Markdown formatting syntax (no `#` or `##` headers, no `**bold**`, no code fence blocks). Use plain capitalized headers (`Changes:`, `Verification:`), 2-space indentation, and plain hyphens (`- `).
-- **Pull Request Descriptions**: Full GitHub Flavored Markdown (GFM) (headings, bold, tables, links, code blocks) is encouraged for Pull Request bodies to give reviewers a rich, structured visual experience.
+### Formatting Policy: Concise Plain-Text Commit Messages vs Rich Detailed PRs
+- **Git Commit Messages**: Keep Git commit messages short, concise, and focused (singkat dan padat). Use Conventional Commits (`<type>(<scope>): <subject>`) with an optional brief 1-3 line plain-text explanation of WHY. Never bloat commit messages with full issue task checklists or detailed component inventories. Never use Markdown formatting syntax (no `#` or `##` headers, no `**bold**`, no code fence blocks).
+- **Pull Request Descriptions**: Full issue resolution details, architectural rationale, component modifications, and test verification matrices belong exclusively in the GitHub Pull Request description where rich GitHub Flavored Markdown (GFM) (headings, bold, tables, links, code blocks) is fully rendered.

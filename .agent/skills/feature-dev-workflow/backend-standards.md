@@ -133,9 +133,9 @@ All developers MUST use this format. GitHub Release changelogs are automatically
 ```
 
 ### Plain-Text Commit Body Rules
+- **Short & Concise (Singkat dan Padat)**: Git commit messages MUST be brief. Provide an imperative subject line (`<type>(<scope>): <subject>`) and an optional 1-3 line plain-text explanation of WHY. Never bloat commit messages with full issue task checklists or detailed component inventories.
 - **No Markdown Formatting Syntax**: Git commit messages are displayed in monospace plain text in terminal pagers (`git log`) and GitHub commit detail blocks (`<pre>`). Never include Markdown headings (`#`, `##`), bold/italic markers (`**`, `*`), markdown links (`[text](url)`), or code fences (```` ``` ````).
-- **Clean Structure**: Use Conventional Commits for the subject line (`<type>(<scope>): <subject>`), capitalized section titles followed by colons (`Changes:`, `Components:`, `Verification:`), 2-space indentation, and plain hyphens (`- `) for list items.
-- **Rich Markdown in PRs Only**: Reserve full GitHub Flavored Markdown (GFM) (headings, bold, tables, links, code blocks) for Pull Request descriptions.
+- **Details Belong in PRs**: Reserve exhaustive technical descriptions, architectural decision trees, component change matrices, and test verification tables for GitHub Pull Request descriptions where rich GFM is fully rendered.
 
 ### Applicable Types
 
