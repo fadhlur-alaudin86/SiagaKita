@@ -9,7 +9,7 @@
 | Requestor | Fadhlurrahman Alaudin |
 | Date Created | 2026-09-06 |
 | GitHub Issue | #43 |
-| Status | In Progress |
+| Status | Merged (PR #44) |
 
 ## Discovery (Step -2)
 
@@ -47,7 +47,7 @@
 | 5 | Documentation Update | Done | 2026-09-06 | Update `DEPLOYMENT_GUIDE.md` |
 | 6 | Verification | Done | 2026-09-06 | `nginx -t`, `flutter analyze`, `go test -v -race ./...` lulus tanpa kendala |
 | 7 | CI + Review | Done | 2026-09-06 | Validasi dan persiapan status ready |
-| 8 | Close Log | Done | 2026-09-06 | Finalisasi feature log F-043 |
+| 8 | Close Log | Done | 2026-09-06 | Merged to dev via PR #44 |
 
 ## Decisions Log
 

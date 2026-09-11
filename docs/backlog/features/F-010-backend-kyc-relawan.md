@@ -9,7 +9,7 @@
 | Requestor | Fadhlurrahman Alaudin |
 | Date Created | 2026-09-06 |
 | GitHub Issue | #10 |
-| Status | In Progress |
+| Status | Merged (PR #39) |
 
 ## Discovery (Step -2)
 
@@ -46,7 +46,7 @@
 | 5 | Flutter Implementation | Verified | 2026-09-06 | `windows_console_flutter` siap mengonsumsi field DTO yang diperbarui |
 | 6 | Tests | Done | 2026-09-06 | Test suite `handler_test.go` lulus 100% |
 | 7 | CI + Review | Done | 2026-09-06 | Unit test dan golangci-lint lolos dengan 0 issue |
-| 8 | Close Log | Pending | 2026-09-06 | Menunggu PR review dan merge |
+| 8 | Close Log | Done | 2026-09-06 | Merged to dev via PR #39 |
 
 ## Test Cases
 

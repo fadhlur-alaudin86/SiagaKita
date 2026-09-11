@@ -9,7 +9,7 @@
 | Requestor | Fadhlurrahman Alaudin |
 | Date Created | 2026-09-09 |
 | GitHub Issue | #11 (Parent: #36) |
-| Status | In Progress |
+| Status | Merged (PR #53) |
 
 ## Discovery (Step -2)
 
@@ -43,8 +43,8 @@
 | 4 | Backend Implementation | Done | 2026-09-09 | Implementasi logic audit logging, temporary ban duration, dan role filtering |
 | 5 | Flutter Verification | Verified | 2026-09-09 | Verifikasi payload request dari `user_management_page.dart` |
 | 6 | Tests | Done | 2026-09-09 | Unit tests di `handler_test.go` dan `auth_test.go` lulus 100% |
-| 7 | CI + Review | ⏳ Ready | 2026-09-09 | Pre-PR review checklist & tests passing |
-| 8 | Close Log | Pending | 2026-09-09 | Menunggu PR review dan merge |
+| 7 | CI + Review | Done | 2026-09-09 | Pre-PR review checklist & tests passing |
+| 8 | Close Log | Done | 2026-09-09 | Merged to dev via PR #53 |
 
 ## Test Cases
 
