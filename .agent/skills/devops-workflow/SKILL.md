@@ -114,6 +114,11 @@ All team members MUST follow Conventional Commits to ensure automated release no
 
 `auth`, `incident`, `user`, `admin`, `telemetry`, `otp`, `ws`, `mobile`, `desktop`, `infra`, `ci`, `docs`
 
+### Plain-Text Commit Body Rules
+- **No Markdown Formatting Syntax**: Git commit messages are displayed in monospace plain text in terminal pagers (`git log`) and GitHub commit detail blocks (`<pre>`). Never include Markdown headings (`#`, `##`), bold/italic markers (`**`, `*`), markdown links (`[text](url)`), or code fences (```` ``` ````).
+- **Clean Structure**: Use Conventional Commits for the subject line (`<type>(<scope>): <subject>`), capitalized section titles followed by colons (`Changes:`, `Components:`, `Verification:`), 2-space indentation, and plain hyphens (`- `) for list items.
+- **Rich Markdown in PRs Only**: Reserve full GitHub Flavored Markdown (GFM) (headings, bold, tables, links, code blocks) for Pull Request descriptions.
+
 ## Database Migrations & Rollback Operations
 
 ### Automated In-App Migrations (Startup)
@@ -148,7 +153,7 @@ All team members MUST follow Conventional Commits to ensure automated release no
 3. **Use path filters** — `ci-dev.yml` should only execute checks relevant to changed paths.
 4. **Never merge dev to main directly** — merging `dev` into `main` must always be executed manually by the user (release gate).
 5. **Update VERSION** — remind developers to update `VERSION` when creating a release PR to `main`.
-6. **Enforce Conventional Commits** — if commit messages break standard format, point it out and request correction.
+6. **Enforce Conventional Commits** — if commit messages break standard format or contain Markdown syntax (`##`, `**`), point it out and request plain-text formatting.
 7. **Automated Rollback awareness** — deployment workflows include automated health check rollbacks. If a deployment fails, inspect container logs and report findings.
 8. **Database Rollback Caution** — Never automate destructive database schema rollbacks in unattended CI/CD pipelines. Always verify backward-compatibility (Expand & Contract) and instruct developers to use `siagakita-migrate` for manual schema rollbacks.
 9. **Major Workflow Evolution Protocol** — Any proposed modifications to GitHub Actions workflows (`.github/workflows/*.yml`), branching models, or deployment automation are classified as Major Evolutions. Draft a structured proposal in `learning_proposal.md` and recommend `/grill-me` alignment before implementing changes. See `feature-dev-workflow/workflow-evolution.md`.
