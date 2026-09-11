@@ -226,7 +226,7 @@
     tags:
       - Auth
     summary: Login for agency field personnel (mobile responder)
-    description: Direct login for `agency_personnel` role. Returns JWT immediately.
+    description: Direct login for `agency_personnel` role using Email or Badge Number. Returns JWT immediately.
     requestBody:
       required: true
       content:
@@ -237,7 +237,7 @@
             properties:
               email:
                 type: string
-                format: email
+                description: Officer registered email or unique badge number (e.g. DMK-01)
               password:
                 type: string
                 format: password

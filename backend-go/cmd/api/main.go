@@ -233,14 +233,17 @@ func main() {
 	incidents.Get("/my-active-response", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetMyActiveResponse)
 	incidents.Put("/:id/response-location", sessionMw, middleware.VolunteerOnly(), incidentHandler.UpdateResponseLocation)
 	// Console routes: tambah idempotencyMw untuk aksi yang mengubah state
-	incidents.Get("/all-active", middleware.ConsoleOnly(), incidentHandler.GetAllActive)
-	incidents.Get("/agency/history", middleware.ConsoleOnly(), incidentHandler.GetAgencyHistory)
+	incidents.Get("/all-active", middleware.AgencyOrPersonnelOnly(), incidentHandler.GetAllActive)
+	incidents.Get("/agency/history", middleware.AgencyOrPersonnelOnly(), incidentHandler.GetAgencyHistory)
 	incidents.Post("/:id/handle", middleware.AgencyOnly(), idempotencyMw, incidentHandler.AgencyHandleSOS)
-	incidents.Post("/:id/agency-handle", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyHandleSOS)
+	incidents.Post("/:id/agency-handle", middleware.AgencyOrPersonnelOnly(), idempotencyMw, incidentHandler.AgencyHandleSOS)
 	incidents.Post("/:id/agency-review", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyReviewVolunteer)
-	incidents.Post("/:id/agency-resolve", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.AgencyResolveSOS)
+	incidents.Post("/:id/agency-resolve", middleware.AgencyOrPersonnelOnly(), idempotencyMw, incidentHandler.AgencyResolveSOS)
 	incidents.Post("/:id/mark-false-alarm", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.MarkFalseAlarm)
 	incidents.Post("/:id/dispatch-broadcast", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.DispatchBroadcast)
+	// Mobile Responder routes (agency_personnel)
+	incidents.Post("/:id/personnel-status", middleware.PersonnelOnly(), idempotencyMw, incidentHandler.PersonnelUpdateStatus)
+	incidents.Get("/responder/active-mission", middleware.PersonnelOnly(), incidentHandler.GetPersonnelActiveMission)
 	// endpoint lama: incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve) // bisa tetap ada atau diganti, kita pakai agency-resolve sekarang
 
 	reports := v1.Group("/reports", authMw)

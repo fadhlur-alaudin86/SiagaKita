@@ -510,7 +510,7 @@ func (h *Handler) broadcastEventToAgencies(msg hub.Message) {
 	if h.hub == nil {
 		return
 	}
-	h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin")
+	h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin", "agency_personnel")
 }
 
 // notifyReporter mengirimkan WS event ke user yang membuat SOS (reporter).
@@ -974,4 +974,58 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 		FieldMessage: "Broadcast penugasan berhasil dikirim",
 		"sent_to":    len(req.VolunteerIDs),
 	})
+}
+
+// POST /api/v1/incidents/:id/personnel-status [PersonnelOnly / AgencyOrPersonnelOnly]
+func (h *Handler) PersonnelUpdateStatus(c *fiber.Ctx) error {
+	personnelID := c.Locals("userID").(string)
+	incidentID := c.Params("id")
+
+	var req struct {
+		Status        string `json:"status"` // en_route, on_scene, resolved
+		ProofPhotoURL string `json:"proof_photo_url,omitempty"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+
+	if req.Status == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Status wajib diisi")
+	}
+
+	if err := h.svc.PersonnelUpdateStatus(incidentID, personnelID, req.Status, req.ProofPhotoURL); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	// Broadcast WS event ke agency console dan reporter
+	go func() {
+		h.broadcastEventToAgencies(hub.Message{
+			Event: EventSOSStatusUpdate,
+			Payload: map[string]interface{}{
+				FieldIncidentID: incidentID,
+				"personnel_id":  personnelID,
+				"status":        req.Status,
+			},
+		})
+		h.notifyReporter(incidentID, "AGENCY_HANDLING", map[string]interface{}{
+			FieldIncidentID: incidentID,
+			"status":        req.Status,
+		})
+	}()
+
+	return utils.SuccessResponse(c, fiber.Map{
+		"updated":    true,
+		"status":     req.Status,
+		FieldMessage: "Status misi berhasil diperbarui",
+	})
+}
+
+// GET /api/v1/incidents/responder/active-mission [PersonnelOnly]
+func (h *Handler) GetPersonnelActiveMission(c *fiber.Ctx) error {
+	personnelID := c.Locals("userID").(string)
+	resp, err := h.svc.GetActiveResponse(personnelID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat misi aktif")
+	}
+	return utils.SuccessResponse(c, resp)
 }

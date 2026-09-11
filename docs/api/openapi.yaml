@@ -151,6 +151,10 @@ paths:
     $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1agency-resolve'
   /api/v1/incidents/{id}/mark-false-alarm:
     $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1mark-false-alarm'
+  /api/v1/incidents/{id}/personnel-status:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1{id}~1personnel-status'
+  /api/v1/incidents/responder/active-mission:
+    $ref: './paths/incidents.yaml#/~1api~1v1~1incidents~1responder~1active-mission'
 
   # ── Reports ───────────────────────────────────────────────────────────────
   /api/v1/reports:

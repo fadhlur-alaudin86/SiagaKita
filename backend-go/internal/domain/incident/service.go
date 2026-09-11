@@ -483,6 +483,10 @@ func (s *Service) AgencyHandleSOS(incidentID, agencyID string) error {
 	return s.repo.AgencyHandleSOS(incidentID, agencyID)
 }
 
+func (s *Service) PersonnelUpdateStatus(incidentID, personnelID, newStatus, photoURL string) error {
+	return s.repo.PersonnelUpdateStatus(incidentID, personnelID, newStatus, photoURL)
+}
+
 func (s *Service) VolunteerCompleteSOS(incidentID, volunteerID string, photoPaths []string) error {
 	if len(photoPaths) == 0 {
 		return errors.New("foto bukti wajib disertakan")

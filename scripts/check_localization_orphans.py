@@ -73,13 +73,16 @@ def scan_for_orphans(app_loc_path, lib_dir):
 def main():
     parser = argparse.ArgumentParser(description="Check for orphaned localization dictionary keys.")
     parser.add_argument("--mobile", action="store_true", help="Check mobile-flutter only")
+    parser.add_argument("--responder", action="store_true", help="Check mobile-flutter-responder only")
     parser.add_argument("--desktop", action="store_true", help="Check windows_console_flutter only")
-    parser.add_argument("--all", action="store_true", help="Check both mobile and desktop (default)")
+    parser.add_argument("--all", action="store_true", help="Check all flutter clients (default)")
 
     args = parser.parse_args()
 
-    check_mobile = args.mobile or args.all or (not args.mobile and not args.desktop)
-    check_desktop = args.desktop or args.all or (not args.mobile and not args.desktop)
+    check_any_specific = args.mobile or args.responder or args.desktop
+    check_mobile = args.mobile or args.all or not check_any_specific
+    check_responder = args.responder or args.all or not check_any_specific
+    check_desktop = args.desktop or args.all or not check_any_specific
 
     repo_root = find_repo_root()
     has_errors = False
@@ -90,6 +93,12 @@ def main():
             "name": "mobile-flutter",
             "loc_file": os.path.join(repo_root, "mobile-flutter", "lib", "core", "localization", "app_localization.dart"),
             "lib_dir": os.path.join(repo_root, "mobile-flutter", "lib"),
+        })
+    if check_responder and os.path.exists(os.path.join(repo_root, "mobile-flutter-responder")):
+        targets.append({
+            "name": "mobile-flutter-responder",
+            "loc_file": os.path.join(repo_root, "mobile-flutter-responder", "lib", "core", "localization", "app_localization.dart"),
+            "lib_dir": os.path.join(repo_root, "mobile-flutter-responder", "lib"),
         })
     if check_desktop:
         targets.append({

@@ -15,6 +15,8 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       mobile: ${{ steps.filter.outputs.mobile }}
+      mobile_main: ${{ steps.filter.outputs.mobile_main }}
+      mobile_responder: ${{ steps.filter.outputs.mobile_responder }}
       desktop: ${{ steps.filter.outputs.desktop }}
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +30,11 @@ jobs:
               - 'backend-go/**'
             mobile:
               - 'mobile-flutter/**'
+              - 'mobile-flutter-responder/**'
+            mobile_main:
+              - 'mobile-flutter/**'
+            mobile_responder:
+              - 'mobile-flutter-responder/**'
             desktop:
               - 'windows_console_flutter/**'
 
@@ -87,9 +94,6 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.mobile == 'true' }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./mobile-flutter
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -100,19 +104,59 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install Dependencies
+      # ─── Mobile Flutter (Citizen / Volunteer) ───
+      - name: Install Dependencies (mobile-flutter)
+        if: ${{ needs.changes.outputs.mobile_main == 'true' }}
+        working-directory: ./mobile-flutter
         run: flutter pub get
 
-      - name: Check Format (dart format)
+      - name: Check Format (mobile-flutter)
+        if: ${{ needs.changes.outputs.mobile_main == 'true' }}
+        working-directory: ./mobile-flutter
         run: dart format --set-exit-if-changed .
 
-      - name: Check Localization Orphans
+      - name: Check Localization Orphans (mobile-flutter)
+        if: ${{ needs.changes.outputs.mobile_main == 'true' }}
+        working-directory: ./mobile-flutter
         run: python3 ../scripts/check_localization_orphans.py --mobile
 
-      - name: Analyze
+      - name: Analyze (mobile-flutter)
+        if: ${{ needs.changes.outputs.mobile_main == 'true' }}
+        working-directory: ./mobile-flutter
         run: flutter analyze --fatal-infos
 
-      - name: Test
+      - name: Test (mobile-flutter)
+        if: ${{ needs.changes.outputs.mobile_main == 'true' }}
+        working-directory: ./mobile-flutter
+        run: |
+          if [ -d "test" ]; then
+            flutter test
+          fi
+
+      # ─── Mobile Flutter Responder (Emergency Personnel) ───
+      - name: Install Dependencies (mobile-flutter-responder)
+        if: ${{ needs.changes.outputs.mobile_responder == 'true' }}
+        working-directory: ./mobile-flutter-responder
+        run: flutter pub get
+
+      - name: Check Format (mobile-flutter-responder)
+        if: ${{ needs.changes.outputs.mobile_responder == 'true' }}
+        working-directory: ./mobile-flutter-responder
+        run: dart format --set-exit-if-changed .
+
+      - name: Check Localization Orphans (mobile-flutter-responder)
+        if: ${{ needs.changes.outputs.mobile_responder == 'true' }}
+        working-directory: ./mobile-flutter-responder
+        run: python3 ../scripts/check_localization_orphans.py --responder
+
+      - name: Analyze (mobile-flutter-responder)
+        if: ${{ needs.changes.outputs.mobile_responder == 'true' }}
+        working-directory: ./mobile-flutter-responder
+        run: flutter analyze --fatal-infos
+
+      - name: Test (mobile-flutter-responder)
+        if: ${{ needs.changes.outputs.mobile_responder == 'true' }}
+        working-directory: ./mobile-flutter-responder
         run: |
           if [ -d "test" ]; then
             flutter test

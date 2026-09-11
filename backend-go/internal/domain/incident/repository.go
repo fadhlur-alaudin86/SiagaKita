@@ -622,6 +622,78 @@ func (r *Repository) AgencyReviewVolunteer(incidentID, volunteerID string, appro
 	})
 }
 
+// PersonnelUpdateStatus memperbarui status respons lapangan oleh agency_personnel.
+// Siklus: en_route -> on_scene -> resolved.
+func (r *Repository) PersonnelUpdateStatus(incidentID, personnelID, newStatus, photoURL string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var inc Incident
+		if err := tx.Where("id = ? AND status NOT IN ('resolved','false_alarm','canceled')", incidentID).
+			First(&inc).Error; err != nil {
+			return errors.New("insiden tidak ditemukan atau sudah selesai")
+		}
+
+		now := time.Now()
+		var resp IncidentResponse
+		err := tx.Where("incident_id = ? AND responder_id = ?", incidentID, personnelID).First(&resp).Error
+		if err != nil {
+			// Jika belum ada record response (klaim pertama), buat baru
+			var agencyAccountID string
+			_ = tx.Raw(`
+				SELECT a.account_id 
+				FROM agencies a 
+				JOIN agency_personnels ap ON ap.agency_id = a.id 
+				WHERE ap.user_id = ?
+			`, personnelID).Scan(&agencyAccountID).Error
+
+			statusToSet := newStatus
+			if statusToSet == "handling" {
+				statusToSet = "en_route"
+			}
+			resp = IncidentResponse{
+				IncidentID:  incidentID,
+				ResponderID: personnelID,
+				Status:      statusToSet,
+				AcceptedAt:  now,
+			}
+			if err := tx.Create(&resp).Error; err != nil {
+				return err
+			}
+
+			incUpdates := map[string]interface{}{
+				FieldStatus:       StatusHandled,
+				FieldAgencyStatus: AgencyStatusHandling,
+				FieldUpdatedAt:    now,
+			}
+			if agencyAccountID != "" {
+				incUpdates["handled_by_agency_id"] = agencyAccountID
+			}
+			return tx.Model(&Incident{}).Where("id = ?", incidentID).Updates(incUpdates).Error
+		}
+
+		// Update response yang sudah ada
+		updates := map[string]interface{}{
+			FieldStatus: newStatus,
+		}
+		if photoURL != "" {
+			updates["proof_photo_url"] = photoURL
+		}
+
+		if newStatus == "resolved" || newStatus == "completed" {
+			updates[FieldStatus] = "resolved"
+			updates[FieldCompletedAt] = now
+			// Selesaikan insiden secara global
+			tx.Model(&Incident{}).Where("id = ?", incidentID).Updates(map[string]interface{}{
+				FieldStatus:       StatusResolved,
+				FieldAgencyStatus: "resolved",
+				"resolved_at":     now,
+				FieldUpdatedAt:    now,
+			})
+		}
+
+		return tx.Model(&IncidentResponse{}).Where("id = ?", resp.ID).Updates(updates).Error
+	})
+}
+
 func (r *Repository) FindResponsesByIncident(incidentID string) ([]IncidentResponse, error) {
 	var responses []IncidentResponse
 	err := r.db.Where("incident_id = ?", incidentID).Find(&responses).Error

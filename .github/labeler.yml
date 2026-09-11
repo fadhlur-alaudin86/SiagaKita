@@ -4,7 +4,9 @@
 
 'component: mobile':
   - changed-files:
-      - any-glob-to-any-file: 'mobile-flutter/**'
+      - any-glob-to-any-file:
+          - 'mobile-flutter/**'
+          - 'mobile-flutter-responder/**'
 
 'component: desktop':
   - changed-files:
