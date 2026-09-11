@@ -12,6 +12,7 @@ import 'volunteer_registration_screen.dart';
 import 'report_history_screen.dart';
 import 'wa_verification_screen.dart';
 import '../../core/constants/api_config.dart';
+import '../../core/constants/relation_constants.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String accessToken;
@@ -1112,7 +1113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                                 subtitle: Text(
-                                  '${contact['relation'] ?? ''} • ${contact['phone'] ?? ''}',
+                                  '${EmergencyRelation.getLabel(contact['relation'], context)} • ${contact['phone'] ?? ''}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: secondaryTextColor,

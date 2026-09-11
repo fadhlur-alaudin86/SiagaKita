@@ -156,12 +156,18 @@ func replaceEmergencyContacts(tx *gorm.DB, userID string, contacts []EmergencyCo
 		return err
 	}
 	for _, c := range contacts {
-		relation := c.Relation
+		var relPtr *string
+		if c.Relation != "" {
+			normalized := NormalizeRelation(c.Relation)
+			if normalized != "" {
+				relPtr = &normalized
+			}
+		}
 		contact := EmergencyContact{
 			UserID:       userID,
 			ContactName:  c.Name,
 			ContactPhone: c.Phone,
-			Relation:     &relation,
+			Relation:     relPtr,
 		}
 		if err := tx.Create(&contact).Error; err != nil {
 			return err
@@ -241,11 +247,18 @@ func (r *Repository) SaveBiodata(userID string, req *BiodataRequest) error {
 
 		// 2. Insert emergency contact (jika disertakan)
 		if req.EmergencyContactName != nil && req.EmergencyContactPhone != nil {
+			var relPtr *string
+			if req.EmergencyRelation != nil && *req.EmergencyRelation != "" {
+				normalized := NormalizeRelation(*req.EmergencyRelation)
+				if normalized != "" {
+					relPtr = &normalized
+				}
+			}
 			contact := EmergencyContact{
 				UserID:       userID,
 				ContactName:  *req.EmergencyContactName,
 				ContactPhone: *req.EmergencyContactPhone,
-				Relation:     req.EmergencyRelation,
+				Relation:     relPtr,
 			}
 			if err := tx.Create(&contact).Error; err != nil {
 				return err

@@ -6,7 +6,7 @@ This document serves as the primary technical specification for the SiagaKita Po
 
 ## Schema Overview
 
-- **Active Version**: Schema v12 (Migrations 001 through 020)
+- **Active Version**: Schema v13 (Migrations 001 through 021)
 - **Database Engine**: PostgreSQL 15+
 - **Driver**: `jackc/pgx/v5` via `pgxpool.Pool` (Raw SQL, ORM-free)
 - **Migration Engine**: `golang-migrate` embedded in Go binary
@@ -17,7 +17,7 @@ This document serves as the primary technical specification for the SiagaKita Po
 ## Table of Contents
 
 1. [Database Migration & Reset Procedures](#1-database-migration--reset-procedures)
-2. [Custom ENUM Types](#2-custom-enum-types)
+2. [Domain Data Types & Value Constraints](#2-domain-data-types--value-constraints)
 3. [Authentication & Profile Tables](#3-authentication--profile-tables)
 4. [Agencies & Responders](#4-agencies--responders)
 5. [Incidents & Responses](#5-incidents--responses)
@@ -66,10 +66,13 @@ cd backend-go && go run cmd/migrate/main.go up
 
 ---
 
-## 2. Custom ENUM Types
+## 2. Domain Data Types & Value Constraints
 
-### `user_role`
-Enumeration of user authorization roles across all client interfaces:
+> [!NOTE]
+> As of **Schema v13 (Migration 021)**, all state machine, category, status, role, and relationship columns transitioned from custom PostgreSQL ENUM types to **Domain-Constrained `VARCHAR` with explicit SQL `CHECK` constraints**. This eliminates PostgreSQL migration lockouts (`ALTER TYPE ... ADD VALUE` cannot run inside transaction blocks), ensures 100% transactional safety during zero-downtime deployments via `golang-migrate`, and streamlines model mapping across Go, SQL, Dart, and JSON.
+
+### User Roles (`users.role`)
+- **Column**: `varchar(30)` with `CHECK (role IN ('superadmin', 'admin', 'agency', 'agency_personnel', 'volunteer', 'civilian'))`
 - `superadmin`: Root platform administrator seeded from environment variables.
 - `admin`: Platform administrator (KYC approval, user moderation, ranks management).
 - `agency`: Official emergency services organization account (Police, Fire, Medical, SAR).
@@ -77,34 +80,50 @@ Enumeration of user authorization roles across all client interfaces:
 - `volunteer`: Civilian responder verified via KYC.
 - `civilian`: General public user.
 
-### `agency_type`
-Categorization of emergency organizations:
-- `police`, `fire`, `medical`, `sar`
+### Agency Types (`agencies.type`)
+- **Column**: `varchar(20)` with `CHECK (type IN ('police', 'fire', 'medical', 'sar'))`
+- Categorization of emergency organizations: `police`, `fire`, `medical`, `sar`.
 
-### `blood_type_enum`
-ABO blood group classification:
-- `A`, `B`, `AB`, `O`, `UNKNOWN`
+### Blood Types (`user_profiles.blood_type`)
+- **Column**: `varchar(10)` with `CHECK (blood_type IN ('A', 'B', 'AB', 'O', 'UNKNOWN', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'))`
+- ABO and Rhesus classification. Default is `'UNKNOWN'`.
 
-### `cert_status`
-Validation lifecycle for volunteer medical/rescue credentials:
-- `pending`, `approved`, `rejected`, `expired`
+### Volunteer Certification Status (`volunteer_certifications.status`)
+- **Column**: `varchar(20)` with `CHECK (status IN ('pending', 'approved', 'rejected', 'expired'))`
+- Credential review lifecycle.
 
-### `incident_category`
-Emergency categorization:
-- `medical`, `fire`, `crime`, `rescue`, `disaster`, `general`, `unknown`
+### Incident Types & Categories (`incidents.incident_type`, `incident_reports.incident_type`)
+- **Columns**: `varchar(50)` with `CHECK (incident_type IN ('medical', 'fire', 'crime', 'rescue', 'disaster', 'general', 'unknown'))`
+- Standardized across both SOS alerts (Jalur A) and community reports (Jalur B).
 
-### `incident_status`
-Lifecycle states for Emergency SOS alerts (Jalur A):
-- `grace_period`: Initial 10-second window permitting cancellation without dispatch.
-- `broadcasting`: Active SOS alert broadcasted to nearby responders and console operators.
+### SOS Incident Status (`incidents.status` — Jalur A)
+- **Column**: `varchar(30)` with `CHECK (status IN ('grace_period', 'broadcasting', 'handled', 'resolved', 'false_alarm', 'canceled'))`
+- `grace_period`: Initial 10-second cancellation window.
+- `broadcasting`: Active SOS alert broadcasted to nearby responders and dispatchers.
 - `handled`: Accepted by a responder or assigned by an emergency agency.
-- `resolved`: Successfully handled and marked resolved.
-- `false_alarm`: Designated as false alarm by an agency or administrator with strike audit logged.
-- `canceled`: Canceled by the reporting citizen before responder arrival.
+- `resolved`: Handled and marked resolved.
+- `false_alarm`: Designated as false alarm with strike logged.
+- `canceled`: Canceled by the citizen before responder arrival.
 
-### `response_status`
-Operational state of a responder assigned to an incident:
-- `en_route`, `on_scene`, `completed`, `canceled`, `waiting_review`, `rejected`
+### Agency Handling Status (`incidents.agency_status`)
+- **Column**: `varchar(20)` with `CHECK (agency_status IS NULL OR agency_status IN ('pending', 'accepted', 'declined', 'completed'))`
+- Status of agency coordination for an SOS incident.
+
+### Reporter Trust Label (`incidents.reporter_trust_label`)
+- **Column**: `varchar(20)` with `CHECK (reporter_trust_label IS NULL OR reporter_trust_label IN ('standard', 'trusted', 'untrusted', 'verified'))`
+- Reputation level assigned dynamically to reporting citizens.
+
+### Community Report Status (`incident_reports.status` — Jalur B)
+- **Column**: `varchar(20)` with `CHECK (status IN ('received', 'sent', 'processing', 'investigating', 'handled', 'resolved', 'rejected', 'canceled'))`
+- Lifecycle states for non-emergency citizen reports.
+
+### Responder Mission Status (`incident_responses.status`)
+- **Column**: `varchar(30)` with `CHECK (status IN ('en_route', 'on_scene', 'waiting_review', 'completed', 'rejected', 'canceled'))`
+- Operational lifecycle of a responder assigned to an incident.
+
+### Emergency Contact Relations (`emergency_contacts.relation`)
+- **Column**: `varchar(50)` with `CHECK (relation IS NULL OR relation IN ('parent', 'spouse', 'child', 'sibling', 'friend', 'other'))`
+- Standardized relationship codes with bilingual client localization (`app_localization.dart`).
 
 ---
 
@@ -470,3 +489,4 @@ For the comprehensive interactive Mermaid ERD diagram, see [`docs/design/databas
 | `018` | `018_incident_reports_address...` | Nominatim reverse-geocoded addresses and completion timestamps. |
 | `019` | `019_add_missing_fk_indexes` | Added B-Tree indexes across all 13 relational foreign keys. |
 | `020` | `020_add_analytics_indexes` | Composite indexes for incident stats and gamification rank queries. |
+| `021` | `021_standardize_varchar_constraints_and_relations` | Transitioned custom ENUMs to Domain-Constrained VARCHAR with CHECK constraints; standardized emergency contact relations. |

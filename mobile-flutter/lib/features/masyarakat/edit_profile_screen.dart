@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/user_model.dart';
 import '../../core/services/user_service.dart';
+import '../../core/constants/relation_constants.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String accessToken;
@@ -509,36 +510,69 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  initialValue: _contacts[index]['relation'],
-                                  onChanged: (val) =>
-                                      _contacts[index]['relation'] = val,
-                                  maxLength: 50,
-                                  decoration: InputDecoration(
-                                    labelText: 'Hubungan'.tr(context),
-                                    isDense: true,
+                          TextFormField(
+                            initialValue: _contacts[index]['phone'],
+                            onChanged: (val) =>
+                                _contacts[index]['phone'] = val,
+                            keyboardType: TextInputType.phone,
+                            maxLength: 20,
+                            decoration: InputDecoration(
+                              labelText: 'No Hp'.tr(context),
+                              isDense: true,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Hubungan'.tr(context),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: EmergencyRelation.all.map((rel) {
+                              final currentRel = _contacts[index]['relation'];
+                              final isSelected = currentRel == rel ||
+                                  (rel == EmergencyRelation.other &&
+                                      currentRel != null &&
+                                      currentRel.isNotEmpty &&
+                                      !EmergencyRelation.all.contains(currentRel));
+                              return ChoiceChip(
+                                label: Text(
+                                  EmergencyRelation.getLabel(rel, context),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected
+                                        ? Colors.orange
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.8),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 2,
-                                child: TextFormField(
-                                  initialValue: _contacts[index]['phone'],
-                                  onChanged: (val) =>
-                                      _contacts[index]['phone'] = val,
-                                  keyboardType: TextInputType.phone,
-                                  maxLength: 20,
-                                  decoration: InputDecoration(
-                                    labelText: 'No Hp'.tr(context),
-                                    isDense: true,
-                                  ),
-                                ),
-                              ),
-                            ],
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() {
+                                      _contacts[index]['relation'] = rel;
+                                    });
+                                  }
+                                },
+                              );
+                            }).toList(),
                           ),
                         ],
                       ),

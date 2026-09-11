@@ -82,6 +82,7 @@ mobile-flutter/.metadata
 **/mobile-flutter/android/build/
 **/mobile-flutter/android/app/build/
 **/mobile-flutter/android/.gradle/
+**/mobile-flutter/android/.kotlin/
 **/mobile-flutter/android/captures/
 **/mobile-flutter/android/gradlew
 **/mobile-flutter/android/gradlew.bat
