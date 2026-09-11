@@ -597,6 +597,54 @@ class AppLocalization {
     'Email wajib diisi': 'Email is required',
     'Format email tidak valid': 'Invalid email format',
     'Gagal memperbarui profil': 'Failed to update profile',
+
+    // ─── FTUE Onboarding & Permission Priming (Plan 12) ─────────────────────────
+    'RESPONS CEPAT': 'FAST RESPONSE',
+    'SOS Darurat Seketika': 'Instant Emergency SOS',
+    'Kirim sinyal bahaya seketika dalam hitungan detik dengan siaga countdown dan transmisi lokasi presisi ke pos komando.':
+        'Send instant distress signals within seconds with countdown alert and precise location broadcast to command post.',
+    'KOMUNITAS SIAGA': 'ALERT COMMUNITY',
+    'Jaringan Relawan & Instansi': 'Volunteer & Agency Network',
+    'Terhubung langsung dengan tim relawan terverifikasi serta armada instansi resmi (Damkar, Medis, Polisi) di sekitar Anda.':
+        'Connect directly with verified volunteer teams and official agency fleets (Fire, Medical, Police) around you.',
+    'KESELAMATAN KELUARGA': 'FAMILY SAFETY',
+    'Zonasi & Perlindungan Keluarga': 'Family Zoning & Protection',
+    'Pantau radius aman keluarga tercinta secara real-time dan dapatkan notifikasi otomatis saat terjadi insiden darurat.':
+        'Monitor your loved ones\' safe radius in real-time and get automated notifications during emergency incidents.',
+    'Mulai Sekarang': 'Get Started',
+    'Izin Aplikasi SiagaKita': 'SiagaKita App Permissions',
+    'Aktifkan izin berikut untuk memastikan fitur perlindungan darurat, notifikasi evakuasi, dan pelaporan bencana berfungsi optimal.':
+        'Enable the following permissions to ensure emergency protection, evacuation alerts, and disaster reporting function optimally.',
+    'Lokasi & GPS Presisi': 'Location & Precise GPS',
+    'Wajib': 'Mandatory',
+    'Menentukan titik koordinat akurat saat tombol SOS ditekan agar relawan dan armada bantuan dapat segera diarahkan ke lokasi Anda.':
+        'Determines accurate coordinate points when the SOS button is pressed so volunteers and rescue fleets can be immediately routed to your location.',
+    'Akses Mikrofon': 'Microphone Access',
+    'Disarankan': 'Recommended',
+    'Merekam audio darurat secara otomatis saat sinyal SOS aktif untuk memberikan bukti situasi bahaya kepada posko siaga.':
+        'Automatically records emergency audio while the SOS signal is active to provide situational evidence to the alert post.',
+    'Notifikasi Peringatan': 'Alert Notifications',
+    'Menerima lansiran darurat seketika, peringatan perimeter keluarga, serta pembaruan status penanganan evakuasi.':
+        'Receive instant emergency alerts, family perimeter warnings, and evacuation handling status updates.',
+    'Kamera Foto': 'Photo Camera',
+    'Opsional': 'Optional',
+    'Mengambil foto bukti kejadian bencana di tempat saat Anda mengirimkan formulir pelaporan situasi darurat.':
+        'Take on-site disaster evidence photos when submitting emergency situation reports.',
+    'Aktif': 'Active',
+    'Aktifkan': 'Enable',
+    'Izin Ditolak Permanen': 'Permission Permanently Denied',
+    'Izin ini telah dinonaktifkan secara permanen. Silakan aktifkan melalui Pengaturan Aplikasi pada perangkat Anda.':
+        'This permission has been permanently disabled. Please enable it via App Settings on your device.',
+    'Lanjutkan ke Aplikasi': 'Continue to Application',
+    'Lewati untuk Sekarang': 'Skip for Now',
+    'Izin Lokasi Belum Aktif': 'Location Permission Not Active',
+    'SOS dan pelaporan membutuhkan akses lokasi. Ketuk untuk mengaktifkan.':
+        'SOS and reporting require location access. Tap to activate.',
+    'Akses Lokasi Wajib untuk SOS': 'Location Access Mandatory for SOS',
+    'SiagaKita memerlukan koordinat GPS presisi untuk menyiarkan posisi darurat Anda kepada relawan dan pos komando tanggap bencana.':
+        'SiagaKita requires high-precision GPS coordinates to broadcast your emergency position to volunteers and disaster response command post.',
+    'Buka Layar Perizinan': 'Open Permissions Screen',
+    'Buka Pengaturan Gawai': 'Open Device Settings',
   };
 
   static Locale currentLocale = localeId;

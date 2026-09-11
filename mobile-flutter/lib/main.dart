@@ -4,13 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'core/localization/app_localization.dart';
 import 'core/models/user_model.dart';
 import 'core/services/connectivity_service.dart';
-import 'core/services/permission_service.dart';
 import 'core/services/session_service.dart';
 import 'core/services/user_service.dart';
 import 'core/services/background_service.dart';
 import 'core/services/local_storage_service.dart';
 import 'features/auth/login_screen.dart';
 import 'features/masyarakat/main_screen.dart';
+import 'features/onboarding/presentation/onboarding_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -128,6 +128,18 @@ class _AppStartupState extends State<_AppStartup> {
   }
 
   Future<void> _checkSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasCompletedOnboarding =
+        prefs.getBool('has_completed_onboarding') ?? false;
+
+    if (!hasCompletedOnboarding) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+      return;
+    }
+
     final session = await SessionService.loadSession();
     if (!mounted) return;
 
@@ -144,12 +156,6 @@ class _AppStartupState extends State<_AppStartup> {
 
       // Ambil data profil lengkap dari server (background refresh)
       UserService.refreshCurrentUser(session.token);
-
-      // Minta izin GPS jika online, abaikan jika offline
-      if (ConnectivityService.isOnline.value) {
-        await PermissionService.requestAllPermissions(context);
-        if (!mounted) return;
-      }
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(

@@ -3,7 +3,7 @@
 ## 1. Overview & Problem Statement
 - **Target Issue**: [#107](https://github.com/fadhlur-alaudin86/SiagaKita/issues/107)
 - **Priority**: P1 (High)
-- **Status**: Backlog (Architectural Alignment via `/grill-me` Completed)
+- **Status**: In Review | Implementation Completed & Verified
 - **Problem**:
   - Newly authenticated users in `mobile-flutter` face unprimed, stacked permission dialogs (Location, Camera, Microphone) without contextual explanations, creating distrust and high denial rates.
   - When permissions are denied and the device is offline, tapping the SOS button prematurely enters the `gracePeriod` state and simulates transmission, only to fail or trigger delayed permission prompts once network connectivity resumes.

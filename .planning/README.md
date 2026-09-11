@@ -38,7 +38,7 @@ graph TD
 | **09** | [`09-push-notifications-fcm.md`](./09-push-notifications-fcm.md) | [#30](https://github.com/fadhlur-alaudin86/SiagaKita/issues/30), [#31](https://github.com/fadhlur-alaudin86/SiagaKita/issues/31) | [#7](https://github.com/fadhlur-alaudin86/SiagaKita/issues/7) | Go, FCM, Flutter | Backlog (P2) | High-priority emergency broadcast push notifications waking terminated mobile devices. |
 | **10** | [`10-gamification-badges.md`](./10-gamification-badges.md) | [#32](https://github.com/fadhlur-alaudin86/SiagaKita/issues/32), [#33](https://github.com/fadhlur-alaudin86/SiagaKita/issues/33) | [#8](https://github.com/fadhlur-alaudin86/SiagaKita/issues/8) | Go, Flutter Mobile | Backlog (P2) | Automated badge evaluation engine upon incident resolution and mobile profile badge grid. |
 | **11** | [`11-email-otp-gateway-migration.md`](./11-email-otp-gateway-migration.md) | [#45](https://github.com/fadhlur-alaudin86/SiagaKita/issues/45) | - | Go, REST API | Backlog (P2) | Migrate email OTP gateway to Resend HTTPS REST API (port 443) with verified domain SPF/DKIM. |
-| **12** | [`12-mobile-ftue-onboarding-permissions.md`](./12-mobile-ftue-onboarding-permissions.md) | [#107](https://github.com/fadhlur-alaudin86/SiagaKita/issues/107) | - | Flutter Mobile | Backlog (P1) | First-launch visual onboarding carousel, contextual permission primer, and offline SOS guard. |
+| **12** | [`12-mobile-ftue-onboarding-permissions.md`](./12-mobile-ftue-onboarding-permissions.md) | [#107](https://github.com/fadhlur-alaudin86/SiagaKita/issues/107) | - | Flutter Mobile | In Review | First-launch visual onboarding carousel, contextual permission primer, and offline SOS guard. |
 
 ---
 

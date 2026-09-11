@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vibration/vibration.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/models/user_model.dart';
@@ -23,6 +24,7 @@ import '../../core/services/mobile_ws_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/services/offline_service.dart';
 import '../../core/services/connectivity_service.dart';
+import '../permissions/presentation/permission_primer_screen.dart';
 import 'report_screen.dart';
 import 'widgets/home_widgets.dart';
 import 'widgets/sos_active_widgets.dart';
@@ -44,7 +46,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  // ─── Permission State ───────────────────────────────────────────────────────
+  bool _hasLocationPermission = true;
+
   // ─── SOS Tap State ──────────────────────────────────────────────────────────
   static const int _requiredTaps = 3;
   static const Duration _tapResetDuration = Duration(milliseconds: 1500);
@@ -108,6 +113,8 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkLocationPermission();
     ConnectivityService.isOnline.addListener(_onConnectivityChanged);
     _checkCooldownState();
     _checkActiveIncident();
@@ -355,7 +362,22 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkLocationPermission();
+    }
+  }
+
+  Future<void> _checkLocationPermission() async {
+    final hasLocation = await LocationService.hasPermission();
+    if (mounted && _hasLocationPermission != hasLocation) {
+      setState(() => _hasLocationPermission = hasLocation);
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     ConnectivityService.isOnline.removeListener(_onConnectivityChanged);
     _pingTimer?.cancel();
     _tapResetTimer?.cancel();
@@ -562,7 +584,27 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ─── SOS Tap Logic (Send) ────────────────────────────────────────────────────
 
-  void _onSOSTap() {
+  Future<void> _onSOSTap() async {
+    // Pre-flight guard: Periksa izin lokasi sebelum menghitung tap atau masuk grace period
+    final hasLocation = await LocationService.hasPermission();
+    if (!hasLocation) {
+      HapticFeedback.heavyImpact();
+      if (mounted) {
+        setState(() {
+          _hasLocationPermission = false;
+          _tapCount = 0;
+        });
+        _showPermissionRequiredModal();
+      }
+      return;
+    } else {
+      if (!_hasLocationPermission && mounted) {
+        setState(() => _hasLocationPermission = true);
+      }
+    }
+
+    if (!mounted) return;
+
     // Blokir jika akun di-ban
     if (widget.isSOSBanned) {
       HapticFeedback.heavyImpact();
@@ -603,6 +645,119 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
+  void _showPermissionRequiredModal() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF162A5A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white30,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF4D4D).withAlpha(30),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.location_off_rounded,
+                    color: Color(0xFFFF4D4D),
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Akses Lokasi Wajib untuk SOS'.tr(ctx),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'SiagaKita memerlukan koordinat GPS presisi untuk menyiarkan posisi darurat Anda kepada relawan dan pos komando tanggap bencana.'.tr(ctx),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF7418),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PermissionPrimerScreen(
+                            target: PermissionPrimerTarget.returnOnly,
+                          ),
+                        ),
+                      );
+                      _checkLocationPermission();
+                    },
+                    child: Text(
+                      'Buka Layar Perizinan'.tr(ctx),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.white30),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      openAppSettings();
+                    },
+                    child: Text(
+                      'Buka Pengaturan Gawai'.tr(ctx),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // ─── Cancel SOS Tap Logic (5× tap saat SOS aktif) ──────────────────────────
 
   void _onCancelTap() {
@@ -626,6 +781,19 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _triggerSOS({required String triggeredBy}) async {
     if (_isTriggeringSOS) return;
+
+    final hasLocation = await LocationService.hasPermission();
+    if (!hasLocation) {
+      HapticFeedback.heavyImpact();
+      if (mounted) {
+        setState(() {
+          _hasLocationPermission = false;
+          _tapCount = 0;
+        });
+        _showPermissionRequiredModal();
+      }
+      return;
+    }
 
     HapticFeedback.vibrate();
 
@@ -1164,6 +1332,73 @@ class _HomeScreenState extends State<HomeScreen>
                     isSOSActive: isSOSActive,
                     primaryColor: primaryColor,
                   ),
+
+                  if (!_hasLocationPermission && !isSOSActive) ...[
+                    SizedBox(height: 10.h(context)),
+                    GestureDetector(
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const PermissionPrimerScreen(
+                              target: PermissionPrimerTarget.returnOnly,
+                            ),
+                          ),
+                        );
+                        _checkLocationPermission();
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w(context),
+                          vertical: 10.h(context),
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade900.withAlpha(40),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.amber.shade700,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.amber.shade400,
+                              size: 24,
+                            ),
+                            SizedBox(width: 10.w(context)),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Izin Lokasi Belum Aktif'.tr(context),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13.sp(context),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'SOS dan pelaporan membutuhkan akses lokasi. Ketuk untuk mengaktifkan.'.tr(context),
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11.sp(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: Colors.amber.shade400,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
 
                   const Spacer(flex: 2),
 
