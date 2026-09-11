@@ -303,234 +303,264 @@ class _SosAktifPageState extends State<SosAktifPage> {
     return Row(
       children: [
         // ── Kiri: Live List ────────────────────────────────────────────────
-        SizedBox(
-          width: 320,
-          child: Card(
-            color: const Color(0xFF1A2035),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.sensors, color: Colors.red, size: 18),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'SOS Aktif',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+        RepaintBoundary(
+          child: SizedBox(
+            width: 320,
+            child: Card(
+              color: const Color(0xFF1A2035),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.sensors, color: Colors.red, size: 18),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'SOS Aktif',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const Spacer(),
-                      if (!_loading)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _incidents.isEmpty
-                                ? Colors.green.withValues(alpha: 0.2)
-                                : Colors.red.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                          child: Text(
-                            '${_incidents.length}',
-                            style: TextStyle(
+                        const Spacer(),
+                        if (!_loading)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
                               color: _incidents.isEmpty
-                                  ? Colors.green
-                                  : Colors.red,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                                  ? Colors.green.withValues(alpha: 0.2)
+                                  : Colors.red.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              '${_incidents.length}',
+                              style: TextStyle(
+                                color: _incidents.isEmpty
+                                    ? Colors.green
+                                    : Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const Divider(color: Colors.white12, height: 1),
+                  const Divider(color: Colors.white12, height: 1),
 
-                // Filter chips
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                  child: Row(
-                    children: [
-                      for (final entry in [
-                        ('semua', 'SEMUA'),
-                        ('masuk', 'MASUK'),
-                        ('ditangani', 'DITANGANI'),
-                      ])
-                        Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: ChoiceChip(
-                            label: Text(entry.$2.tr(context)),
-                            selected: _filterStatus == entry.$1,
-                            onSelected: (_) =>
-                                setState(() => _filterStatus = entry.$1),
-                            selectedColor: Colors.red,
-                            labelStyle: TextStyle(
-                              color: _filterStatus == entry.$1
-                                  ? Colors.white
-                                  : Colors.white54,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
+                  // Filter chips
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                    child: Row(
+                      children: [
+                        for (final entry in [
+                          ('semua', 'SEMUA'),
+                          ('masuk', 'MASUK'),
+                          ('ditangani', 'DITANGANI'),
+                        ])
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: ChoiceChip(
+                              label: Text(entry.$2.tr(context)),
+                              selected: _filterStatus == entry.$1,
+                              onSelected: (_) =>
+                                  setState(() => _filterStatus = entry.$1),
+                              selectedColor: Colors.red,
+                              labelStyle: TextStyle(
+                                color: _filterStatus == entry.$1
+                                    ? Colors.white
+                                    : Colors.white54,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              backgroundColor: const Color(0xFF111827),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2,
+                              ),
+                              visualDensity: VisualDensity.compact,
                             ),
-                            backgroundColor: const Color(0xFF111827),
-                            padding: const EdgeInsets.symmetric(horizontal: 2),
-                            visualDensity: VisualDensity.compact,
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Divider(color: Colors.white12, height: 1),
-                Expanded(
-                  child: RepaintBoundary(
-                    child: _loading
-                        ? const Center(child: CircularProgressIndicator())
-                        : _filteredIncidents.isEmpty
-                        ? const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_circle_outline,
-                                  color: Colors.green,
-                                  size: 36,
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Tidak ada SOS aktif',
-                                  style: TextStyle(color: Colors.white38),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: _filteredIncidents.length,
-                            separatorBuilder: (context, index) =>
-                                const Divider(color: Colors.white10, height: 1),
-                            itemBuilder: (context, i) {
-                              final inc = _filteredIncidents[i];
-                              final isSelected = _selected?.id == inc.id;
-                              return Material(
-                                color: isSelected
-                                    ? Colors.red.withValues(alpha: 0.1)
-                                    : Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() => _selected = inc);
-                                    // Tandai SOS ini sudah dilihat detail-nya
-                                    widget.onSosViewed?.call(inc.id);
-                                    if (inc.audioPath != null) {
-                                      final url =
-                                          inc.audioPath!.startsWith('/uploads')
-                                          ? ApiConstants.baseUrl.replaceAll(
-                                                  '/api/v1',
-                                                  '',
-                                                ) +
-                                                inc.audioPath!
-                                          : inc.audioPath!;
-                                      _audioPlayer.setSourceUrl(url);
-                                    } else {
-                                      _audioPlayer.stop();
-                                    }
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 14,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.withValues(
-                                              alpha: 0.15,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            _incidentIcon(inc.incidentType),
-                                            color: Colors.red,
-                                            size: 18,
-                                          ),
+                  const SizedBox(height: 8),
+                  const Divider(color: Colors.white12, height: 1),
+                  Expanded(
+                    child: RepaintBoundary(
+                      child: _loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _filteredIncidents.isEmpty
+                          ? const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.check_circle_outline,
+                                    color: Colors.green,
+                                    size: 36,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Tidak ada SOS aktif',
+                                    style: TextStyle(color: Colors.white38),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: _filteredIncidents.length,
+                              separatorBuilder: (context, index) =>
+                                  const Divider(
+                                    color: Colors.white10,
+                                    height: 1,
+                                  ),
+                              itemBuilder: (context, i) {
+                                final inc = _filteredIncidents[i];
+                                final isSelected = _selected?.id == inc.id;
+                                return KeyedSubtree(
+                                  key: ValueKey(inc.id),
+                                  child: Material(
+                                    color: isSelected
+                                        ? Colors.red.withValues(alpha: 0.1)
+                                        : Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() => _selected = inc);
+                                        // Tandai SOS ini sudah dilihat detail-nya
+                                        widget.onSosViewed?.call(inc.id);
+                                        if (inc.audioPath != null) {
+                                          final url =
+                                              inc.audioPath!.startsWith(
+                                                '/uploads',
+                                              )
+                                              ? ApiConstants.baseUrl.replaceAll(
+                                                      '/api/v1',
+                                                      '',
+                                                    ) +
+                                                    inc.audioPath!
+                                              : inc.audioPath!;
+                                          _audioPlayer.setSourceUrl(url);
+                                        }
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
                                         ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                inc.typeLabelId,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w600,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red.withValues(
+                                                  alpha: 0.15,
                                                 ),
+                                                shape: BoxShape.circle,
                                               ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                '${inc.reporterName} • ${inc.timeAgo}',
-                                                style: const TextStyle(
-                                                  color: Colors.white54,
-                                                  fontSize: 11,
-                                                ),
+                                              child: Icon(
+                                                _incidentIcon(inc.incidentType),
+                                                color: Colors.red,
+                                                size: 20,
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                        // Indikator belum dilihat (unread red dot)
-                                        if (widget.readIds != null &&
-                                            !widget.readIds!.contains(inc.id))
-                                          Container(
-                                            width: 9,
-                                            height: 9,
-                                            margin: const EdgeInsets.only(
-                                              right: 4,
                                             ),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.redAccent,
-                                              shape: BoxShape.circle,
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        inc.reporterName,
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 13,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                      if (inc.audioPath !=
+                                                          null) ...[
+                                                        const SizedBox(
+                                                          width: 6,
+                                                        ),
+                                                        const Icon(
+                                                          Icons.mic,
+                                                          color: Colors.amber,
+                                                          size: 13,
+                                                        ),
+                                                      ],
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    (inc.incidentType.isEmpty
+                                                            ? 'Darurat'
+                                                            : inc.incidentType)
+                                                        .toUpperCase(),
+                                                    style: const TextStyle(
+                                                      color: Colors.redAccent,
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    inc.addressDetail ??
+                                                        '${inc.latitude.toStringAsFixed(4)}, ${inc.longitude.toStringAsFixed(4)}',
+                                                    style: const TextStyle(
+                                                      color: Colors.white54,
+                                                      fontSize: 11,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        // Indikator Online/Offline korban
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: inc.isOnline
-                                                ? Colors.greenAccent
-                                                : Colors.grey,
-                                            shape: BoxShape.circle,
-                                          ),
+                                            Container(
+                                              width: 7,
+                                              height: 7,
+                                              decoration: BoxDecoration(
+                                                color: inc.isOnline
+                                                    ? Colors.greenAccent
+                                                    : Colors.grey,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            if (isSelected)
+                                              const Icon(
+                                                Icons.chevron_right,
+                                                color: Colors.red,
+                                                size: 18,
+                                              ),
+                                          ],
                                         ),
-                                        const SizedBox(width: 6),
-                                        if (isSelected)
-                                          const Icon(
-                                            Icons.chevron_right,
-                                            color: Colors.red,
-                                            size: 18,
-                                          ),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
+                                );
+                              },
+                            ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -539,25 +569,27 @@ class _SosAktifPageState extends State<SosAktifPage> {
 
         // ── Kanan: Detail Panel ────────────────────────────────────────────
         Expanded(
-          child: _selected == null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.touch_app_outlined,
-                        color: Colors.white24,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Pilih insiden dari daftar untuk melihat detail',
-                        style: TextStyle(color: Colors.white38),
-                      ),
-                    ],
-                  ),
-                )
-              : _buildDetailPanel(_selected!),
+          child: RepaintBoundary(
+            child: _selected == null
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.touch_app_outlined,
+                          color: Colors.white24,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Pilih insiden dari daftar untuk melihat detail',
+                          style: TextStyle(color: Colors.white38),
+                        ),
+                      ],
+                    ),
+                  )
+                : _buildDetailPanel(_selected!),
+          ),
         ),
       ],
     );

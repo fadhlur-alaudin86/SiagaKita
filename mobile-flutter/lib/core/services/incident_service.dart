@@ -1,10 +1,14 @@
+// Purpose: IncidentService handles REST API calls and offline caching for SOS emergencies and citizen reports.
+// Data & Logic Flow: Dispatches HTTP requests to backend endpoints, caches response feeds to LocalStorageService, and provides fallback data during network degradation.
+// Key Components: IncidentService.
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_config.dart';
+import 'local_storage_service.dart';
 
 /// IncidentService menangani API calls untuk SOS incidents (Jalur A)
 /// dan laporan warga non-darurat (Jalur B).
@@ -242,7 +246,6 @@ class IncidentService {
   static Future<List<MissionHistory>> getMyHistory({
     required String accessToken,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
     try {
       final response = await _req(
         () => http.get(
@@ -264,21 +267,24 @@ class IncidentService {
       final data = body['data'] as List?;
       if (data == null) return [];
 
-      await prefs.setString('cached_my_history', jsonEncode(data));
+      await LocalStorageService.cacheIncidents('cached_my_history', data);
 
       return data
           .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      final cachedStr = prefs.getString('cached_my_history');
-      if (cachedStr != null) {
+      final cached = LocalStorageService.getCachedIncidents(
+        'cached_my_history',
+      );
+      if (cached != null) {
         try {
-          final data = jsonDecode(cachedStr) as List?;
-          if (data != null) {
-            return data
-                .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
-                .toList();
-          }
+          return cached
+              .map(
+                (e) => MissionHistory.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
+              .toList();
         } catch (_) {}
       }
       throw IncidentException(
@@ -292,7 +298,6 @@ class IncidentService {
   static Future<List<ActiveIncident>> getReporterHistory({
     required String accessToken,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
     try {
       final response = await _req(
         () => http.get(
@@ -310,21 +315,24 @@ class IncidentService {
       final data = body['data'] as List?;
       if (data == null) return [];
 
-      await prefs.setString('cached_reporter_history', jsonEncode(data));
+      await LocalStorageService.cacheIncidents('cached_reporter_history', data);
 
       return data
           .map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      final cachedStr = prefs.getString('cached_reporter_history');
-      if (cachedStr != null) {
+      final cached = LocalStorageService.getCachedIncidents(
+        'cached_reporter_history',
+      );
+      if (cached != null) {
         try {
-          final data = jsonDecode(cachedStr) as List?;
-          if (data != null) {
-            return data
-                .map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>))
-                .toList();
-          }
+          return cached
+              .map(
+                (e) => ActiveIncident.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
+              .toList();
         } catch (_) {}
       }
       throw IncidentException(
@@ -352,14 +360,42 @@ class IncidentService {
             headers: {'Authorization': 'Bearer $accessToken'},
           )
           .timeout(_defaultTimeout);
-      if (response.statusCode != 200) return [];
+      if (response.statusCode != 200) {
+        final cached = LocalStorageService.getCachedIncidents(
+          'cached_nearby_sos',
+        );
+        if (cached != null) {
+          return cached
+              .map(
+                (e) => NearbyIncident.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
+              .toList();
+        }
+        return [];
+      }
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       final data = body['data'] as List?;
       if (data == null) return [];
+
+      await LocalStorageService.cacheIncidents('cached_nearby_sos', data);
+
       return data
           .map((e) => NearbyIncident.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (_) {
+      final cached = LocalStorageService.getCachedIncidents(
+        'cached_nearby_sos',
+      );
+      if (cached != null) {
+        return cached
+            .map(
+              (e) =>
+                  NearbyIncident.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
+            .toList();
+      }
       return [];
     }
   }

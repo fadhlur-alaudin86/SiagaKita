@@ -28,7 +28,10 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
   String _selectedCategory = 'all';
 
   // Map of online volunteer telemetry: userId -> LatLng
-  final Map<String, LatLng> _volunteerLocations = {};
+  final ValueNotifier<Map<String, LatLng>> _volunteerLocationsNotifier =
+      ValueNotifier({});
+  Map<String, LatLng> get _volunteerLocations =>
+      _volunteerLocationsNotifier.value;
   // Track timestamp of last received telemetry ping
   final Map<String, DateTime> _volunteerLastSeen = {};
   // Selected volunteer candidate IDs for manual dispatch selection
@@ -88,13 +91,12 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
           final lat = msg.payload['latitude'] as num?;
           final lng = msg.payload['longitude'] as num?;
           if (userId != null && lat != null && lng != null) {
-            setState(() {
-              _volunteerLocations[userId] = LatLng(
-                lat.toDouble(),
-                lng.toDouble(),
-              );
-              _volunteerLastSeen[userId] = DateTime.now();
-            });
+            final updated = Map<String, LatLng>.from(
+              _volunteerLocationsNotifier.value,
+            );
+            updated[userId] = LatLng(lat.toDouble(), lng.toDouble());
+            _volunteerLastSeen[userId] = DateTime.now();
+            _volunteerLocationsNotifier.value = updated;
           }
           break;
 
@@ -121,13 +123,21 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
         }
       });
       if (staleKeys.isNotEmpty) {
-        setState(() {
-          for (final key in staleKeys) {
-            _volunteerLocations.remove(key);
-            _volunteerLastSeen.remove(key);
-            _selectedCandidateIds.remove(key);
+        final updated = Map<String, LatLng>.from(
+          _volunteerLocationsNotifier.value,
+        );
+        bool candidateRemoved = false;
+        for (final key in staleKeys) {
+          updated.remove(key);
+          _volunteerLastSeen.remove(key);
+          if (_selectedCandidateIds.remove(key)) {
+            candidateRemoved = true;
           }
-        });
+        }
+        _volunteerLocationsNotifier.value = updated;
+        if (candidateRemoved && mounted) {
+          setState(() {});
+        }
       }
     });
   }
@@ -136,6 +146,7 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
   void dispose() {
     _wsSub?.cancel();
     _cleanupTimer?.cancel();
+    _volunteerLocationsNotifier.dispose();
     super.dispose();
   }
 
@@ -170,20 +181,20 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
         incident.longitude,
       );
       if (!mounted) return;
-      setState(() {
-        for (final v in volunteers) {
-          final userId = v['user_id'] as String?;
-          final lat = v['latitude'] as num?;
-          final lng = v['longitude'] as num?;
-          if (userId != null && lat != null && lng != null) {
-            _volunteerLocations[userId] = LatLng(
-              lat.toDouble(),
-              lng.toDouble(),
-            );
-            _volunteerLastSeen[userId] = DateTime.now();
-          }
+      final updated = Map<String, LatLng>.from(
+        _volunteerLocationsNotifier.value,
+      );
+      for (final v in volunteers) {
+        final userId = v['user_id'] as String?;
+        final lat = v['latitude'] as num?;
+        final lng = v['longitude'] as num?;
+        if (userId != null && lat != null && lng != null) {
+          updated[userId] = LatLng(lat.toDouble(), lng.toDouble());
+          _volunteerLastSeen[userId] = DateTime.now();
         }
-      });
+      }
+      _volunteerLocationsNotifier.value = updated;
+      if (mounted) setState(() {});
     } catch (_) {}
   }
 
@@ -241,14 +252,16 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Left Panel: Active SOS Incident Queue (380px) ──────────────────
-        SizedBox(width: 380, child: _buildQueuePanel()),
+        RepaintBoundary(child: SizedBox(width: 380, child: _buildQueuePanel())),
         const SizedBox(width: 16),
 
         // ── Right Panel: OpenStreetMap Radar & Candidate Drawer ────────────
         Expanded(
-          child: _selectedIncident == null
-              ? _buildEmptyRadarPlaceholder()
-              : _buildRadarAndCandidatesPanel(),
+          child: RepaintBoundary(
+            child: _selectedIncident == null
+                ? _buildEmptyRadarPlaceholder()
+                : _buildRadarAndCandidatesPanel(),
+          ),
         ),
       ],
     );
@@ -418,7 +431,10 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
                     itemBuilder: (ctx, i) {
                       final incident = _filteredIncidents[i];
                       final isSelected = _selectedIncident?.id == incident.id;
-                      return _buildIncidentQueueCard(incident, isSelected);
+                      return KeyedSubtree(
+                        key: ValueKey(incident.id),
+                        child: _buildIncidentQueueCard(incident, isSelected),
+                      );
                     },
                   ),
           ),
@@ -703,102 +719,148 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
 
         // ── Interactive Map (OpenStreetMap) ─────────────────────────────────
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Stack(
-              children: [
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: sosLocation,
-                    initialZoom: 15.0,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.siagakita.console',
-                    ),
-                    if (polylines.isNotEmpty)
-                      PolylineLayer(polylines: polylines),
-                    // Markers Layer
-                    MarkerLayer(
-                      markers: [
-                        // Target SOS Marker (🔴)
-                        Marker(
-                          point: sosLocation,
-                          width: 46,
-                          height: 46,
-                          child: const _PulsingSosMarker(),
+          child: RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Stack(
+                children: [
+                  ValueListenableBuilder<Map<String, LatLng>>(
+                    valueListenable: _volunteerLocationsNotifier,
+                    builder: (context, volunteerLocations, _) {
+                      final dynamicPolylines = <Polyline>[];
+                      if (incident.responderId != null &&
+                          volunteerLocations.containsKey(
+                            incident.responderId,
+                          )) {
+                        dynamicPolylines.add(
+                          Polyline(
+                            points: [
+                              sosLocation,
+                              volunteerLocations[incident.responderId]!,
+                            ],
+                            color: const Color(0xFF43A047),
+                            strokeWidth: 4.0,
+                          ),
+                        );
+                      } else {
+                        for (final id in _selectedCandidateIds) {
+                          if (volunteerLocations.containsKey(id)) {
+                            dynamicPolylines.add(
+                              Polyline(
+                                points: [sosLocation, volunteerLocations[id]!],
+                                color: const Color(
+                                  0xFFFF7418,
+                                ).withValues(alpha: 0.8),
+                                strokeWidth: 2.5,
+                              ),
+                            );
+                          }
+                        }
+                      }
+
+                      return FlutterMap(
+                        mapController: _mapController,
+                        options: MapOptions(
+                          initialCenter: sosLocation,
+                          initialZoom: 15.0,
                         ),
-                        // Live Volunteer Markers (🟢)
-                        ..._volunteerLocations.entries.map((entry) {
-                          final isTopCandidate = rankedCandidates
-                              .take(3)
-                              .any((c) => c.key == entry.key);
-                          return Marker(
-                            point: entry.value,
-                            width: 40,
-                            height: 40,
-                            child: _buildVolunteerMarker(
-                              entry.key,
-                              isTopCandidate,
-                            ),
-                          );
-                        }),
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.siagakita.console',
+                          ),
+                          if (dynamicPolylines.isNotEmpty)
+                            PolylineLayer(polylines: dynamicPolylines),
+                          // Markers Layer
+                          MarkerLayer(
+                            markers: [
+                              // Target SOS Marker (🔴)
+                              Marker(
+                                point: sosLocation,
+                                width: 46,
+                                height: 46,
+                                child: const _PulsingSosMarker(),
+                              ),
+                              // Live Volunteer Markers (🟢)
+                              ...volunteerLocations.entries.map((entry) {
+                                final isTopCandidate = rankedCandidates
+                                    .take(3)
+                                    .any((c) => c.key == entry.key);
+                                return Marker(
+                                  point: entry.value,
+                                  width: 40,
+                                  height: 40,
+                                  child: _buildVolunteerMarker(
+                                    entry.key,
+                                    isTopCandidate,
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+
+                  // Floating Map Controls
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: Column(
+                      children: [
+                        FloatingActionButton.small(
+                          heroTag: 'zoomIn',
+                          backgroundColor: const Color(0xFF1E2537),
+                          foregroundColor: Colors.white,
+                          onPressed: () {
+                            final z = _mapController.camera.zoom + 1;
+                            _mapController.move(
+                              _mapController.camera.center,
+                              z,
+                            );
+                          },
+                          child: const Icon(Icons.add),
+                        ),
+                        const SizedBox(height: 8),
+                        FloatingActionButton.small(
+                          heroTag: 'zoomOut',
+                          backgroundColor: const Color(0xFF1E2537),
+                          foregroundColor: Colors.white,
+                          onPressed: () {
+                            final z = _mapController.camera.zoom - 1;
+                            _mapController.move(
+                              _mapController.camera.center,
+                              z,
+                            );
+                          },
+                          child: const Icon(Icons.remove),
+                        ),
+                        const SizedBox(height: 8),
+                        FloatingActionButton.small(
+                          heroTag: 'centerSos',
+                          backgroundColor: const Color(0xFFFF7418),
+                          foregroundColor: Colors.white,
+                          onPressed: () => _moveMapToIncident(incident),
+                          child: const Icon(Icons.crisis_alert),
+                        ),
                       ],
                     ),
-                  ],
-                ),
-
-                // Floating Map Controls
-                Positioned(
-                  right: 16,
-                  bottom: 16,
-                  child: Column(
-                    children: [
-                      FloatingActionButton.small(
-                        heroTag: 'zoomIn',
-                        backgroundColor: const Color(0xFF1E2537),
-                        foregroundColor: Colors.white,
-                        onPressed: () {
-                          final z = _mapController.camera.zoom + 1;
-                          _mapController.move(_mapController.camera.center, z);
-                        },
-                        child: const Icon(Icons.add),
-                      ),
-                      const SizedBox(height: 8),
-                      FloatingActionButton.small(
-                        heroTag: 'zoomOut',
-                        backgroundColor: const Color(0xFF1E2537),
-                        foregroundColor: Colors.white,
-                        onPressed: () {
-                          final z = _mapController.camera.zoom - 1;
-                          _mapController.move(_mapController.camera.center, z);
-                        },
-                        child: const Icon(Icons.remove),
-                      ),
-                      const SizedBox(height: 8),
-                      FloatingActionButton.small(
-                        heroTag: 'centerSos',
-                        backgroundColor: const Color(0xFFFF7418),
-                        foregroundColor: Colors.white,
-                        onPressed: () => _moveMapToIncident(incident),
-                        child: const Icon(Icons.crisis_alert),
-                      ),
-                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
         const SizedBox(height: 12),
 
         // ── Candidate Panel Drawer: Top-3 Nearest Volunteers or Active Mission Tracking ──
-        incident.volunteerResponseStatus != null
-            ? _buildActiveMissionDrawer(incident, sosLocation)
-            : _buildCandidateDrawer(rankedCandidates, sosLocation),
+        RepaintBoundary(
+          child: incident.volunteerResponseStatus != null
+              ? _buildActiveMissionDrawer(incident, sosLocation)
+              : _buildCandidateDrawer(rankedCandidates, sosLocation),
+        ),
       ],
     );
   }

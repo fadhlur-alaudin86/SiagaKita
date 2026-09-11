@@ -33,7 +33,9 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
     95.32,
   ); // Banda Aceh default fallback
   LatLng? _agencyLocation; // Lokasi agency sendiri
-  final Map<String, LatLng> _volunteers = {}; // Lokasi relawan online
+  final ValueNotifier<Map<String, LatLng>> _volunteersNotifier = ValueNotifier(
+    {},
+  ); // Lokasi relawan online
 
   @override
   void initState() {
@@ -51,9 +53,9 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
         final lat = msg.payload['latitude'] as num?;
         final lng = msg.payload['longitude'] as num?;
         if (userId != null && lat != null && lng != null) {
-          setState(() {
-            _volunteers[userId] = LatLng(lat.toDouble(), lng.toDouble());
-          });
+          final updated = Map<String, LatLng>.from(_volunteersNotifier.value);
+          updated[userId] = LatLng(lat.toDouble(), lng.toDouble());
+          _volunteersNotifier.value = updated;
         }
       }
     });
@@ -102,6 +104,7 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
   void dispose() {
     _wsSub?.cancel();
     _mapController.dispose();
+    _volunteersNotifier.dispose();
     super.dispose();
   }
 
@@ -111,168 +114,198 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Status bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A2035),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.map_outlined, color: Colors.white54, size: 16),
-              const SizedBox(width: 8),
-              const Text(
-                'Peta Real-time',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+        RepaintBoundary(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A2035),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.map_outlined, color: Colors.white54, size: 16),
+                const SizedBox(width: 8),
+                const Text(
+                  'Peta Real-time',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.warning_amber_rounded,
-                      color: Colors.red,
-                      size: 12,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${_incidents.length} SOS Aktif',
-                      style: const TextStyle(
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
                         color: Colors.red,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                        size: 12,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_incidents.length} SOS Aktif',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 12),
 
         // Map
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _defaultCenter,
-                initialZoom: 11,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.siagakita.console',
+          child: RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: _defaultCenter,
+                  initialZoom: 11,
                 ),
-                MarkerLayer(
-                  rotate: true,
-                  markers: [
-                    if (_agencyLocation != null)
-                      Marker(
-                        point: _agencyLocation!,
-                        width: 50,
-                        height: 50,
-                        child: const Column(
-                          children: [
-                            Icon(
-                              Icons.local_hospital_rounded,
-                              color: Colors.blue,
-                              size: 32,
-                            ),
-                            Text(
-                              'Pusat',
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10,
-                                backgroundColor: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ..._incidents.map((inc) {
-                      if (inc.latitude == 0 && inc.longitude == 0) {
-                        return const Marker(
-                          point: LatLng(0, 0),
-                          child: SizedBox.shrink(),
-                        );
-                      }
-                      return Marker(
-                        point: LatLng(inc.latitude, inc.longitude),
-                        width: 48,
-                        height: 56,
-                        child: GestureDetector(
-                          onTap: () => _showIncidentPopup(inc),
-                          child: Column(
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.siagakita.console',
+                  ),
+                  MarkerLayer(
+                    rotate: true,
+                    markers: [
+                      if (_agencyLocation != null)
+                        Marker(
+                          point: _agencyLocation!,
+                          width: 50,
+                          height: 50,
+                          child: const Column(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.red.withValues(alpha: 0.5),
-                                      blurRadius: 10,
-                                      spreadRadius: 3,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
+                              Icon(
+                                Icons.local_hospital_rounded,
+                                color: Colors.blue,
+                                size: 32,
                               ),
-                              CustomPaint(
-                                size: const Size(12, 8),
-                                painter: _TrianglePainter(),
+                              Text(
+                                'Pusat',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                  backgroundColor: Colors.white,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      );
-                    }),
-                    // Marker Relawan
-                    ..._volunteers.entries.map((entry) {
-                      return Marker(
-                        point: entry.value,
-                        width: 60,
-                        height: 60,
-                        child: const _AnimatedVolunteerMarker(),
-                      );
-                    }),
-                    // Target Location Marker (hanya jika TIDAK tumpang tindih dengan incident)
-                    if (widget.targetLocation != null &&
-                        !_incidents.any(
-                          (inc) =>
-                              inc.latitude == widget.targetLocation!.latitude &&
-                              inc.longitude == widget.targetLocation!.longitude,
-                        ))
-                      Marker(
-                        point: widget.targetLocation!,
-                        width: 50,
-                        height: 50,
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.blueAccent,
-                          size: 40,
+                      ..._incidents.map((inc) {
+                        if (inc.latitude == 0 && inc.longitude == 0) {
+                          return const Marker(
+                            point: LatLng(0, 0),
+                            child: SizedBox.shrink(),
+                          );
+                        }
+                        return Marker(
+                          point: LatLng(inc.latitude, inc.longitude),
+                          width: 48,
+                          height: 56,
+                          child: GestureDetector(
+                            onTap: () => _showIncidentPopup(inc),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.red.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                        blurRadius: 10,
+                                        spreadRadius: 3,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                                CustomPaint(
+                                  size: const Size(12, 8),
+                                  painter: _TrianglePainter(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                      // Target Location Marker (hanya jika TIDAK tumpang tindih dengan incident)
+                      if (widget.targetLocation != null &&
+                          !_incidents.any(
+                            (inc) =>
+                                inc.latitude ==
+                                    widget.targetLocation!.latitude &&
+                                inc.longitude ==
+                                    widget.targetLocation!.longitude,
+                          ))
+                        Marker(
+                          point: widget.targetLocation!,
+                          width: 44,
+                          height: 52,
+                          child: const Column(
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                color: Colors.amber,
+                                size: 36,
+                              ),
+                              Text(
+                                'Target',
+                                style: TextStyle(
+                                  color: Colors.amber,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                  backgroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  // Marker Relawan
+                  ValueListenableBuilder<Map<String, LatLng>>(
+                    valueListenable: _volunteersNotifier,
+                    builder: (context, volunteers, _) {
+                      return MarkerLayer(
+                        rotate: true,
+                        markers: volunteers.entries.map((entry) {
+                          return Marker(
+                            point: entry.value,
+                            width: 60,
+                            height: 60,
+                            child: const _AnimatedVolunteerMarker(),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),

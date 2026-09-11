@@ -231,35 +231,41 @@ class _InstansiShellState extends State<InstansiShell> {
         backgroundColor: const Color(0xFF0F172A), // Slate 900
         body: Row(
           children: [
-            _SideNavigation(
-              activeMenu: _activeMenu,
-              unreadSosCount: _unreadSosCount,
-              unreadReportCount: _unreadReportCount,
-              agencyName: _agencyName,
-              onSelected: (menu) {
-                setState(() {
-                  _activeMenu = menu;
-                  if (menu != InstansiMenu.petaOperasional) {
-                    _mapTarget = null;
-                  }
-                });
-                // Alarm hanya berhenti bila semua SOS aktif dibuka detail-nya
-              },
-              ws: widget.ws,
+            RepaintBoundary(
+              child: _SideNavigation(
+                activeMenu: _activeMenu,
+                unreadSosCount: _unreadSosCount,
+                unreadReportCount: _unreadReportCount,
+                agencyName: _agencyName,
+                onSelected: (menu) {
+                  setState(() {
+                    _activeMenu = menu;
+                    if (menu != InstansiMenu.petaOperasional) {
+                      _mapTarget = null;
+                    }
+                  });
+                  // Alarm hanya berhenti bila semua SOS aktif dibuka detail-nya
+                },
+                ws: widget.ws,
+              ),
             ),
             Expanded(
               child: Column(
                 children: [
-                  _TopHeader(
-                    title: (_titles[_activeMenu] ?? 'Instansi Console').tr(
-                      context,
+                  RepaintBoundary(
+                    child: _TopHeader(
+                      title: (_titles[_activeMenu] ?? 'Instansi Console').tr(
+                        context,
+                      ),
+                      ws: widget.ws,
                     ),
-                    ws: widget.ws,
                   ),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: _resolvePage(),
+                    child: RepaintBoundary(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: _resolvePage(),
+                      ),
                     ),
                   ),
                 ],
@@ -353,33 +359,36 @@ class _SideNavigation extends StatelessWidget {
                 onTap: () => onSelected(InstansiMenu.riwayat),
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.circle,
-                      size: 9,
-                      color: ws.isConnected
-                          ? const Color(0xFF2EAF60)
-                          : Colors.red,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      ws.isConnected
-                          ? 'WS Connected'.tr(context)
-                          : 'Offline'.tr(context),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
+              Selector<WsService, bool>(
+                selector: (_, ws) => ws.isConnected,
+                builder: (context, isConnected, _) => Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 9,
+                        color: isConnected
+                            ? const Color(0xFF2EAF60)
+                            : Colors.red,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Text(
+                        isConnected
+                            ? 'WS Connected'.tr(context)
+                            : 'Offline'.tr(context),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -482,11 +491,12 @@ class _TopHeader extends StatelessWidget {
             ).textTheme.titleLarge?.copyWith(color: Colors.white),
           ),
           const Spacer(),
-          Consumer<WsService>(
-            builder: (context, ws, child) => Container(
+          Selector<WsService, bool>(
+            selector: (_, ws) => ws.isConnected,
+            builder: (context, isConnected, child) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: ws.isConnected
+                color: isConnected
                     ? const Color(0xFFE9F8ED)
                     : const Color(0xFFFFE9E9),
                 borderRadius: BorderRadius.circular(999),
@@ -496,19 +506,15 @@ class _TopHeader extends StatelessWidget {
                   Icon(
                     Icons.circle,
                     size: 10,
-                    color: ws.isConnected
-                        ? const Color(0xFF2EAF60)
-                        : Colors.red,
+                    color: isConnected ? const Color(0xFF2EAF60) : Colors.red,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    (ws.isConnected ? 'Realtime Connected' : 'Offline').tr(
+                    (isConnected ? 'Realtime Connected' : 'Offline').tr(
                       context,
                     ),
                     style: TextStyle(
-                      color: ws.isConnected
-                          ? const Color(0xFF2EAF60)
-                          : Colors.red,
+                      color: isConnected ? const Color(0xFF2EAF60) : Colors.red,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
