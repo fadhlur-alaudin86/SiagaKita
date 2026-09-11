@@ -6,7 +6,7 @@
 
 ## 1. SOS Emergency Response Lifecycle (Jalur A)
 
-The diagram below details the entire end-to-end lifecycle across the 4 key participants: **Reporter (Warga)**, **Backend (Go + Redis + WS)**, **Volunteer (Relawan)**, and **Agency (Instansi Console)**.
+The diagram below details the entire end-to-end lifecycle across the key participants: **Reporter (Warga)**, **Backend (Go + Redis + WS)**, **Volunteer (Relawan)**, **Agency Responder (Mobile)**, and **Agency Dispatcher (Instansi Console)**.
 
 ```mermaid
 sequenceDiagram
@@ -14,7 +14,8 @@ sequenceDiagram
     actor W as Reporter (Warga)
     participant B as Backend (Fiber + Redis + WS)
     actor V as Volunteer (Relawan)
-    actor A as Agency (Console)
+    actor AR as Agency Responder (Mobile)
+    actor A as Agency Dispatcher (Console)
 
     %% 1. Trigger SOS
     Note over W, B: Step 1 — Emergency Trigger & Grace Period (10s)
@@ -80,13 +81,36 @@ sequenceDiagram
                 B->>A: WS: "INCIDENT_RESOLVED" (Archive Card)
             end
 
-        else Agency Directly Dispatches Field Unit
-            A->>B: POST /api/v1/incidents/{id}/agency-handle
+        else Agency Dispatches Official Field Unit
+            A->>B: POST /api/v1/incidents/{id}/agency-handle {assignee_id}
             B->>B: Update incidents.handled_by_agency_id, status = "handled"
-            B->>W: WS: "AGENCY_HANDLING" (Official Unit En Route)
+            par Notify Parties
+                B->>W: WS: "AGENCY_HANDLING" (Official Unit En Route)
+                B->>AR: WS: "MISSION_ASSIGNED" (Tactical Mission Board Alert)
+            end
+
+            %% Field Unit En Route & Telemetry
+            AR->>B: PUT /api/v1/incidents/{id}/status {status: "en_route"}
+            loop Tactical Telemetry Streaming (sync.Pool ingestion)
+                AR->>B: PUT /api/v1/telemetry/location {lat, lng, heading, speed}
+                B->>A: WS: "RESPONDER_LOCATION_UPDATE" (Console Tactical Map)
+                B->>W: WS: "AGENCY_LOCATION_UPDATE" (Victim Live Map)
+            end
+
+            %% Arrival On Scene
+            AR->>B: PUT /api/v1/incidents/{id}/status {status: "on_scene"}
+            B->>A: WS: "RESPONDER_STATUS_UPDATE" (Unit On Scene)
+            B->>W: WS: "AGENCY_ON_SCENE" (Responders Arrived)
+
+            %% Mission Mitigation & Resolution
+            AR->>B: PUT /api/v1/incidents/{id}/status {status: "resolved"}
             A->>B: POST /api/v1/incidents/{id}/agency-resolve
             B->>B: Update incidents.status = "resolved", completed_at = NOW()
-            B->>W: WS: "SOS_RESOLVED" (Reset UI)
+            par Incident Complete
+                B->>W: WS: "SOS_RESOLVED" (Reset UI)
+                B->>A: WS: "INCIDENT_RESOLVED" (Archive Card)
+                B->>AR: WS: "MISSION_COMPLETED" (Clear Mission Board)
+            end
 
         else False Alarm Flagged
             A->>B: POST /api/v1/incidents/{id}/mark-false-alarm {reason}

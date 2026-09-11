@@ -9,7 +9,7 @@
 | Requestor | Fadhlurrahman Alaudin |
 | Date Created | 2026-09-10 |
 | GitHub Issues | #12 & #13 (Parent: #36) |
-| Status | Ready for Review |
+| Status | Merged (PR #63) |
 
 ## Discovery (Step -2)
 
@@ -44,4 +44,4 @@
 | 5 | Flutter Implementation | Skipped | 2026-09-10 | Desktop UI already built; backend contract parity verified |
 | 6 | Tests | Done | 2026-09-10 | Unit and live DB tests for ranks CRUD and stats analytics in `handler_test.go` and `migrate_test.go` |
 | 7 | CI + Review | Done | 2026-09-10 | Format checks (`gofmt`), `golangci-lint`, and test suite verification (`go test -race ./...`) |
-| 8 | Close Log | Done | 2026-09-10 | All quality gates pass; ready for PR |
+| 8 | Close Log | Done | 2026-09-10 | Merged to dev via PR #63 |

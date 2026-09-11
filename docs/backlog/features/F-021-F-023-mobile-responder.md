@@ -10,7 +10,7 @@
 | Date Created | 2026-09-11 |
 | GitHub Issues | #21, #22, #23 (Parent: #4) |
 | Parent Plan | `.planning/08-mobile-responder-app.md` |
-| Status | In Progress |
+| Status | Merged (PR #104) |
 
 ---
 
@@ -55,14 +55,14 @@
 | -3 | Backlog Overview | Done | 2026-09-11 | Selected Plan 08 (Issues #21, #22, #23 under Parent #4) |
 | -2 | Discovery | Done | 2026-09-11 | Audited backend auth, dispatch, telemetry routes and existing client patterns |
 | -1 | Resolve Backlog | Done | 2026-09-11 | Created feature specification log `F-021-F-023-mobile-responder.md` |
-| 0 | Branch & Assign | In Progress | 2026-09-11 | Target branch `feature/F-021-F-023-mobile-responder` |
+| 0 | Branch & Assign | Done | 2026-09-11 | Branch `feature/F-021-F-023-mobile-responder` |
 | 1 | Read Mapping | Done | 2026-09-11 | Architectural interview resolved via `/grill-me` |
 | 2 | API Contract | Done | 2026-09-11 | Contract extended for badge login & agency personnel incident operations |
 | 3 | DB Migration | Skipped | 2026-09-11 | Schema already supports `agency_personnels` and `incident_responses` |
-| 4 | Implementation | Pending | 2026-09-11 | Backend middleware update + Flutter mobile responder scaffolding |
-| 5 | Tests | Pending | 2026-09-11 | Unit tests for auth, missions, telemetry, and client parity |
-| 6 | CI + Review | Pending | 2026-09-11 | Pre-PR audit, checklist sync, CodeGraph sync |
-| 7 | Close Log | Pending | 2026-09-11 | Pull Request to `dev` |
+| 4 | Implementation | Done | 2026-09-11 | Backend middleware update + Flutter mobile responder scaffolding |
+| 5 | Tests | Done | 2026-09-11 | Unit tests for auth, missions, telemetry, and client parity |
+| 6 | CI + Review | Done | 2026-09-11 | Pre-PR audit, checklist sync, CodeGraph sync |
+| 7 | Close Log | Done | 2026-09-11 | Merged into `dev` via Pull Request #104 |
 
 ---
 
@@ -70,8 +70,8 @@
 
 | Test Suite | Command | Target Criteria | Status |
 |---|---|---|---|
-| Backend Domain Incident | `go test -v -race ./internal/domain/incident/...` | All tests pass, 0 race | Pending |
-| Backend Domain User | `go test -v -race ./internal/domain/user/...` | Badge login & role tests pass | Pending |
-| Mobile Responder Analyze | `flutter analyze --no-pub` | 0 errors, 0 warnings, 0 lints | Pending |
-| Mobile Responder Tests | `flutter test` | Unit tests pass | Pending |
-| Localization Parity | Parity script / inspection | 100% key parity, zero orphaned | Pending |
+| Backend Domain Incident | `go test -v -race ./internal/domain/incident/...` | All tests pass, 0 race | Passed |
+| Backend Domain User | `go test -v -race ./internal/domain/user/...` | Badge login & role tests pass | Passed |
+| Mobile Responder Analyze | `flutter analyze --no-pub` | 0 errors, 0 warnings, 0 lints | Passed |
+| Mobile Responder Tests | `flutter test` | Unit tests pass | Passed |
+| Localization Parity | Parity script / inspection | 100% key parity, zero orphaned | Passed |

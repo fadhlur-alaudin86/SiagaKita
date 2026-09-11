@@ -9,7 +9,7 @@
 | Requestor | Fadhlurrahman Alaudin |
 | Date Created | 2026-09-09 |
 | GitHub Issues | #28 & #29 (Parent: #6) |
-| Status | In Progress |
+| Status | Merged (PR #60) |
 
 ## Discovery (Step -2)
 
@@ -45,4 +45,4 @@
 | 5 | Flutter Implementation | Done | 2026-09-09 | Implemented `ApiClient` interceptor in mobile and `AuthService`/`api_services.dart` in desktop |
 | 6 | Tests | Done | 2026-09-09 | Unit tests added in Go (`service_test.go`, `handler_test.go`), Mobile (`session_service_test.dart`), Desktop (`auth_service_test.dart`) |
 | 7 | CI + Review | Done | 2026-09-09 | Verified `go test -race` (all pass), Mobile `flutter test` + `flutter analyze` (clean), Desktop `flutter test` + `flutter analyze` (clean) |
-| 8 | Close Log | ⏳ Ready | 2026-09-09 | Awaiting user command to create PR and merge |
+| 8 | Close Log | Done | 2026-09-09 | Merged to dev via PR #60 |
