@@ -1,10 +1,10 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+// Purpose: Offline SOS coordination service bridging UI workflows to LocalStorageService Hive storage.
+// Data & Logic Flow: Receives offline SOS trigger and cancellation commands from HomeScreen and delegates persistence directly to LocalStorageService's in-memory Hive box.
+// Key Components: OfflineService.
+
+import 'local_storage_service.dart';
 
 class OfflineService {
-  static const String _pendingSosKey = 'pending_sos';
-  static const String _pendingCancelSosKey = 'pending_cancel_sos';
-
   // ─── Pending SOS (Offline SOS) ─────────────────────────────────────────────
 
   static Future<void> savePendingSOS({
@@ -13,93 +13,64 @@ class OfflineService {
     required double lng,
     String? addressDetail,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = {
-      'local_id': localId,
-      'latitude': lat,
-      'longitude': lng,
-      'address_detail': addressDetail,
-      'timestamp': DateTime.now().toIso8601String(),
-    };
-    await prefs.setString(_pendingSosKey, jsonEncode(data));
+    await LocalStorageService.savePendingSOS(
+      localId: localId,
+      lat: lat,
+      lng: lng,
+      addressDetail: addressDetail,
+    );
   }
 
   static Future<Map<String, dynamic>?> getPendingSOS() async {
-    final prefs = await SharedPreferences.getInstance();
-    final str = prefs.getString(_pendingSosKey);
-    if (str != null) {
-      try {
-        return jsonDecode(str) as Map<String, dynamic>;
-      } catch (_) {}
-    }
-    return null;
+    return LocalStorageService.getPendingSOS();
   }
 
   static Future<void> clearPendingSOS() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_pendingSosKey);
+    await LocalStorageService.clearPendingSOS();
   }
+
 
   // ─── Pending Cancel SOS ──────────────────────────────────────────────────
 
   static Future<void> savePendingCancelSOS(String incidentId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_pendingCancelSosKey, incidentId);
+    await LocalStorageService.savePendingCancelSOS(incidentId);
   }
 
   static Future<String?> getPendingCancelSOS() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_pendingCancelSosKey);
+    return LocalStorageService.getPendingCancelSOS();
   }
 
   static Future<void> clearPendingCancelSOS() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_pendingCancelSosKey);
+    await LocalStorageService.clearPendingCancelSOS();
   }
 
-  // ─── Pending Incident Type (simpan tipe insiden saat offline) ────────────
 
-  static const String _pendingTypeKey = 'pending_incident_type';
+  // ─── Pending Incident Type ───────────────────────────────────────────────
 
-  /// Simpan tipe insiden yang dipilih user saat offline,
-  /// sehingga bisa di-sync ke server setelah upload berhasil.
   static Future<void> savePendingIncidentType(String type) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_pendingTypeKey, type);
+    await LocalStorageService.savePendingIncidentType(type);
   }
 
   static Future<String?> getPendingIncidentType() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_pendingTypeKey);
+    return LocalStorageService.getPendingIncidentType();
   }
 
   static Future<void> clearPendingIncidentType() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_pendingTypeKey);
+    await LocalStorageService.clearPendingIncidentType();
   }
 
-  // ─── Cooldown End Time (simpan waktu selesai cooldown SOS) ───────────────
 
-  static const String _cooldownEndTimeKey = 'sos_cooldown_end_time';
+  // ─── Cooldown End Time ───────────────────────────────────────────────────
 
   static Future<void> saveCooldownEndTime(DateTime endTime) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_cooldownEndTimeKey, endTime.toIso8601String());
+    await LocalStorageService.saveCooldownEndTime(endTime);
   }
 
   static Future<DateTime?> getCooldownEndTime() async {
-    final prefs = await SharedPreferences.getInstance();
-    final str = prefs.getString(_cooldownEndTimeKey);
-    if (str != null) {
-      try {
-        return DateTime.parse(str);
-      } catch (_) {}
-    }
-    return null;
+    return LocalStorageService.getCooldownEndTime();
   }
 
   static Future<void> clearCooldownEndTime() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_cooldownEndTimeKey);
+    await LocalStorageService.clearCooldownEndTime();
   }
 }

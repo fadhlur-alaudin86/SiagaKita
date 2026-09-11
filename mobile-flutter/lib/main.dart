@@ -8,6 +8,7 @@ import 'core/services/permission_service.dart';
 import 'core/services/session_service.dart';
 import 'core/services/user_service.dart';
 import 'core/services/background_service.dart';
+import 'core/services/local_storage_service.dart';
 import 'features/auth/login_screen.dart';
 import 'features/masyarakat/main_screen.dart';
 
@@ -15,6 +16,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inisialisasi Hive Local Storage
+  await LocalStorageService.init();
 
   // Persistensi Bahasa & Tema
   final prefs = await SharedPreferences.getInstance();

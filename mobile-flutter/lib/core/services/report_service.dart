@@ -1,11 +1,15 @@
+// Purpose: ReportService coordinates citizen non-emergency incident reports and offline queue management.
+// Data & Logic Flow: Submits multi-part form reports to backend, buffers failed submissions to LocalStorageService, and provides offline replay when connection restores.
+// Key Components: ReportService, ReportModel, ReportException.
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../constants/api_config.dart';
 import '../localization/app_localization.dart';
+import 'local_storage_service.dart';
 
 class ReportException implements Exception {
   final String message;
@@ -185,8 +189,6 @@ class ReportService {
   }
 
   // ─── Offline Queue ───────────────────────────────────────────────────────────
-  static const String _failedReportsKey = 'failed_reports';
-
   static Future<void> _saveFailedReportLocal({
     required String incidentType,
     required double latitude,
@@ -196,11 +198,7 @@ class ReportService {
     List<File> photos = const [],
     File? audio,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> currentFailed =
-        prefs.getStringList(_failedReportsKey) ?? [];
-
-    final reportMap = {
+    final reportMap = <String, dynamic>{
       'id': 'offline_${const Uuid().v4()}',
       'incident_type': incidentType,
       'latitude': latitude,
@@ -213,28 +211,18 @@ class ReportService {
       'audio_path': audio?.path,
     };
 
-    currentFailed.add(jsonEncode(reportMap));
-    await prefs.setStringList(_failedReportsKey, currentFailed);
+    await LocalStorageService.addFailedReport(reportMap);
   }
 
   static Future<List<ReportModel>> getFailedReports() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> currentFailed =
-        prefs.getStringList(_failedReportsKey) ?? [];
+    final currentFailed = LocalStorageService.getFailedReports();
     return currentFailed
-        .map((e) => ReportModel.fromJson(jsonDecode(e)))
+        .map((e) => ReportModel.fromJson(e))
         .toList();
   }
 
   static Future<void> removeFailedReport(String id) async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> currentFailed =
-        prefs.getStringList(_failedReportsKey) ?? [];
-    currentFailed.removeWhere((item) {
-      final decoded = jsonDecode(item);
-      return decoded['id'] == id;
-    });
-    await prefs.setStringList(_failedReportsKey, currentFailed);
+    await LocalStorageService.removeFailedReport(id);
   }
 
   // ─── Get my reports ──────────────────────────────────────────────────────────
@@ -262,18 +250,15 @@ class ReportService {
           .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
           .toList();
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('cached_my_reports', jsonEncode(data));
+      await LocalStorageService.cacheMyReports(data);
 
       final offlineReports = await getFailedReports();
       return [...offlineReports, ...serverReports];
     } catch (e) {
-      final prefs = await SharedPreferences.getInstance();
-      final cachedStr = prefs.getString('cached_my_reports');
-      if (cachedStr != null) {
+      final cached = LocalStorageService.getCachedMyReports();
+      if (cached != null) {
         try {
-          final data = jsonDecode(cachedStr) as List<dynamic>? ?? [];
-          final serverReports = data
+          final serverReports = cached
               .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
               .toList();
           final offlineReports = await getFailedReports();

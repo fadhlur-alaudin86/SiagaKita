@@ -303,16 +303,17 @@ class _SosAktifPageState extends State<SosAktifPage> {
     return Row(
       children: [
         // ── Kiri: Live List ────────────────────────────────────────────────
-        SizedBox(
-          width: 320,
-          child: Card(
-            color: const Color(0xFF1A2035),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        RepaintBoundary(
+          child: SizedBox(
+            width: 320,
+            child: Card(
+              color: const Color(0xFF1A2035),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
@@ -419,109 +420,126 @@ class _SosAktifPageState extends State<SosAktifPage> {
                             itemBuilder: (context, i) {
                               final inc = _filteredIncidents[i];
                               final isSelected = _selected?.id == inc.id;
-                              return Material(
-                                color: isSelected
-                                    ? Colors.red.withValues(alpha: 0.1)
-                                    : Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() => _selected = inc);
-                                    // Tandai SOS ini sudah dilihat detail-nya
-                                    widget.onSosViewed?.call(inc.id);
-                                    if (inc.audioPath != null) {
-                                      final url =
-                                          inc.audioPath!.startsWith('/uploads')
-                                          ? ApiConstants.baseUrl.replaceAll(
-                                                  '/api/v1',
-                                                  '',
-                                                ) +
-                                                inc.audioPath!
-                                          : inc.audioPath!;
-                                      _audioPlayer.setSourceUrl(url);
-                                    } else {
-                                      _audioPlayer.stop();
-                                    }
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 14,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.withValues(
-                                              alpha: 0.15,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            _incidentIcon(inc.incidentType),
-                                            color: Colors.red,
-                                            size: 18,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                inc.typeLabelId,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                '${inc.reporterName} • ${inc.timeAgo}',
-                                                style: const TextStyle(
-                                                  color: Colors.white54,
-                                                  fontSize: 11,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        // Indikator belum dilihat (unread red dot)
-                                        if (widget.readIds != null &&
-                                            !widget.readIds!.contains(inc.id))
+                              return KeyedSubtree(
+                                key: ValueKey(inc.id),
+                                child: Material(
+                                  color: isSelected
+                                      ? Colors.red.withValues(alpha: 0.1)
+                                      : Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() => _selected = inc);
+                                      // Tandai SOS ini sudah dilihat detail-nya
+                                      widget.onSosViewed?.call(inc.id);
+                                      if (inc.audioPath != null) {
+                                        final url =
+                                            inc.audioPath!.startsWith('/uploads')
+                                            ? ApiConstants.baseUrl.replaceAll(
+                                                    '/api/v1',
+                                                    '',
+                                                  ) +
+                                                  inc.audioPath!
+                                            : inc.audioPath!;
+                                        _audioPlayer.setSourceUrl(url);
+                                      }
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      child: Row(
+                                        children: [
                                           Container(
-                                            width: 9,
-                                            height: 9,
-                                            margin: const EdgeInsets.only(
-                                              right: 4,
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red.withValues(
+                                                alpha: 0.15,
+                                              ),
+                                              shape: BoxShape.circle,
                                             ),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.redAccent,
+                                            child: Icon(
+                                              _incidentIcon(inc.incidentType),
+                                              color: Colors.red,
+                                              size: 20,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      inc.reporterName,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 13,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    if (inc.audioPath != null) ...[
+                                                      const SizedBox(width: 6),
+                                                      const Icon(
+                                                        Icons.mic,
+                                                        color: Colors.amber,
+                                                        size: 13,
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  (inc.incidentType.isEmpty
+                                                          ? 'Darurat'
+                                                          : inc.incidentType)
+                                                      .toUpperCase(),
+                                                  style: const TextStyle(
+                                                    color: Colors.redAccent,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  inc.addressDetail ??
+                                                      '${inc.latitude.toStringAsFixed(4)}, ${inc.longitude.toStringAsFixed(4)}',
+                                                  style: const TextStyle(
+                                                    color: Colors.white54,
+                                                    fontSize: 11,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 7,
+                                            height: 7,
+                                            decoration: BoxDecoration(
+                                              color: inc.isOnline
+                                                  ? Colors.greenAccent
+                                                  : Colors.grey,
                                               shape: BoxShape.circle,
                                             ),
                                           ),
-                                        // Indikator Online/Offline korban
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: inc.isOnline
-                                                ? Colors.greenAccent
-                                                : Colors.grey,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        if (isSelected)
-                                          const Icon(
-                                            Icons.chevron_right,
-                                            color: Colors.red,
-                                            size: 18,
-                                          ),
-                                      ],
+                                          const SizedBox(width: 6),
+                                          if (isSelected)
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.red,
+                                              size: 18,
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -534,30 +552,33 @@ class _SosAktifPageState extends State<SosAktifPage> {
             ),
           ),
         ),
+      ),
 
         const SizedBox(width: 16),
 
         // ── Kanan: Detail Panel ────────────────────────────────────────────
         Expanded(
-          child: _selected == null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.touch_app_outlined,
-                        color: Colors.white24,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Pilih insiden dari daftar untuk melihat detail',
-                        style: TextStyle(color: Colors.white38),
-                      ),
-                    ],
-                  ),
-                )
-              : _buildDetailPanel(_selected!),
+          child: RepaintBoundary(
+            child: _selected == null
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.touch_app_outlined,
+                          color: Colors.white24,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Pilih insiden dari daftar untuk melihat detail',
+                          style: TextStyle(color: Colors.white38),
+                        ),
+                      ],
+                    ),
+                  )
+                : _buildDetailPanel(_selected!),
+          ),
         ),
       ],
     );

@@ -1,3 +1,7 @@
+// Purpose: Primary screen and mission coordination dashboard for volunteer field operations.
+// Data & Logic Flow: Listens to location changes, WebSocket dispatch/status events, and connectivity state. Automatically buffers GPS telemetry during offline periods and flushes coordinates upon reconnection.
+// Key Components: RelawanMainScreen, _RelawanMainScreenState.
+
 import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
@@ -10,6 +14,8 @@ import '../../core/services/incident_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/location_controller.dart';
 import '../../core/services/mobile_ws_service.dart';
+import '../../core/services/local_storage_service.dart';
+import '../../core/services/connectivity_service.dart';
 import '../../core/constants/api_config.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/widgets/custom_camera_view.dart';
@@ -64,6 +70,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     _wsSub = _ws!.eventStream.listen(_onWsEvent);
 
     LocationController.instance.addListener(_handleLocationChange);
+    ConnectivityService.isOnline.addListener(_onConnectivityChanged);
   }
 
   void _onWsEvent(MobileWsMessage msg) {
@@ -260,6 +267,7 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     _wsSub?.cancel();
     _ws?.dispose();
     LocationController.instance.removeListener(_handleLocationChange);
+    ConnectivityService.isOnline.removeListener(_onConnectivityChanged);
     // Lepaskan GPS dari relawan caller
     LocationController.instance.releaseMode('relawan_mission');
     super.dispose();
@@ -417,6 +425,38 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     );
   }
 
+  void _onConnectivityChanged() {
+    if (!mounted) return;
+    if (ConnectivityService.isOnline.value) {
+      _flushBufferedTelemetry();
+    }
+  }
+
+
+  Future<void> _flushBufferedTelemetry() async {
+    final buffer = LocalStorageService.getTelemetryBuffer();
+    if (buffer.isEmpty || _activeMission == null) return;
+
+    final lastPoint = buffer.last;
+    final lat = (lastPoint['latitude'] as num?)?.toDouble();
+    final lng = (lastPoint['longitude'] as num?)?.toDouble();
+    if (lat != null && lng != null) {
+      try {
+        await IncidentService.updateResponseLocation(
+          accessToken: widget.accessToken,
+          incidentId: _activeMission!.incidentId,
+          latitude: lat,
+          longitude: lng,
+        );
+        _ws?.sendLocation(lat, lng);
+        await LocalStorageService.clearTelemetryBuffer();
+      } catch (e) {
+        debugPrint('[RelawanMainScreen] Gagal flush buffered telemetry: $e');
+      }
+    }
+  }
+
+
   DateTime? _lastLocationUpdate;
 
   Future<void> _handleLocationChange() async {
@@ -430,6 +470,14 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
     final now = DateTime.now();
     if (_lastLocationUpdate == null ||
         now.difference(_lastLocationUpdate!) > const Duration(seconds: 10)) {
+      if (!ConnectivityService.isOnline.value) {
+        await LocalStorageService.bufferTelemetryPoint(
+          latitude: pos.lat,
+          longitude: pos.lng,
+        );
+        return;
+      }
+
       try {
         await IncidentService.updateResponseLocation(
           accessToken: widget.accessToken,
@@ -445,6 +493,10 @@ class _RelawanMainScreenState extends State<RelawanMainScreen> {
         }
       } catch (e) {
         debugPrint('[RelawanMainScreen] Gagal mengirim pembaruan lokasi: $e');
+        await LocalStorageService.bufferTelemetryPoint(
+          latitude: pos.lat,
+          longitude: pos.lng,
+        );
       }
     }
   }
