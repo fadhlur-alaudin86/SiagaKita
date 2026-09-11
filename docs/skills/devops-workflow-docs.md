@@ -61,3 +61,21 @@ If a deployment fails health checks (5 retries with 5s intervals), `release-depl
 2. Pulls the previous stable Docker image.
 3. Restarts the container using the previous image.
 4. Reports deployment failure in GitHub Actions logs.
+
+---
+
+## Conventional Commits & Commit Message Formatting
+
+All developers and AI workers MUST follow Conventional Commits:
+
+```
+<type>(<scope>): <short description in imperative mood>
+
+[body explaining WHY and technical details]
+
+[footer: Closes #N]
+```
+
+### Formatting Policy: Plain-Text Commit Messages vs Rich Markdown PRs
+- **Git Commit Messages**: Git commits are viewed in terminal logs (`git log`) and GitHub monospace `<pre>` blocks. They MUST be written in clean plain text without Markdown formatting syntax (no `#` or `##` headers, no `**bold**`, no code fence blocks). Use plain capitalized headers (`Changes:`, `Verification:`), 2-space indentation, and plain hyphens (`- `).
+- **Pull Request Descriptions**: Full GitHub Flavored Markdown (GFM) (headings, bold, tables, links, code blocks) is encouraged for Pull Request bodies to give reviewers a rich, structured visual experience.

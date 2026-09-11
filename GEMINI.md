@@ -90,6 +90,7 @@ Full details are documented in [`.agent/rules/localization.md`](.agent/rules/loc
 
 ## 3. Git & Operational Constraints
 - **Strictly No Uninstructed Commits/Pushes**: AI workers must never create Git commits, push branches, or open Pull Requests unless specifically commanded by the user in the current turn.
+- **Plain-Text Commit Messages vs Rich Markdown PRs**: Git commit messages are rendered inside terminal logs (`git log`) and GitHub `<pre>` monospace blocks where Markdown formatting syntax is not parsed. Git commit messages MUST use clean plain text: Conventional Commits (`<type>(<scope>): <subject>`), capitalized section headings followed by colons (`Components:`, `Verification:`), standard indentation, and plain hyphens (`- `). NEVER use Markdown formatting in commit messages (no Markdown headers `#` or `##`, no bold `**`, no italics, no markdown links, no code fences ` ``` `). Conversely, GitHub Pull Request descriptions SHOULD leverage rich GitHub Flavored Markdown (GFM) (headings, bold, tables, links, code blocks) for structured, polished review.
 - **Language Policy**:
   - All written code, repository artifacts, documentation, and agent task files must be in formal **technical English**.
   - Interactive chat dialogue with the user adapts to the user's conversational preference (e.g., Bahasa Indonesia).
