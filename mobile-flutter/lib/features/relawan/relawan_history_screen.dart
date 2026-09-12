@@ -1,7 +1,12 @@
+// Purpose: Volunteer mission response history screen showing completed, reviewed, and historical responses.
+// Data & Logic Flow: Loads mission history via IncidentService.getMyHistory, renders cards with duration, address, proof photos, and XP.
+// Key Components: RelawanHistoryScreen, _RelawanHistoryScreenState.
+
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/services/incident_service.dart';
 import 'widgets/relawan_card_widgets.dart';
+
 
 class RelawanHistoryScreen extends StatefulWidget {
   final String accessToken;

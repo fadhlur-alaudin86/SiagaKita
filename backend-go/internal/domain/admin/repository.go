@@ -739,7 +739,7 @@ func (r *Repository) GetStats(period string) (*StatsResponse, error) {
 
 func (r *Repository) FindAllBadges() ([]MBadge, error) {
 	var badges []MBadge
-	err := r.db.Order("badge_name asc").Find(&badges).Error
+	err := r.db.Order("badge_code asc, level asc").Find(&badges).Error
 	return badges, err
 }
 
@@ -748,11 +748,21 @@ func (r *Repository) CreateBadge(badge *MBadge) error {
 }
 
 func (r *Repository) UpdateBadge(id string, req *BadgeRequest) error {
-	return r.db.Model(&MBadge{}).Where("id = ?", id).Updates(map[string]interface{}{
+	updates := map[string]interface{}{
 		"badge_name":  req.BadgeName,
 		"description": req.Description,
 		"icon_url":    req.IconURL,
-	}).Error
+	}
+	if req.BadgeCode != "" {
+		updates["badge_code"] = req.BadgeCode
+	}
+	if req.Level > 0 {
+		updates["level"] = req.Level
+	}
+	if req.Threshold > 0 {
+		updates["threshold"] = req.Threshold
+	}
+	return r.db.Model(&MBadge{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *Repository) DeleteBadge(id string) error {

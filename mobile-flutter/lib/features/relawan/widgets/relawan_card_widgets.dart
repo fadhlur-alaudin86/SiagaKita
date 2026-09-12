@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/api_config.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/services/incident_service.dart';
 
@@ -175,54 +176,217 @@ class MissionHistoryCard extends StatelessWidget {
     };
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark ? Colors.white10 : Colors.grey.shade200,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(inc.typeIcon, size: 20, color: const Color(0xFFFF7418)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  inc.incidentType.toUpperCase().tr(context),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF7418).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(inc.typeIcon, size: 20, color: const Color(0xFFFF7418)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      inc.typeLabel.tr(context),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: primaryText,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatDate(inc.acceptedAt),
+                      style: TextStyle(color: secondaryText, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  statusLabel,
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: primaryText,
-                    fontSize: 13,
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  _formatDate(inc.acceptedAt),
-                  style: TextStyle(color: secondaryText, fontSize: 11),
+              ),
+            ],
+          ),
+          if (inc.addressDetail != null && inc.addressDetail!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: secondaryText,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    inc.addressDetail!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: secondaryText, fontSize: 12),
+                  ),
                 ),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(99),
+          ],
+          if (inc.durationMinutes != null ||
+              (inc.proofPhotoUrl != null && inc.proofPhotoUrl!.isNotEmpty)) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (inc.durationMinutes != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 13,
+                          color: secondaryText,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${inc.durationMinutes} ${'menit'.tr(context)}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: secondaryText,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const Spacer(),
+                if (inc.proofPhotoUrl != null && inc.proofPhotoUrl!.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => _showPhotoDialog(context, inc.proofPhotoUrl!),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.photo_outlined,
+                            size: 13,
+                            color: Color(0xFF3B82F6),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Foto Bukti'.tr(context),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF3B82F6),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            child: Text(
-              statusLabel,
-              style: TextStyle(
-                color: statusColor,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          ],
         ],
+      ),
+    );
+  }
+
+  void _showPhotoDialog(BuildContext context, String url) {
+    final fullUrl = url.startsWith('http')
+        ? url
+        : '${ApiConfig.baseUrl.replaceAll('/api/v1', '')}/$url';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              children: [
+                Image.network(
+                  fullUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.broken_image,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Gagal memuat gambar'.tr(context)),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black54,
+                    radius: 16,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

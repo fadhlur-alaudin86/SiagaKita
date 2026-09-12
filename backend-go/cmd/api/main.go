@@ -210,6 +210,9 @@ func main() {
 	users.Get("/kyc/status", userHandler.GetKYCStatus)
 	// Pendaftaran Relawan
 	users.Post("/volunteer/register", userHandler.SubmitVolunteerRegistration)
+	users.Get("/volunteer/badges", middleware.VolunteerOnly(), incidentHandler.GetVolunteerBadges)
+	// Direct alias /api/v1/volunteer/badges
+	v1.Get("/volunteer/badges", authMw, sessionMw, middleware.VolunteerOnly(), incidentHandler.GetVolunteerBadges)
 	// Ping: Heartbeat untuk update last_active_at (dipanggil tiap 30 detik dari mobile)
 	users.Get("/ping", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
@@ -220,6 +223,7 @@ func main() {
 	// Mobile routes: tambah sessionMw
 	incidents.Get("/active", sessionMw, incidentHandler.GetActive)
 	incidents.Get("/my-history", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetMissionHistory)
+	incidents.Get("/missions/history", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetMissionHistory)
 	incidents.Get("/reporter-history", sessionMw, incidentHandler.GetHistory)
 	incidents.Get("/nearby", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetNearby)
 	incidents.Post("/trigger", sessionMw, middleware.BanCheck(db), incidentHandler.TriggerSOS)

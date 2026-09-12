@@ -3,7 +3,7 @@
 ## 1. Overview & Problem Statement
 - **Target Issues**: Sub-Issues [#32](https://github.com/fadhlur-alaudin86/SiagaKita/issues/32) & [#33](https://github.com/fadhlur-alaudin86/SiagaKita/issues/33) (completing Parent Issue [#8](https://github.com/fadhlur-alaudin86/SiagaKita/issues/8))
 - **Priority**: P2 (Normal)
-- **Status**: Ready for Backlog Execution
+- **Status**: In Progress | Aligned via /grill-me
 - **Problem**:
   - While XP and Tier Ranks are implemented, the badge achievement system is static and lacks automated evaluation. Volunteers who successfully resolve emergencies do not automatically receive achievement badges (`m_badges`), diminishing motivation and engagement.
   - In `mobile-flutter`, volunteers cannot view their full history of past emergency missions or see which badges they have unlocked vs locked.
@@ -39,16 +39,16 @@
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Backend Badge Evaluation Tasks ([#32](https://github.com/fadhlur-alaudin86/SiagaKita/issues/32))
-- [ ] Create `EvaluateBadges(userID string)` engine in `incident.Service` or `user.Service`.
-- [ ] Implement query checking badge eligibility against `volunteer_reputation` and `incident_responses`.
-- [ ] Add unit tests verifying badge unlocking logic and duplicate prevention.
-- [ ] Emit real-time notification on badge unlock via `hub.Hub`.
+- [x] Create `EvaluateBadges(userID string)` engine in `incident.Service` or `user.Service`.
+- [x] Implement query checking badge eligibility against `volunteer_reputation` and `incident_responses`.
+- [x] Add unit tests verifying badge unlocking logic and duplicate prevention.
+- [x] Emit real-time notification on badge unlock via `hub.Hub`.
 
 ### 3.2 Mobile UI Tasks ([#33](https://github.com/fadhlur-alaudin86/SiagaKita/issues/33))
-- [ ] Build `BadgeGridWidget` with grayscale color filter for unacquired badges.
-- [ ] Build `MissionHistoryScreen` consuming `GET /api/v1/incidents/missions/history`.
-- [ ] Add celebration pop-up / confetti animation when a `BADGE_UNLOCKED` event is received via WebSocket.
-- [ ] Update Indonesian and English localization dictionaries.
+- [x] Build `BadgeGridWidget` with grayscale color filter for unacquired badges.
+- [x] Build `MissionHistoryScreen` consuming `GET /api/v1/incidents/missions/history`.
+- [x] Add celebration pop-up / confetti animation when a `BADGE_UNLOCKED` event is received via WebSocket.
+- [x] Update Indonesian and English localization dictionaries.
 
 ---
 

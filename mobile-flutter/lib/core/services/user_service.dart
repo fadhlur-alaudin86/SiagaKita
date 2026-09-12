@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_config.dart';
+import '../models/badge_model.dart';
 import '../models/user_model.dart';
 
 class UserService {
@@ -317,6 +318,31 @@ class UserService {
       }
     } catch (e) {
       throw Exception('Gagal memperbarui status ketersediaan: $e');
+    }
+  }
+
+
+  // ─── Gamifikasi Lencana (Khusus Relawan) ────────────────────────────────────
+  static Future<List<BadgeCategoryProgress>> getVolunteerBadges(String token) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/users/volunteer/badges'),
+            headers: _headers(token),
+          )
+          .timeout(_timeout);
+
+      final body = jsonDecode(response.body);
+      if (response.statusCode != 200) {
+        throw Exception(body['message'] ?? 'Gagal mengambil data lencana');
+      }
+
+      final List<dynamic> data = body['data'] as List<dynamic>? ?? [];
+      return data
+          .map((item) => BadgeCategoryProgress.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Gagal memuat lencana relawan: $e');
     }
   }
 }

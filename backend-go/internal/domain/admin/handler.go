@@ -345,8 +345,21 @@ func (h *Handler) CreateBadge(c *fiber.Ctx) error {
 	}
 
 	req := BadgeRequest{}
+	if codes := form.Value["badge_code"]; len(codes) > 0 {
+		req.BadgeCode = codes[0]
+	}
 	if names := form.Value["badge_name"]; len(names) > 0 {
 		req.BadgeName = names[0]
+	}
+	if levels := form.Value["level"]; len(levels) > 0 {
+		if lvl, err := strconv.Atoi(levels[0]); err == nil {
+			req.Level = lvl
+		}
+	}
+	if thresholds := form.Value["threshold"]; len(thresholds) > 0 {
+		if th, err := strconv.Atoi(thresholds[0]); err == nil {
+			req.Threshold = th
+		}
 	}
 	if descs := form.Value["description"]; len(descs) > 0 {
 		req.Description = descs[0]
@@ -387,8 +400,21 @@ func (h *Handler) UpdateBadge(c *fiber.Ctx) error {
 	}
 
 	req := BadgeRequest{}
+	if codes := form.Value["badge_code"]; len(codes) > 0 {
+		req.BadgeCode = codes[0]
+	}
 	if names := form.Value["badge_name"]; len(names) > 0 {
 		req.BadgeName = names[0]
+	}
+	if levels := form.Value["level"]; len(levels) > 0 {
+		if lvl, err := strconv.Atoi(levels[0]); err == nil {
+			req.Level = lvl
+		}
+	}
+	if thresholds := form.Value["threshold"]; len(thresholds) > 0 {
+		if th, err := strconv.Atoi(thresholds[0]); err == nil {
+			req.Threshold = th
+		}
 	}
 	if descs := form.Value["description"]; len(descs) > 0 {
 		req.Description = descs[0]

@@ -198,7 +198,10 @@ func (MRank) TableName() string { return "m_ranks" }
 
 type MBadge struct {
 	ID          string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	BadgeCode   string `gorm:"column:badge_code;not null;default:'general'" json:"badge_code"`
 	BadgeName   string `gorm:"not null" json:"badge_name"`
+	Level       int    `gorm:"not null;default:1" json:"level"`
+	Threshold   int    `gorm:"not null;default:1" json:"threshold"`
 	Description string `json:"description"`
 	IconURL     string `json:"icon_url,omitempty"`
 }
@@ -206,7 +209,10 @@ type MBadge struct {
 func (MBadge) TableName() string { return "m_badges" }
 
 type BadgeRequest struct {
+	BadgeCode   string `json:"badge_code"`
 	BadgeName   string `json:"badge_name"`
+	Level       int    `json:"level"`
+	Threshold   int    `json:"threshold"`
 	Description string `json:"description"`
 	IconURL     string `json:"icon_url,omitempty"`
 }

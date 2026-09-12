@@ -199,9 +199,36 @@ class AppLocalization {
     'Reset': 'Reset',
     'Strike': 'Strike',
 
-    // ─── Gamifikasi: Ranks ───────────────────────────────────────────────────
+    // ─── Gamifikasi: Ranks & Badges ──────────────────────────────────────────
     'Rank (XP Otomatis)': 'Ranks (Automatic XP)',
-    'Badges (Pemberian Manual)': 'Badges (Manual Award)',
+    'Badges & Penghargaan': 'Badges & Achievements',
+    'Sistem badge multi-level otomatis dan manual untuk apresiasi relawan.':
+        'Multi-level automated and manual badge system for volunteer recognition.',
+    'Kategori Badge': 'Badge Categories',
+    'Tier Level': 'Level Tiers',
+    'Tambah Badge': 'Add Badge',
+    'Tambah Badge Baru': 'Add New Badge',
+    'Edit Badge': 'Edit Badge',
+    'Tambah Kategori / Badge': 'Add Category / Badge',
+    'Tambah Tier Level': 'Add Level Tier',
+    'Kode Kategori': 'Category Code',
+    'Level': 'Level',
+    'Target Ambang Batas': 'Target Threshold',
+    'Belum ada tier level pada kategori ini.':
+        'No level tiers in this category yet.',
+    'Hapus Badge?': 'Delete Badge?',
+    'Badge berhasil ditambahkan': 'Badge successfully added',
+    'Badge berhasil diupdate': 'Badge successfully updated',
+    'Badge dihapus.': 'Badge deleted.',
+    'Ikon Badge': 'Badge Icon',
+    'Nama Badge': 'Badge Name',
+    'Pilih Gambar': 'Choose Image',
+    'Ganti File': 'Change File',
+    'Hapus badge': 'Delete badge',
+    'Daftar level dan syarat misi untuk kategori ini':
+        'List of levels and mission requirements for this category',
+    'Belum ada data badge. Silakan tambah badge baru.':
+        'No badge data available yet. Please add a new badge.',
     'Relawan akan naik rank secara otomatis saat XP mereka mencapai batas minimum.':
         'Volunteers will rank up automatically when their XP reaches the minimum threshold.',
     'Tambah Rank': 'Add Rank',

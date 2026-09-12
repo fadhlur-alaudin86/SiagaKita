@@ -359,16 +359,22 @@ CREATE TABLE public.m_ranks (
 Indexes: `idx_m_ranks_min_exp`
 
 ### `m_badges` — Master Badge Definitions
-Stores achievements awardable to volunteers upon completing specialized milestones.
+Stores achievements awardable to volunteers upon completing specialized milestones with tiered levels.
 
 ```sql
 CREATE TABLE public.m_badges (
     id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    badge_code  varchar(50) NOT NULL,
     badge_name  varchar(50) NOT NULL,
+    level       int NOT NULL DEFAULT 1,
+    threshold   int NOT NULL DEFAULT 1,
     description text,
-    icon_url    varchar(255)
+    icon_url    varchar(255),
+    CONSTRAINT uq_m_badges_code_level UNIQUE (badge_code, level)
 );
 ```
+
+Indexes: `idx_m_badges_code_level`, `idx_m_badges_badge_code`
 
 ### `volunteer_reputation` — Volunteer Experience & Standing
 Records current experience points (XP), active rank, and total rescue missions completed.
@@ -410,12 +416,13 @@ Many-to-many relationship mapping earned badges to volunteers.
 CREATE TABLE public.volunteer_badges_acquired (
     id        uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id   uuid REFERENCES users(id) ON DELETE CASCADE,
-    badge_id  uuid REFERENCES m_badges(id),
-    earned_at timestamptz DEFAULT now()
+    badge_id  uuid REFERENCES m_badges(id) ON DELETE CASCADE,
+    earned_at timestamptz DEFAULT now(),
+    CONSTRAINT uq_volunteer_badges_acquired_user_badge UNIQUE (user_id, badge_id)
 );
 ```
 
-Indexes: `idx_volunteer_badges_acquired_user_id`, `idx_volunteer_badges_acquired_badge_id`
+Indexes: `idx_volunteer_badges_acquired_user_id`, `idx_volunteer_badges_acquired_badge_id`, `uq_volunteer_badges_acquired_user_badge`
 
 ---
 
@@ -466,7 +473,7 @@ For the comprehensive interactive Mermaid ERD diagram, see [`docs/design/databas
 
 ---
 
-## 10. Sequential Migration History (001–020)
+## 10. Sequential Migration History (001–022)
 
 | Version | Migration Script | Scope & Description |
 |---|---|---|
@@ -491,3 +498,4 @@ For the comprehensive interactive Mermaid ERD diagram, see [`docs/design/databas
 | `019` | `019_add_missing_fk_indexes` | Added B-Tree indexes across all 13 relational foreign keys. |
 | `020` | `020_add_analytics_indexes` | Composite indexes for incident stats and gamification rank queries. |
 | `021` | `021_standardize_varchar_constraints_and_relations` | Transitioned custom ENUMs to Domain-Constrained VARCHAR with CHECK constraints; standardized emergency contact relations. |
+| `022` | `022_add_multi_level_badges_and_constraints` | Added badge_code, level, and threshold to m_badges with UNIQUE(badge_code, level), added UNIQUE(user_id, badge_id) to volunteer_badges_acquired, and seeded 17 multi-level milestones across 5 categories. |

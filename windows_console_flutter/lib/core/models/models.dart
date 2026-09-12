@@ -812,14 +812,20 @@ class AdminModel {
 
 class BadgeModel {
   final String id;
+  final String badgeCode;
   final String badgeName;
+  final int level;
+  final int threshold;
   final String description;
   final String iconUrl;
   final DateTime createdAt;
 
   const BadgeModel({
     required this.id,
+    this.badgeCode = 'general',
     required this.badgeName,
+    this.level = 1,
+    this.threshold = 1,
     required this.description,
     required this.iconUrl,
     required this.createdAt,
@@ -827,11 +833,24 @@ class BadgeModel {
 
   factory BadgeModel.fromJson(Map<String, dynamic> json) => BadgeModel(
     id: json['id'] as String? ?? '',
+    badgeCode: json['badge_code'] as String? ?? 'general',
     badgeName: json['badge_name'] as String? ?? '',
+    level: (json['level'] as num?)?.toInt() ?? 1,
+    threshold: (json['threshold'] as num?)?.toInt() ?? 1,
     description: json['description'] as String? ?? '',
     iconUrl: json['icon_url'] as String? ?? '',
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
         DateTime.now(),
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'badge_code': badgeCode,
+    'badge_name': badgeName,
+    'level': level,
+    'threshold': threshold,
+    'description': description,
+    'icon_url': iconUrl,
+  };
 }

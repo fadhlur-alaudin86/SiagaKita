@@ -297,12 +297,13 @@ type AllActiveIncidentResponse struct {
 }
 
 type ResolveResponse struct {
-	Resolved     bool   `json:"resolved"`
-	XPEarned     int    `json:"xp_earned"`
-	NewTotalXP   int    `json:"new_total_xp"`
-	TotalRescues int    `json:"total_rescues"`
-	RankUp       bool   `json:"rank_up"`
-	NewRank      string `json:"new_rank,omitempty"`
+	Resolved     bool            `json:"resolved"`
+	XPEarned     int             `json:"xp_earned"`
+	NewTotalXP   int             `json:"new_total_xp"`
+	TotalRescues int             `json:"total_rescues"`
+	RankUp       bool            `json:"rank_up"`
+	NewRank      string          `json:"new_rank,omitempty"`
+	NewBadges    []BadgeUnlocked `json:"new_badges,omitempty"`
 }
 
 // FalseAlarmResponse dikirim setelah mark-false-alarm berhasil.
@@ -343,13 +344,16 @@ type AgencyReviewRequest struct {
 }
 
 type MissionHistoryResponse struct {
-	ID             string  `json:"id"`
-	IncidentType   string  `json:"incident_type"`
-	Status         string  `json:"status"`          // Status global
-	ResponseStatus string  `json:"response_status"` // Status relawan
-	AddressDetail  *string `json:"address_detail,omitempty"`
-	AcceptedAt     string  `json:"accepted_at"`
-	XPEarned       int     `json:"xp_earned,omitempty"` // Jika ada XP historis
+	ID              string  `json:"id"`
+	IncidentType    string  `json:"incident_type"`
+	Status          string  `json:"status"`          // Status global
+	ResponseStatus  string  `json:"response_status"` // Status relawan
+	AddressDetail   *string `json:"address_detail,omitempty"`
+	AcceptedAt      string  `json:"accepted_at"`
+	CompletedAt     *string `json:"completed_at,omitempty"`
+	DurationMinutes *int    `json:"duration_minutes,omitempty"`
+	ProofPhotoURL   *string `json:"proof_photo_url,omitempty"`
+	XPEarned        int     `json:"xp_earned,omitempty"` // Jika ada XP historis
 }
 
 // IncidentReportResponse - data lengkap laporan (Jalur B) dengan nama pelapor.
@@ -371,4 +375,57 @@ type IncidentReportResponse struct {
 	CreatedAt     time.Time   `json:"created_at"`
 	UpdatedAt     time.Time   `json:"updated_at"`
 	CompletedAt   *time.Time  `json:"completed_at,omitempty"`
+}
+
+// ─── Gamification Multi-Level Badges ──────────────────────────────────────────
+
+// MasterBadge represents m_badges table in incident domain.
+type MasterBadge struct {
+	ID          string `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	BadgeCode   string `gorm:"column:badge_code;not null" json:"badge_code"`
+	BadgeName   string `gorm:"column:badge_name;not null" json:"badge_name"`
+	Level       int    `gorm:"column:level;not null;default:1" json:"level"`
+	Threshold   int    `gorm:"column:threshold;not null;default:1" json:"threshold"`
+	Description string `gorm:"column:description" json:"description"`
+	IconURL     string `gorm:"column:icon_url" json:"icon_url,omitempty"`
+}
+
+func (MasterBadge) TableName() string { return "m_badges" }
+
+type VolunteerBadgeAcquired struct {
+	ID       string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID   string    `gorm:"type:uuid;not null" json:"user_id"`
+	BadgeID  string    `gorm:"type:uuid;not null" json:"badge_id"`
+	EarnedAt time.Time `json:"earned_at"`
+}
+
+func (VolunteerBadgeAcquired) TableName() string { return "volunteer_badges_acquired" }
+
+type BadgeTierItem struct {
+	ID          string  `json:"id"`
+	Level       int     `json:"level"`
+	Threshold   int     `json:"threshold"`
+	Description string  `json:"description"`
+	IconURL     string  `json:"icon_url,omitempty"`
+	Earned      bool    `json:"earned"`
+	EarnedAt    *string `json:"earned_at,omitempty"`
+}
+
+type BadgeCategoryProgress struct {
+	BadgeCode       string          `json:"badge_code"`
+	BadgeName       string          `json:"badge_name"`
+	CurrentLevel    int             `json:"current_level"` // 0 if unearned
+	MaxLevel        int             `json:"max_level"`
+	CurrentProgress int             `json:"current_progress"`         // e.g. 7 rescues
+	NextThreshold   *int            `json:"next_threshold,omitempty"` // nil if max level reached
+	Tiers           []BadgeTierItem `json:"tiers"`
+}
+
+type BadgeUnlocked struct {
+	BadgeCode   string `json:"badge_code"`
+	BadgeName   string `json:"badge_name"`
+	Level       int    `json:"level"`
+	Threshold   int    `json:"threshold"`
+	Description string `json:"description"`
+	IconURL     string `json:"icon_url,omitempty"`
 }

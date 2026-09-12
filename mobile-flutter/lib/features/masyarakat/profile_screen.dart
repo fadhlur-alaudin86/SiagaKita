@@ -11,6 +11,8 @@ import 'kyc_screen.dart';
 import 'volunteer_registration_screen.dart';
 import 'report_history_screen.dart';
 import 'wa_verification_screen.dart';
+import '../relawan/relawan_history_screen.dart';
+import 'widgets/badge_grid_widget.dart';
 import '../../core/constants/api_config.dart';
 import '../../core/constants/relation_constants.dart';
 
@@ -1163,29 +1165,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             )
                           : BorderSide.none,
                     ),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.history_outlined,
-                        color: primaryTextColor,
-                      ),
-                      title: Text(
-                        'Riwayat Laporan'.tr(context),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: primaryTextColor,
-                        ),
-                      ),
-                      trailing: Icon(Icons.chevron_right, color: hintColor),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ReportHistoryScreen(
-                              accessToken: widget.accessToken,
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: Icon(
+                            Icons.history_outlined,
+                            color: primaryTextColor,
+                          ),
+                          title: Text(
+                            'Riwayat Laporan'.tr(context),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: primaryTextColor,
                             ),
                           ),
-                        );
-                      },
+                          trailing: Icon(Icons.chevron_right, color: hintColor),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReportHistoryScreen(
+                                  accessToken: widget.accessToken,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        if (user.volunteerStatus == 'approved') ...[
+                          Divider(
+                            height: 1,
+                            indent: 16,
+                            endIndent: 16,
+                            color: isDark
+                                ? Colors.grey.withValues(alpha: 0.2)
+                                : Colors.grey.shade200,
+                          ),
+                          ListTile(
+                            leading: Icon(
+                              Icons.assignment_turned_in_outlined,
+                              color: primaryTextColor,
+                            ),
+                            title: Text(
+                              'Riwayat Misi Relawan'.tr(context),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: primaryTextColor,
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.chevron_right,
+                              color: hintColor,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => RelawanHistoryScreen(
+                                    accessToken: widget.accessToken,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ],
                     ),
                   ),
 
@@ -1324,6 +1367,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (user.volunteerStatus == 'approved') ...[
                     const SizedBox(height: 8),
                     _buildVolunteerReputationCard(user, isDark, hintColor),
+                    const SizedBox(height: 16),
+                    BadgeGridWidget(accessToken: widget.accessToken),
                   ],
 
                   const SizedBox(height: 16),
