@@ -19,9 +19,6 @@ linters:
       min-occurrences: 3
     misspell:
       locale: US
-      ignore-words:
-        - cancelled
-        - CANCELLED
     gosec:
       excludes:
         - G304

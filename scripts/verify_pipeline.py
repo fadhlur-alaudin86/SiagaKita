@@ -231,6 +231,14 @@ def check_code_linters(repo_root):
         else:
             print("[PASS] go vet passed cleanly.")
 
+        print("[INFO] Verifying golangci-lint config...")
+        res_cfg = subprocess.run(["golangci-lint", "config", "verify"], cwd=backend_dir)
+        if res_cfg.returncode != 0:
+            print("[FAIL] golangci-lint config verification failed.")
+            all_passed = False
+        else:
+            print("[PASS] golangci-lint config verified valid.")
+
         print("[INFO] Running golangci-lint in backend-go...")
         res_lint = subprocess.run(["golangci-lint", "run", "--timeout=5m"], cwd=backend_dir)
         if res_lint.returncode != 0:
