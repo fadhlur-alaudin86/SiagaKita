@@ -162,12 +162,108 @@ def check_localization_hygiene(repo_root):
     return True
 
 
-def run_code_tests_and_analysis(repo_root):
-    """Runs backend Go tests and Flutter static analysis across mobile and desktop console."""
-    print("\n--- 4. Code Quality & Regression Test Suite ---")
+def check_code_formatting(repo_root, fix=False):
+    """Verifies gofmt in backend-go and dart format across all Flutter workspaces."""
+    print("\n--- 4. Code Formatting Verification (gofmt & dart format) ---")
     all_passed = True
 
-    # 4.1 Go Backend Tests
+    # 4.1 Go Formatting (gofmt)
+    backend_dir = os.path.join(repo_root, "backend-go")
+    if os.path.exists(backend_dir):
+        if fix:
+            print("[INFO] Formatting Go source files (gofmt -w .)...")
+            subprocess.run(["gofmt", "-w", "."], cwd=backend_dir)
+            print("[PASS] Go formatting applied.")
+        else:
+            print("[INFO] Checking Go formatting (gofmt -l .)...")
+            res = subprocess.run(["gofmt", "-l", "."], cwd=backend_dir, capture_output=True, text=True)
+            if res.returncode != 0 or res.stdout.strip():
+                print("[FAIL] Unformatted Go files found:")
+                for f in res.stdout.strip().splitlines():
+                    print(f"  - backend-go/{f}")
+                print("[HINT] Run 'gofmt -w backend-go/' or 'python3 scripts/verify_pipeline.py --format' to fix.")
+                all_passed = False
+            else:
+                print("[PASS] All Go source files are properly formatted.")
+
+    # 4.2 Flutter / Dart Formatting
+    flutter_apps = [
+        ("mobile-flutter", "Flutter Mobile"),
+        ("windows_console_flutter", "Flutter Desktop Console"),
+        ("mobile-flutter-responder", "Flutter Mobile Responder")
+    ]
+
+    for app_dir, label in flutter_apps:
+        full_path = os.path.join(repo_root, app_dir)
+        if os.path.exists(full_path) and os.path.exists(os.path.join(full_path, "pubspec.yaml")):
+            if fix:
+                print(f"[INFO] Formatting {label} source files (dart format .)...")
+                subprocess.run(["dart", "format", "."], cwd=full_path)
+                print(f"[PASS] {label} formatting applied.")
+            else:
+                print(f"[INFO] Checking {label} formatting (dart format --set-exit-if-changed .)...")
+                res = subprocess.run(["dart", "format", "--set-exit-if-changed", "."], cwd=full_path, capture_output=True, text=True)
+                if res.returncode != 0:
+                    print(f"[FAIL] {label} has unformatted Dart source files.")
+                    print(res.stdout.strip())
+                    print(f"[HINT] Run 'dart format {app_dir}/' or 'python3 scripts/verify_pipeline.py --format' to fix.")
+                    all_passed = False
+                else:
+                    print(f"[PASS] {label} formatting verified clean.")
+
+    return all_passed
+
+
+def check_code_linters(repo_root):
+    """Runs golangci-lint, go vet, and flutter analyze across all workspaces."""
+    print("\n--- 5. Static Analysis & Linters (golangci-lint & flutter analyze) ---")
+    all_passed = True
+
+    # 5.1 Go Vet & golangci-lint
+    backend_dir = os.path.join(repo_root, "backend-go")
+    if os.path.exists(backend_dir) and os.path.exists(os.path.join(backend_dir, "go.mod")):
+        print("[INFO] Running go vet in backend-go...")
+        res_vet = subprocess.run(["go", "vet", "./..."], cwd=backend_dir)
+        if res_vet.returncode != 0:
+            print("[FAIL] go vet reported issues.")
+            all_passed = False
+        else:
+            print("[PASS] go vet passed cleanly.")
+
+        print("[INFO] Running golangci-lint in backend-go...")
+        res_lint = subprocess.run(["golangci-lint", "run", "--timeout=5m"], cwd=backend_dir)
+        if res_lint.returncode != 0:
+            print("[FAIL] golangci-lint reported issues.")
+            all_passed = False
+        else:
+            print("[PASS] golangci-lint passed cleanly with 0 issues.")
+
+    # 5.2 Flutter Static Analysis
+    flutter_apps = [
+        ("mobile-flutter", "Flutter Mobile"),
+        ("windows_console_flutter", "Flutter Desktop Console"),
+        ("mobile-flutter-responder", "Flutter Mobile Responder")
+    ]
+
+    for app_dir, label in flutter_apps:
+        full_path = os.path.join(repo_root, app_dir)
+        if os.path.exists(full_path) and os.path.exists(os.path.join(full_path, "pubspec.yaml")):
+            print(f"[INFO] Running {label} static analysis (flutter analyze --fatal-infos)...")
+            res_mob = subprocess.run(["flutter", "analyze", "--fatal-infos"], cwd=full_path)
+            if res_mob.returncode != 0:
+                print(f"[FAIL] {label} static analysis failed.")
+                all_passed = False
+            else:
+                print(f"[PASS] {label} static analysis passed with 0 issues.")
+
+    return all_passed
+
+
+def run_regression_tests(repo_root):
+    """Runs backend Go tests and Flutter unit tests."""
+    print("\n--- 6. Regression Unit Test Suite ---")
+    all_passed = True
+
     backend_dir = os.path.join(repo_root, "backend-go")
     if os.path.exists(backend_dir) and os.path.exists(os.path.join(backend_dir, "go.mod")):
         print("\n[INFO] Running Go backend tests with race detector (cd backend-go && go test ./...)...")
@@ -178,45 +274,22 @@ def run_code_tests_and_analysis(repo_root):
         else:
             print("[PASS] Go backend unit tests passed.")
 
-    # 4.2 Flutter Mobile Analysis
     mobile_dir = os.path.join(repo_root, "mobile-flutter")
-    if os.path.exists(mobile_dir) and os.path.exists(os.path.join(mobile_dir, "pubspec.yaml")):
-        print("\n[INFO] Running Flutter Mobile static analysis (flutter analyze --fatal-infos)...")
-        mob_res = subprocess.run(["flutter", "analyze", "--fatal-infos"], cwd=mobile_dir)
-        if mob_res.returncode != 0:
-            print("[FAIL] Flutter Mobile static analysis failed.")
+    if os.path.exists(mobile_dir) and os.path.exists(os.path.join(mobile_dir, "test")):
+        print("\n[INFO] Running Flutter Mobile unit tests (flutter test)...")
+        mob_test = subprocess.run(["flutter", "test"], cwd=mobile_dir)
+        if mob_test.returncode != 0:
+            print("[FAIL] Flutter Mobile unit tests failed.")
             all_passed = False
         else:
-            print("[PASS] Flutter Mobile static analysis passed with 0 issues.")
-
-    # 4.3 Flutter Desktop Console Analysis
-    desktop_dir = os.path.join(repo_root, "windows_console_flutter")
-    if os.path.exists(desktop_dir) and os.path.exists(os.path.join(desktop_dir, "pubspec.yaml")):
-        print("\n[INFO] Running Flutter Desktop Console static analysis (flutter analyze --fatal-infos)...")
-        desk_res = subprocess.run(["flutter", "analyze", "--fatal-infos"], cwd=desktop_dir)
-        if desk_res.returncode != 0:
-            print("[FAIL] Flutter Desktop Console static analysis failed.")
-            all_passed = False
-        else:
-            print("[PASS] Flutter Desktop Console static analysis passed with 0 issues.")
-
-    # 4.4 Flutter Responder Mobile Analysis
-    responder_dir = os.path.join(repo_root, "mobile-flutter-responder")
-    if os.path.exists(responder_dir) and os.path.exists(os.path.join(responder_dir, "pubspec.yaml")):
-        print("\n[INFO] Running Flutter Responder static analysis (flutter analyze --fatal-infos)...")
-        resp_res = subprocess.run(["flutter", "analyze", "--fatal-infos"], cwd=responder_dir)
-        if resp_res.returncode != 0:
-            print("[FAIL] Flutter Responder static analysis failed.")
-            all_passed = False
-        else:
-            print("[PASS] Flutter Responder static analysis passed with 0 issues.")
+            print("[PASS] Flutter Mobile unit tests passed.")
 
     return all_passed
 
 
 def check_backlog_planning_sync(repo_root):
     """Executes backlog and planning synchronization check."""
-    print("\n--- 5. Backlog & Planning Documentation Parity Audit ---")
+    print("\n--- 7. Backlog & Planning Documentation Parity Audit ---")
     script_path = os.path.join(repo_root, "scripts", "sync_backlog_status.py")
     if not os.path.exists(script_path):
         print(f"[FAIL] sync_backlog_status.py not found at: {script_path}")
@@ -237,9 +310,9 @@ def check_backlog_planning_sync(repo_root):
 
 def main():
     parser = argparse.ArgumentParser(description="Automated Pre-Flight Quality Gatekeeper for SiagaKita.")
-    parser.add_argument("--fast", action="store_true", help="Skip running unit tests and analyzer (audits contracts and migrations only)")
-    parser.add_argument("--run-tests", action="store_true", default=True, help="Run full backend unit tests and Flutter static analysis (default)")
-    parser.add_argument("--skip-tests", action="store_true", help="Explicitly skip test suite execution")
+    parser.add_argument("--fast", action="store_true", help="Skip running unit tests and analyzer (audits contracts, migrations, formatting, and sync)")
+    parser.add_argument("--format", action="store_true", help="Automatically format Go (gofmt -w) and Dart (dart format) source files across all workspaces")
+    parser.add_argument("--skip-tests", action="store_true", help="Explicitly skip regression test suite execution")
     args = parser.parse_args()
 
     repo_root = find_repo_root()
@@ -259,15 +332,26 @@ def main():
     # 3. Localization Hygiene
     results.append(("Localization Hygiene", check_localization_hygiene(repo_root)))
 
-    # 4. Code Quality & Tests
+    # 4. Code Formatting (gofmt & dart format)
+    results.append(("Code Formatting", check_code_formatting(repo_root, fix=args.format)))
+
+    # 5. Static Analysis & Linters (golangci-lint & flutter analyze)
+    if args.fast:
+        print("\n--- 5. Static Analysis & Linters ---")
+        print("[SKIP] Linter and static analysis skipped due to --fast flag.")
+        results.append(("Static Analysis & Linters", True))
+    else:
+        results.append(("Static Analysis & Linters", check_code_linters(repo_root)))
+
+    # 6. Regression Unit Tests
     if args.fast or args.skip_tests:
-        print("\n--- 4. Code Quality & Regression Test Suite ---")
+        print("\n--- 6. Regression Unit Test Suite ---")
         print("[SKIP] Test execution skipped due to --fast / --skip-tests flag.")
         results.append(("Regression Tests", True))
     else:
-        results.append(("Regression Tests", run_code_tests_and_analysis(repo_root)))
+        results.append(("Regression Tests", run_regression_tests(repo_root)))
 
-    # 5. Backlog & Planning Sync
+    # 7. Backlog & Planning Sync
     results.append(("Backlog & Planning Sync", check_backlog_planning_sync(repo_root)))
 
     print("\n=======================================================")

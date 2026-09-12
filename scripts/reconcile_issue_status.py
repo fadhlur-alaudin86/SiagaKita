@@ -114,8 +114,7 @@ def autocomplete_and_close(repo, issue_num, reason="completed"):
 def extract_issues(text, pr_num=None):
     """Extracts closing issues and parent tracking issues from text."""
     parent_clause_pattern = re.compile(
-        r'(?:parent(?:\s+issues?)?|refs?|related\s+to)\s*:?\s*(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
-        re.IGNORECASE
+        r'(?mi)^[ \t-]*(?:parent(?:\s+issues?)?|refs?|related\s+to)\s*:\s*(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)'
     )
     parent_issues = set()
     for match in parent_clause_pattern.finditer(text):
@@ -146,6 +145,67 @@ def extract_issues(text, pr_num=None):
     return closing_issues, parent_issues
 
 
+def find_repo_root():
+    """Finds repository root by locating .git or VERSION."""
+    curr = os.path.abspath(os.getcwd())
+    while curr != os.path.dirname(curr):
+        if os.path.exists(os.path.join(curr, ".git")) or os.path.exists(os.path.join(curr, "VERSION")):
+            return curr
+        curr = os.path.dirname(curr)
+    return os.path.abspath(os.getcwd())
+
+
+def get_parent_sub_issues(repo, parent_num, repo_root=None):
+    """
+    Resolves all child sub-issues for a given parent tracking issue.
+    Queries:
+    1. .planning/README.md catalog mapping (Parent -> Target Issues)
+    2. GitHub issue search for child issues declaring 'Parent Issue: #{parent_num}'
+    3. Direct references in parent issue body
+    """
+    sub_issues = set()
+    if not repo_root:
+        repo_root = find_repo_root()
+
+    # 1. Check .planning/README.md catalog table
+    readme_path = os.path.join(repo_root, ".planning", "README.md")
+    if os.path.exists(readme_path):
+        try:
+            with open(readme_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            row_pattern = re.compile(
+                r'\|\s*\*\*\d+\*\*\s*\|\s*\[`[^`]+`\]\([^)]+\)\s*\|\s*([^|]+)\|\s*([^|]+)\|'
+            )
+            for m in row_pattern.finditer(content):
+                target_str = m.group(1)
+                parent_str = m.group(2)
+                p_match = re.search(r'#(\d+)', parent_str)
+                if p_match and int(p_match.group(1)) == int(parent_num):
+                    for t_num in re.findall(r'#(\d+)', target_str):
+                        sub_issues.add(str(t_num))
+        except Exception as e:
+            print(f"[WARN] Failed to parse .planning/README.md for parent #{parent_num}: {e}")
+
+    # 2. Search GitHub for issues declaring 'Parent Issue: #{parent_num}'
+    code, out, _ = run_cmd(
+        f'gh issue list --repo "{repo}" --state all --search "Parent Issue: #{parent_num}" --json number -q ".[].number"'
+    )
+    if code == 0 and out.strip():
+        for line in out.splitlines():
+            if line.strip():
+                sub_issues.add(line.strip())
+
+    # 3. Check parent issue body itself for explicit child issue listings
+    code_p, out_p, _ = run_cmd(f'gh issue view "{parent_num}" --repo "{repo}" --json body -q .body')
+    if code_p == 0 and out_p.strip():
+        for num in re.findall(r'#(\d+)', out_p):
+            if str(num) != str(parent_num):
+                sub_issues.add(str(num))
+
+    sub_issues.discard(str(parent_num))
+    return sub_issues
+
+
 def inspect_and_update_parent_issue(repo, parent_num, pr_num=None, pr_title=""):
     """
     Evaluates a parent issue. If all referenced sub-issues are closed:
@@ -163,24 +223,27 @@ def inspect_and_update_parent_issue(repo, parent_num, pr_num=None, pr_title=""):
         return
 
     state = data.get("state", "")
-    body = data.get("body", "") or ""
     labels = [lbl.get("name") for lbl in data.get("labels", []) if isinstance(lbl, dict)]
 
-    # Find any referenced sub-issue numbers in parent issue body
-    referenced_sub_issues = set(re.findall(r'#(\d+)', body))
-    referenced_sub_issues.discard(str(parent_num))
+    referenced_sub_issues = get_parent_sub_issues(repo, parent_num)
     if pr_num:
         referenced_sub_issues.discard(str(pr_num))
 
+    if not referenced_sub_issues:
+        print(f"Parent issue #{parent_num}: No child sub-issues found or mapped. Skipping automation.")
+        return
+
+    print(f"Parent issue #{parent_num}: Evaluating child sub-issues: {sorted(referenced_sub_issues, key=int)}")
     all_subs_closed = True
     for sub in referenced_sub_issues:
         code_sub, out_sub, _ = run_cmd(f'gh issue view "{sub}" --repo "{repo}" --json state -q .state')
         if code_sub == 0 and out_sub.strip() == "OPEN":
+            print(f"Parent issue #{parent_num}: Sub-issue #{sub} is still OPEN.")
             all_subs_closed = False
             break
 
     if all_subs_closed:
-        print(f"Parent issue #{parent_num}: All sub-issues closed. Completing checklists and transitioning to status: ready.")
+        print(f"Parent issue #{parent_num}: All sub-issues {referenced_sub_issues} are closed. Completing checklists and transitioning to status: ready.")
         autocomplete_checklist(repo, parent_num)
         if state == "OPEN" and "status: ready" not in labels:
             set_issue_status(repo, parent_num, "status: ready")
@@ -190,7 +253,7 @@ def inspect_and_update_parent_issue(repo, parent_num, pr_num=None, pr_title=""):
             )
             run_cmd(f'gh issue comment "{parent_num}" --repo "{repo}" --body "{msg}"')
     else:
-        print(f"Parent issue #{parent_num}: Some child sub-tasks remain open.")
+        print(f"Parent issue #{parent_num}: One or more child sub-tasks remain open. No status change.")
 
 
 def reconcile_merged_prs(repo, limit=25):
