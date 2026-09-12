@@ -38,9 +38,76 @@ jobs:
             desktop:
               - 'windows_console_flutter/**'
 
+  # ─── Fast Fail Format & Clean Text Check (<20s) ──────────────────────────
+  fast-format-check:
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        if: ${{ needs.changes.outputs.backend == 'true' }}
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend-go/go.mod
+          cache: false
+
+      - name: Setup Dart
+        if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.desktop == 'true' }}
+        uses: dart-lang/setup-dart@v1
+
+      - name: Check Go Format
+        if: ${{ needs.changes.outputs.backend == 'true' }}
+        run: |
+          unformatted=$(gofmt -l backend-go/)
+          if [ -n "$unformatted" ]; then
+            echo "Files not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Check Dart Format
+        if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.desktop == 'true' }}
+        run: |
+          for dir in mobile-flutter mobile-flutter-responder windows_console_flutter; do
+            if [ -d "$dir" ]; then
+              dart format --set-exit-if-changed "$dir"
+            fi
+          done
+
+      - name: Check Clean Text & Decorative Icons
+        run: |
+          python3 -c '
+          import os, re, sys
+          pattern = re.compile(r"[\U0001F300-\U0001F9FF\U0001FA70-\U0001FAFF\U00002700-\U000027BF\U00002600-\U000026FF]")
+          skip_dirs = {".git", ".dart_tool", "build", ".codegraph", "postgres-data", "__pycache__", "vendor"}
+          target_exts = {".go", ".dart", ".md", ".yaml", ".yml"}
+          violations = []
+          for root, dirs, files in os.walk("."):
+              dirs[:] = [d for d in dirs if d not in skip_dirs]
+              for f in files:
+                  if os.path.splitext(f)[1] in target_exts:
+                      fpath = os.path.join(root, f)
+                      try:
+                          with open(fpath, "r", encoding="utf-8", errors="ignore") as file:
+                              for idx, line in enumerate(file, 1):
+                                  m = pattern.search(line)
+                                  if m:
+                                      violations.append(f"{fpath}:{idx}: {m.group(0)!r}")
+                      except Exception:
+                          pass
+          if violations:
+              print("Clean Text Policy Violations found:")
+              for v in violations:
+                  print("  - " + v)
+              sys.exit(1)
+          print("Clean Text verified (0 decorative emojis/icons)")
+          '
+
   # ─── Go Backend CI ─────────────────────────────────────────────────────────
   ci-backend:
-    needs: changes
+    needs: [changes, fast-format-check]
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     defaults:
@@ -91,7 +158,7 @@ jobs:
 
   # ─── Flutter Mobile CI ─────────────────────────────────────────────────────
   ci-mobile:
-    needs: changes
+    needs: [changes, fast-format-check]
     if: ${{ needs.changes.outputs.mobile == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -164,7 +231,7 @@ jobs:
 
   # ─── Flutter Desktop CI ────────────────────────────────────────────────────
   ci-desktop:
-    needs: changes
+    needs: [changes, fast-format-check]
     if: ${{ needs.changes.outputs.desktop == 'true' }}
     runs-on: ubuntu-latest
     defaults:

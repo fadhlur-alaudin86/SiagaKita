@@ -48,6 +48,7 @@ var idToEn = map[string]string{
 	"Email atau kata sandi salah":                      "Invalid email or password",
 	"Email atau password salah.":                       "Invalid email or password.",
 	"Kode OTP salah atau sudah kedaluwarsa":            "Invalid or expired OTP code",
+	"Kode OTP salah":                                   "Invalid OTP code",
 	"Registrasi berhasil":                              "Registration successful",
 	"Password berhasil diubah. Silakan login kembali.": "Password changed successfully. Please log in again.",
 	"Kode OTP baru telah dikirim":                      "A new OTP code has been sent",

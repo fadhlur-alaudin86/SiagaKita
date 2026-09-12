@@ -141,31 +141,133 @@ def check_database_migrations(repo_root):
     return True
 
 
+def check_backend_i18n_errors(repo_root):
+    """Verifies that all domain sentinel error strings in backend-go/internal/domain/*/errors.go
+    are registered in backend-go/internal/i18n/i18n.go."""
+    print("[INFO] Auditing backend domain sentinel error translations in internal/i18n/i18n.go...")
+    i18n_file = os.path.join(repo_root, "backend-go", "internal", "i18n", "i18n.go")
+    if not os.path.exists(i18n_file):
+        print(f"[FAIL] i18n.go not found at: {i18n_file}")
+        return False
+
+    with open(i18n_file, "r", encoding="utf-8") as f:
+        i18n_content = f.read()
+
+    # Extract all keys from idToEn map: matches '"Indonesian text": "English text",'
+    key_pattern = re.compile(r'^\s*"([^"]+)":\s*"', re.MULTILINE)
+    known_keys = set(key_pattern.findall(i18n_content))
+
+    domain_dir = os.path.join(repo_root, "backend-go", "internal", "domain")
+    if not os.path.exists(domain_dir):
+        print("[SKIP] Domain directory not found.")
+        return True
+
+    errors_new_pattern = re.compile(r'errors\.New\("([^"]+)"\)')
+    missing_translations = []
+
+    for root, _, files in os.walk(domain_dir):
+        for f in files:
+            if f == "errors.go":
+                fpath = os.path.join(root, f)
+                rel_path = os.path.relpath(fpath, repo_root)
+                with open(fpath, "r", encoding="utf-8") as ef:
+                    for line_no, line in enumerate(ef, 1):
+                        match = errors_new_pattern.search(line)
+                        if match:
+                            raw_msg = match.group(1)
+                            # Handle prefixes like "ERR_TOKEN_REUSED: Token refresh..."
+                            if ": " in raw_msg:
+                                msg_part = raw_msg.split(": ", 1)[1]
+                            else:
+                                msg_part = raw_msg
+
+                            # Check if raw_msg or msg_part exists in known_keys
+                            # or if it is purely an internal machine error code (e.g. NIK_ALREADY_USED)
+                            is_code_only = raw_msg.isupper() and "_" in raw_msg and " " not in raw_msg
+                            if not is_code_only and raw_msg not in known_keys and msg_part not in known_keys:
+                                missing_translations.append((rel_path, line_no, raw_msg))
+
+    if missing_translations:
+        print("[FAIL] Found backend domain sentinel errors missing translations in i18n.go:")
+        for rpath, lno, msg in missing_translations:
+            print(f"  - {rpath}:{lno} -> \"{msg}\"")
+        print("[HINT] Add English translations for these messages to idToEn in backend-go/internal/i18n/i18n.go.")
+        return False
+
+    print("[PASS] All backend domain sentinel error strings are registered in internal/i18n/i18n.go.")
+    return True
+
+
 def check_localization_hygiene(repo_root):
-    """Executes localization orphan check on both Flutter Mobile and Windows Console."""
-    print("\n--- 3. Localization Dictionary Hygiene Audit ---")
+    """Executes localization orphan check on Flutter clients and audit on backend domain error translations."""
+    print("\n--- 3. Localization Dictionary Hygiene & Backend i18n Audit ---")
     script_path = os.path.join(repo_root, "scripts", "check_localization_orphans.py")
 
     if not os.path.exists(script_path):
         print(f"[FAIL] check_localization_orphans.py not found at: {script_path}")
         return False
 
+    client_passed = True
     res = subprocess.run([sys.executable, script_path, "--all"], capture_output=True, text=True)
     sys.stdout.write(res.stdout)
     if res.stderr:
         sys.stderr.write(res.stderr)
 
     if res.returncode != 0:
-        print("[FAIL] Localization dictionary hygiene audit failed.")
+        print("[FAIL] Client localization dictionary hygiene audit failed.")
+        client_passed = False
+    else:
+        print("[PASS] Both Mobile and Desktop localization dictionaries are clean and free of orphaned keys.")
+
+    backend_passed = check_backend_i18n_errors(repo_root)
+
+    return client_passed and backend_passed
+
+
+def check_clean_text_hygiene(repo_root):
+    """Enforces Clean Text & Icon Minimization Policy:
+    Scans tracked source files (.go, .dart), documentation (.md), and OpenAPI (.yaml, .yml)
+    for decorative emojis and icons."""
+    print("\n[INFO] Auditing Clean Text & Decorative Icon Minimization Policy...")
+    emoji_pattern = re.compile(r"[\U0001F300-\U0001F9FF\U0001FA70-\U0001FAFF\U00002700-\U000027BF\U00002600-\U000026FF]")
+
+    skip_dirs = {
+        ".git", ".dart_tool", "build", ".codegraph", "postgres-data",
+        "__pycache__", ".system_generated", "vendor"
+    }
+    target_exts = {".go", ".dart", ".md", ".yaml", ".yml"}
+    violations = []
+
+    for root, dirs, files in os.walk(repo_root):
+        dirs[:] = [d for d in dirs if d not in skip_dirs]
+        for f in files:
+            ext = os.path.splitext(f)[1]
+            if ext in target_exts:
+                fpath = os.path.join(root, f)
+                rel_path = os.path.relpath(fpath, repo_root)
+                try:
+                    with open(fpath, "r", encoding="utf-8", errors="ignore") as file:
+                        for line_no, line in enumerate(file, 1):
+                            match = emoji_pattern.search(line)
+                            if match:
+                                violations.append((rel_path, line_no, match.group(0), line.strip()[:80]))
+                except Exception:
+                    pass
+
+    if violations:
+        print(f"[FAIL] Found {len(violations)} decorative emoji/icon violation(s) violating Clean Text Policy:")
+        for rpath, lno, char, preview in violations:
+            print(f"  - {rpath}:{lno}: emoji {char!r} in: {preview}")
+        print("[HINT] Remove decorative emojis and icons to comply with Clean Text Policy.")
         return False
 
-    print("[PASS] Both Mobile and Desktop localization dictionaries are clean and free of orphaned keys.")
+    print("[PASS] Clean Text & Icon Minimization verified (0 decorative emojis/icons found).")
     return True
 
 
 def check_code_formatting(repo_root, fix=False):
-    """Verifies gofmt in backend-go and dart format across all Flutter workspaces."""
-    print("\n--- 4. Code Formatting Verification (gofmt & dart format) ---")
+    """Verifies gofmt in backend-go, dart format across all Flutter workspaces, and clean text policy."""
+    print("\n--- 4. Code Formatting & Clean Text Verification ---")
     all_passed = True
 
     # 4.1 Go Formatting (gofmt)
@@ -212,7 +314,10 @@ def check_code_formatting(repo_root, fix=False):
                 else:
                     print(f"[PASS] {label} formatting verified clean.")
 
-    return all_passed
+    # 4.3 Clean Text & Icon Minimization Audit
+    clean_text_passed = check_clean_text_hygiene(repo_root)
+
+    return all_passed and clean_text_passed
 
 
 def check_code_linters(repo_root):
@@ -357,11 +462,11 @@ def main():
     # 2. Database Migrations
     results.append(("Database Migrations", check_database_migrations(repo_root)))
 
-    # 3. Localization Hygiene
-    results.append(("Localization Hygiene", check_localization_hygiene(repo_root)))
+    # 3. Localization & i18n Hygiene
+    results.append(("Localization & i18n Hygiene", check_localization_hygiene(repo_root)))
 
-    # 4. Code Formatting (gofmt & dart format)
-    results.append(("Code Formatting", check_code_formatting(repo_root, fix=args.format)))
+    # 4. Code Formatting & Clean Text (gofmt, dart format, clean text)
+    results.append(("Code Formatting & Clean Text", check_code_formatting(repo_root, fix=args.format)))
 
     # 5. Static Analysis, Linters & Security (golangci-lint, govulncheck & flutter analyze)
     if args.fast:
