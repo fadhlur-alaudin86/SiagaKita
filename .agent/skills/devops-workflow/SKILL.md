@@ -117,7 +117,7 @@ All team members MUST follow Conventional Commits to ensure automated release no
 ### Plain-Text Commit Body Rules
 - **Short & Concise (Singkat dan Padat)**: Git commit messages MUST be brief. Provide an imperative subject line (`<type>(<scope>): <subject>`) and an optional 1-3 line plain-text explanation of WHY. Never bloat commit messages with full issue task checklists or detailed component inventories.
 - **No Markdown Formatting Syntax**: Git commit messages are displayed in monospace plain text in terminal pagers (`git log`) and GitHub commit detail blocks (`<pre>`). Never include Markdown headings (`#`, `##`), bold/italic markers (`**`, `*`), markdown links (`[text](url)`), or code fences (```` ``` ````).
-- **Details Belong in PRs**: Reserve exhaustive technical descriptions, architectural decision trees, component change matrices, and test verification tables for GitHub Pull Request descriptions where rich GFM is fully rendered.
+- **Details Belong in PRs**: Reserve exhaustive technical descriptions, architectural decision trees, component change matrices, and test verification tables for GitHub Pull Request descriptions where rich GFM is fully rendered. Exclude local developer tooling status (such as `codegraph sync`) from PR descriptions and commit messages, as local indexing tools are meant strictly for individual developer workstations and are not project deliverables.
 
 ## Database Migrations & Rollback Operations
 
