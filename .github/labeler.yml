@@ -18,8 +18,9 @@
           - 'infrastructure/**'
           - '.github/**'
 
-'type: docs':
+'component: docs':
   - changed-files:
       - any-glob-to-any-file:
           - 'docs/**'
+          - '.planning/**'
           - '*.md'

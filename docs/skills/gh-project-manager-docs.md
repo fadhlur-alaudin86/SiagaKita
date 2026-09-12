@@ -46,6 +46,7 @@ Example: `F-014: Volunteer Dispatch from Console to Nearest Responders`
 | | `component: mobile` | Flutter mobile app |
 | | `component: desktop` | Flutter desktop console |
 | | `component: infra` | Docker & infrastructure |
+| | `component: docs` | Documentation & planning |
 | **Priority** | `priority: P0` | Urgent / critical |
 | | `priority: P1` | High priority |
 | | `priority: P2` | Normal priority |
