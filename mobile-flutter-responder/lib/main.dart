@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
 import 'core/localization/app_localization.dart';
 import 'core/services/background_telemetry_service.dart';
+import 'core/services/notification_service.dart';
 import 'core/services/responder_ws_service.dart';
 import 'core/services/session_service.dart';
 import 'features/auth/presentation/login_screen.dart';
@@ -18,6 +19,10 @@ void main() async {
   try {
     await BackgroundTelemetryService.initialize();
   } catch (_) {}
+
+  await NotificationService.instance.initialize(
+    navigatorKey: ResponderApp.navigatorKey,
+  );
 
   final isLoggedIn = await SessionService.isLoggedIn();
   final initialLang = await SessionService.getLocale();
@@ -39,6 +44,9 @@ void main() async {
 class ResponderApp extends StatefulWidget {
   final bool isLoggedIn;
   final Locale initialLocale;
+
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   const ResponderApp({
     super.key,
@@ -74,6 +82,7 @@ class _ResponderAppState extends State<ResponderApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: ResponderApp.navigatorKey,
       title: 'SiagaKita Responder',
       debugShowCheckedModeBanner: false,
       locale: _currentLocale,

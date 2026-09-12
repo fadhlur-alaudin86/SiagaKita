@@ -20,10 +20,12 @@ import (
 )
 
 type Handler struct {
-	svc *Service
-	cfg *config.Config
-	hub *hub.Hub
-	rdb *redis.Client
+	svc                     *Service
+	cfg                     *config.Config
+	hub                     *hub.Hub
+	rdb                     *redis.Client
+	OnPushEmergency         func(incidentID, incidentType, address, reporterID string, lat, lon float64)
+	OnPushMissionAssignment func(personnelUserID, incidentID, incidentType, address string, lat, lon float64)
 }
 
 func NewHandler(svc *Service, cfg *config.Config, h *hub.Hub, rdb *redis.Client) *Handler {
@@ -514,6 +516,15 @@ func (h *Handler) broadcastSOSViaREST(incidentID string) {
 		sent = h.hub.BroadcastToRoles(msg, inc.ReporterID, "agency", "admin", "superadmin")
 	}
 	utils.Info().Str("incident_id", incidentID).Int("sent_count", sent).Msg("[IncidentHandler] REST-triggered SOS broadcast")
+
+	// Trigger push notification broadcast ke relawan dan responder terdekat
+	if h.OnPushEmergency != nil {
+		addr := ""
+		if inc.AddressDetail != nil {
+			addr = *inc.AddressDetail
+		}
+		go h.OnPushEmergency(inc.ID, inc.IncidentType, addr, inc.ReporterID, inc.Latitude, inc.Longitude)
+	}
 }
 
 func (h *Handler) broadcastEventToAgencies(msg hub.Message) {

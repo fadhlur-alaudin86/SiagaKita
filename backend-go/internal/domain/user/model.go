@@ -49,6 +49,7 @@ type UserProfile struct {
 	ProfilePhotoURL       *string   `gorm:"column:profile_photo_url" json:"profile_photo_url,omitempty"`
 	NIKVerificationStatus string    `gorm:"default:'none'" json:"nik_verification_status"`
 	VolunteerExperience   *string   `gorm:"column:volunteer_experience" json:"volunteer_experience,omitempty"`
+	FCMToken              *string   `gorm:"column:fcm_token" json:"fcm_token,omitempty"`
 	UpdatedAt             time.Time `json:"updated_at"`
 }
 
@@ -382,4 +383,9 @@ type KYCStatusResponse struct {
 type RegisterVolunteerRequest struct {
 	Specializations []string `form:"specializations"` // Akan diurai sebagai array dari form-data
 	Experience      string   `form:"experience"`
+}
+
+// UpdateFCMTokenRequest adalah body request untuk update FCM token perangkat.
+type UpdateFCMTokenRequest struct {
+	FCMToken string `json:"fcm_token"`
 }

@@ -208,6 +208,66 @@
             schema:
               $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
 
+/api/v1/users/profile/fcm-token:
+  put:
+    tags:
+      - Users
+    summary: Register or update FCM device token
+    description: Stores the device FCM token for high-priority push notification delivery.
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - fcm_token
+            properties:
+              fcm_token:
+                type: string
+                example: "fcm_token_sample..."
+    responses:
+      '200':
+        description: Token updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+      '400':
+        description: Invalid request
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+  delete:
+    tags:
+      - Users
+    summary: Clear FCM device token on logout
+    description: Clears the device FCM token to prevent cross-account push notifications.
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Token cleared successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SuccessResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+
 /api/v1/users/phone/request-otp:
   post:
     tags:

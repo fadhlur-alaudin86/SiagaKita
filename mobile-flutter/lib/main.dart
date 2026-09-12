@@ -8,6 +8,7 @@ import 'core/services/session_service.dart';
 import 'core/services/user_service.dart';
 import 'core/services/background_service.dart';
 import 'core/services/local_storage_service.dart';
+import 'core/services/notification_service.dart';
 import 'features/auth/login_screen.dart';
 import 'features/masyarakat/main_screen.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
@@ -31,11 +32,17 @@ void main() async {
 
   await ConnectivityService.instance.init();
   await AppBackgroundService.initialize();
+  await NotificationService.instance.initialize(
+    navigatorKey: SiagaKitaApp.navigatorKey,
+  );
   runApp(const SiagaKitaApp());
 }
 
 class SiagaKitaApp extends StatefulWidget {
   const SiagaKitaApp({super.key});
+
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   static final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(
     ThemeMode.dark, // Paksa Dark Mode
@@ -88,6 +95,7 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
             );
 
             return MaterialApp(
+              navigatorKey: SiagaKitaApp.navigatorKey,
               title: 'SiagaKita',
               debugShowCheckedModeBanner: false,
               themeMode: ThemeMode.dark, // Selalu Dark

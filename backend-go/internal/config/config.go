@@ -54,6 +54,10 @@ type Config struct {
 	// Upload Storage
 	UploadDir     string
 	UploadBaseURL string
+
+	// Firebase Cloud Messaging (FCM)
+	FirebaseCredentialsFile string
+	FirebaseCredentialsJSON string
 }
 
 // Load reads environment variables and returns a populated Config.
@@ -79,33 +83,35 @@ func Load() *Config {
 	}
 
 	return &Config{
-		DBHost:            getEnv("DB_HOST", "localhost"),
-		DBPort:            getEnv("DB_PORT", "5432"),
-		DBUser:            getEnv("DB_USER", ""),
-		DBPassword:        getEnv("DB_PASSWORD", ""),
-		DBName:            getEnv("DB_NAME", ""),
-		DBMaxConns:        getEnvInt32("DB_MAX_CONNS", 50),
-		DBMinConns:        getEnvInt32("DB_MIN_CONNS", 10),
-		DBMaxConnLifetime: maxConnLifetime,
-		DBMaxConnIdleTime: maxConnIdleTime,
-		RedisHost:         getEnv("REDIS_HOST", "localhost"),
-		RedisPort:         getEnv("REDIS_PORT", "6379"),
-		RedisPassword:     getEnv("REDIS_PASSWORD", ""),
-		JWTSecret:         getEnv("JWT_SECRET", ""),
-		JWTAccessTTL:      accessTTL,
-		JWTRefreshTTL:     refreshTTL,
-		SMSGatewaySecret:  getEnv("SMS_GATEWAY_SECRET", ""),
-		FonnteToken:       getEnv("FONNTE_TOKEN", ""),
-		EmailFrom:         getEnv("EMAIL_FROM", ""),
-		GmailClientID:     getEnv("GMAIL_CLIENT_ID", ""),
-		GmailClientSecret: getEnv("GMAIL_CLIENT_SECRET", ""),
-		GmailRefreshToken: getEnv("GMAIL_REFRESH_TOKEN", ""),
-		HTTPPort:          getEnv("HTTP_PORT", "8080"),
-		WSPort:            getEnv("WS_PORT", "8081"),
-		SuperAdminEmail:   getEnv("SUPERADMIN_EMAIL", ""),
-		SuperAdminPass:    getEnv("SUPERADMIN_PASS", ""),
-		UploadDir:         getEnv("UPLOAD_DIR", "/app/uploads"),
-		UploadBaseURL:     getEnv("UPLOAD_BASE_URL", "http://localhost:8080/uploads"),
+		DBHost:                  getEnv("DB_HOST", "localhost"),
+		DBPort:                  getEnv("DB_PORT", "5432"),
+		DBUser:                  getEnv("DB_USER", ""),
+		DBPassword:              getEnv("DB_PASSWORD", ""),
+		DBName:                  getEnv("DB_NAME", ""),
+		DBMaxConns:              getEnvInt32("DB_MAX_CONNS", 50),
+		DBMinConns:              getEnvInt32("DB_MIN_CONNS", 10),
+		DBMaxConnLifetime:       maxConnLifetime,
+		DBMaxConnIdleTime:       maxConnIdleTime,
+		RedisHost:               getEnv("REDIS_HOST", "localhost"),
+		RedisPort:               getEnv("REDIS_PORT", "6379"),
+		RedisPassword:           getEnv("REDIS_PASSWORD", ""),
+		JWTSecret:               getEnv("JWT_SECRET", ""),
+		JWTAccessTTL:            accessTTL,
+		JWTRefreshTTL:           refreshTTL,
+		SMSGatewaySecret:        getEnv("SMS_GATEWAY_SECRET", ""),
+		FonnteToken:             getEnv("FONNTE_TOKEN", ""),
+		EmailFrom:               getEnv("EMAIL_FROM", ""),
+		GmailClientID:           getEnv("GMAIL_CLIENT_ID", ""),
+		GmailClientSecret:       getEnv("GMAIL_CLIENT_SECRET", ""),
+		GmailRefreshToken:       getEnv("GMAIL_REFRESH_TOKEN", ""),
+		HTTPPort:                getEnv("HTTP_PORT", "8080"),
+		WSPort:                  getEnv("WS_PORT", "8081"),
+		SuperAdminEmail:         getEnv("SUPERADMIN_EMAIL", ""),
+		SuperAdminPass:          getEnv("SUPERADMIN_PASS", ""),
+		UploadDir:               getEnv("UPLOAD_DIR", "/app/uploads"),
+		UploadBaseURL:           getEnv("UPLOAD_BASE_URL", "http://localhost:8080/uploads"),
+		FirebaseCredentialsFile: getEnv("FIREBASE_CREDENTIALS_FILE", ""),
+		FirebaseCredentialsJSON: getEnv("FIREBASE_CREDENTIALS_JSON", ""),
 	}
 }
 

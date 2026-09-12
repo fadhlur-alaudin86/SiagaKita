@@ -309,3 +309,42 @@ func (h *Handler) SubmitVolunteerRegistration(c *fiber.Ctx) error {
 		"status":     string(KYCStatusPending),
 	})
 }
+
+// ─── FCM Token Management ───────────────────────────────────────────────────
+
+// PUT /api/v1/users/profile/fcm-token
+// POST /api/v1/notifications/register-token
+func (h *Handler) UpdateFCMToken(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
+
+	var req UpdateFCMTokenRequest
+	if err := c.BodyParser(&req); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
+	}
+	if strings.TrimSpace(req.FCMToken) == "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "fcm_token wajib diisi")
+	}
+
+	if err := h.svc.UpdateFCMToken(userID, req.FCMToken); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memperbarui FCM token")
+	}
+
+	return utils.SuccessResponseWithMsg(c, "FCM token berhasil diperbarui", nil)
+}
+
+// DELETE /api/v1/users/profile/fcm-token
+func (h *Handler) ClearFCMToken(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Unauthorized")
+	}
+
+	if err := h.svc.ClearFCMToken(userID); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal menghapus FCM token")
+	}
+
+	return utils.SuccessResponseWithMsg(c, "FCM token berhasil dihapus", nil)
+}

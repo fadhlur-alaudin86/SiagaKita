@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1036281626509",
+    "project_id": "siagakita-1557f",
+    "storage_bucket": "siagakita-1557f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1036281626509:android:7502d59cb81d149c9e87c4",
+        "android_client_info": {
+          "package_name": "com.siagakita.app.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrU56G_7F-ZGqfTbSHROMLM8UoCwCcfCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1036281626509:android:6c2f8c8f639e896d9e87c4",
+        "android_client_info": {
+          "package_name": "com.siagakita.app.responder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrU56G_7F-ZGqfTbSHROMLM8UoCwCcfCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

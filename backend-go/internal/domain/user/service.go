@@ -693,3 +693,19 @@ func (s *Service) GetKYCStatus(userID string) (*KYCStatusResponse, error) {
 		Message:         msg,
 	}, nil
 }
+
+// ─── FCM Token Management ───────────────────────────────────────────────────
+
+// UpdateFCMToken memperbarui token perangkat FCM pengguna.
+func (s *Service) UpdateFCMToken(userID, token string) error {
+	trimmed := strings.TrimSpace(token)
+	if trimmed == "" {
+		return errors.New("fcm_token tidak boleh kosong")
+	}
+	return s.repo.UpdateFCMToken(userID, trimmed)
+}
+
+// ClearFCMToken menghapus token FCM saat logout.
+func (s *Service) ClearFCMToken(userID string) error {
+	return s.repo.ClearFCMToken(userID)
+}

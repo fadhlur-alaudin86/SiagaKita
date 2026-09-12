@@ -202,4 +202,26 @@ class ApiClient {
       return http.patch(Uri.parse(url), headers: reqHeaders, body: encodedBody);
     }, timeout: timeout);
   }
+
+  static Future<http.Response> delete(
+    String url, {
+    Object? body,
+    Map<String, String>? headers,
+    Duration? timeout,
+  }) {
+    return _executeWithRetry((token) async {
+      final reqHeaders = await _buildHeaders(
+        token: token,
+        extraHeaders: headers,
+      );
+      final encodedBody = body is String
+          ? body
+          : (body != null ? jsonEncode(body) : null);
+      return http.delete(
+        Uri.parse(url),
+        headers: reqHeaders,
+        body: encodedBody,
+      );
+    }, timeout: timeout);
+  }
 }

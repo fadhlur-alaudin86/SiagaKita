@@ -60,6 +60,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Firebase Cloud Messaging default channel -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="emergency_alerts" />
+
         <!-- flutter_background_service component -->
         <service
             android:name="id.flutter.flutter_background_service.BackgroundService"
