@@ -7,24 +7,40 @@ Sub-file of [SKILL.md](SKILL.md).
 
 ## Step 7 Verification Flow (Pre-PR Gate)
 
-Before the agent opens a Pull Request to `dev`, the agent MUST conduct a self-review covering the four critical dimensions below:
+Before the agent opens a Pull Request to `dev`, the agent MUST execute the automated pre-flight quality gatekeeper (`python3 scripts/verify_pipeline.py`) and conduct a self-review covering the critical quality dimensions below:
 
 ```
-[Code Complete & Tests Pass]
+[Code Complete & Ready for Review]
               │
               ▼
- ┌────────────────────────────────────────┐
- │ 1. Security Review Checklist           │
- ├────────────────────────────────────────┤
- │ 2. Database & Migration Review         │
- ├────────────────────────────────────────┤
- │ 3. Silent Failure Hunter Audit         │
- ├────────────────────────────────────────┤
- │ 4. Clean Code & Dead Code Elimination  │
- └────────────────────────────────────────┘
-              │
-      (All Passed?)
-       ├── Findings Found ──► Fix code & rerun tests
+ ┌────────────────────────────────────────────────────────┐
+ │ 0. Automated Gatekeeper: verify_pipeline.py            │
+ │    - Gate 1: OpenAPI Contracts (docs/api/)             │
+ │    - Gate 2: DB Migrations & DATABASE_SCHEMA.md Sync   │
+ │    - Gate 3: Localization Hygiene (Zero Orphans)       │
+ │    - Gate 4: Code Formatting (gofmt & dart format)     │
+ │    - Gate 5: Linters (golangci-lint, govulncheck, etc) │
+ │    - Gate 6: Regression Unit Tests (Go & Flutter)      │
+ │    - Gate 7: Backlog & Planning Documentation Parity   │
+ └────────────────────────────┬───────────────────────────┘
+                              │
+                    (7/7 Gates Passed)
+                              │
+                              ▼
+ ┌────────────────────────────────────────────────────────┐
+ │ 1. Security Review Checklist                           │
+ ├────────────────────────────────────────────────────────┤
+ │ 2. Database & Migration Review                         │
+ ├────────────────────────────────────────────────────────┤
+ │ 3. Silent Failure Hunter Audit                         │
+ ├────────────────────────────────────────────────────────┤
+ │ 4. Clean Code & Dead Code Elimination                  │
+ ├────────────────────────────────────────────────────────┤
+ │ 5. Karpathy Behavioral Review                          │
+ └────────────────────────────┬───────────────────────────┘
+                              │
+                        (All Passed?)
+       ├── Findings Found ──► Fix code & rerun verify_pipeline.py
        └── Passed          ──► Sync Issue Checklists ──► Open PR to dev
 ```
 
@@ -120,6 +136,7 @@ After completing the self-review at Step 7, record the summary in the feature lo
 
 ```markdown
 ### Pre-PR Review Gate
+- [x] Automated Quality Gatekeeper: PASS (`python3 scripts/verify_pipeline.py` 7/7 gates clean)
 - [x] Security Review: PASS (No SQL injection, secrets sanitized, role check verified, 0750 permissions, WS timeouts set)
 - [x] Database Review: PASS (Migrations idempotent, FK indexed, ERD updated)
 - [x] Silent Failure Audit: PASS (No ignored errors, context.mounted checked, defer cancel present)
