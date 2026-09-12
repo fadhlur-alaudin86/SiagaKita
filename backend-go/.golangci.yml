@@ -6,13 +6,19 @@ run:
 linters:
   enable:
     - cyclop
+    - gocognit
     - goconst
     - gosec
+    - misspell
   settings:
     cyclop:
       max-complexity: 16
+    gocognit:
+      min-complexity: 30
     goconst:
-      min-occurrences: 4
+      min-occurrences: 3
+    misspell:
+      locale: US
     gosec:
       excludes:
         - G304
@@ -21,15 +27,20 @@ linters:
     rules:
       - linters:
           - cyclop
+          - gocognit
           - goconst
         path: (.+)_test\.go
       - linters:
           - cyclop
+          - gocognit
         path: ^cmd/
       - linters:
           - gosec
         path: internal/i18n/i18n\.go
         text: "G101"
+      - linters:
+          - misspell
+        text: "CANCELLED"
 formatters:
   exclusions:
     generated: lax

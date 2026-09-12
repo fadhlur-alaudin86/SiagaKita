@@ -649,7 +649,7 @@ func (r *Repository) PersonnelUpdateStatus(incidentID, personnelID, newStatus, p
 
 			statusToSet := newStatus
 			if statusToSet == "handling" {
-				statusToSet = "en_route"
+				statusToSet = StatusEnRoute
 			}
 			resp = IncidentResponse{
 				IncidentID:  incidentID,
@@ -680,13 +680,13 @@ func (r *Repository) PersonnelUpdateStatus(incidentID, personnelID, newStatus, p
 			updates["proof_photo_url"] = photoURL
 		}
 
-		if newStatus == "resolved" || newStatus == "completed" {
-			updates[FieldStatus] = "resolved"
+		if newStatus == StatusResolved || newStatus == "completed" {
+			updates[FieldStatus] = StatusResolved
 			updates[FieldCompletedAt] = now
 			// Selesaikan insiden secara global
 			tx.Model(&Incident{}).Where("id = ?", incidentID).Updates(map[string]interface{}{
 				FieldStatus:       StatusResolved,
-				FieldAgencyStatus: "resolved",
+				FieldAgencyStatus: StatusResolved,
 				"resolved_at":     now,
 				FieldUpdatedAt:    now,
 			})

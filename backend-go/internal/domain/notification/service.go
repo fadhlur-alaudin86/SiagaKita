@@ -84,7 +84,7 @@ func (s *Service) BroadcastEmergencySOS(ctx context.Context, incidentID, inciden
 		Longitude:    fmt.Sprintf("%f", lon),
 		Address:      address,
 		ChannelID:    "emergency_alerts",
-		Priority:     "high",
+		Priority:     PriorityHigh,
 		ClickAction:  "FLUTTER_NOTIFICATION_CLICK",
 	}
 

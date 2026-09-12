@@ -608,7 +608,7 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 		// Notify reporter bahwa relawan sudah on the way
 		h.notifyReporter(incidentID, "VOLUNTEER_HANDLING", map[string]interface{}{
 			FieldIncidentID:    incidentID,
-			"volunteer_status": "en_route",
+			"volunteer_status": StatusEnRoute,
 		})
 		// Notify candidate volunteers that the incident has been claimed
 		if h.rdb != nil && h.hub != nil {
@@ -1041,18 +1041,18 @@ func (h *Handler) PersonnelUpdateStatus(c *fiber.Ctx) error {
 			Payload: map[string]interface{}{
 				FieldIncidentID: incidentID,
 				"personnel_id":  personnelID,
-				"status":        req.Status,
+				FieldStatus:     req.Status,
 			},
 		})
 		h.notifyReporter(incidentID, "AGENCY_HANDLING", map[string]interface{}{
 			FieldIncidentID: incidentID,
-			"status":        req.Status,
+			FieldStatus:     req.Status,
 		})
 	}()
 
 	return utils.SuccessResponse(c, fiber.Map{
 		"updated":    true,
-		"status":     req.Status,
+		FieldStatus:  req.Status,
 		FieldMessage: "Status misi berhasil diperbarui",
 	})
 }

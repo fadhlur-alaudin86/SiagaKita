@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# pre-commit — Git hook to format staged Go and Dart files before commit
+# Auto-installed via scripts/install_git_hooks.sh
+#
+
+set -euo pipefail
+
+# Find repository root
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT"
+
+# Get list of staged files (Added, Copied, Modified, Renamed)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+
+if [ -z "$STAGED_FILES" ]; then
+    exit 0
+fi
+
+# 1. Format staged Go files
+GO_FILES=$(echo "$STAGED_FILES" | grep -E '\.go$' || true)
+if [ -n "$GO_FILES" ]; then
+    if command -v gofmt >/dev/null 2>&1; then
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                gofmt -w "$file"
+                git add "$file"
+            fi
+        done <<< "$GO_FILES"
+    fi
+fi
+
+# 2. Format staged Dart files
+DART_FILES=$(echo "$STAGED_FILES" | grep -E '\.dart$' || true)
+if [ -n "$DART_FILES" ]; then
+    if command -v dart >/dev/null 2>&1; then
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                dart format "$file" >/dev/null 2>&1 || true
+                git add "$file"
+            fi
+        done <<< "$DART_FILES"
+    fi
+fi
+
+exit 0

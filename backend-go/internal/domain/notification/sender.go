@@ -65,7 +65,7 @@ func (s *FirebaseSender) SendMulticast(ctx context.Context, payload PushPayload,
 				Body:  payload.Body,
 			},
 			Android: &messaging.AndroidConfig{
-				Priority: "high",
+				Priority: PriorityHigh,
 				Notification: &messaging.AndroidNotification{
 					ChannelID:   payload.ChannelID,
 					ClickAction: payload.ClickAction,
