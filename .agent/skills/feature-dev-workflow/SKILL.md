@@ -49,7 +49,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 11. **Raw SQL** — No ORM. Use raw SQL via `pgx` with parameterized queries (`$1, $2`).
 12. **Comment Every Public Symbol** — Provide `// why` comments on every public handler, function, middleware.
 13. **Error Wrapping** — Always wrap errors with `fmt.Errorf("...: %w", err)` and inspect using `errors.Is`/`errors.As`.
-14. **Conventional Commits & Concise Plain-Text Formatting MANDATORY** — Format: `<type>(<scope>): <description>`. Keep commit messages short and focused (singkat dan padat) with an optional brief 1-3 line plain-text explanation of WHY. Never include exhaustive issue task lists, component inventories, Markdown headers (`##`), bold (`**`), or code fences in commit messages. Full detailed breakdowns belong in the Pull Request description.
+14. **Conventional Commits & Concise Plain-Text Formatting MANDATORY** — Format: `<type>(<scope>): <description>`. Keep commit messages short and focused (singkat dan padat) with an optional brief 1-3 line plain-text explanation of WHY. Never include exhaustive issue task lists, component inventories, Markdown headers (`##`), bold (`**`), or code fences in commit messages. Full detailed breakdowns belong in the Pull Request description (excluding local developer tooling status such as `codegraph sync`).
 
 ### API Contract (OpenAPI)
 15. **Extend, don't create new** — New endpoints MUST be appended to the existing domain file `docs/api/paths/<domain>.yaml`. Never create a standalone per-feature file.
