@@ -612,15 +612,21 @@ class AdminApiService {
     String name,
     String desc,
     List<int>? fileBytes,
-    String? fileName,
-  ) async {
+    String? fileName, {
+    String badgeCode = 'general',
+    int level = 1,
+    int threshold = 1,
+  }) async {
     final resp = await _authedMultipart(token, (activeToken) {
       final req = http.MultipartRequest(
         'POST',
         Uri.parse('${ApiConstants.baseUrl}/admin/badges'),
       );
       req.headers.addAll(AuthService.headers(activeToken));
+      req.fields['badge_code'] = badgeCode;
       req.fields['badge_name'] = name;
+      req.fields['level'] = level.toString();
+      req.fields['threshold'] = threshold.toString();
       req.fields['description'] = desc;
 
       if (fileBytes != null && fileName != null) {
@@ -640,15 +646,21 @@ class AdminApiService {
     String desc,
     String existingIconUrl,
     List<int>? fileBytes,
-    String? fileName,
-  ) async {
+    String? fileName, {
+    String badgeCode = 'general',
+    int level = 1,
+    int threshold = 1,
+  }) async {
     final resp = await _authedMultipart(token, (activeToken) {
       final req = http.MultipartRequest(
         'PUT',
         Uri.parse('${ApiConstants.baseUrl}/admin/badges/$id'),
       );
       req.headers.addAll(AuthService.headers(activeToken));
+      req.fields['badge_code'] = badgeCode;
       req.fields['badge_name'] = name;
+      req.fields['level'] = level.toString();
+      req.fields['threshold'] = threshold.toString();
       req.fields['description'] = desc;
       req.fields['icon_url'] = existingIconUrl;
 

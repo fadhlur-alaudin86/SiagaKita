@@ -33,6 +33,16 @@ func NewHandler(svc *Service, cfg *config.Config, h *hub.Hub, rdb *redis.Client)
 	svc.OnBroadcast = func(incidentID string) {
 		go handler.broadcastSOSViaREST(incidentID)
 	}
+	// Wire callback: saat relawan mendapatkan badge tier baru,
+	// kirim event WS BADGE_UNLOCKED ke user.
+	svc.OnBadgeUnlocked = func(userID string, badges []BadgeUnlocked) {
+		if handler.hub != nil {
+			_ = handler.hub.SendToUser(userID, hub.Message{
+				Event:   "BADGE_UNLOCKED",
+				Payload: fiber.Map{"badges": badges},
+			})
+		}
+	}
 	return handler
 }
 
@@ -800,15 +810,30 @@ func (h *Handler) AgencyResolveSOS(c *fiber.Ctx) error {
 }
 
 // GET /api/v1/incidents/my-history [VolunteerOnly]
+// GET /api/v1/incidents/missions/history [VolunteerOnly]
 func (h *Handler) GetMissionHistory(c *fiber.Ctx) error {
 	volunteerID := c.Locals("userID").(string)
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 20)
 
-	history, err := h.svc.GetMissionHistory(volunteerID)
+	history, err := h.svc.GetMissionHistoryPaginated(volunteerID, page, limit)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat riwayat misi")
 	}
 
 	return utils.SuccessResponse(c, history)
+}
+
+// GET /api/v1/volunteer/badges [VolunteerOnly]
+func (h *Handler) GetVolunteerBadges(c *fiber.Ctx) error {
+	volunteerID := c.Locals("userID").(string)
+
+	badges, err := h.svc.GetVolunteerBadges(volunteerID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat badge relawan")
+	}
+
+	return utils.SuccessResponse(c, badges)
 }
 
 // GET /api/v1/incidents/my-active-response [VolunteerOnly]

@@ -42,6 +42,8 @@ type Service struct {
 	// OnBroadcast dipanggil saat auto-promote grace_period → broadcasting
 	// agar WS event INCOMING_EMERGENCY dikirim ke console.
 	OnBroadcast func(incidentID string)
+	// OnBadgeUnlocked dipanggil saat relawan mendapatkan badge tier baru.
+	OnBadgeUnlocked func(userID string, badges []BadgeUnlocked)
 }
 
 func NewService(repo *Repository, rdb *redis.Client) *Service {
@@ -438,6 +440,11 @@ func (s *Service) Resolve(incidentID, responderID string) (*ResolveResponse, err
 		}
 	}
 
+	newBadges, err := s.EvaluateAndAwardMultiLevelBadges(responderID)
+	if err != nil {
+		utils.Error().Err(err).Str("responder_id", responderID).Msg("[IncidentService] Failed to evaluate badges")
+	}
+
 	return &ResolveResponse{
 		Resolved:     true,
 		XPEarned:     totalXP,
@@ -445,6 +452,7 @@ func (s *Service) Resolve(incidentID, responderID string) (*ResolveResponse, err
 		TotalRescues: rep.TotalRescues,
 		RankUp:       rankUp,
 		NewRank:      newRankName,
+		NewBadges:    newBadges,
 	}, nil
 }
 
@@ -538,6 +546,11 @@ func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve 
 					}
 				}
 
+				newBadges, err := s.EvaluateAndAwardMultiLevelBadges(volunteerID)
+				if err != nil {
+					utils.Error().Err(err).Str("volunteer_id", volunteerID).Msg("[IncidentService] Failed to evaluate badges")
+				}
+
 				return &ResolveResponse{
 					Resolved:     true,
 					XPEarned:     totalXP,
@@ -545,6 +558,7 @@ func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve 
 					TotalRescues: rep.TotalRescues,
 					RankUp:       rankUp,
 					NewRank:      newRankName,
+					NewBadges:    newBadges,
 				}, nil
 			}
 		}
@@ -634,4 +648,97 @@ func (s *Service) GetActiveResponse(volunteerID string) (*ActiveResponseDTO, err
 // UpdateResponseLocation memperbarui lokasi relawan pada misi aktif.
 func (s *Service) UpdateResponseLocation(incidentID, volunteerID string, lat, lng float64, address *string) error {
 	return s.repo.UpdateResponseLocation(incidentID, volunteerID, lat, lng, address)
+}
+
+func (s *Service) GetMissionHistoryPaginated(volunteerID string, page, limit int) ([]MissionHistoryResponse, error) {
+	offset := 0
+	if page > 1 && limit > 0 {
+		offset = (page - 1) * limit
+	}
+	history, err := s.repo.FindVolunteerMissionHistory(volunteerID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	if history == nil {
+		history = []MissionHistoryResponse{}
+	}
+	return history, nil
+}
+
+func (s *Service) GetVolunteerBadges(volunteerID string) ([]BadgeCategoryProgress, error) {
+	badges, err := s.repo.FindVolunteerBadgesGrouped(volunteerID)
+	if err != nil {
+		return nil, err
+	}
+	if badges == nil {
+		badges = []BadgeCategoryProgress{}
+	}
+	return badges, nil
+}
+
+func (s *Service) EvaluateAndAwardMultiLevelBadges(volunteerID string) ([]BadgeUnlocked, error) {
+	masterBadges, err := s.repo.FindAllMasterBadges()
+	if err != nil {
+		return nil, err
+	}
+	if len(masterBadges) == 0 {
+		return nil, nil
+	}
+
+	acquiredMap, err := s.repo.FindAcquiredBadgeIDs(volunteerID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := s.repo.GetVolunteerRescueStats(volunteerID)
+	if err != nil {
+		return nil, err
+	}
+
+	var newlyUnlocked []BadgeUnlocked
+	for _, mb := range masterBadges {
+		// If already earned, skip
+		if _, exists := acquiredMap[mb.ID]; exists {
+			continue
+		}
+
+		progress := stats.TotalRescues
+		switch mb.BadgeCode {
+		case "medic_specialist":
+			progress = stats.MedicalRescues
+		case "night_owl":
+			progress = stats.NightRescues
+		case "rapid_hero":
+			progress = stats.RapidRescues
+		}
+
+		if progress >= mb.Threshold {
+			awarded, err := s.repo.AwardBadgeTier(volunteerID, mb.ID)
+			if err != nil {
+				utils.Error().Err(err).
+					Str("volunteer_id", volunteerID).
+					Str("badge_code", mb.BadgeCode).
+					Int("level", mb.Level).
+					Msg("[IncidentService] Failed to award badge tier")
+				continue
+			}
+			if awarded {
+				unlocked := BadgeUnlocked{
+					BadgeCode:   mb.BadgeCode,
+					BadgeName:   mb.BadgeName,
+					Level:       mb.Level,
+					Threshold:   mb.Threshold,
+					Description: mb.Description,
+					IconURL:     mb.IconURL,
+				}
+				newlyUnlocked = append(newlyUnlocked, unlocked)
+			}
+		}
+	}
+
+	if len(newlyUnlocked) > 0 && s.OnBadgeUnlocked != nil {
+		s.OnBadgeUnlocked(volunteerID, newlyUnlocked)
+	}
+
+	return newlyUnlocked, nil
 }

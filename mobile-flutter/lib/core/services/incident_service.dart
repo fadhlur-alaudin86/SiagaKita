@@ -8,7 +8,10 @@ import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_config.dart';
+import '../models/mission_history_model.dart';
 import 'local_storage_service.dart';
+
+export '../models/mission_history_model.dart';
 
 /// IncidentService menangani API calls untuk SOS incidents (Jalur A)
 /// dan laporan warga non-darurat (Jalur B).
@@ -291,6 +294,38 @@ class IncidentService {
         'Periksa koneksi internet. Gagal memuat riwayat: $e',
       );
     }
+  }
+
+  // ─── Get Volunteer Mission History (Paginated) ───────────────────────────
+
+  static Future<List<MissionHistoryItem>> getVolunteerMissionHistory({
+    required String accessToken,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _req(
+      () => http.get(
+        Uri.parse(
+          '$_baseUrl/incidents/missions/history?page=$page&limit=$limit',
+        ),
+        headers: _authHeader(accessToken),
+      ),
+      timeout: _defaultTimeout,
+    );
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw IncidentException(
+        body['message'] as String? ?? 'Gagal mengambil riwayat misi',
+      );
+    }
+
+    final data = body['data'] as List<dynamic>? ?? [];
+    return data
+        .map(
+          (item) => MissionHistoryItem.fromJson(item as Map<String, dynamic>),
+        )
+        .toList();
   }
 
   // ─── Get Reporter History ─────────────────────────────────────────────────
@@ -761,61 +796,7 @@ class NearbyIncident {
 
 // ─── MissionHistory ───────────────────────────────────────────────────────────
 
-class MissionHistory {
-  final String id;
-  final String incidentType;
-  final String status;
-  final String responseStatus;
-  final String? addressDetail;
-  final String acceptedAt;
-  final int xpEarned;
-
-  const MissionHistory({
-    required this.id,
-    required this.incidentType,
-    required this.status,
-    required this.responseStatus,
-    this.addressDetail,
-    required this.acceptedAt,
-    this.xpEarned = 0,
-  });
-
-  factory MissionHistory.fromJson(Map<String, dynamic> json) => MissionHistory(
-    id: json['id'] as String,
-    incidentType: json['incident_type'] as String,
-    status: json['status'] as String,
-    responseStatus: json['response_status'] as String,
-    addressDetail: json['address_detail'] as String?,
-    acceptedAt: json['accepted_at'] as String,
-    xpEarned: json['xp_earned'] as int? ?? 0,
-  );
-
-  /// Ikon tipe insiden
-  IconData get typeIcon {
-    return switch (incidentType) {
-      'medical' => Icons.medical_services,
-      'fire' => Icons.local_fire_department,
-      'crime' => Icons.local_police,
-      'rescue' => Icons.emergency,
-      'accident' => Icons.car_crash,
-      'disaster' => Icons.flood,
-      _ => Icons.warning_amber,
-    };
-  }
-
-  /// Kode tipe insiden
-  String get typeCode {
-    return switch (incidentType) {
-      'medical' => '[Medis]',
-      'fire' => '[Kebakaran]',
-      'crime' => '[Kriminal]',
-      'rescue' => '[SAR]',
-      'accident' => '[Kecelakaan]',
-      'disaster' => '[Bencana]',
-      _ => '[Umum]',
-    };
-  }
-}
+typedef MissionHistory = MissionHistoryItem;
 
 // ─── Exceptions ───────────────────────────────────────────────────────────────
 

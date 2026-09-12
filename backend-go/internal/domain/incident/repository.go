@@ -3,6 +3,8 @@ package incident
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"siagakita-backend/internal/database/sqlc"
@@ -701,20 +703,35 @@ func (r *Repository) FindResponsesByIncident(incidentID string) ([]IncidentRespo
 }
 
 func (r *Repository) GetMissionHistory(volunteerID string) ([]MissionHistoryResponse, error) {
+	return r.FindVolunteerMissionHistory(volunteerID, 0, 0)
+}
+
+func (r *Repository) FindVolunteerMissionHistory(volunteerID string, limit, offset int) ([]MissionHistoryResponse, error) {
 	var results []MissionHistoryResponse
-	err := r.db.Raw(`
+	baseQuery := `
 		SELECT 
 			i.id,
 			i.incident_type,
 			i.status,
 			ir.status as response_status,
-			i.address_detail,
-			CAST(ir.accepted_at AS VARCHAR) AS accepted_at
+			COALESCE(ir.address_detail, i.address_detail) as address_detail,
+			CAST(ir.accepted_at AS VARCHAR) AS accepted_at,
+			CAST(ir.completed_at AS VARCHAR) AS completed_at,
+			ir.proof_photo_url,
+			CASE 
+				WHEN ir.completed_at IS NOT NULL AND ir.accepted_at IS NOT NULL 
+				THEN ROUND(EXTRACT(EPOCH FROM (ir.completed_at - ir.accepted_at))/60)
+				ELSE NULL 
+			END as duration_minutes
 		FROM incident_responses ir
 		JOIN incidents i ON i.id = ir.incident_id
-		WHERE ir.responder_id = $1
+		WHERE ir.responder_id = ?
 		ORDER BY ir.accepted_at DESC
-	`, volunteerID).Scan(&results).Error
+	`
+	if limit > 0 {
+		baseQuery += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
+	}
+	err := r.db.Raw(baseQuery, volunteerID).Scan(&results).Error
 	return results, err
 }
 
@@ -794,4 +811,163 @@ func (r *Repository) UpdateResponseLocation(incidentID, volunteerID string, lat,
 	return r.db.Model(&IncidentResponse{}).
 		Where("incident_id = ? AND responder_id = ? AND status = 'on_scene'", incidentID, volunteerID).
 		Updates(updates).Error
+}
+
+// ─── Gamification Multi-Level Badges ──────────────────────────────────────────
+
+type VolunteerRescueStats struct {
+	TotalRescues   int `gorm:"column:total_rescues"`
+	MedicalRescues int `gorm:"column:medical_rescues"`
+	NightRescues   int `gorm:"column:night_rescues"`
+	RapidRescues   int `gorm:"column:rapid_rescues"`
+}
+
+func (r *Repository) FindAllMasterBadges() ([]MasterBadge, error) {
+	var badges []MasterBadge
+	err := r.db.Order("badge_code ASC, level ASC").Find(&badges).Error
+	return badges, err
+}
+
+func (r *Repository) FindAcquiredBadgeIDs(userID string) (map[string]time.Time, error) {
+	type result struct {
+		BadgeID  string    `gorm:"column:badge_id"`
+		EarnedAt time.Time `gorm:"column:earned_at"`
+	}
+	var rows []result
+	err := r.db.Model(&VolunteerBadgeAcquired{}).
+		Select("badge_id, earned_at").
+		Where("user_id = ?", userID).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[string]time.Time, len(rows))
+	for _, row := range rows {
+		m[row.BadgeID] = row.EarnedAt
+	}
+	return m, nil
+}
+
+func (r *Repository) GetVolunteerRescueStats(volunteerID string) (*VolunteerRescueStats, error) {
+	var stats VolunteerRescueStats
+	err := r.db.Raw(`
+		SELECT
+			COUNT(*) AS total_rescues,
+			COUNT(CASE WHEN i.incident_type = 'medical' THEN 1 END) AS medical_rescues,
+			COUNT(CASE WHEN EXTRACT(HOUR FROM (ir.accepted_at AT TIME ZONE 'Asia/Jakarta')) >= 22 
+			             OR EXTRACT(HOUR FROM (ir.accepted_at AT TIME ZONE 'Asia/Jakarta')) < 5 THEN 1 END) AS night_rescues,
+			COUNT(CASE WHEN ir.completed_at IS NOT NULL 
+			            AND ir.accepted_at IS NOT NULL 
+			            AND EXTRACT(EPOCH FROM (ir.completed_at - ir.accepted_at)) <= 900
+			            AND EXTRACT(EPOCH FROM (ir.completed_at - ir.accepted_at)) >= 0 THEN 1 END) AS rapid_rescues
+		FROM incident_responses ir
+		JOIN incidents i ON i.id = ir.incident_id
+		WHERE ir.responder_id = ? AND ir.status = 'completed'
+	`, volunteerID).Scan(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+	return &stats, nil
+}
+
+func (r *Repository) AwardBadgeTier(userID, badgeID string) (bool, error) {
+	var insertedID string
+	err := r.db.Raw(`
+		INSERT INTO volunteer_badges_acquired (user_id, badge_id, earned_at)
+		VALUES (?, ?, NOW())
+		ON CONFLICT (user_id, badge_id) DO NOTHING
+		RETURNING id
+	`, userID, badgeID).Scan(&insertedID).Error
+	if err != nil {
+		return false, err
+	}
+	return insertedID != "", nil
+}
+
+func (r *Repository) FindVolunteerBadgesGrouped(userID string) ([]BadgeCategoryProgress, error) {
+	masterBadges, err := r.FindAllMasterBadges()
+	if err != nil {
+		return nil, err
+	}
+
+	acquiredMap, err := r.FindAcquiredBadgeIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := r.GetVolunteerRescueStats(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	categories := make([]BadgeCategoryProgress, 0)
+	catIndexMap := make(map[string]int)
+
+	for _, mb := range masterBadges {
+		catIdx, exists := catIndexMap[mb.BadgeCode]
+		if !exists {
+			catName := mb.BadgeName
+			trimmed := strings.TrimRight(catName, " 0123456789IVXLCDM")
+			if trimmed != "" {
+				catName = trimmed
+			}
+
+			progress := stats.TotalRescues
+			switch mb.BadgeCode {
+			case "medic_specialist":
+				progress = stats.MedicalRescues
+			case "night_owl":
+				progress = stats.NightRescues
+			case "rapid_hero":
+				progress = stats.RapidRescues
+			}
+
+			cat := BadgeCategoryProgress{
+				BadgeCode:       mb.BadgeCode,
+				BadgeName:       catName,
+				CurrentLevel:    0,
+				MaxLevel:        mb.Level,
+				CurrentProgress: progress,
+				Tiers:           make([]BadgeTierItem, 0),
+			}
+			categories = append(categories, cat)
+			catIdx = len(categories) - 1
+			catIndexMap[mb.BadgeCode] = catIdx
+		}
+
+		earnedAtTime, earned := acquiredMap[mb.ID]
+		var earnedAtStr *string
+		if earned {
+			s := earnedAtTime.Format(time.RFC3339)
+			earnedAtStr = &s
+			if mb.Level > categories[catIdx].CurrentLevel {
+				categories[catIdx].CurrentLevel = mb.Level
+			}
+		}
+		if mb.Level > categories[catIdx].MaxLevel {
+			categories[catIdx].MaxLevel = mb.Level
+		}
+
+		categories[catIdx].Tiers = append(categories[catIdx].Tiers, BadgeTierItem{
+			ID:          mb.ID,
+			Level:       mb.Level,
+			Threshold:   mb.Threshold,
+			Description: mb.Description,
+			IconURL:     mb.IconURL,
+			Earned:      earned,
+			EarnedAt:    earnedAtStr,
+		})
+	}
+
+	for i := range categories {
+		for _, tier := range categories[i].Tiers {
+			if !tier.Earned {
+				th := tier.Threshold
+				categories[i].NextThreshold = &th
+				break
+			}
+		}
+	}
+
+	return categories, nil
 }

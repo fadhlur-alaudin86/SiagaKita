@@ -199,8 +199,23 @@ func (s *Service) CreateBadge(req *BadgeRequest) (*MBadge, error) {
 	if req.BadgeName == "" {
 		return nil, errorMsg("badge_name wajib diisi")
 	}
+	level := req.Level
+	if level <= 0 {
+		level = 1
+	}
+	threshold := req.Threshold
+	if threshold <= 0 {
+		threshold = 1
+	}
+	code := req.BadgeCode
+	if code == "" {
+		code = "general"
+	}
 	badge := &MBadge{
+		BadgeCode:   code,
 		BadgeName:   req.BadgeName,
+		Level:       level,
+		Threshold:   threshold,
 		Description: req.Description,
 		IconURL:     req.IconURL,
 	}
@@ -212,11 +227,31 @@ func (s *Service) UpdateBadge(id string, req *BadgeRequest) (*MBadge, error) {
 	if req.BadgeName == "" {
 		return nil, errorMsg("badge_name wajib diisi")
 	}
+	level := req.Level
+	if level <= 0 {
+		level = 1
+	}
+	threshold := req.Threshold
+	if threshold <= 0 {
+		threshold = 1
+	}
+	code := req.BadgeCode
+	if code == "" {
+		code = "general"
+	}
 	err := s.repo.UpdateBadge(id, req)
 	if err != nil {
 		return nil, err
 	}
-	return &MBadge{ID: id, BadgeName: req.BadgeName, Description: req.Description, IconURL: req.IconURL}, nil
+	return &MBadge{
+		ID:          id,
+		BadgeCode:   code,
+		BadgeName:   req.BadgeName,
+		Level:       level,
+		Threshold:   threshold,
+		Description: req.Description,
+		IconURL:     req.IconURL,
+	}, nil
 }
 
 func (s *Service) DeleteBadge(id string) error {
