@@ -14,6 +14,7 @@ const (
 	StatusFalseAlarm  = "false_alarm"
 	StatusHandled     = "handled"
 	StatusHandling    = "handling"
+	StatusEnRoute     = "en_route"
 )
 
 // Agency Operational Statuses

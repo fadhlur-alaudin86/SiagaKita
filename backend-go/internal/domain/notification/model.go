@@ -1,5 +1,10 @@
 package notification
 
+// Priority levels for push notifications
+const (
+	PriorityHigh = "high"
+)
+
 // PushPayload defines the structured notification and data payload delivered via FCM.
 type PushPayload struct {
 	IncidentID   string `json:"incident_id"`

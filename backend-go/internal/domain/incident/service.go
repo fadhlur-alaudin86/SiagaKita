@@ -599,7 +599,7 @@ func (s *Service) processFallbackVolunteers(inc *Incident, incidentID string) {
 }
 
 func (s *Service) processFallbackVolunteer(ctx context.Context, inc *Incident, incidentID string, resp IncidentResponse) {
-	if resp.Status != "en_route" && resp.Status != "on_scene" {
+	if resp.Status != StatusEnRoute && resp.Status != "on_scene" {
 		return
 	}
 
