@@ -10,7 +10,7 @@
 | Date Created | 2026-09-12 |
 | GitHub Issues | [#8](https://github.com/fadhlur-alaudin86/SiagaKita/issues/8), [#32](https://github.com/fadhlur-alaudin86/SiagaKita/issues/32), [#33](https://github.com/fadhlur-alaudin86/SiagaKita/issues/33) |
 | Parent Plan | `.planning/10-gamification-badges.md` |
-| Status | In Progress |
+| Status | Done |
 
 ---
 
@@ -209,7 +209,7 @@ ADD CONSTRAINT uq_volunteer_badges_acquired_user_badge UNIQUE (user_id, badge_id
 
 ## 5. Step Progress
 
-| Step | Action | Status | Date | Notes |
+| Step | Action | Status | Done | Notes |
 |---|---|---|---|---|
 | -3 | Backlog Overview | Done | 2026-09-12 | Identified Parent Issue #8 and Sub-Issues #32, #33 |
 | -2 | Discovery & Grill-Me | Done | 2026-09-12 | Resolved multi-level badge architecture via /grill-me |
@@ -220,4 +220,4 @@ ADD CONSTRAINT uq_volunteer_badges_acquired_user_badge UNIQUE (user_id, badge_id
 | 3 | Desktop Console Update | Done | 2026-09-12 | Master-detail interface on `_BadgesTab` in Console |
 | 4 | Mobile Implementation | Done | 2026-09-12 | BadgeGridWidget, modal sheet, mission history, and models |
 | 5 | Verification | Done | 2026-09-12 | Pre-flight pipeline and test suites passed 100% |
-| 6 | CI + Review | Pending | 2026-09-12 | Pull request targeting `dev` |
+| 6 | CI + Review | Done | 2026-09-12 | Merged into `dev` via PR #111 |
