@@ -97,8 +97,8 @@ class MobileWsService extends ChangeNotifier {
         const MobileWsMessage(event: MobileWsEvent.connected, payload: {}),
       );
       notifyListeners();
-    } catch (e) {
-      debugPrint('[MobileWS] Connect error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[MobileWS] Connect error: $e\n$stackTrace');
       _scheduleReconnect();
     }
   }
@@ -122,13 +122,13 @@ class MobileWsService extends ChangeNotifier {
       }
 
       _controller.add(msg);
-    } catch (e) {
-      debugPrint('[MobileWS] Parse error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[MobileWS] Parse error: $e\n$stackTrace');
     }
   }
 
-  void _onError(Object err) {
-    debugPrint('[MobileWS] Error: $err');
+  void _onError(Object err, [StackTrace? stackTrace]) {
+    debugPrint('[MobileWS] Error: $err${stackTrace != null ? '\n$stackTrace' : ''}');
     _connected = false;
     notifyListeners();
     _scheduleReconnect();

@@ -275,7 +275,8 @@ class IncidentService {
       return data
           .map((e) => MissionHistory.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[IncidentService] Error fetching history: $e\n$stackTrace');
       final cached = LocalStorageService.getCachedIncidents(
         'cached_my_history',
       );
@@ -290,8 +291,9 @@ class IncidentService {
               .toList();
         } catch (_) {}
       }
-      throw IncidentException(
-        'Periksa koneksi internet. Gagal memuat riwayat: $e',
+      Error.throwWithStackTrace(
+        IncidentException('Periksa koneksi internet. Gagal memuat riwayat: $e'),
+        stackTrace,
       );
     }
   }
@@ -355,7 +357,10 @@ class IncidentService {
       return data
           .map((e) => ActiveIncident.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[IncidentService] Error fetching reporter history: $e\n$stackTrace',
+      );
       final cached = LocalStorageService.getCachedIncidents(
         'cached_reporter_history',
       );
@@ -370,8 +375,9 @@ class IncidentService {
               .toList();
         } catch (_) {}
       }
-      throw IncidentException(
-        'Periksa koneksi internet. Gagal memuat riwayat: $e',
+      Error.throwWithStackTrace(
+        IncidentException('Periksa koneksi internet. Gagal memuat riwayat: $e'),
+        stackTrace,
       );
     }
   }
@@ -533,9 +539,13 @@ class IncidentService {
           body['message'] as String? ?? 'Gagal mengunggah bukti',
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (e is IncidentException) rethrow;
-      throw IncidentException('Terjadi kesalahan saat mengunggah bukti');
+      debugPrint('[IncidentService] Error uploading evidence: $e\n$stackTrace');
+      Error.throwWithStackTrace(
+        IncidentException('Terjadi kesalahan saat mengunggah bukti'),
+        stackTrace,
+      );
     }
   }
 
