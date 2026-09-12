@@ -127,12 +127,7 @@ func main() {
 	// Telemetry domain
 	telemetryHandler := telemetry.NewHandler(rdb, wsHub, cfg)
 
-	app := fiber.New(fiber.Config{
-		AppName:     "SiagaKita API v1",
-		BodyLimit:   15 * 1024 * 1024, // 15 MB
-		JSONEncoder: sonic.Marshal,
-		JSONDecoder: sonic.Unmarshal,
-	})
+	app := fiber.New(newFiberConfig())
 
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -386,6 +381,21 @@ func main() {
 		utils.Error().Err(err).Msg("[Redis] Close error")
 	}
 	utils.Info().Msg("[Main] Goodbye.")
+}
+
+// newFiberConfig creates the base Fiber configuration with hardened HTTP timeouts.
+// ReadTimeout and WriteTimeout mitigate Slowloris attack vectors, while IdleTimeout
+// preserves keep-alive connections for active clients.
+func newFiberConfig() fiber.Config {
+	return fiber.Config{
+		AppName:      "SiagaKita API v1",
+		BodyLimit:    15 * 1024 * 1024, // 15 MB
+		JSONEncoder:  sonic.Marshal,
+		JSONDecoder:  sonic.Unmarshal,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
 }
 
 // seedSuperAdmin memastikan tepat satu akun superadmin ada di DB.
