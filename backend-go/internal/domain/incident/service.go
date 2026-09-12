@@ -520,7 +520,6 @@ func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve 
 	return s.awardReviewXP(volunteerID, totalXP)
 }
 
-
 func calculateReviewXP(inc *Incident) int {
 	durationMinutes := 10.0
 	if inc.CompletedAt != nil {
@@ -534,7 +533,6 @@ func calculateReviewXP(inc *Incident) int {
 	}
 	return int((float64(baseXP) + speedBonus) * multiplier)
 }
-
 
 func (s *Service) checkAndUpdateRank(volunteerID string, rep *VolunteerReputation) (bool, string) {
 	newRank, _ := s.repo.GetRankForXP(rep.ExpPoints)
@@ -553,7 +551,6 @@ func (s *Service) checkAndUpdateRank(volunteerID string, rep *VolunteerReputatio
 	}
 	return true, newRank.RankName
 }
-
 
 func (s *Service) awardReviewXP(volunteerID string, totalXP int) (*ResolveResponse, error) {
 	rep, _ := s.repo.UpsertReputation(volunteerID, totalXP, 1)
@@ -578,7 +575,6 @@ func (s *Service) awardReviewXP(volunteerID string, totalXP int) (*ResolveRespon
 	}, nil
 }
 
-
 func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) {
 	inc, err := s.repo.MarkResolved(incidentID)
 	if err != nil {
@@ -588,7 +584,6 @@ func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) 
 	s.processFallbackVolunteers(inc, incidentID)
 	return &ResolveResponse{Resolved: true}, nil
 }
-
 
 func (s *Service) processFallbackVolunteers(inc *Incident, incidentID string) {
 	responses, err := s.repo.FindResponsesByIncident(incidentID)
@@ -602,7 +597,6 @@ func (s *Service) processFallbackVolunteers(inc *Incident, incidentID string) {
 		s.processFallbackVolunteer(ctx, inc, incidentID, resp)
 	}
 }
-
 
 func (s *Service) processFallbackVolunteer(ctx context.Context, inc *Incident, incidentID string, resp IncidentResponse) {
 	if resp.Status != "en_route" && resp.Status != "on_scene" {
@@ -628,7 +622,6 @@ func (s *Service) processFallbackVolunteer(ctx context.Context, inc *Incident, i
 		utils.Error().Err(err).Str("incident_id", incidentID).Str("volunteer_id", resp.ResponderID).Msg("[IncidentService] Failed to update volunteer review status")
 	}
 }
-
 
 func haversineDistanceKm(lat1, lon1, lat2, lon2 float64) float64 {
 	dLat := (lat2 - lat1) * math.Pi / 180.0

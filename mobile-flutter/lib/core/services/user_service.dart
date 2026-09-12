@@ -247,7 +247,9 @@ class UserService {
         );
       }
     } catch (e, stackTrace) {
-      debugPrint('[UserService] Error submitting volunteer registration: $e\n$stackTrace');
+      debugPrint(
+        '[UserService] Error submitting volunteer registration: $e\n$stackTrace',
+      );
       Error.throwWithStackTrace(Exception('Kesalahan: $e'), stackTrace);
     }
   }
@@ -365,7 +367,9 @@ class UserService {
           )
           .toList();
     } catch (e, stackTrace) {
-      debugPrint('[UserService] Error loading volunteer badges: $e\n$stackTrace');
+      debugPrint(
+        '[UserService] Error loading volunteer badges: $e\n$stackTrace',
+      );
       Error.throwWithStackTrace(
         Exception('Gagal memuat lencana relawan: $e'),
         stackTrace,

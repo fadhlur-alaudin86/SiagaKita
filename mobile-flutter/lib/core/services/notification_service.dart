@@ -260,7 +260,9 @@ class NotificationService {
         await _sendTokenToBackend(token);
       }
     } catch (e, stackTrace) {
-      debugPrint('[NotificationService] syncTokenWithBackend error: $e\n$stackTrace');
+      debugPrint(
+        '[NotificationService] syncTokenWithBackend error: $e\n$stackTrace',
+      );
     }
   }
 
@@ -279,7 +281,9 @@ class NotificationService {
       }
       debugPrint('[NotificationService] FCM token cleared on logout');
     } catch (e, stackTrace) {
-      debugPrint('[NotificationService] clearTokenOnLogout error: $e\n$stackTrace');
+      debugPrint(
+        '[NotificationService] clearTokenOnLogout error: $e\n$stackTrace',
+      );
     }
   }
 
@@ -313,7 +317,9 @@ class NotificationService {
         );
       }
     } catch (e, stackTrace) {
-      debugPrint('[NotificationService] Error sending token to backend: $e\n$stackTrace');
+      debugPrint(
+        '[NotificationService] Error sending token to backend: $e\n$stackTrace',
+      );
     }
   }
 

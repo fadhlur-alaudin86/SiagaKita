@@ -267,9 +267,7 @@ class ReportService {
         } catch (_) {}
       }
       Error.throwWithStackTrace(
-        ReportException(
-          'Periksa koneksi internet. Gagal memuat laporan: $e',
-        ),
+        ReportException('Periksa koneksi internet. Gagal memuat laporan: $e'),
         stackTrace,
       );
     }
@@ -301,7 +299,9 @@ class ReportService {
       // Remove from offline queue if successful
       await removeFailedReport(failedReport.id);
     } catch (e, stackTrace) {
-      debugPrint('[ReportService] Error resending failed report: $e\n$stackTrace');
+      debugPrint(
+        '[ReportService] Error resending failed report: $e\n$stackTrace',
+      );
       rethrow; // let UI handle it
     }
   }

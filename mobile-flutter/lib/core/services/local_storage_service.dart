@@ -430,7 +430,9 @@ class LocalStorageService {
 
       await prefs.setBool(migrationFlag, true);
     } catch (e, stackTrace) {
-      debugPrint('[LocalStorageService] Legacy migration error: $e\n$stackTrace');
+      debugPrint(
+        '[LocalStorageService] Legacy migration error: $e\n$stackTrace',
+      );
     }
   }
 }

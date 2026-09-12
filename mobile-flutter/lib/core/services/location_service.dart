@@ -149,7 +149,9 @@ class LocationService {
       );
       return (latitude: position.latitude, longitude: position.longitude);
     } catch (e, stackTrace) {
-      debugPrint('[LocationService] Error getting current position: $e\n$stackTrace');
+      debugPrint(
+        '[LocationService] Error getting current position: $e\n$stackTrace',
+      );
       Error.throwWithStackTrace(
         AppLocationPermissionException('Gagal mengambil lokasi: $e'),
         stackTrace,
@@ -164,7 +166,9 @@ class LocationService {
     try {
       return await getCurrentPosition();
     } catch (e, stackTrace) {
-      debugPrint('[LocationService] Optional position fetch failed: $e\n$stackTrace');
+      debugPrint(
+        '[LocationService] Optional position fetch failed: $e\n$stackTrace',
+      );
       return null;
     }
   }

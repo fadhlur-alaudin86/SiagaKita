@@ -128,7 +128,9 @@ class MobileWsService extends ChangeNotifier {
   }
 
   void _onError(Object err, [StackTrace? stackTrace]) {
-    debugPrint('[MobileWS] Error: $err${stackTrace != null ? '\n$stackTrace' : ''}');
+    debugPrint(
+      '[MobileWS] Error: $err${stackTrace != null ? '\n$stackTrace' : ''}',
+    );
     _connected = false;
     notifyListeners();
     _scheduleReconnect();
