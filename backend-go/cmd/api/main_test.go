@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"siagakita-backend/internal/config"
 	userDomain "siagakita-backend/internal/domain/user"
@@ -140,4 +141,13 @@ func TestSeedSuperAdmin_WithLiveDB(t *testing.T) {
 	var count int64
 	db.Model(&userDomain.User{}).Where("role = 'superadmin' AND deleted_at IS NULL").Count(&count)
 	assert.Equal(t, int64(1), count)
+}
+
+func TestNewFiberConfig_Timeouts(t *testing.T) {
+	cfg := newFiberConfig()
+	assert.Equal(t, 15*time.Second, cfg.ReadTimeout)
+	assert.Equal(t, 15*time.Second, cfg.WriteTimeout)
+	assert.Equal(t, 120*time.Second, cfg.IdleTimeout)
+	assert.Equal(t, "SiagaKita API v1", cfg.AppName)
+	assert.Equal(t, 15*1024*1024, cfg.BodyLimit)
 }
