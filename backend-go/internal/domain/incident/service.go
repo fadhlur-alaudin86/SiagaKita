@@ -504,70 +504,75 @@ func (s *Service) VolunteerCompleteSOS(incidentID, volunteerID string, photoPath
 }
 
 func (s *Service) AgencyReviewVolunteer(incidentID, volunteerID string, approve bool) (*ResolveResponse, error) {
-	err := s.repo.AgencyReviewVolunteer(incidentID, volunteerID, approve)
-	if err != nil {
+	if err := s.repo.AgencyReviewVolunteer(incidentID, volunteerID, approve); err != nil {
 		return nil, err
 	}
+	if !approve {
+		return &ResolveResponse{Resolved: false}, nil
+	}
 
-	if approve {
-		// Calculate XP
-		inc, _ := s.repo.FindByID(incidentID)
-		if inc != nil {
-			durationMinutes := 10.0 // Default 10 minutes jika error
-			if inc.CompletedAt != nil {
-				durationMinutes = inc.CompletedAt.Sub(inc.CreatedAt).Minutes()
-			}
-			baseXP := 100
-			speedBonus := math.Max(0, 50-durationMinutes)
-			multiplier := incidentTypeMultiplier[inc.IncidentType]
-			if multiplier == 0 {
-				multiplier = 1.0
-			}
-			totalXP := int((float64(baseXP) + speedBonus) * multiplier)
-
-			// Award XP
-			rep, _ := s.repo.UpsertReputation(volunteerID, totalXP, 1)
-
-			rankUp := false
-			newRankName := ""
-			if rep != nil {
-				newRank, _ := s.repo.GetRankForXP(rep.ExpPoints)
-				if newRank != nil {
-					oldRankID := uint(0)
-					if rep.RankID != nil {
-						oldRankID = *rep.RankID
-					}
-					if newRank.ID != oldRankID {
-						rankUp = true
-						newRankName = newRank.RankName
-						if err := s.repo.UpdateRank(volunteerID, newRank.ID); err != nil {
-							utils.Error().Err(err).Str("user_id", volunteerID).Msg("[IncidentService] Failed to update volunteer rank")
-						}
-					}
-				}
-
-				newBadges, err := s.EvaluateAndAwardMultiLevelBadges(volunteerID)
-				if err != nil {
-					utils.Error().Err(err).Str("volunteer_id", volunteerID).Msg("[IncidentService] Failed to evaluate badges")
-				}
-
-				return &ResolveResponse{
-					Resolved:     true,
-					XPEarned:     totalXP,
-					NewTotalXP:   rep.ExpPoints,
-					TotalRescues: rep.TotalRescues,
-					RankUp:       rankUp,
-					NewRank:      newRankName,
-					NewBadges:    newBadges,
-				}, nil
-			}
-		}
-
+	inc, _ := s.repo.FindByID(incidentID)
+	if inc == nil {
 		return &ResolveResponse{Resolved: true}, nil
 	}
 
-	// Jika ditolak, kembalikan response kosong
-	return &ResolveResponse{Resolved: false}, nil
+	totalXP := calculateReviewXP(inc)
+	return s.awardReviewXP(volunteerID, totalXP)
+}
+
+func calculateReviewXP(inc *Incident) int {
+	durationMinutes := 10.0
+	if inc.CompletedAt != nil {
+		durationMinutes = inc.CompletedAt.Sub(inc.CreatedAt).Minutes()
+	}
+	baseXP := 100
+	speedBonus := math.Max(0, 50-durationMinutes)
+	multiplier := incidentTypeMultiplier[inc.IncidentType]
+	if multiplier == 0 {
+		multiplier = 1.0
+	}
+	return int((float64(baseXP) + speedBonus) * multiplier)
+}
+
+func (s *Service) checkAndUpdateRank(volunteerID string, rep *VolunteerReputation) (bool, string) {
+	newRank, _ := s.repo.GetRankForXP(rep.ExpPoints)
+	if newRank == nil {
+		return false, ""
+	}
+	oldRankID := uint(0)
+	if rep.RankID != nil {
+		oldRankID = *rep.RankID
+	}
+	if newRank.ID == oldRankID {
+		return false, ""
+	}
+	if err := s.repo.UpdateRank(volunteerID, newRank.ID); err != nil {
+		utils.Error().Err(err).Str("user_id", volunteerID).Msg("[IncidentService] Failed to update volunteer rank")
+	}
+	return true, newRank.RankName
+}
+
+func (s *Service) awardReviewXP(volunteerID string, totalXP int) (*ResolveResponse, error) {
+	rep, _ := s.repo.UpsertReputation(volunteerID, totalXP, 1)
+	if rep == nil {
+		return &ResolveResponse{Resolved: true}, nil
+	}
+
+	rankUp, newRankName := s.checkAndUpdateRank(volunteerID, rep)
+	newBadges, err := s.EvaluateAndAwardMultiLevelBadges(volunteerID)
+	if err != nil {
+		utils.Error().Err(err).Str("volunteer_id", volunteerID).Msg("[IncidentService] Failed to evaluate badges")
+	}
+
+	return &ResolveResponse{
+		Resolved:     true,
+		XPEarned:     totalXP,
+		NewTotalXP:   rep.ExpPoints,
+		TotalRescues: rep.TotalRescues,
+		RankUp:       rankUp,
+		NewRank:      newRankName,
+		NewBadges:    newBadges,
+	}, nil
 }
 
 func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) {
@@ -576,57 +581,58 @@ func (s *Service) AgencyResolveSOS(incidentID string) (*ResolveResponse, error) 
 		return nil, err
 	}
 
-	// ─── Fallback Logic ──────────────────────────────────────────────────────────
-	// Cari relawan yang berstatus en_route atau on_scene
+	s.processFallbackVolunteers(inc, incidentID)
+	return &ResolveResponse{Resolved: true}, nil
+}
+
+func (s *Service) processFallbackVolunteers(inc *Incident, incidentID string) {
 	responses, err := s.repo.FindResponsesByIncident(incidentID)
-	if err == nil {
-		ctx, canceled := context.WithTimeout(context.Background(), 5*time.Second)
-		defer canceled()
-		for _, resp := range responses {
-			if resp.Status == "en_route" || resp.Status == "on_scene" {
-				// Cek posisi terakhir di Redis
-				positions, err := s.rdb.GeoPos(ctx, "relawan:locations", resp.ResponderID).Result()
-				if err == nil && len(positions) > 0 && positions[0] != nil {
-					// Hitung jarak (Haversine)
-					volunteerLat := positions[0].Latitude
-					volunteerLng := positions[0].Longitude
+	if err != nil {
+		return
+	}
+	ctx, canceled := context.WithTimeout(context.Background(), 5*time.Second)
+	defer canceled()
 
-					// Gunakan formula haversine sederhana (radius bumi = 6371 km)
-					dLat := (inc.Latitude - volunteerLat) * math.Pi / 180.0
-					dLon := (inc.Longitude - volunteerLng) * math.Pi / 180.0
-					lat1 := volunteerLat * math.Pi / 180.0
-					lat2 := inc.Latitude * math.Pi / 180.0
+	for _, resp := range responses {
+		s.processFallbackVolunteer(ctx, inc, incidentID, resp)
+	}
+}
 
-					a := math.Sin(dLat/2)*math.Sin(dLat/2) +
-						math.Sin(dLon/2)*math.Sin(dLon/2)*math.Cos(lat1)*math.Cos(lat2)
-					c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-					distanceKm := 6371 * c
+func (s *Service) processFallbackVolunteer(ctx context.Context, inc *Incident, incidentID string, resp IncidentResponse) {
+	if resp.Status != "en_route" && resp.Status != "on_scene" {
+		return
+	}
 
-					// Jika jarak <= 1 KM, berikan 50% XP
-					if distanceKm <= 1.0 {
-						baseXP := 100
-						multiplier := incidentTypeMultiplier[inc.IncidentType]
-						if multiplier == 0 {
-							multiplier = 1.0
-						}
-						// 50% dari baseXP + multiplier, tanpa speed bonus
-						totalXP := int((float64(baseXP) * multiplier) * 0.5)
-
-						// Award XP
-						if _, err := s.repo.UpsertReputation(resp.ResponderID, totalXP, 1); err != nil {
-							utils.Error().Err(err).Str("user_id", resp.ResponderID).Msg("[IncidentService] Failed to award fallback reputation")
-						}
-					}
-				}
-				// Ubah status relawan menjadi canceled (oleh sistem/instansi)
-				if err := s.repo.AgencyReviewVolunteer(incidentID, resp.ResponderID, false); err != nil {
-					utils.Error().Err(err).Str("incident_id", incidentID).Str("volunteer_id", resp.ResponderID).Msg("[IncidentService] Failed to update volunteer review status")
-				}
+	positions, err := s.rdb.GeoPos(ctx, "relawan:locations", resp.ResponderID).Result()
+	if err == nil && len(positions) > 0 && positions[0] != nil {
+		distanceKm := haversineDistanceKm(positions[0].Latitude, positions[0].Longitude, inc.Latitude, inc.Longitude)
+		if distanceKm <= 1.0 {
+			multiplier := incidentTypeMultiplier[inc.IncidentType]
+			if multiplier == 0 {
+				multiplier = 1.0
+			}
+			totalXP := int((100.0 * multiplier) * 0.5)
+			if _, err := s.repo.UpsertReputation(resp.ResponderID, totalXP, 1); err != nil {
+				utils.Error().Err(err).Str("user_id", resp.ResponderID).Msg("[IncidentService] Failed to award fallback reputation")
 			}
 		}
 	}
 
-	return &ResolveResponse{Resolved: true}, nil
+	if err := s.repo.AgencyReviewVolunteer(incidentID, resp.ResponderID, false); err != nil {
+		utils.Error().Err(err).Str("incident_id", incidentID).Str("volunteer_id", resp.ResponderID).Msg("[IncidentService] Failed to update volunteer review status")
+	}
+}
+
+func haversineDistanceKm(lat1, lon1, lat2, lon2 float64) float64 {
+	dLat := (lat2 - lat1) * math.Pi / 180.0
+	dLon := (lon2 - lon1) * math.Pi / 180.0
+	rLat1 := lat1 * math.Pi / 180.0
+	rLat2 := lat2 * math.Pi / 180.0
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Sin(dLon/2)*math.Sin(dLon/2)*math.Cos(rLat1)*math.Cos(rLat2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return 6371 * c
 }
 
 func (s *Service) GetMissionHistory(volunteerID string) ([]MissionHistoryResponse, error) {

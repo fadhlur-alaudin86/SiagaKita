@@ -171,7 +171,8 @@ class ReportService {
       }
     } on ReportException {
       rethrow;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[ReportService] Error submitting report: $e\n$stackTrace');
       // Save offline if network fails
       await _saveFailedReportLocal(
         incidentType: incidentType,
@@ -182,8 +183,9 @@ class ReportService {
         photos: photos,
         audio: audio,
       );
-      throw ReportException(
-        'Periksa koneksi internet. Laporan disimpan offline.',
+      Error.throwWithStackTrace(
+        ReportException('Gagal mengirim laporan: $e'),
+        stackTrace,
       );
     }
   }
@@ -252,7 +254,8 @@ class ReportService {
 
       final offlineReports = await getFailedReports();
       return [...offlineReports, ...serverReports];
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[ReportService] Error loading my reports: $e\n$stackTrace');
       final cached = LocalStorageService.getCachedMyReports();
       if (cached != null) {
         try {
@@ -263,8 +266,9 @@ class ReportService {
           return [...offlineReports, ...serverReports];
         } catch (_) {}
       }
-      throw ReportException(
-        'Periksa koneksi internet. Gagal memuat laporan: $e',
+      Error.throwWithStackTrace(
+        ReportException('Periksa koneksi internet. Gagal memuat laporan: $e'),
+        stackTrace,
       );
     }
   }
@@ -294,7 +298,10 @@ class ReportService {
       );
       // Remove from offline queue if successful
       await removeFailedReport(failedReport.id);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[ReportService] Error resending failed report: $e\n$stackTrace',
+      );
       rethrow; // let UI handle it
     }
   }
@@ -321,8 +328,12 @@ class ReportService {
       }
     } on ReportException {
       rethrow;
-    } catch (e) {
-      throw ReportException('Gagal menghubungi server: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[ReportService] Error canceling report: $e\n$stackTrace');
+      Error.throwWithStackTrace(
+        ReportException('Gagal menghubungi server: $e'),
+        stackTrace,
+      );
     }
   }
 }

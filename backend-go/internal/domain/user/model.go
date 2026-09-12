@@ -67,7 +67,7 @@ type AdminProfile struct {
 
 func (AdminProfile) TableName() string { return "admin_profiles" }
 
-// AgencyPersonnel menyimpan data personel instansi.
+// AgencyPersonnel stores agency personnel data.
 type AgencyPersonnel struct {
 	UserID      string    `gorm:"type:uuid;primaryKey" json:"user_id"`
 	AgencyID    string    `gorm:"type:uuid;not null" json:"agency_id"`

@@ -31,7 +31,8 @@ class UserService {
       await prefs.setString('cached_profile', jsonEncode(body['data']));
 
       return UserModel.fromJson(body['data']);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[UserService] Error loading profile: $e\n$stackTrace');
       // Try to load from cache
       final cachedStr = prefs.getString('cached_profile');
       if (cachedStr != null) {
@@ -39,7 +40,10 @@ class UserService {
           return UserModel.fromJson(jsonDecode(cachedStr));
         } catch (_) {}
       }
-      throw Exception('Periksa koneksi internet. Kesalahan memuat profil: $e');
+      Error.throwWithStackTrace(
+        Exception('Periksa koneksi internet. Kesalahan memuat profil: $e'),
+        stackTrace,
+      );
     }
   }
 
@@ -48,8 +52,8 @@ class UserService {
     try {
       final user = await getProfile(token);
       UserModel.currentUser.value = user;
-    } catch (e) {
-      debugPrint('[UserService] Gagal refresh user: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[UserService] Gagal refresh user: $e\n$stackTrace');
       // Jangan lempar error agar tidak mengganggu UI jika hanya background refresh
     }
   }
@@ -113,8 +117,12 @@ class UserService {
       }
 
       return UserModel.fromJson(body['data']);
-    } catch (e) {
-      throw Exception('Kesalahan memperbarui profil: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[UserService] Error updating profile: $e\n$stackTrace');
+      Error.throwWithStackTrace(
+        Exception('Kesalahan memperbarui profil: $e'),
+        stackTrace,
+      );
     }
   }
 
@@ -176,8 +184,12 @@ class UserService {
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception(body['message'] ?? 'Gagal menyimpan biodata');
       }
-    } catch (e) {
-      throw Exception('Kesalahan menyimpan biodata: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[UserService] Error saving biodata: $e\n$stackTrace');
+      Error.throwWithStackTrace(
+        Exception('Kesalahan menyimpan biodata: $e'),
+        stackTrace,
+      );
     }
   }
 
@@ -234,8 +246,11 @@ class UserService {
           body['message'] ?? 'Gagal mengirim pendaftaran relawan',
         );
       }
-    } catch (e) {
-      throw Exception('Kesalahan: $e');
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[UserService] Error submitting volunteer registration: $e\n$stackTrace',
+      );
+      Error.throwWithStackTrace(Exception('Kesalahan: $e'), stackTrace);
     }
   }
 
@@ -256,8 +271,9 @@ class UserService {
       if (response.statusCode != 200) {
         throw Exception(body['message'] ?? 'Gagal mengirim OTP');
       }
-    } catch (e) {
-      throw Exception('$e');
+    } catch (e, stackTrace) {
+      debugPrint('[UserService] Error requesting phone OTP: $e\n$stackTrace');
+      Error.throwWithStackTrace(Exception('$e'), stackTrace);
     }
   }
 
@@ -283,8 +299,9 @@ class UserService {
       if (response.statusCode != 200) {
         throw Exception(body['message'] ?? 'Kode OTP tidak valid');
       }
-    } catch (e) {
-      throw Exception('$e');
+    } catch (e, stackTrace) {
+      debugPrint('[UserService] Error verifying phone OTP: $e\n$stackTrace');
+      Error.throwWithStackTrace(Exception('$e'), stackTrace);
     }
   }
 
@@ -316,8 +333,12 @@ class UserService {
         final body = jsonDecode(response.body);
         throw Exception(body['message'] ?? 'Gagal memperbarui status');
       }
-    } catch (e) {
-      throw Exception('Gagal memperbarui status ketersediaan: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[UserService] Error updating availability: $e\n$stackTrace');
+      Error.throwWithStackTrace(
+        Exception('Gagal memperbarui status ketersediaan: $e'),
+        stackTrace,
+      );
     }
   }
 
@@ -345,8 +366,14 @@ class UserService {
                 BadgeCategoryProgress.fromJson(item as Map<String, dynamic>),
           )
           .toList();
-    } catch (e) {
-      throw Exception('Gagal memuat lencana relawan: $e');
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[UserService] Error loading volunteer badges: $e\n$stackTrace',
+      );
+      Error.throwWithStackTrace(
+        Exception('Gagal memuat lencana relawan: $e'),
+        stackTrace,
+      );
     }
   }
 }

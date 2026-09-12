@@ -37,9 +37,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp();
     }
-  } catch (e) {
+  } catch (e, stackTrace) {
     debugPrint(
-      '[NotificationService] Background Firebase.initializeApp error: $e',
+      '[NotificationService] Background Firebase.initializeApp error: $e\n$stackTrace',
     );
   }
 
@@ -70,9 +70,9 @@ class NotificationService {
       if (Firebase.apps.isEmpty) {
         await Firebase.initializeApp();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint(
-        '[NotificationService] Firebase not initialized or config missing: $e',
+        '[NotificationService] Firebase not initialized or config missing: $e\n$stackTrace',
       );
       // Continue execution so offline or local mock mode remains functional
       return;
@@ -99,9 +99,9 @@ class NotificationService {
           try {
             final data = jsonDecode(response.payload!) as Map<String, dynamic>;
             handleNotificationNavigation(data);
-          } catch (e) {
+          } catch (e, stackTrace) {
             debugPrint(
-              '[NotificationService] Error parsing payload on tap: $e',
+              '[NotificationService] Error parsing payload on tap: $e\n$stackTrace',
             );
           }
         }
@@ -194,8 +194,8 @@ class NotificationService {
 
       _initialized = true;
       debugPrint('[NotificationService] Initialized successfully');
-    } catch (e) {
-      debugPrint('[NotificationService] FCM setup error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[NotificationService] FCM setup error: $e\n$stackTrace');
     }
   }
 
@@ -259,8 +259,10 @@ class NotificationService {
       if (token != null && token.isNotEmpty) {
         await _sendTokenToBackend(token);
       }
-    } catch (e) {
-      debugPrint('[NotificationService] syncTokenWithBackend error: $e');
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[NotificationService] syncTokenWithBackend error: $e\n$stackTrace',
+      );
     }
   }
 
@@ -278,8 +280,10 @@ class NotificationService {
         await FirebaseMessaging.instance.deleteToken();
       }
       debugPrint('[NotificationService] FCM token cleared on logout');
-    } catch (e) {
-      debugPrint('[NotificationService] clearTokenOnLogout error: $e');
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[NotificationService] clearTokenOnLogout error: $e\n$stackTrace',
+      );
     }
   }
 
@@ -312,8 +316,10 @@ class NotificationService {
           '[NotificationService] Failed to sync FCM token: ${response.statusCode} ${response.body}',
         );
       }
-    } catch (e) {
-      debugPrint('[NotificationService] Error sending token to backend: $e');
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[NotificationService] Error sending token to backend: $e\n$stackTrace',
+      );
     }
   }
 

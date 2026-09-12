@@ -82,8 +82,8 @@ class ApiClient {
 
       _resolveQueue(result.accessToken);
       return result.accessToken;
-    } catch (e) {
-      debugPrint('[ApiClient] Error refreshing token: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[ApiClient] Error refreshing token: $e\n$stackTrace');
       await SessionService.clearSession();
       _resolveQueue(null);
       return null;

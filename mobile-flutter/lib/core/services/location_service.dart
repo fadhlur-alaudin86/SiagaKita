@@ -148,8 +148,14 @@ class LocationService {
         ),
       );
       return (latitude: position.latitude, longitude: position.longitude);
-    } catch (e) {
-      throw AppLocationPermissionException('Gagal mengambil lokasi: $e');
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[LocationService] Error getting current position: $e\n$stackTrace',
+      );
+      Error.throwWithStackTrace(
+        AppLocationPermissionException('Gagal mengambil lokasi: $e'),
+        stackTrace,
+      );
     }
   }
 
@@ -159,7 +165,10 @@ class LocationService {
   getCurrentPositionOrNull() async {
     try {
       return await getCurrentPosition();
-    } catch (_) {
+    } catch (e, stackTrace) {
+      debugPrint(
+        '[LocationService] Optional position fetch failed: $e\n$stackTrace',
+      );
       return null;
     }
   }
