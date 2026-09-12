@@ -3,7 +3,7 @@
 ## 1. Overview & Problem Statement
 - **Target Issues**: Sub-Issues [#21](https://github.com/fadhlur-alaudin86/SiagaKita/issues/21), [#22](https://github.com/fadhlur-alaudin86/SiagaKita/issues/22), & [#23](https://github.com/fadhlur-alaudin86/SiagaKita/issues/23) (completing Parent Issue [#4](https://github.com/fadhlur-alaudin86/SiagaKita/issues/4))
 - **Priority**: P1 (High)
-- **Status**: Merged | Implemented & Verified in PR #104
+- **Status**: Merged | Verified and closed
 - **Problem**:
   - Currently, SiagaKita has clients for civilians/volunteers (`mobile-flutter`) and agency desktop dispatchers (`windows_console_flutter`).
   - Official emergency responders (firefighters, paramedic drivers, police patrol, SAR field teams) operating with the `agency_personnel` role do not have a dedicated mobile app to receive unit dispatches on the road, update response statuses, or stream vehicle GPS coordinates back to the agency command center.
@@ -50,21 +50,21 @@
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Project Scaffolding & Auth Tasks ([#21](https://github.com/fadhlur-alaudin86/SiagaKita/issues/21))
-- [ ] Initialize `mobile-flutter-responder/` with dependencies (`provider`, `dio`, `flutter_secure_storage`, `flutter_map`).
-- [ ] Implement `AppLocalization` and bilingual dictionaries (`id` & `en`).
-- [ ] Build `LoginScreen` and integrate `POST /api/v1/auth/personnel/login`.
-- [ ] Implement session guard and role validation.
+- [x] Initialize `mobile-flutter-responder/` with dependencies (`provider`, `dio`, `flutter_secure_storage`, `flutter_map`).
+- [x] Implement `AppLocalization` and bilingual dictionaries (`id` & `en`).
+- [x] Build `LoginScreen` and integrate `POST /api/v1/auth/personnel/login`.
+- [x] Implement session guard and role validation.
 
 ### 3.2 Mission Board Tasks ([#22](https://github.com/fadhlur-alaudin86/SiagaKita/issues/22))
-- [ ] Build `MissionBoardScreen` displaying assigned emergency alerts.
-- [ ] Implement mission detail view with victim profile, medical tags, and multimedia audio/photo evidence.
-- [ ] Implement status transition buttons with optimistic UI updates and error rollbacks.
-- [ ] Connect WebSocket listener to receive instant alerts when new dispatches are assigned.
+- [x] Build `MissionBoardScreen` displaying assigned emergency alerts.
+- [x] Implement mission detail view with victim profile, medical tags, and multimedia audio/photo evidence.
+- [x] Implement status transition buttons with optimistic UI updates and error rollbacks.
+- [x] Connect WebSocket listener to receive instant alerts when new dispatches are assigned.
 
 ### 3.3 Telemetry & Navigation Tasks ([#23](https://github.com/fadhlur-alaudin86/SiagaKita/issues/23))
-- [ ] Configure background location permissions on Android (`ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`).
-- [ ] Implement background location service streaming coordinates to `PUT /api/v1/telemetry/location`.
-- [ ] Build `NavigationMapScreen` rendering responder position, incident pin, and route polyline.
+- [x] Configure background location permissions on Android (`ACCESS_FINE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`).
+- [x] Implement background location service streaming coordinates to `PUT /api/v1/telemetry/location`.
+- [x] Build `NavigationMapScreen` rendering responder position, incident pin, and route polyline.
 
 ---
 

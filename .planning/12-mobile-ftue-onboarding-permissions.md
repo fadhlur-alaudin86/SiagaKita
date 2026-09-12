@@ -3,7 +3,7 @@
 ## 1. Overview & Problem Statement
 - **Target Issue**: [#107](https://github.com/fadhlur-alaudin86/SiagaKita/issues/107)
 - **Priority**: P1 (High)
-- **Status**: Merged | Implemented & Verified in PR #108
+- **Status**: Merged | Verified and closed
 - **Problem**:
   - Newly authenticated users in `mobile-flutter` face unprimed, stacked permission dialogs (Location, Camera, Microphone) without contextual explanations, creating distrust and high denial rates.
   - When permissions are denied and the device is offline, tapping the SOS button prematurely enters the `gracePeriod` state and simulates transmission, only to fail or trigger delayed permission prompts once network connectivity resumes.
@@ -73,27 +73,27 @@
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Onboarding Module
-- [ ] Implement `OnboardingScreen` with `PageView`, custom declarative illustrations, and page indicator dots.
-- [ ] Implement `OnboardingService` / local preference persistence for `has_completed_onboarding`.
-- [ ] Integrate startup routing logic in `_AppStartup` (`main.dart`).
+- [x] Implement `OnboardingScreen` with `PageView`, custom declarative illustrations, and page indicator dots.
+- [x] Implement `OnboardingService` / local preference persistence for `has_completed_onboarding`.
+- [x] Integrate startup routing logic in `_AppStartup` (`main.dart`).
 
 ### 3.2 Permission Management Module
-- [ ] Create `PermissionPrimerScreen` with permission explanation cards and live status badges.
-- [ ] Implement per-permission request triggers and permanent denial redirect handling.
-- [ ] Add `WidgetsBindingObserver` lifecycle sync to refresh statuses upon app resume.
-- [ ] Remove abrupt sequential permission calls from `LoginScreen`, `RegisterScreen`, and `_AppStartup`.
-- [ ] Implement warning banner on `HomeScreen` when permissions are incomplete.
+- [x] Create `PermissionPrimerScreen` with permission explanation cards and live status badges.
+- [x] Implement per-permission request triggers and permanent denial redirect handling.
+- [x] Add `WidgetsBindingObserver` lifecycle sync to refresh statuses upon app resume.
+- [x] Remove abrupt sequential permission calls from `LoginScreen`, `RegisterScreen`, and `_AppStartup`.
+- [x] Implement warning banner on `HomeScreen` when permissions are incomplete.
 
 ### 3.3 SOS Pre-Flight Guard & Offline Resilience
-- [ ] Add instant permission validation before tap progression and grace period countdown in `home_screen.dart`.
-- [ ] Implement `_showPermissionRequiredModal` bottom sheet.
-- [ ] Validate offline SOS behavior: tapping without permissions displays modal cleanly without glitching UI.
+- [x] Add instant permission validation before tap progression and grace period countdown in `home_screen.dart`.
+- [x] Implement `_showPermissionRequiredModal` bottom sheet.
+- [x] Validate offline SOS behavior: tapping without permissions displays modal cleanly without glitching UI.
 
 ### 3.4 Localization & Quality Verification
-- [ ] Register all new UI strings in `mobile-flutter/lib/core/localization/app_localization.dart` with 100% bilingual parity (`id` and `en`).
-- [ ] Run `python3 scripts/check_localization_orphans.py --mobile` and ensure 0 orphaned keys.
-- [ ] Run `flutter analyze --fatal-infos` and ensure 0 static analysis errors.
-- [ ] Author widget and unit tests for onboarding navigation and SOS pre-flight checks.
+- [x] Register all new UI strings in `mobile-flutter/lib/core/localization/app_localization.dart` with 100% bilingual parity (`id` and `en`).
+- [x] Run `python3 scripts/check_localization_orphans.py --mobile` and ensure 0 orphaned keys.
+- [x] Run `flutter analyze --fatal-infos` and ensure 0 static analysis errors.
+- [x] Author widget and unit tests for onboarding navigation and SOS pre-flight checks.
 
 ---
 

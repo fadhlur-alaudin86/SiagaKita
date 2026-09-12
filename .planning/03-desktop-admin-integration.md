@@ -57,15 +57,15 @@
 
 ## 3. Tasks & Implementation Checklist
 
-- [ ] Connect `kyc_relawan_page.dart` to `AdminApiService`:
+- [x] Connect `kyc_relawan_page.dart` to `AdminApiService`:
   - Wire queue fetching, KTP network images, certificate `url_launcher`, and approve/reject dialogs.
-- [ ] Connect `user_management_page.dart` to `AdminApiService`:
+- [x] Connect `user_management_page.dart` to `AdminApiService`:
   - Wire search query, role/strike filters, ban modal with days/reason, unban confirmation, and reset strike.
-- [ ] Connect `gamifikasi_page.dart` to `AdminApiService`:
+- [x] Connect `gamifikasi_page.dart` to `AdminApiService`:
   - Wire rank cards list, add/edit modal form, and deletion confirmation modal.
-- [ ] Connect `statistik_page.dart` to `AdminApiService`:
+- [x] Connect `statistik_page.dart` to `AdminApiService`:
   - Wire period selector, refresh listeners, dynamic LineChart, and PieChart data mappings.
-- [ ] Maintain localization compliance:
+- [x] Maintain localization compliance:
   - Add missing strings to `windows_console_flutter/lib/core/localization/app_localization.dart`.
   - Verify zero raw strings inside `Text(...)`, `SnackBar`, or modal dialogs (`.tr(context)`).
   - Prune any dead or duplicate keys.

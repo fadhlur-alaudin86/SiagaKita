@@ -191,3 +191,24 @@ jobs:
 
       - name: Analyze
         run: flutter analyze --fatal-infos
+
+  # ─── Instant Issue Status & Parent Tracker Reconciliation ────────────────
+  reconcile-dev:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Reconcile Merged Issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 scripts/reconcile_issue_status.py --reconcile --limit 15
