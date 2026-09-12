@@ -1,8 +1,10 @@
 package user
 
 import (
+	"errors"
 	"strings"
 
+	"siagakita-backend/internal/domain/otp"
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -114,7 +116,7 @@ func (h *Handler) RefreshToken(c *fiber.Ctx) error {
 
 	resp, err := h.svc.RefreshToken(c.Context(), req.RefreshToken)
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "ERR_TOKEN_REUSED") {
+		if errors.Is(err, ErrTokenReused) {
 			return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Token refresh telah kedaluwarsa atau digunakan kembali")
 		}
 		return utils.ErrorResponse(c, fiber.StatusUnauthorized, err.Error())
@@ -173,7 +175,7 @@ func (h *Handler) RequestPhoneVerification(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "phone_number wajib diisi")
 	}
 	if err := h.svc.RequestPhoneVerification(c.Context(), userID, req.PhoneNumber); err != nil {
-		if err.Error() == "Tunggu 1 menit sebelum meminta kode baru" {
+		if errors.Is(err, otp.ErrCooldown) {
 			return utils.ErrorResponse(c, fiber.StatusTooManyRequests, err.Error())
 		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())

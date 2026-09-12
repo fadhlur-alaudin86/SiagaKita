@@ -1,7 +1,6 @@
 package user
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -385,7 +384,7 @@ func (r *Repository) SubmitKYC(userID, nik, fullName, placeOfBirth, dateOfBirthS
 		return err
 	}
 	if count > 0 {
-		return errors.New("NIK_ALREADY_USED")
+		return ErrNIKAlreadyUsed
 	}
 
 	updates := map[string]interface{}{

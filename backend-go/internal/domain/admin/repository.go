@@ -610,7 +610,7 @@ func (r *Repository) CreateRank(req *RankRequest) (*MRank, error) {
 func (r *Repository) UpdateRank(id int, req *RankRequest) (*MRank, error) {
 	var rank MRank
 	if err := r.db.First(&rank, id).Error; err != nil {
-		return nil, fmt.Errorf("rank tidak ditemukan")
+		return nil, ErrRankNotFound
 	}
 	rank.RankName = req.RankName
 	rank.MinExp = req.MinExp
@@ -630,7 +630,7 @@ func (r *Repository) DeleteRankWithAutoDowngrade(targetRankID int, fallbackRankI
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return fmt.Errorf("rank tidak ditemukan")
+			return ErrRankNotFound
 		}
 		return nil
 	})
@@ -639,7 +639,7 @@ func (r *Repository) DeleteRankWithAutoDowngrade(targetRankID int, fallbackRankI
 func (r *Repository) DeleteRank(id int) error {
 	result := r.db.Delete(&MRank{}, id)
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("rank tidak ditemukan")
+		return ErrRankNotFound
 	}
 	return result.Error
 }

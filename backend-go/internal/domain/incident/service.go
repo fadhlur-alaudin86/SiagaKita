@@ -58,7 +58,7 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest) (*Trigge
 		return nil, err
 	}
 	if banned {
-		return nil, errors.New("sos_banned: akun Anda dinonaktifkan dari fitur SOS karena pelanggaran berulang")
+		return nil, ErrSOSBanned
 	}
 
 	// Guard: cegah duplikat SOS — jika user sudah punya incident aktif, kembalikan yang ada
@@ -117,7 +117,7 @@ func (s *Service) UpdateType(incidentID, reporterID, incidentType string) error 
 		return err
 	}
 	if inc.ReporterID != reporterID {
-		return errors.New("unauthorized")
+		return ErrUnauthorized
 	}
 	if inc.Status != "grace_period" {
 		return errors.New("tipe hanya bisa diubah saat grace period")
@@ -139,7 +139,7 @@ func (s *Service) PromoteToBroadcasting(incidentID, reporterID string) error {
 		return err
 	}
 	if inc.ReporterID != reporterID {
-		return errors.New("unauthorized")
+		return ErrUnauthorized
 	}
 	return s.repo.UpdateStatus(incidentID, "broadcasting")
 }
@@ -188,7 +188,7 @@ func (s *Service) CancelSOS(incidentID, reporterID string) error {
 		return err
 	}
 	if inc.ReporterID != reporterID {
-		return errors.New("unauthorized")
+		return ErrUnauthorized
 	}
 	return s.repo.MarkCancelled(incidentID)
 }
@@ -203,7 +203,7 @@ func (s *Service) UploadEvidence(incidentID, reporterID string, photoPaths []str
 		return err
 	}
 	if inc.ReporterID != reporterID {
-		return errors.New("unauthorized")
+		return ErrUnauthorized
 	}
 	return s.repo.UploadEvidence(incidentID, photoPaths, audioPath)
 }
