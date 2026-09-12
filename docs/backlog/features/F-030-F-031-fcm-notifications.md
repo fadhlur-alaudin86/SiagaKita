@@ -10,7 +10,7 @@
 | Date Created | 2026-09-12 |
 | GitHub Issues | [#7](https://github.com/fadhlur-alaudin86/SiagaKita/issues/7), [#30](https://github.com/fadhlur-alaudin86/SiagaKita/issues/30), [#31](https://github.com/fadhlur-alaudin86/SiagaKita/issues/31) |
 | Parent Plan | `.planning/09-push-notifications-fcm.md` |
-| Status | In Progress |
+| Status | Done |
 
 ---
 
@@ -137,7 +137,7 @@ DROP COLUMN IF EXISTS fcm_token;
 
 ## 5. Step Progress
 
-| Step | Action | Status | Date | Notes |
+| Step | Action | Status | Done | Notes |
 |---|---|---|---|---|
 | -3 | Backlog Overview | Done | 2026-09-12 | Identified Parent Issue #7 and Sub-Issues #30, #31 |
 | -2 | Discovery & Grill-Me | Done | 2026-09-12 | Resolved 2-tier audience, dual channels, and token lifecycle |

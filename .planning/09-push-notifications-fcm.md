@@ -3,7 +3,7 @@
 ## 1. Overview & Problem Statement
 - **Target Issues**: Sub-Issues [#30](https://github.com/fadhlur-alaudin86/SiagaKita/issues/30) & [#31](https://github.com/fadhlur-alaudin86/SiagaKita/issues/31) (completing Parent Issue [#7](https://github.com/fadhlur-alaudin86/SiagaKita/issues/7))
 - **Priority**: P2 (Normal)
-- **Status**: Ready for Backlog Execution
+- **Status**: Merged | Verified and closed
 - **Problem**:
   - Emergency SOS broadcasts and dispatch assignments currently rely solely on active WebSocket connections.
   - When a volunteer or citizen locks their phone or the mobile application process is terminated by the OS, they miss critical time-sensitive disaster alerts, severely impacting emergency response response times.
@@ -40,16 +40,16 @@
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Backend Notification Tasks ([#30](https://github.com/fadhlur-alaudin86/SiagaKita/issues/30))
-- [ ] Add `firebase-admin-go` to `backend-go/go.mod`.
-- [ ] Create database migration for `user_device_tokens`.
-- [ ] Implement `NotificationService` with FCM multicast batching.
-- [ ] Wire notification trigger into incident broadcast flow.
+- [x] Add `firebase-admin-go` to `backend-go/go.mod`.
+- [x] Create database migration for `user_device_tokens`.
+- [x] Implement `NotificationService` with FCM multicast batching.
+- [x] Wire notification trigger into incident broadcast flow.
 
 ### 3.2 Mobile Notification Tasks ([#31](https://github.com/fadhlur-alaudin86/SiagaKita/issues/31))
-- [ ] Configure `google-services.json` and Android notification channels.
-- [ ] Implement top-level `firebaseMessagingBackgroundHandler`.
-- [ ] Implement local notifications wrapper with custom emergency ringtone.
-- [ ] Register FCM token on auth login and handle token refresh.
+- [x] Configure `google-services.json` and Android notification channels.
+- [x] Implement top-level `firebaseMessagingBackgroundHandler`.
+- [x] Implement local notifications wrapper with custom emergency ringtone.
+- [x] Register FCM token on auth login and handle token refresh.
 
 ---
 
