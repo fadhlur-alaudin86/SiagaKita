@@ -174,11 +174,12 @@ CREATE TABLE public.user_profiles (
     profile_photo_url       varchar(255),
     nik_verification_status varchar(20) DEFAULT 'none'
         CHECK (nik_verification_status IN ('none', 'pending', 'approved', 'rejected')),
+    fcm_token               text,
     updated_at              timestamptz DEFAULT now()
 );
 ```
 
-Indexes: `idx_up_phone`, `idx_up_nik`, `idx_user_profiles_user_id`
+Indexes: `idx_up_phone`, `idx_up_nik`, `idx_user_profiles_user_id`, `idx_up_fcm_token`
 
 ### `admin_profiles` — Administrator Details
 Stores personal records for platform administrators created by superadmin.
@@ -499,3 +500,4 @@ For the comprehensive interactive Mermaid ERD diagram, see [`docs/design/databas
 | `020` | `020_add_analytics_indexes` | Composite indexes for incident stats and gamification rank queries. |
 | `021` | `021_standardize_varchar_constraints_and_relations` | Transitioned custom ENUMs to Domain-Constrained VARCHAR with CHECK constraints; standardized emergency contact relations. |
 | `022` | `022_add_multi_level_badges_and_constraints` | Added badge_code, level, and threshold to m_badges with UNIQUE(badge_code, level), added UNIQUE(user_id, badge_id) to volunteer_badges_acquired, and seeded 17 multi-level milestones across 5 categories. |
+| `023` | `023_add_fcm_token_to_user_profiles` | Added `fcm_token` column to `user_profiles` and partial index `idx_up_fcm_token` for push notifications delivery. |

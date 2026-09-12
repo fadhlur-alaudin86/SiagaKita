@@ -444,3 +444,81 @@ func (r *Repository) SubmitVolunteerRegistration(userID string, experience strin
 		return nil
 	})
 }
+
+// ─── FCM Token Management ───────────────────────────────────────────────────
+
+// UpdateFCMToken sets the user's FCM device token.
+func (r *Repository) UpdateFCMToken(userID, token string) error {
+	return r.db.Model(&UserProfile{}).Where("user_id = ?", userID).Update("fcm_token", token).Error
+}
+
+// ClearFCMToken resets the user's FCM token to NULL on logout.
+func (r *Repository) ClearFCMToken(userID string) error {
+	return r.db.Model(&UserProfile{}).Where("user_id = ?", userID).Update("fcm_token", gorm.Expr("NULL")).Error
+}
+
+// ClearStaleFCMTokens resets invalid/unregistered FCM tokens to NULL.
+func (r *Repository) ClearStaleFCMTokens(tokens []string) error {
+	if len(tokens) == 0 {
+		return nil
+	}
+	return r.db.Model(&UserProfile{}).Where("fcm_token IN ?", tokens).Update("fcm_token", gorm.Expr("NULL")).Error
+}
+
+// FindVolunteerFCMTokensByIDs retrieves active FCM tokens for verified volunteers in userIDs.
+func (r *Repository) FindVolunteerFCMTokensByIDs(userIDs []string, excludeUserID string) ([]string, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+	var tokens []string
+	query := r.db.Model(&UserProfile{}).
+		Where("user_id IN ? AND user_id != ? AND fcm_token IS NOT NULL AND fcm_token != '' AND is_verified_volunteer = true", userIDs, excludeUserID)
+	err := query.Pluck("fcm_token", &tokens).Error
+	return tokens, err
+}
+
+// FindAllVerifiedVolunteerFCMTokens returns active FCM tokens for verified volunteers up to limit.
+func (r *Repository) FindAllVerifiedVolunteerFCMTokens(excludeUserID string, limit int) ([]string, error) {
+	var tokens []string
+	if limit <= 0 {
+		limit = 100
+	}
+	query := r.db.Model(&UserProfile{}).
+		Where("user_id != ? AND fcm_token IS NOT NULL AND fcm_token != '' AND is_verified_volunteer = true", excludeUserID).
+		Limit(limit)
+	err := query.Pluck("fcm_token", &tokens).Error
+	return tokens, err
+}
+
+// FindNearbyAgencyPersonnelTokens retrieves active personnel FCM tokens for agencies within radiusKm of (lat, lon).
+func (r *Repository) FindNearbyAgencyPersonnelTokens(lat, lon, radiusKm float64) ([]string, error) {
+	var tokens []string
+	haversineSQL := `
+		SELECT u.fcm_token
+		FROM agency_personnels ap
+		JOIN agencies a ON ap.agency_id = a.id
+		JOIN user_profiles u ON ap.user_id = u.user_id
+		WHERE u.fcm_token IS NOT NULL 
+		  AND u.fcm_token != ''
+		  AND ap.is_active = true
+		  AND a.latitude IS NOT NULL 
+		  AND a.longitude IS NOT NULL
+		  AND (6371 * acos(
+				LEAST(1.0, GREATEST(-1.0,
+					cos(radians(?)) * cos(radians(a.latitude)) *
+					cos(radians(a.longitude) - radians(?)) +
+					sin(radians(?)) * sin(radians(a.latitude))
+				))
+		  )) <= ?`
+	err := r.db.Raw(haversineSQL, lat, lon, lat, radiusKm).Scan(&tokens).Error
+	return tokens, err
+}
+
+// FindUserFCMToken retrieves the active FCM token for a single user.
+func (r *Repository) FindUserFCMToken(userID string) (string, error) {
+	var token string
+	err := r.db.Model(&UserProfile{}).
+		Where("user_id = ? AND fcm_token IS NOT NULL AND fcm_token != ''", userID).
+		Pluck("fcm_token", &token).Error
+	return token, err
+}

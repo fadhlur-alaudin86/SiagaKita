@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notification_service.dart';
 
 /// SessionService menyimpan dan membaca sesi login secara lokal.
 /// Menggunakan FlutterSecureStorage (hardware-backed Keystore/Keychain)
@@ -80,6 +82,9 @@ class SessionService {
     if (name != null) {
       await prefs.setString(_keyName, name);
     }
+
+    // 3. Sinkronisasikan token FCM perangkat ke backend
+    unawaited(NotificationService.instance.syncTokenWithBackend());
   }
 
   /// Baca sesi tersimpan. Kembalikan null jika tidak ada.
@@ -105,6 +110,10 @@ class SessionService {
 
   /// Hapus sesi saat logout.
   static Future<void> clearSession() async {
+    // 1. Bersihkan token FCM di backend dan lokal sebelum kredensial dihapus
+    await NotificationService.instance.clearTokenOnLogout();
+
+    // 2. Bersihkan token sesi lokal
     await _secureStorage.delete(key: _keyToken);
     await _secureStorage.delete(key: _keyRefreshToken);
     final prefs = await SharedPreferences.getInstance();

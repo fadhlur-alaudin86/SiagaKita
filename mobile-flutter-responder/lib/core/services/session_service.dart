@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notification_service.dart';
 
 /// SessionService manages encrypted persistence of JWT tokens, user metadata,
 /// active mission states, and responder preferences.
@@ -40,6 +42,7 @@ class SessionService {
       if (badgeNumber != null)
         _storage.write(key: _keyBadgeNumber, value: badgeNumber),
     ]);
+    unawaited(NotificationService.instance.syncTokenWithBackend());
   }
 
   static Future<void> updateTokens({
@@ -106,6 +109,7 @@ class SessionService {
 
   static Future<void> clear() async {
     _cachedAccessToken = null;
+    await NotificationService.instance.clearTokenOnLogout();
     await Future.wait([_storage.deleteAll(), setActiveIncidentId(null)]);
   }
 }

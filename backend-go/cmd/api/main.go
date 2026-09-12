@@ -15,6 +15,7 @@ import (
 	adminDomain "siagakita-backend/internal/domain/admin"
 	agencyDomain "siagakita-backend/internal/domain/agency"
 	incidentDomain "siagakita-backend/internal/domain/incident"
+	notificationDomain "siagakita-backend/internal/domain/notification"
 	otpDomain "siagakita-backend/internal/domain/otp"
 	"siagakita-backend/internal/domain/telemetry"
 	userDomain "siagakita-backend/internal/domain/user"
@@ -89,6 +90,30 @@ func main() {
 	incidentRepo := incidentDomain.NewRepository(db, pgxPool)
 	incidentSvc := incidentDomain.NewService(incidentRepo, rdb)
 	incidentHandler := incidentDomain.NewHandler(incidentSvc, cfg, wsHub, rdb)
+
+	// Notification domain (FCM push notifications)
+	notificationSender, err := notificationDomain.NewSender(cfg.FirebaseCredentialsFile, cfg.FirebaseCredentialsJSON)
+	if err != nil {
+		utils.Warn().Err(err).Msg("[Main] Fallback to NoOpLoggerSender")
+		notificationSender = notificationDomain.NewNoOpLoggerSender()
+	}
+	notificationSvc := notificationDomain.NewService(notificationSender, userRepo, rdb)
+
+	// Wire push notification callbacks into incidentHandler
+	incidentHandler.OnPushEmergency = func(incidentID, incidentType, address, reporterID string, lat, lon float64) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := notificationSvc.BroadcastEmergencySOS(ctx, incidentID, incidentType, address, reporterID, lat, lon); err != nil {
+			utils.Error().Err(err).Str("incident_id", incidentID).Msg("[Main] Failed to broadcast emergency push notification")
+		}
+	}
+	incidentHandler.OnPushMissionAssignment = func(personnelUserID, incidentID, incidentType, address string, lat, lon float64) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := notificationSvc.SendDirectMissionAssignment(ctx, personnelUserID, incidentID, incidentType, address, lat, lon); err != nil {
+			utils.Error().Err(err).Str("incident_id", incidentID).Str("personnel_id", personnelUserID).Msg("[Main] Failed to send mission assignment push")
+		}
+	}
 
 	// Admin domain
 	adminSvc := adminDomain.NewService(db)
@@ -197,6 +222,11 @@ func main() {
 	// OTP WhatsApp (phone verification)
 	auth.Post("/request-otp", otpHandler.RequestOTP)
 	auth.Post("/verify-otp", otpHandler.VerifyOTP)
+
+	// FCM device token registration (all authenticated mobile roles: civilian, volunteer, agency_personnel)
+	v1.Put("/users/profile/fcm-token", authMw, userHandler.UpdateFCMToken)
+	v1.Delete("/users/profile/fcm-token", authMw, userHandler.ClearFCMToken)
+	v1.Post("/notifications/register-token", authMw, userHandler.UpdateFCMToken)
 
 	// ── Users (protected - civilian/volunteer only) ────────────────────────────
 	users := v1.Group("/users", authMw, sessionMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db, rdb))
