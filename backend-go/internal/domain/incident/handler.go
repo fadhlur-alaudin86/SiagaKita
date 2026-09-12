@@ -2,6 +2,7 @@ package incident
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -84,7 +85,7 @@ func (h *Handler) UpdateType(c *fiber.Ctx) error {
 
 	if err := h.svc.UpdateType(incidentID, reporterID, req.IncidentType); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == errUnauthorized {
+		if errors.Is(err, ErrUnauthorized) {
 			status = fiber.StatusForbidden
 		}
 		return utils.ErrorResponse(c, status, err.Error())
@@ -103,7 +104,7 @@ func (h *Handler) Broadcast(c *fiber.Ctx) error {
 
 	if err := h.svc.PromoteToBroadcasting(incidentID, reporterID); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == errUnauthorized {
+		if errors.Is(err, ErrUnauthorized) {
 			status = fiber.StatusForbidden
 		}
 		return utils.ErrorResponse(c, status, err.Error())
@@ -122,9 +123,9 @@ func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 
 	if err := h.svc.CancelSOS(incidentID, reporterID); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == errUnauthorized {
+		if errors.Is(err, ErrUnauthorized) {
 			status = fiber.StatusForbidden
-		} else if len(err.Error()) >= 8 && err.Error()[:8] == "conflict" {
+		} else if errors.Is(err, ErrIncidentConflict) {
 			status = fiber.StatusConflict
 		}
 		return utils.ErrorResponse(c, status, err.Error())
@@ -198,7 +199,7 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 
 	if err := h.svc.UploadEvidence(incidentID, reporterID, photoPaths, audioPath); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == errUnauthorized {
+		if errors.Is(err, ErrUnauthorized) {
 			status = fiber.StatusForbidden
 		}
 		return utils.ErrorResponse(c, status, err.Error())
@@ -420,11 +421,11 @@ func (h *Handler) CancelReport(c *fiber.Ctx) error {
 
 	if err := h.svc.CancelReport(reportID, reporterID); err != nil {
 		status := fiber.StatusInternalServerError
-		if err.Error() == errUnauthorized {
+		if errors.Is(err, ErrUnauthorized) {
 			status = fiber.StatusForbidden
-		} else if err.Error() == "laporan tidak ditemukan" {
+		} else if errors.Is(err, ErrReportNotFound) {
 			status = fiber.StatusNotFound
-		} else if err.Error() == "hanya laporan dengan status 'sent' atau 'pending' yang dapat dibatalkan" {
+		} else if errors.Is(err, ErrReportCannotBeCanceled) {
 			status = fiber.StatusConflict
 		}
 		return utils.ErrorResponse(c, status, err.Error())
@@ -481,7 +482,7 @@ func (h *Handler) GetAgencyHistory(c *fiber.Ctx) error {
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 func isBanError(err error) bool {
-	return err != nil && len(err.Error()) >= 10 && err.Error()[:10] == "sos_banned"
+	return errors.Is(err, ErrSOSBanned)
 }
 
 // broadcastSOSViaREST dipanggil dari REST handler setelah PromoteToBroadcasting.

@@ -51,6 +51,5 @@ const (
 )
 
 const (
-	errUnauthorized = "unauthorized"
-	extJPG          = ".jpg"
+	extJPG = ".jpg"
 )

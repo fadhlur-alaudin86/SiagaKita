@@ -1,6 +1,8 @@
 package otp
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -60,7 +62,7 @@ func (h *Handler) RequestOTP(c *fiber.Ctx) error {
 
 	if err := h.svc.RequestOTP(c.Context(), req.PhoneNumber); err != nil {
 		// Bedakan rate-limit (429) vs error server (500)
-		if err.Error() == "Tunggu 1 menit sebelum meminta kode baru" {
+		if errors.Is(err, ErrCooldown) {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
 				fieldSuccess: false,
 				fieldMessage: err.Error(),

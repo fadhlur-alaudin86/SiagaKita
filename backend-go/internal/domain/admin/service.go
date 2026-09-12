@@ -137,7 +137,7 @@ func (s *Service) UpdateRank(id int, req *RankRequest) (*MRank, error) {
 	}
 	existing, err := s.repo.FindRankByID(id)
 	if err != nil {
-		return nil, errorMsg("rank tidak ditemukan")
+		return nil, ErrRankNotFound
 	}
 	if existing.MinExp == 0 && req.MinExp != 0 {
 		return nil, errorMsg("min_exp untuk rank dasar harus tetap 0")
@@ -159,7 +159,7 @@ func (s *Service) UpdateRank(id int, req *RankRequest) (*MRank, error) {
 func (s *Service) DeleteRank(id int) error {
 	rank, err := s.repo.FindRankByID(id)
 	if err != nil {
-		return errorMsg("rank tidak ditemukan")
+		return ErrRankNotFound
 	}
 	if rank.MinExp == 0 {
 		return errorMsg("rank dasar (min_exp = 0) tidak dapat dihapus")

@@ -89,7 +89,7 @@ func (r *Repository) MarkCancelled(id string) error {
 			return db.Error
 		}
 		if db.RowsAffected == 0 {
-			return errors.New("conflict: incident cannot be canceled at its current status")
+			return ErrIncidentConflict
 		}
 
 		// 2. canceled all active incident responses (termasuk on_scene)
@@ -311,10 +311,10 @@ func (r *Repository) FindReportsByUser(userID string) ([]IncidentReportResponse,
 func (r *Repository) CancelReport(reportID, reporterID string) error {
 	var rep IncidentReport
 	if err := r.db.Where("id = ? AND reporter_id = ?", reportID, reporterID).First(&rep).Error; err != nil {
-		return errors.New("laporan tidak ditemukan")
+		return ErrReportNotFound
 	}
 	if rep.Status != "sent" && rep.Status != "pending" {
-		return errors.New("hanya laporan dengan status 'sent' atau 'pending' yang dapat dibatalkan")
+		return ErrReportCannotBeCanceled
 	}
 	return r.db.Model(&IncidentReport{}).Where("id = ?", reportID).
 		Updates(map[string]interface{}{FieldStatus: StatusCanceled, FieldUpdatedAt: time.Now(), FieldCompletedAt: time.Now()}).Error

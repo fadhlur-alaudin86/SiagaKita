@@ -55,6 +55,9 @@ var idToEn = map[string]string{
 	"Verifikasi NIK berhasil diajukan":                 "NIK verification successfully submitted",
 	"Profil berhasil diperbarui":                       "Profile successfully updated",
 	"User tidak ditemukan":                             "User not found",
+	"Tunggu 1 menit sebelum meminta kode baru":         "Please wait 1 minute before requesting a new code",
+	"NIK ini sudah terdaftar pada akun lain. Pastikan NIK yang Anda masukkan benar": "This NIK is already registered on another account. Ensure the NIK you entered is correct",
+	"Token refresh telah kedaluwarsa atau digunakan kembali":                        "Refresh token has expired or was reused",
 
 	// ── Incidents & SOS ─────────────────────────────────────────────────────────
 	"Koordinat GPS wajib diisi":                          "GPS coordinates are required",
@@ -76,6 +79,9 @@ var idToEn = map[string]string{
 	"lokasi harus diisi (latitude dan longitude tidak boleh 0)":                      "Location is required (latitude and longitude cannot be 0)",
 	"Insiden tidak ditemukan":                                                        "Incident not found",
 	"Laporan tidak ditemukan":                                                        "Report not found",
+	"laporan tidak ditemukan":                                                        "Report not found",
+	"hanya laporan dengan status 'sent' atau 'pending' yang dapat dibatalkan":        "Only reports with 'sent' or 'pending' status can be canceled",
+	"conflict: incident cannot be canceled at its current status":                    "Conflict: incident cannot be canceled at its current status",
 	"Relawan tidak ditemukan":                                                        "Volunteer not found",
 	"Misi berhasil diterima. Segera menuju lokasi.":                                  "Mission accepted successfully. Proceed to the location immediately.",
 	"Misi telah selesai. Bukti telah diverifikasi.":                                  "Mission completed. Evidence has been verified.",
@@ -96,6 +102,7 @@ var idToEn = map[string]string{
 	// ── Admin & Agency ──────────────────────────────────────────────────────────
 	"Admin tidak ditemukan":      "Admin not found",
 	"Instansi tidak ditemukan":   "Agency not found",
+	"rank tidak ditemukan":       "Rank not found",
 	"Gagal memuat data":          "Failed to load data",
 	"Data berhasil disimpan":     "Data saved successfully",
 	"Data berhasil diperbarui":   "Data updated successfully",

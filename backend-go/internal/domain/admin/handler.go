@@ -291,7 +291,7 @@ func (h *Handler) UpdateRank(c *fiber.Ctx) error {
 	}
 	rank, err := h.svc.UpdateRank(id, &req)
 	if err != nil {
-		if err.Error() == "rank tidak ditemukan" {
+		if errors.Is(err, ErrRankNotFound) {
 			return utils.ErrorResponse(c, fiber.StatusNotFound, err.Error())
 		}
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
@@ -306,7 +306,7 @@ func (h *Handler) DeleteRank(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "ID rank tidak valid")
 	}
 	if err := h.svc.DeleteRank(id); err != nil {
-		if err.Error() == "rank tidak ditemukan" {
+		if errors.Is(err, ErrRankNotFound) {
 			return utils.ErrorResponse(c, fiber.StatusNotFound, err.Error())
 		}
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())

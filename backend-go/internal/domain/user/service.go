@@ -471,7 +471,7 @@ func (s *Service) verifyRefreshTokenReplay(ctx context.Context, userID, role, ol
 			// Replay attack terdeteksi di luar grace period! Revoke seluruh sesi aktif
 			_ = s.rdb.Del(ctx, "session:"+userID)
 			_ = s.rdb.Del(ctx, "refresh_token:"+userID)
-			return errors.New("ERR_TOKEN_REUSED: Token refresh telah kedaluwarsa atau digunakan kembali")
+			return ErrTokenReused
 		}
 		return nil
 	}
@@ -480,7 +480,7 @@ func (s *Service) verifyRefreshTokenReplay(ctx context.Context, userID, role, ol
 	jtiKey := "refresh_jti:" + oldJTI
 	val, err := s.rdb.Get(ctx, jtiKey).Result()
 	if err != nil || val != "valid" {
-		return errors.New("ERR_TOKEN_REUSED: Token refresh telah kedaluwarsa atau digunakan kembali")
+		return ErrTokenReused
 	}
 	_ = s.rdb.Del(ctx, jtiKey)
 	return nil
@@ -666,7 +666,7 @@ func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName, placeOfBirth, d
 
 	err = s.repo.SubmitKYC(userID, nik, fullName, placeOfBirth, dateOfBirth, ktpPublicURL, selfiePublicURL)
 	if err != nil {
-		if err.Error() == "NIK_ALREADY_USED" {
+		if errors.Is(err, ErrNIKAlreadyUsed) {
 			return errors.New("NIK ini sudah terdaftar pada akun lain. Pastikan NIK yang Anda masukkan benar")
 		}
 		return err

@@ -75,7 +75,7 @@ func (s *service) RequestOTP(ctx context.Context, phone string) error {
 	if exists, err := s.rdb.Exists(ctx, phoneCooldownKey(phone)).Result(); err != nil {
 		return fmt.Errorf("otp: cek cooldown phone gagal: %w", err)
 	} else if exists > 0 {
-		return errors.New("Tunggu 1 menit sebelum meminta kode baru") //nolint:staticcheck
+		return ErrCooldown
 	}
 
 	code := generateCode()
@@ -110,7 +110,7 @@ func (s *service) RequestEmailOTP(ctx context.Context, email, purpose string) er
 	if exists, err := s.rdb.Exists(ctx, emailCooldownKey(email)).Result(); err != nil {
 		return fmt.Errorf("otp: cek cooldown email gagal: %w", err)
 	} else if exists > 0 {
-		return errors.New("Tunggu 1 menit sebelum meminta kode baru") //nolint:staticcheck
+		return ErrCooldown
 	}
 
 	code := generateCode()
@@ -147,7 +147,7 @@ func (s *service) verifyFromRedis(ctx context.Context, key, code, label string) 
 		return fmt.Errorf("otp: ambil OTP gagal: %w", err)
 	}
 	if stored != code {
-		return errors.New("Kode OTP salah") //nolint:staticcheck
+		return ErrInvalidOTP
 	}
 	_ = s.rdb.Del(ctx, key) // anti-replay
 	return nil
