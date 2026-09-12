@@ -72,27 +72,27 @@ sequenceDiagram
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Backend Go Tasks
-- [ ] Implement `DispatchBroadcast(c *fiber.Ctx)` in `backend-go/internal/domain/incident/handler.go`.
-- [ ] Implement `DispatchBroadcast` domain service logic in `backend-go/internal/domain/incident/service.go`:
+- [x] Implement `DispatchBroadcast(c *fiber.Ctx)` in `backend-go/internal/domain/incident/handler.go`.
+- [x] Implement `DispatchBroadcast` domain service logic in `backend-go/internal/domain/incident/service.go`:
   - Validate incident status is active.
   - Send `INCIDENT_ASSIGNMENT_OFFER` via WebSocket hub to selected candidate IDs.
-- [ ] Ensure `AcceptIncident` in `incident/service.go` performs atomic claiming and sends `INCIDENT_ASSIGNMENT_CLAIMED` to dismissed candidates.
-- [ ] Register route `incidents.Post("/:id/dispatch-broadcast", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.DispatchBroadcast)` in `backend-go/cmd/api/main.go`.
-- [ ] Author unit tests in `backend-go/internal/domain/incident/handler_test.go`.
+- [x] Ensure `AcceptIncident` in `incident/service.go` performs atomic claiming and sends `INCIDENT_ASSIGNMENT_CLAIMED` to dismissed candidates.
+- [x] Register route `incidents.Post("/:id/dispatch-broadcast", middleware.ConsoleOnly(), idempotencyMw, incidentHandler.DispatchBroadcast)` in `backend-go/cmd/api/main.go`.
+- [x] Author unit tests in `backend-go/internal/domain/incident/handler_test.go`.
 
 ### 3.2 Desktop Console Tasks
-- [ ] Add `dispatchRelawan` to `InstansiMenu` enum and sidebar in `instansi_shell.dart`.
-- [ ] Create `windows_console_flutter/lib/features/instansi/presentation/pages/dispatch_relawan_page.dart`.
-- [ ] Wire `WsService` listener for `WsEvent.volunteerLocationUpdate`.
-- [ ] Implement proximity calculation using Haversine distance from selected SOS coordinates to all online volunteers.
-- [ ] Implement "Broadcast ke 3 Terdekat" action button and trigger dispatch API.
-- [ ] Integrate real-time mission status tracking badge in detail pane.
-- [ ] Ensure full bilingual localization in `app_localization.dart`.
+- [x] Add `dispatchRelawan` to `InstansiMenu` enum and sidebar in `instansi_shell.dart`.
+- [x] Create `windows_console_flutter/lib/features/instansi/presentation/pages/dispatch_relawan_page.dart`.
+- [x] Wire `WsService` listener for `WsEvent.volunteerLocationUpdate`.
+- [x] Implement proximity calculation using Haversine distance from selected SOS coordinates to all online volunteers.
+- [x] Implement "Broadcast ke 3 Terdekat" action button and trigger dispatch API.
+- [x] Integrate real-time mission status tracking badge in detail pane.
+- [x] Ensure full bilingual localization in `app_localization.dart`.
 
 ### 3.3 Mobile Volunteer Client Tasks
-- [ ] Listen for `INCIDENT_ASSIGNMENT_OFFER` and `INCIDENT_ASSIGNMENT_CLAIMED` in `mobile-flutter/lib/core/services/mobile_ws_service.dart`.
-- [ ] Display immediate mission offer dialog with countdown and audio alert.
-- [ ] Connect "Terima" button to `IncidentService.acceptSOS`.
+- [x] Listen for `INCIDENT_ASSIGNMENT_OFFER` and `INCIDENT_ASSIGNMENT_CLAIMED` in `mobile-flutter/lib/core/services/mobile_ws_service.dart`.
+- [x] Display immediate mission offer dialog with countdown and audio alert.
+- [x] Connect "Terima" button to `IncidentService.acceptSOS`.
 
 ---
 

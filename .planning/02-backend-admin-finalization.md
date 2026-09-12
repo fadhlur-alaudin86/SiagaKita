@@ -50,21 +50,21 @@
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Gamification Ranks Tasks ([#12](https://github.com/fadhlur-alaudin86/SiagaKita/issues/12))
-- [ ] Implement XP boundary validation and uniqueness in `backend-go/internal/domain/admin/service.go`.
-- [ ] Implement base rank deletion protection (`min_exp == 0`).
-- [ ] Implement atomic volunteer auto-downgrade transaction in `backend-go/internal/domain/admin/repository.go` when a rank is deleted.
-- [ ] Add unit tests in `backend-go/internal/domain/admin/handler_test.go` asserting:
+- [x] Implement XP boundary validation and uniqueness in `backend-go/internal/domain/admin/service.go`.
+- [x] Implement base rank deletion protection (`min_exp == 0`).
+- [x] Implement atomic volunteer auto-downgrade transaction in `backend-go/internal/domain/admin/repository.go` when a rank is deleted.
+- [x] Add unit tests in `backend-go/internal/domain/admin/handler_test.go` asserting:
   - Successful creation of valid rank.
   - Rejection of duplicate `min_exp`.
   - Rejection of base rank deletion.
   - Auto-downgrade of volunteers when their rank is deleted.
 
 ### 3.2 Analytics Optimization Tasks ([#13](https://github.com/fadhlur-alaudin86/SiagaKita/issues/13))
-- [ ] Normalize `period` query parameter parsing in `backend-go/internal/domain/admin/handler.go` (`week`, `month`, `year`).
-- [ ] Create migration `020_add_analytics_indexes.up.sql` and `020_add_analytics_indexes.down.sql`.
-- [ ] Update `docs/DATABASE_SCHEMA.md` to document the new index definitions.
-- [ ] Benchmark query execution times using `EXPLAIN ANALYZE` to verify <100ms execution on simulated incident volume.
-- [ ] Add unit and integration tests verifying stats response contracts for all 3 time horizons.
+- [x] Normalize `period` query parameter parsing in `backend-go/internal/domain/admin/handler.go` (`week`, `month`, `year`).
+- [x] Create migration `020_add_analytics_indexes.up.sql` and `020_add_analytics_indexes.down.sql`.
+- [x] Update `docs/DATABASE_SCHEMA.md` to document the new index definitions.
+- [x] Benchmark query execution times using `EXPLAIN ANALYZE` to verify <100ms execution on simulated incident volume.
+- [x] Add unit and integration tests verifying stats response contracts for all 3 time horizons.
 
 ---
 

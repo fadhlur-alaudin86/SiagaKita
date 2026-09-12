@@ -214,6 +214,27 @@ def run_code_tests_and_analysis(repo_root):
     return all_passed
 
 
+def check_backlog_planning_sync(repo_root):
+    """Executes backlog and planning synchronization check."""
+    print("\n--- 5. Backlog & Planning Documentation Parity Audit ---")
+    script_path = os.path.join(repo_root, "scripts", "sync_backlog_status.py")
+    if not os.path.exists(script_path):
+        print(f"[FAIL] sync_backlog_status.py not found at: {script_path}")
+        return False
+
+    res = subprocess.run([sys.executable, script_path, "--check"], capture_output=True, text=True)
+    sys.stdout.write(res.stdout)
+    if res.stderr:
+        sys.stderr.write(res.stderr)
+
+    if res.returncode != 0:
+        print("[FAIL] Backlog and planning documentation drift detected.")
+        return False
+
+    print("[PASS] All planning catalogs, task checklists, and feature logs are in sync with GitHub.")
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Automated Pre-Flight Quality Gatekeeper for SiagaKita.")
     parser.add_argument("--fast", action="store_true", help="Skip running unit tests and analyzer (audits contracts and migrations only)")
@@ -245,6 +266,9 @@ def main():
         results.append(("Regression Tests", True))
     else:
         results.append(("Regression Tests", run_code_tests_and_analysis(repo_root)))
+
+    # 5. Backlog & Planning Sync
+    results.append(("Backlog & Planning Sync", check_backlog_planning_sync(repo_root)))
 
     print("\n=======================================================")
     print("                   Summary Scorecard                   ")

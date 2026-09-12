@@ -3,7 +3,7 @@
 ## 1. Overview & Problem Statement
 - **Target Issues**: Sub-Issues [#26](https://github.com/fadhlur-alaudin86/SiagaKita/issues/26) & [#27](https://github.com/fadhlur-alaudin86/SiagaKita/issues/27) (completing Parent Issue [#5](https://github.com/fadhlur-alaudin86/SiagaKita/issues/5))
 - **Priority**: P1 (High)
-- **Status**: Merged | Implemented & Verified in PR #100
+- **Status**: Merged | Verified and closed
 - **Problem**:
   1. In `windows_console_flutter`, emergency dispatch tables, radar maps, and header status widgets consume state using generic `Consumer<WsService>` or broad `Provider.of` listeners. When high-frequency volunteer GPS updates stream in over WebSocket (multiple updates per second), entire views undergo redundant rebuilds, degrading rendering performance below 60 FPS on dispatch consoles.
   2. In `mobile-flutter`, offline SOS queueing and cached incident feeds rely on `SharedPreferences` with stringified JSON blobs. Serializing and deserializing arrays of incidents across disk creates UI thread pauses and lacks indexed queries during low-connectivity disaster scenarios.
@@ -37,16 +37,16 @@
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Desktop Selector Tasks ([#26](https://github.com/fadhlur-alaudin86/SiagaKita/issues/26))
-- [ ] Audit all `Consumer` and `Provider.of` call sites in `windows_console_flutter`.
-- [ ] Refactor incident table rows to subscribe only to individual incident status changes.
-- [ ] Refactor map markers to update coordinates without triggering whole-canvas re-renders.
-- [ ] Wrap stationary views in `RepaintBoundary` and verify widget rebuild counts in Flutter DevTools.
+- [x] Audit all `Consumer` and `Provider.of` call sites in `windows_console_flutter`.
+- [x] Refactor incident table rows to subscribe only to individual incident status changes.
+- [x] Refactor map markers to update coordinates without triggering whole-canvas re-renders.
+- [x] Wrap stationary views in `RepaintBoundary` and verify widget rebuild counts in Flutter DevTools.
 
 ### 3.2 Mobile Local Cache Tasks ([#27](https://github.com/fadhlur-alaudin86/SiagaKita/issues/27))
-- [ ] Add `hive_flutter` to `mobile-flutter/pubspec.yaml` and initialize boxes in `main.dart`.
-- [ ] Create `OfflineStorageService` with typed adapters for `IncidentModel` and `TelemetryBreadcrumb`.
-- [ ] Migrate `OfflineService` from `SharedPreferences` to the new Hive storage layer.
-- [ ] Implement automatic sync daemon that flushes queued offline requests when internet resumes.
+- [x] Add `hive_flutter` to `mobile-flutter/pubspec.yaml` and initialize boxes in `main.dart`.
+- [x] Create `OfflineStorageService` with typed adapters for `IncidentModel` and `TelemetryBreadcrumb`.
+- [x] Migrate `OfflineService` from `SharedPreferences` to the new Hive storage layer.
+- [x] Implement automatic sync daemon that flushes queued offline requests when internet resumes.
 
 ---
 

@@ -16,7 +16,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 
 | Step | Action | Artifacts |
 |------|--------|-----------|
-| -3 | **Backlog Overview** — Fetch issues via `gh` + read `DATABASE_SCHEMA.md` + read `stacks.md`. Print compact summary. User picks target. | Inline summary |
+| -3 | **Backlog Overview** — Run `python3 scripts/sync_backlog_status.py --check` (or `--fix`) to audit documentation parity + fetch issues via `gh` + read `DATABASE_SCHEMA.md` + read `stacks.md`. Print compact summary. User picks target. | Inline summary + parity audit |
 | -2 | **Discovery** — Explore codebase, inspect target domain, ask **5 clarifying questions**. Formulate plan and get user confirmation. | Discovery notes, 5 Q&A, Plan (in memory) |
 | -1 | **Resolve Backlog** — Match/create GitHub Issue. Check parent plan in `.planning/`. Create `docs/backlog/features/F-XXX-name.md` using full template linking to parent plan. | Feature log file |
 | 0 | **Branch & Assign** — Create `feature/F-XXX-name` from `dev`. Update issue label to `status: in-progress`, assign to active account (`--add-assignee "@me"`), and add comment to issue. | Git branch |
@@ -27,18 +27,19 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
 | 6 | **Tests & Hybrid TDD** — Write Go unit tests (`_test.go`) with RED-GREEN cycle for critical logic + Flutter tests. Document test outcomes in feature log. | Test files + test docs |
 | 7 | **Review Gate & Retrospective** — Run Pre-PR verification (Security, Database, Silent-Failure, and Dead-Code audits). Execute Step 7.5 Workflow Retrospective (apply minor skill updates or draft major proposals). Ensure CI passes. Sync issue checklist. Open PR targeting `dev`. | Pre-PR audit report + workflow updates + Pull Request |
-| 8 | **Close Log & Evolution** — Update feature log (all steps completed). Record applied workflow evolutions. Link PR. Move issue to Done. | Updated feature log |
+| 8 | **Close Log & Evolution** — Update feature log (all steps completed). Run `python3 scripts/sync_backlog_status.py --fix` to verify plan and backlog parity. Record applied workflow evolutions. Link PR. Move issue to Done. | Updated feature log |
 
 ## Agent Rules
 
 ### General
-0. **Backlog Overview First** — Run Step -3 before Step -2 on first skill activation per session.
+0. **Backlog Overview First** — Run Step -3 before Step -2 on first skill activation per session. Audit documentation sync with `python3 scripts/sync_backlog_status.py --check`.
 1. **Check Backlog First** — Run `gh issue list` before starting work to avoid duplicates.
 2. **Create Feature Log at Step -1** — Write full log template to `docs/backlog/features/F-XXX-name.md` and link to parent plan in `.planning/` if part of an epic.
 3. **Update Log per Step** — Mark progress completed with timestamp and decision rationale.
 4. **Confirm Before Writing** — Ask user approval before modifying backend, DB, or Flutter files.
 5. **Decision Logging** — Document every non-trivial design choice in the Decisions Log.
 6. **Resume Protocol** — If interrupted or handing off, read feature log first → resume at first pending step.
+6a. **Parent Tracker Automation** — When all sub-issues of a parent tracking issue/epic are merged, automation marks parent checklists `[x]` and transitions the label to `status: ready`. Final issue closure is left to human/tech lead verification.
 
 ### Backend (Go Fiber)
 7. **Read Schema First** — Read `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md` before writing migrations.
