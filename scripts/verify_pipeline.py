@@ -15,6 +15,7 @@ Usage:
 import os
 import re
 import sys
+import shutil
 import argparse
 import subprocess
 
@@ -215,11 +216,11 @@ def check_code_formatting(repo_root, fix=False):
 
 
 def check_code_linters(repo_root):
-    """Runs golangci-lint, go vet, and flutter analyze across all workspaces."""
-    print("\n--- 5. Static Analysis & Linters (golangci-lint & flutter analyze) ---")
+    """Runs golangci-lint, go vet, govulncheck, and flutter analyze across all workspaces."""
+    print("\n--- 5. Static Analysis, Linters & Security (golangci-lint, govulncheck & flutter analyze) ---")
     all_passed = True
 
-    # 5.1 Go Vet & golangci-lint
+    # 5.1 Go Vet, golangci-lint & govulncheck
     backend_dir = os.path.join(repo_root, "backend-go")
     if os.path.exists(backend_dir) and os.path.exists(os.path.join(backend_dir, "go.mod")):
         print("[INFO] Running go vet in backend-go...")
@@ -237,6 +238,25 @@ def check_code_linters(repo_root):
             all_passed = False
         else:
             print("[PASS] golangci-lint passed cleanly with 0 issues.")
+
+        print("[INFO] Running govulncheck in backend-go...")
+        govulncheck_cmd = None
+        if shutil.which("govulncheck"):
+            govulncheck_cmd = ["govulncheck", "./..."]
+        elif os.path.exists(os.path.expanduser("~/go/bin/govulncheck")):
+            govulncheck_cmd = [os.path.expanduser("~/go/bin/govulncheck"), "./..."]
+        elif shutil.which("go"):
+            govulncheck_cmd = ["go", "run", "golang.org/x/vuln/cmd/govulncheck@latest", "./..."]
+
+        if govulncheck_cmd:
+            res_vuln = subprocess.run(govulncheck_cmd, cwd=backend_dir)
+            if res_vuln.returncode != 0:
+                print("[FAIL] govulncheck reported vulnerability issues.")
+                all_passed = False
+            else:
+                print("[PASS] govulncheck passed cleanly with 0 vulnerabilities.")
+        else:
+            print("[WARN] Neither govulncheck nor go was found to execute vulnerability checks.")
 
     # 5.2 Flutter Static Analysis
     flutter_apps = [
@@ -335,10 +355,10 @@ def main():
     # 4. Code Formatting (gofmt & dart format)
     results.append(("Code Formatting", check_code_formatting(repo_root, fix=args.format)))
 
-    # 5. Static Analysis & Linters (golangci-lint & flutter analyze)
+    # 5. Static Analysis, Linters & Security (golangci-lint, govulncheck & flutter analyze)
     if args.fast:
-        print("\n--- 5. Static Analysis & Linters ---")
-        print("[SKIP] Linter and static analysis skipped due to --fast flag.")
+        print("\n--- 5. Static Analysis, Linters & Security ---")
+        print("[SKIP] Linter, security, and static analysis skipped due to --fast flag.")
         results.append(("Static Analysis & Linters", True))
     else:
         results.append(("Static Analysis & Linters", check_code_linters(repo_root)))
