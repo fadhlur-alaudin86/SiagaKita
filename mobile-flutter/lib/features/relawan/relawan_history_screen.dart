@@ -7,7 +7,6 @@ import '../../core/localization/app_localization.dart';
 import '../../core/services/incident_service.dart';
 import 'widgets/relawan_card_widgets.dart';
 
-
 class RelawanHistoryScreen extends StatefulWidget {
   final String accessToken;
 

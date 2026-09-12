@@ -8,7 +8,6 @@ import 'package:siagakita/core/localization/app_localization.dart';
 import 'package:siagakita/core/models/badge_model.dart';
 import 'package:siagakita/core/models/mission_history_model.dart';
 
-
 void main() {
   group('Badge Models Test', () {
     test('BadgeTierItem deserialization and serialization', () {
@@ -85,7 +84,6 @@ void main() {
     });
   });
 
-
   group('MissionHistoryItem Test', () {
     test('Deserializes mission history with duration and proof photo', () {
       final json = {
@@ -142,7 +140,6 @@ void main() {
     });
   });
 
-
   group('Localization Translation Parity for Badges', () {
     test('Badge dictionary translations in English', () {
       AppLocalization.currentLocale = AppLocalization.localeEn;
@@ -153,7 +150,10 @@ void main() {
       expect(AppLocalization.translate('Respon Kilat'), 'Rapid Response');
       expect(AppLocalization.translate('Medis Siaga'), 'Guardian Healer');
       expect(AppLocalization.translate('Tutup'), 'Close');
-      expect(AppLocalization.translate('Riwayat Misi Relawan'), 'Volunteer Mission History');
+      expect(
+        AppLocalization.translate('Riwayat Misi Relawan'),
+        'Volunteer Mission History',
+      );
       expect(AppLocalization.translate('Lencana Relawan'), 'Volunteer Badges');
       expect(AppLocalization.translate('Terbuka'), 'Unlocked');
       expect(AppLocalization.translate('Terkunci'), 'Locked');

@@ -531,7 +531,8 @@ class _BadgesTabState extends State<_BadgesTab> {
         _badges = data;
         _loading = false;
         final grouped = _groupedBadges;
-        if (_selectedCategoryCode == null || !grouped.containsKey(_selectedCategoryCode)) {
+        if (_selectedCategoryCode == null ||
+            !grouped.containsKey(_selectedCategoryCode)) {
           if (grouped.isNotEmpty) {
             _selectedCategoryCode = grouped.keys.first;
           } else {
@@ -638,7 +639,10 @@ class _BadgesTabState extends State<_BadgesTab> {
                                 color: Colors.white10,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.image, color: Colors.green),
+                              child: const Icon(
+                                Icons.image,
+                                color: Colors.green,
+                              ),
                             )
                           else if (currentIconUrl.isNotEmpty)
                             Container(
@@ -738,7 +742,9 @@ class _BadgesTabState extends State<_BadgesTab> {
 
     final parsedLevel = int.tryParse(levelCtrl.text.trim()) ?? 1;
     final parsedThreshold = int.tryParse(thresholdCtrl.text.trim()) ?? 1;
-    final categoryCode = codeCtrl.text.trim().isEmpty ? 'general' : codeCtrl.text.trim();
+    final categoryCode = codeCtrl.text.trim().isEmpty
+        ? 'general'
+        : codeCtrl.text.trim();
 
     bool ok;
     if (existing == null) {
@@ -795,7 +801,10 @@ class _BadgesTabState extends State<_BadgesTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal'.tr(context), style: const TextStyle(color: Colors.white54)),
+            child: Text(
+              'Batal'.tr(context),
+              style: const TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -820,8 +829,12 @@ class _BadgesTabState extends State<_BadgesTab> {
   @override
   Widget build(BuildContext context) {
     final grouped = _groupedBadges;
-    final activeCode = _selectedCategoryCode ?? (grouped.keys.isNotEmpty ? grouped.keys.first : null);
-    final selectedTiers = activeCode != null ? (grouped[activeCode] ?? []) : <BadgeModel>[];
+    final activeCode =
+        _selectedCategoryCode ??
+        (grouped.keys.isNotEmpty ? grouped.keys.first : null);
+    final selectedTiers = activeCode != null
+        ? (grouped[activeCode] ?? [])
+        : <BadgeModel>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -830,7 +843,8 @@ class _BadgesTabState extends State<_BadgesTab> {
           children: [
             Expanded(
               child: Text(
-                'Sistem badge multi-level otomatis dan manual untuk apresiasi relawan.'.tr(context),
+                'Sistem badge multi-level otomatis dan manual untuk apresiasi relawan.'
+                    .tr(context),
                 style: const TextStyle(color: Colors.white54, fontSize: 13),
               ),
             ),
@@ -853,354 +867,440 @@ class _BadgesTabState extends State<_BadgesTab> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _badges.isEmpty
-                  ? Center(
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.military_tech_outlined,
+                        size: 64,
+                        color: Colors.white38,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Belum ada data badge. Silakan tambah badge baru.'.tr(
+                          context,
+                        ),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // MASTER: Category List
+                    Container(
+                      width: 320,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A2035),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white10),
+                      ),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.military_tech_outlined,
-                            size: 64,
-                            color: Colors.white38,
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              'Kategori Badge'.tr(context),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Belum ada data badge. Silakan tambah badge baru.'.tr(context),
-                            style: const TextStyle(color: Colors.white54, fontSize: 14),
+                          const Divider(height: 1, color: Colors.white10),
+                          Expanded(
+                            child: ListView.separated(
+                              padding: const EdgeInsets.all(8),
+                              itemCount: grouped.keys.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 4),
+                              itemBuilder: (ctx, i) {
+                                final code = grouped.keys.elementAt(i);
+                                final tiers = grouped[code] ?? [];
+                                final isSelected = code == activeCode;
+                                final tierCount = tiers.length;
+                                final maxLevel = tiers.isNotEmpty
+                                    ? tiers.last.level
+                                    : 1;
+
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedCategoryCode = code;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(
+                                              0xFFFF7418,
+                                            ).withValues(alpha: 0.12)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFFFF7418)
+                                            : Colors.transparent,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? const Color(
+                                                    0xFFFF7418,
+                                                  ).withValues(alpha: 0.2)
+                                                : Colors.white10,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.military_tech,
+                                            color: isSelected
+                                                ? const Color(0xFFFF7418)
+                                                : Colors.white70,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                code,
+                                                style: TextStyle(
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : Colors.white70,
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                  fontSize: 14,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '$tierCount ${'Tier Level'.tr(context)} (Maks Lv $maxLevel)',
+                                                style: const TextStyle(
+                                                  color: Colors.white38,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (isSelected)
+                                          const Icon(
+                                            Icons.chevron_right,
+                                            color: Color(0xFFFF7418),
+                                            size: 20,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ],
                       ),
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // MASTER: Category List
-                        Container(
-                          width: 320,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A2035),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text(
-                                  'Kategori Badge'.tr(context),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              const Divider(height: 1, color: Colors.white10),
-                              Expanded(
-                                child: ListView.separated(
-                                  padding: const EdgeInsets.all(8),
-                                  itemCount: grouped.keys.length,
-                                  separatorBuilder: (_, _) => const SizedBox(height: 4),
-                                  itemBuilder: (ctx, i) {
-                                    final code = grouped.keys.elementAt(i);
-                                    final tiers = grouped[code] ?? [];
-                                    final isSelected = code == activeCode;
-                                    final tierCount = tiers.length;
-                                    final maxLevel = tiers.isNotEmpty ? tiers.last.level : 1;
-
-                                    return InkWell(
-                                      borderRadius: BorderRadius.circular(12),
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedCategoryCode = code;
-                                        });
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: isSelected ? const Color(0xFFFF7418).withValues(alpha: 0.12) : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isSelected ? const Color(0xFFFF7418) : Colors.transparent,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                        child: Row(
+                    ),
+                    const SizedBox(width: 16),
+                    // DETAIL: Tier List
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A2035),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
                                           children: [
+                                            Text(
+                                              activeCode ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
                                             Container(
-                                              width: 36,
-                                              height: 36,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 3,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: isSelected ? const Color(0xFFFF7418).withValues(alpha: 0.2) : Colors.white10,
-                                                borderRadius: BorderRadius.circular(8),
+                                                color: const Color(
+                                                  0xFFFF7418,
+                                                ).withValues(alpha: 0.15),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
                                               ),
-                                              child: Icon(
-                                                Icons.military_tech,
-                                                color: isSelected ? const Color(0xFFFF7418) : Colors.white70,
-                                                size: 20,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    code,
-                                                    style: TextStyle(
-                                                      color: isSelected ? Colors.white : Colors.white70,
-                                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                                      fontSize: 14,
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    '$tierCount ${'Tier Level'.tr(context)} (Maks Lv $maxLevel)',
-                                                    style: const TextStyle(
-                                                      color: Colors.white38,
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                ],
+                                              child: Text(
+                                                '${selectedTiers.length} ${'Tier Level'.tr(context)}',
+                                                style: const TextStyle(
+                                                  color: Color(0xFFFF7418),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                               ),
                                             ),
-                                            if (isSelected)
-                                              const Icon(
-                                                Icons.chevron_right,
-                                                color: Color(0xFFFF7418),
-                                                size: 20,
-                                              ),
                                           ],
                                         ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Daftar level dan syarat misi untuk kategori ini'
+                                              .tr(context),
+                                          style: const TextStyle(
+                                            color: Colors.white38,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white12,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                    );
-                                  },
-                                ),
+                                    ),
+                                    icon: const Icon(Icons.add, size: 16),
+                                    label: Text(
+                                      'Tambah Tier Level'.tr(context),
+                                    ),
+                                    onPressed: () {
+                                      final nextLevel = selectedTiers.isNotEmpty
+                                          ? selectedTiers.last.level + 1
+                                          : 1;
+                                      _showForm(
+                                        defaultCategoryCode: activeCode,
+                                        defaultLevel: nextLevel,
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // DETAIL: Tier List
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1A2035),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.white10),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  activeCode ?? '',
+                            const Divider(height: 1, color: Colors.white10),
+                            Expanded(
+                              child: selectedTiers.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        'Belum ada tier level pada kategori ini.'
+                                            .tr(context),
+                                        style: const TextStyle(
+                                          color: Colors.white38,
+                                        ),
+                                      ),
+                                    )
+                                  : ListView.separated(
+                                      padding: const EdgeInsets.all(16),
+                                      itemCount: selectedTiers.length,
+                                      separatorBuilder: (_, _) =>
+                                          const SizedBox(height: 12),
+                                      itemBuilder: (ctx, i) {
+                                        final tier = selectedTiers[i];
+                                        return Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF141929),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.06,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              // Level Chip
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 6,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                    0xFFFF7418,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'Lv ${tier.level}',
                                                   style: const TextStyle(
                                                     color: Colors.white,
-                                                    fontSize: 18,
                                                     fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
                                                   ),
                                                 ),
-                                                const SizedBox(width: 10),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(0xFFFF7418).withValues(alpha: 0.15),
-                                                    borderRadius: BorderRadius.circular(6),
-                                                  ),
-                                                  child: Text(
-                                                    '${selectedTiers.length} ${'Tier Level'.tr(context)}',
-                                                    style: const TextStyle(
-                                                      color: Color(0xFFFF7418),
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Daftar level dan syarat misi untuk kategori ini'.tr(context),
-                                              style: const TextStyle(color: Colors.white38, fontSize: 12),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.white12,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                        icon: const Icon(Icons.add, size: 16),
-                                        label: Text('Tambah Tier Level'.tr(context)),
-                                        onPressed: () {
-                                          final nextLevel = selectedTiers.isNotEmpty
-                                              ? selectedTiers.last.level + 1
-                                              : 1;
-                                          _showForm(
-                                            defaultCategoryCode: activeCode,
-                                            defaultLevel: nextLevel,
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Divider(height: 1, color: Colors.white10),
-                                Expanded(
-                                  child: selectedTiers.isEmpty
-                                      ? Center(
-                                          child: Text(
-                                            'Belum ada tier level pada kategori ini.'.tr(context),
-                                            style: const TextStyle(color: Colors.white38),
-                                          ),
-                                        )
-                                      : ListView.separated(
-                                          padding: const EdgeInsets.all(16),
-                                          itemCount: selectedTiers.length,
-                                          separatorBuilder: (_, _) => const SizedBox(height: 12),
-                                          itemBuilder: (ctx, i) {
-                                            final tier = selectedTiers[i];
-                                            return Container(
-                                              padding: const EdgeInsets.all(16),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF141929),
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                                               ),
-                                              child: Row(
-                                                children: [
-                                                  // Level Chip
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(0xFFFF7418),
-                                                      borderRadius: BorderRadius.circular(8),
-                                                    ),
-                                                    child: Text(
-                                                      'Lv ${tier.level}',
-                                                      style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 12,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 14),
-                                                  // Icon preview
-                                                  if (tier.iconUrl.isNotEmpty && tier.iconUrl.startsWith('http'))
-                                                    ClipRRect(
-                                                      borderRadius: BorderRadius.circular(8),
-                                                      child: Image.network(
-                                                        tier.iconUrl,
-                                                        width: 40,
-                                                        height: 40,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder: (c, e, s) => const Icon(
+                                              const SizedBox(width: 14),
+                                              // Icon preview
+                                              if (tier.iconUrl.isNotEmpty &&
+                                                  tier.iconUrl.startsWith(
+                                                    'http',
+                                                  ))
+                                                ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  child: Image.network(
+                                                    tier.iconUrl,
+                                                    width: 40,
+                                                    height: 40,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (c, e, s) =>
+                                                        const Icon(
                                                           Icons.military_tech,
                                                           color: Colors.white38,
                                                           size: 36,
                                                         ),
-                                                      ),
-                                                    )
-                                                  else
-                                                    const Icon(
-                                                      Icons.military_tech,
-                                                      color: Colors.amber,
-                                                      size: 36,
-                                                    ),
-                                                  const SizedBox(width: 14),
-                                                  // Info
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                  ),
+                                                )
+                                              else
+                                                const Icon(
+                                                  Icons.military_tech,
+                                                  color: Colors.amber,
+                                                  size: 36,
+                                                ),
+                                              const SizedBox(width: 14),
+                                              // Info
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
                                                       children: [
-                                                        Row(
-                                                          children: [
-                                                            Text(
-                                                              tier.badgeName,
-                                                              style: const TextStyle(
-                                                                color: Colors.white,
+                                                        Text(
+                                                          tier.badgeName,
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .white,
                                                                 fontSize: 15,
-                                                                fontWeight: FontWeight.bold,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
                                                               ),
-                                                            ),
-                                                            const SizedBox(width: 8),
-                                                            Container(
-                                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                              decoration: BoxDecoration(
-                                                                color: Colors.white10,
-                                                                borderRadius: BorderRadius.circular(6),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 2,
                                                               ),
-                                                              child: Text(
-                                                                '${'Target Ambang Batas'.tr(context)}: ${tier.threshold}',
-                                                                style: const TextStyle(
-                                                                  color: Colors.white70,
+                                                          decoration: BoxDecoration(
+                                                            color:
+                                                                Colors.white10,
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                          child: Text(
+                                                            '${'Target Ambang Batas'.tr(context)}: ${tier.threshold}',
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .white70,
                                                                   fontSize: 11,
                                                                 ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        if (tier.description.isNotEmpty) ...[
-                                                          const SizedBox(height: 4),
-                                                          Text(
-                                                            tier.description,
-                                                            style: const TextStyle(
-                                                              color: Colors.white54,
-                                                              fontSize: 12,
-                                                            ),
                                                           ),
-                                                        ],
+                                                        ),
                                                       ],
                                                     ),
-                                                  ),
-                                                  // Actions
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.edit_outlined,
-                                                      color: Colors.white54,
-                                                      size: 18,
-                                                    ),
-                                                    onPressed: () => _showForm(existing: tier),
-                                                    tooltip: 'Edit'.tr(context),
-                                                  ),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.delete_outline,
-                                                      color: Colors.redAccent,
-                                                      size: 18,
-                                                    ),
-                                                    onPressed: () => _delete(tier),
-                                                    tooltip: 'Hapus'.tr(context),
-                                                  ),
-                                                ],
+                                                    if (tier
+                                                        .description
+                                                        .isNotEmpty) ...[
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        tier.description,
+                                                        style: const TextStyle(
+                                                          color: Colors.white54,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
                                               ),
-                                            );
-                                          },
-                                        ),
-                                ),
-                              ],
+                                              // Actions
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.edit_outlined,
+                                                  color: Colors.white54,
+                                                  size: 18,
+                                                ),
+                                                onPressed: () =>
+                                                    _showForm(existing: tier),
+                                                tooltip: 'Edit'.tr(context),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.redAccent,
+                                                  size: 18,
+                                                ),
+                                                onPressed: () => _delete(tier),
+                                                tooltip: 'Hapus'.tr(context),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
+                  ],
+                ),
         ),
       ],
     );

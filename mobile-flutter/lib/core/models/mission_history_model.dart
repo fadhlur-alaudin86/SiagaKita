@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 // Purpose: Data model representing a volunteer's emergency mission response history.
 // Data & Logic Flow: Deserializes JSON from GET /incidents/missions/history or /my-history into structured MissionHistoryItem instances.
 // Key Components: MissionHistoryItem (mission response summary with duration, proof photo, and XP).

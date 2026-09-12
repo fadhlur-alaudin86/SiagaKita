@@ -7,7 +7,6 @@ import '../../../core/localization/app_localization.dart';
 import '../../../core/models/badge_model.dart';
 import '../../../core/services/user_service.dart';
 
-
 class BadgeGridWidget extends StatefulWidget {
   final String accessToken;
 
@@ -16,7 +15,6 @@ class BadgeGridWidget extends StatefulWidget {
   @override
   State<BadgeGridWidget> createState() => _BadgeGridWidgetState();
 }
-
 
 class _BadgeGridWidgetState extends State<BadgeGridWidget> {
   List<BadgeCategoryProgress> _categories = [];
@@ -251,9 +249,7 @@ class _BadgeGridWidgetState extends State<BadgeGridWidget> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: cat.currentLevel > 0
-                          ? categoryColor
-                          : hintColor,
+                      color: cat.currentLevel > 0 ? categoryColor : hintColor,
                     ),
                   ),
                 ),
@@ -364,7 +360,11 @@ class _BadgeGridWidgetState extends State<BadgeGridWidget> {
                           color: categoryColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(categoryIcon, color: categoryColor, size: 28),
+                        child: Icon(
+                          categoryIcon,
+                          color: categoryColor,
+                          size: 28,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -470,8 +470,8 @@ class _BadgeGridWidgetState extends State<BadgeGridWidget> {
       decoration: BoxDecoration(
         color: isEarned
             ? (isDark
-                ? categoryColor.withValues(alpha: 0.12)
-                : categoryColor.withValues(alpha: 0.06))
+                  ? categoryColor.withValues(alpha: 0.12)
+                  : categoryColor.withValues(alpha: 0.06))
             : (isDark ? const Color(0xFF1E293B) : Colors.grey.shade50),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(

@@ -196,7 +196,11 @@ class MissionHistoryCard extends StatelessWidget {
                   color: const Color(0xFFFF7418).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(inc.typeIcon, size: 20, color: const Color(0xFFFF7418)),
+                child: Icon(
+                  inc.typeIcon,
+                  size: 20,
+                  color: const Color(0xFFFF7418),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

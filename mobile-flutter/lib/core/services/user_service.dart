@@ -321,9 +321,10 @@ class UserService {
     }
   }
 
-
   // ─── Gamifikasi Lencana (Khusus Relawan) ────────────────────────────────────
-  static Future<List<BadgeCategoryProgress>> getVolunteerBadges(String token) async {
+  static Future<List<BadgeCategoryProgress>> getVolunteerBadges(
+    String token,
+  ) async {
     try {
       final response = await http
           .get(
@@ -339,7 +340,10 @@ class UserService {
 
       final List<dynamic> data = body['data'] as List<dynamic>? ?? [];
       return data
-          .map((item) => BadgeCategoryProgress.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                BadgeCategoryProgress.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     } catch (e) {
       throw Exception('Gagal memuat lencana relawan: $e');

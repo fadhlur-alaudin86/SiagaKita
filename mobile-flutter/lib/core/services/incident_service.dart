@@ -296,7 +296,6 @@ class IncidentService {
     }
   }
 
-
   // ─── Get Volunteer Mission History (Paginated) ───────────────────────────
 
   static Future<List<MissionHistoryItem>> getVolunteerMissionHistory({
@@ -328,7 +327,6 @@ class IncidentService {
         )
         .toList();
   }
-
 
   // ─── Get Reporter History ─────────────────────────────────────────────────
 

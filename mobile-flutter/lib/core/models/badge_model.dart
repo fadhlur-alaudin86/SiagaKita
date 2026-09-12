@@ -42,7 +42,6 @@ class BadgeTierItem {
   };
 }
 
-
 class BadgeCategoryProgress {
   final String badgeCode;
   final String badgeName;
@@ -74,7 +73,9 @@ class BadgeCategoryProgress {
     final rawTiers = json['tiers'] as List<dynamic>? ?? [];
     final code = json['badge_code'] as String? ?? '';
     final name = json['badge_name'] as String? ?? '';
-    final resolvedName = name.isNotEmpty ? name : (defaultBadgeNames[code] ?? code);
+    final resolvedName = name.isNotEmpty
+        ? name
+        : (defaultBadgeNames[code] ?? code);
 
     return BadgeCategoryProgress(
       badgeCode: code,
