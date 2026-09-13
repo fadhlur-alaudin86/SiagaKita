@@ -997,18 +997,31 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
 
+    final pendingType = await OfflineService.getPendingIncidentType();
+    final bool countdownExpired =
+        _sosPhase == 'broadcasting' || _graceCountdown <= 0;
+    final bool shouldSkipGracePeriod = pendingType != null || countdownExpired;
+
     try {
       final result = await IncidentService.triggerSOS(
         accessToken: widget.accessToken,
         latitude: lat,
         longitude: lng,
         addressDetail: addressDetail,
+        incidentType: pendingType,
+        skipGracePeriod: shouldSkipGracePeriod,
       );
 
       if (!mounted) return;
 
       final bool wasCancelled = _cancelledLocalId == localId;
       final serverId = result.incidentId;
+      final serverStatus = result.status;
+      final effectiveType =
+          result.incidentType ??
+          pendingType ??
+          _activeIncident?.incidentType ??
+          'unknown';
 
       // Ganti local ID dengan server ID (tidak tampil di UI)
       setState(() {
@@ -1017,11 +1030,15 @@ class _HomeScreenState extends State<HomeScreen>
         }
         _sosUploadStatus = 'sent';
         _sosTransmitting = true;
+        if (serverStatus == 'broadcasting' && _sosPhase != 'broadcasting') {
+          _sosPhase = 'broadcasting';
+          _graceTimer?.cancel();
+        }
         if (_activeIncident != null && _activeIncident!.incidentId == localId) {
           _activeIncident = ActiveIncident(
             incidentId: serverId,
-            status: _activeIncident!.status,
-            incidentType: _activeIncident!.incidentType,
+            status: serverStatus,
+            incidentType: effectiveType,
             latitude: _activeIncident!.latitude,
             longitude: _activeIncident!.longitude,
             createdAt: _activeIncident!.createdAt,
@@ -1031,18 +1048,29 @@ class _HomeScreenState extends State<HomeScreen>
       });
 
       // Bersihkan pending SOS karena berhasil masuk ke server
-      OfflineService.clearPendingSOS();
+      await OfflineService.clearPendingSOS();
+      if (pendingType != null && serverStatus == 'broadcasting') {
+        await OfflineService.clearPendingIncidentType();
+      }
 
-      // Sync tipe insiden yang tersimpan saat offline
-      final pendingType = await OfflineService.getPendingIncidentType();
-      if (pendingType != null) {
+      if (serverStatus == 'broadcasting') {
+        _startLocationUpdates();
+        AppBackgroundService.startSOSTracking(serverId);
+        _startStatusPolling();
+        _startVibration();
+      }
+
+      // Sync tipe insiden yang tersimpan saat offline jika masih tersisa dan status belum broadcasting
+      final remainingPendingType =
+          await OfflineService.getPendingIncidentType();
+      if (remainingPendingType != null && serverStatus != 'broadcasting') {
         try {
           await IncidentService.updateType(
             accessToken: widget.accessToken,
             incidentId: serverId,
-            incidentType: pendingType,
+            incidentType: remainingPendingType,
           );
-          OfflineService.clearPendingIncidentType();
+          await OfflineService.clearPendingIncidentType();
         } catch (_) {
           /* akan di-retry di polling berikutnya */
         }

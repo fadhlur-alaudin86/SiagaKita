@@ -172,11 +172,13 @@ type MRank struct {
 
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
 
-// TriggerSOSRequest - Jalur A: hanya GPS wajib, tipe selalu mulai 'unknown'.
+// TriggerSOSRequest - Jalur A: hanya GPS wajib, tipe opsional (dapat ditentukan dari offline queue).
 type TriggerSOSRequest struct {
-	Latitude      float64 `json:"latitude"`
-	Longitude     float64 `json:"longitude"`
-	AddressDetail string  `json:"address_detail"`
+	Latitude        float64 `json:"latitude"`
+	Longitude       float64 `json:"longitude"`
+	AddressDetail   string  `json:"address_detail"`
+	IncidentType    string  `json:"incident_type,omitempty"`
+	SkipGracePeriod bool    `json:"skip_grace_period,omitempty"`
 }
 
 // UploadSOSEvidenceRequest - dikirim SETELAH masuk fase broadcasting.
@@ -235,9 +237,10 @@ type CreateReportRequest struct {
 
 // TriggerSOSResponse dikirim ke Flutter setelah SOS berhasil dibuat.
 type TriggerSOSResponse struct {
-	IncidentID string `json:"incident_id"`
-	Status     string `json:"status"`
-	Message    string `json:"message"`
+	IncidentID   string `json:"incident_id"`
+	Status       string `json:"status"`
+	IncidentType string `json:"incident_type,omitempty"`
+	Message      string `json:"message"`
 }
 
 type VolunteerLocation struct {

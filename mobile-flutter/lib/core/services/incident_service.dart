@@ -52,23 +52,28 @@ class IncidentService {
 
   // ─── Trigger SOS (Jalur A) ────────────────────────────────────────────────
 
-  /// Mengirim SOS. Selalu mulai dengan tipe 'unknown'.
-  /// Status awal: grace_period. Tipe diupdate via [updateType].
+  /// Mengirim SOS. Menerima kategori darurat opsional dan flag skipGracePeriod
+  /// untuk pemanggilan atomik (misalnya saat sinkronisasi offline).
   static Future<TriggerSOSResult> triggerSOS({
     required String accessToken,
     required double latitude,
     required double longitude,
     String? addressDetail,
+    String? incidentType,
+    bool skipGracePeriod = false,
   }) async {
+    final Map<String, dynamic> payload = {
+      'latitude': latitude,
+      'longitude': longitude,
+      'address_detail': ?addressDetail,
+      'incident_type': ?incidentType,
+      if (skipGracePeriod) 'skip_grace_period': true,
+    };
     final response = await _req(
       () => http.post(
         Uri.parse('$_baseUrl/incidents/trigger'),
         headers: _authHeader(accessToken),
-        body: jsonEncode({
-          'latitude': latitude,
-          'longitude': longitude,
-          'address_detail': addressDetail,
-        }),
+        body: jsonEncode(payload),
       ),
       timeout: _sosTimeout, // SOS harus cepat
     );
@@ -590,11 +595,13 @@ class IncidentService {
 class TriggerSOSResult {
   final String incidentId;
   final String status;
+  final String? incidentType;
   final String message;
 
   const TriggerSOSResult({
     required this.incidentId,
     required this.status,
+    this.incidentType,
     required this.message,
   });
 
@@ -602,6 +609,7 @@ class TriggerSOSResult {
       TriggerSOSResult(
         incidentId: json['incident_id'] as String,
         status: json['status'] as String,
+        incidentType: json['incident_type'] as String?,
         message: json['message'] as String? ?? '',
       );
 }

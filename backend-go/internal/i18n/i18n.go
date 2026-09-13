@@ -70,6 +70,7 @@ var idToEn = map[string]string{
 	"Parameter 'lng' wajib diisi dan harus berupa angka": "Parameter 'lng' is required and must be a number",
 	"SOS sudah aktif.":                                   "SOS is already active.",
 	"SOS diterima. Pilih jenis darurat atau tunggu 10 detik untuk dikirim otomatis.": "SOS received. Select emergency type or wait 10 seconds for automatic dispatch.",
+	"SOS diterima dan langsung disiarkan.":                                           "SOS received and broadcasting immediately.",
 	"Tipe insiden diperbarui, SOS sedang disiarkan.":                                 "Incident type updated, SOS is broadcasting.",
 	"SOS sedang disiarkan ke relawan dan instansi terdekat.":                         "SOS is broadcasting to nearby volunteers and agencies.",
 	"Panggilan SOS berhasil dibatalkan.":                                             "SOS call successfully canceled.",
