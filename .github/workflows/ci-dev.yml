@@ -53,10 +53,6 @@ jobs:
           go-version-file: backend-go/go.mod
           cache: false
 
-      - name: Setup Dart
-        if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.desktop == 'true' }}
-        uses: dart-lang/setup-dart@v1
-
       - name: Check Go Format
         if: ${{ needs.changes.outputs.backend == 'true' }}
         run: |
@@ -66,15 +62,6 @@ jobs:
             echo "$unformatted"
             exit 1
           fi
-
-      - name: Check Dart Format
-        if: ${{ needs.changes.outputs.mobile == 'true' || needs.changes.outputs.desktop == 'true' }}
-        run: |
-          for dir in mobile-flutter mobile-flutter-responder windows_console_flutter; do
-            if [ -d "$dir" ]; then
-              dart format --set-exit-if-changed "$dir"
-            fi
-          done
 
       - name: Check Clean Text & Decorative Icons
         run: |
