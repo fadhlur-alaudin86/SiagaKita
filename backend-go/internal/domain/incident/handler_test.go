@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/hub"
@@ -148,4 +150,102 @@ func TestPersonnelUpdateStatus_Validation(t *testing.T) {
 			t.Errorf("expected 400, got %d", resp.StatusCode)
 		}
 	})
+}
+
+func TestUploadEvidence_NonExistentIncident_Returns404(t *testing.T) {
+	db := getTestDB()
+	if db == nil {
+		t.Skip("PostgreSQL test database unavailable, skipping integration test")
+	}
+
+	repo := NewRepository(db)
+	svc := NewService(repo, nil)
+	cfg := &config.Config{
+		UploadDir: t.TempDir(),
+	}
+	wsHub := hub.New()
+	h := NewHandler(svc, cfg, wsHub, nil)
+
+	app := fiber.New()
+	app.Post("/api/v1/incidents/:id/evidence", func(c *fiber.Ctx) error {
+		c.Locals("userID", "any-reporter-id")
+		return h.UploadEvidence(c)
+	})
+
+	nonExistentID := "00000000-0000-0000-0000-000000000000"
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/incidents/"+nonExistentID+"/evidence", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("expected 404, got %d", resp.StatusCode)
+	}
+
+	// Verify no directory or files were created in UploadDir
+	entries, err := os.ReadDir(cfg.UploadDir)
+	if err != nil {
+		t.Fatalf("failed to read upload dir: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected upload dir to be empty, found %d entries", len(entries))
+	}
+}
+
+func TestUploadEvidence_UnauthorizedReporter_Returns403(t *testing.T) {
+	db := getTestDB()
+	if db == nil {
+		t.Skip("PostgreSQL test database unavailable, skipping integration test")
+	}
+
+	repo := NewRepository(db)
+	svc := NewService(repo, nil)
+	cfg := &config.Config{
+		UploadDir: t.TempDir(),
+	}
+	wsHub := hub.New()
+	h := NewHandler(svc, cfg, wsHub, nil)
+
+	var testUserID string
+	if err := db.Raw("SELECT id FROM users WHERE role = 'civilian' LIMIT 1").Scan(&testUserID).Error; err != nil || testUserID == "" {
+		t.Skip("No civilian user found in test database, skipping test")
+	}
+
+	inc := &Incident{
+		ReporterID:   testUserID,
+		Latitude:     -6.2088,
+		Longitude:    106.8456,
+		IncidentType: "medical",
+		Status:       StatusBroadcasting,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	if err := repo.CreateIncident(inc); err != nil {
+		t.Fatalf("failed to create incident: %v", err)
+	}
+	defer db.Exec("DELETE FROM incidents WHERE id = ?", inc.ID)
+
+	app := fiber.New()
+	app.Post("/api/v1/incidents/:id/evidence", func(c *fiber.Ctx) error {
+		c.Locals("userID", "different-unauthorized-user-id")
+		return h.UploadEvidence(c)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/incidents/"+inc.ID+"/evidence", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.StatusCode != http.StatusForbidden {
+		t.Errorf("expected 403, got %d", resp.StatusCode)
+	}
+
+	// Verify no directory or files were created in UploadDir
+	entries, err := os.ReadDir(cfg.UploadDir)
+	if err != nil {
+		t.Fatalf("failed to read upload dir: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected upload dir to be empty, found %d entries", len(entries))
+	}
 }

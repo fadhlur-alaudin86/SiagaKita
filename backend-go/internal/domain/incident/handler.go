@@ -18,6 +18,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
@@ -148,6 +149,18 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 	reporterID := c.Locals("userID").(string)
 	incidentID := c.Params("id")
 
+	// 1. Verifikasi eksistensi dan otorisasi insiden TERLEBIH DAHULU sebelum menyentuh file system
+	inc, err := h.svc.repo.FindByID(incidentID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.ErrorResponse(c, fiber.StatusNotFound, "Insiden tidak ditemukan")
+		}
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	if inc.ReporterID != reporterID {
+		return utils.ErrorResponse(c, fiber.StatusForbidden, ErrUnauthorized.Error())
+	}
+
 	uploadDir := h.cfg.UploadDir
 	baseURL := h.cfg.UploadBaseURL
 	now := time.Now()
@@ -198,6 +211,9 @@ func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
 	}
 
 	if err := h.svc.UploadEvidence(incidentID, reporterID, photoPaths, audioPath); err != nil {
+		dir := filepath.Join(uploadDir, "incidents", "evidence", yearMonth, incidentID)
+		_ = os.RemoveAll(dir)
+
 		status := fiber.StatusInternalServerError
 		if errors.Is(err, ErrUnauthorized) {
 			status = fiber.StatusForbidden
