@@ -10,7 +10,7 @@
 | Date Created | 2026-09-13 |
 | GitHub Issues | [#139](https://github.com/fadhlur-alaudin86/SiagaKita/issues/139) |
 | Parent Plan | `.planning/13-sos-offline-online-sync-resilience.md` ([#136](https://github.com/fadhlur-alaudin86/SiagaKita/issues/136)) |
-| Status | In Progress |
+| Status | Done |
 
 ---
 
@@ -63,4 +63,4 @@
 | 2 | Client-Side Evidence Spooling | Done | 2026-09-13 | Spool offline evidence in Hive and sync on confirmed server ID |
 | 3 | Orphan Evidence Pruning Script | Done | 2026-09-13 | Created `scripts/prune_orphaned_evidence.py` and purged 4 orphans |
 | 4 | Unit & Integration Tests | Done | 2026-09-13 | Tested zero disk writes on 404/403, tested spooling in Flutter |
-| 5 | Quality Gates & PR | In Progress | 2026-09-13 | `verify_pipeline.py` & pull request to `dev` |
+| 5 | Quality Gates & PR | Done | 2026-09-13 | `verify_pipeline.py` & PR #144 merged into `dev` |
