@@ -69,27 +69,28 @@ app.*.symbols
 profile.json
 
 # Dart tool & cache
-**/mobile-flutter/.dart_tool/
-**/mobile-flutter/.packages
-**/mobile-flutter/build/
-**/mobile-flutter/.pub-cache/
-**/mobile-flutter/.pub/
-mobile-flutter/.flutter-plugins
-mobile-flutter/.flutter-plugins-dependencies
-mobile-flutter/.metadata
+**/.dart_tool/
+**/.packages
+**/build/
+**/.pub-cache/
+**/.pub/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.metadata
 
 # Android (Kotlin/Java) Build & Keystore
-**/mobile-flutter/android/build/
-**/mobile-flutter/android/app/build/
-**/mobile-flutter/android/.gradle/
-**/mobile-flutter/android/.kotlin/
-**/mobile-flutter/android/captures/
-**/mobile-flutter/android/gradlew
-**/mobile-flutter/android/gradlew.bat
-**/mobile-flutter/android/local.properties
-**/mobile-flutter/android/**/GeneratedPluginRegistrant.java
-**/mobile-flutter/android/**/*.keystore
-**/mobile-flutter/android/**/*.jks
+**/android/build/
+**/android/app/build/
+**/android/.gradle/
+**/android/.kotlin/
+**/.kotlin/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/**/*.keystore
+**/android/**/*.jks
 
 # iOS (Swift/Objective-C) Build & Pods
 **/mobile-flutter/ios/Flutter/App.framework
