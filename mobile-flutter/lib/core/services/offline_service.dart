@@ -43,6 +43,20 @@ class OfflineService {
     await LocalStorageService.clearPendingCancelSOS();
   }
 
+  // ─── Last Cancelled Incident ID ──────────────────────────────────────────
+
+  static Future<void> saveLastCancelledIncidentId(String incidentId) async {
+    await LocalStorageService.saveLastCancelledIncidentId(incidentId);
+  }
+
+  static String? getLastCancelledIncidentId() {
+    return LocalStorageService.getLastCancelledIncidentId();
+  }
+
+  static Future<void> clearLastCancelledIncidentId() async {
+    await LocalStorageService.clearLastCancelledIncidentId();
+  }
+
   // ─── Pending Incident Type ───────────────────────────────────────────────
 
   static Future<void> savePendingIncidentType(String type) async {

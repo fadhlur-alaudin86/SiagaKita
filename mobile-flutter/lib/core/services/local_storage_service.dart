@@ -61,6 +61,8 @@ class LocalStorageService {
   static const String _keyPendingCancelSos = 'pending_cancel_sos';
   static const String _keyPendingIncidentType = 'pending_incident_type';
   static const String _keyCooldownEndTime = 'sos_cooldown_end_time';
+  static const String _keyLastCancelledIncidentId =
+      'last_cancelled_incident_id';
 
   static Future<void> savePendingSOS({
     required String localId,
@@ -107,6 +109,19 @@ class LocalStorageService {
 
   static Future<void> clearPendingCancelSOS() async {
     await _sosQueueBox?.delete(_keyPendingCancelSos);
+  }
+
+  static Future<void> saveLastCancelledIncidentId(String incidentId) async {
+    await _sosQueueBox?.put(_keyLastCancelledIncidentId, incidentId);
+  }
+
+  static String? getLastCancelledIncidentId() {
+    final val = _sosQueueBox?.get(_keyLastCancelledIncidentId);
+    return val as String?;
+  }
+
+  static Future<void> clearLastCancelledIncidentId() async {
+    await _sosQueueBox?.delete(_keyLastCancelledIncidentId);
   }
 
   static Future<void> savePendingIncidentType(String type) async {

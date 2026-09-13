@@ -98,6 +98,24 @@ void main() {
         expect(LocalStorageService.getCooldownEndTime(), isNull);
       },
     );
+
+    test(
+      'saveLastCancelledIncidentId, getLastCancelledIncidentId, and clearLastCancelledIncidentId',
+      () async {
+        expect(LocalStorageService.getLastCancelledIncidentId(), isNull);
+
+        await LocalStorageService.saveLastCancelledIncidentId(
+          'incident-cancelled-999',
+        );
+        expect(
+          LocalStorageService.getLastCancelledIncidentId(),
+          equals('incident-cancelled-999'),
+        );
+
+        await LocalStorageService.clearLastCancelledIncidentId();
+        expect(LocalStorageService.getLastCancelledIncidentId(), isNull);
+      },
+    );
   });
 
   group('Incident Cache & TTL', () {
