@@ -9,7 +9,7 @@
   - [#139](https://github.com/fadhlur-alaudin86/SiagaKita/issues/139) (Evidence Isolation & Offline Spooling)
   - [#140](https://github.com/fadhlur-alaudin86/SiagaKita/issues/140) (UI Resurrect Race Condition & Adaptive Status)
 - **Priority**: P1 (High)
-- **Status**: Backlog
+- **Status**: Merged | Verified and closed
 - **Primary Stack**: Flutter Mobile (`mobile-flutter`), Go Fiber Backend (`backend-go`), OpenAPI, PostgreSQL
 - **Problem**:
   - Complex offline/online state transitions in emergency SOS dispatch currently exhibit multiple race conditions and failure modes:
@@ -83,28 +83,28 @@
 ## 3. Tasks & Implementation Checklist
 
 ### 3.1 Mobile Offline Cancellation Purge ([#137](https://github.com/fadhlur-alaudin86/SiagaKita/issues/137))
-- [ ] Purge offline queue on local cancellation in `home_screen.dart: _cancelSOS()`.
-- [ ] Break infinite retry while-loop on HTTP 200 or 409 Conflict in `_attemptSOSCancelBackground`.
-- [ ] Add unit tests for offline cancellation lifecycle in `mobile-flutter/test/`.
+- [x] Purge offline queue on local cancellation in `home_screen.dart: _cancelSOS()`.
+- [x] Break infinite retry while-loop on HTTP 200 or 409 Conflict in `_attemptSOSCancelBackground`.
+- [x] Add unit tests for offline cancellation lifecycle in `mobile-flutter/test/`.
 
 ### 3.2 Atomic SOS Trigger & Category Sync ([#138](https://github.com/fadhlur-alaudin86/SiagaKita/issues/138))
-- [ ] Update OpenAPI specification in `docs/api/paths/incidents.yaml` and `docs/api/openapi.yaml`.
-- [ ] Update Go model `TriggerSOSRequest` and implement atomic broadcasting in `Service.TriggerSOS`.
-- [ ] Update `Service.UpdateType` to permit updating category from `unknown` during early broadcasting.
-- [ ] Update Flutter `IncidentService.triggerSOS` and `home_screen.dart` to send atomic payload.
-- [ ] Add Go backend unit tests in `internal/domain/incident/incident_test.go`.
+- [x] Update OpenAPI specification in `docs/api/paths/incidents.yaml` and `docs/api/openapi.yaml`.
+- [x] Update Go model `TriggerSOSRequest` and implement atomic broadcasting in `Service.TriggerSOS`.
+- [x] Update `Service.UpdateType` to permit updating category from `unknown` during early broadcasting.
+- [x] Update Flutter `IncidentService.triggerSOS` and `home_screen.dart` to send atomic payload.
+- [x] Add Go backend unit tests in `internal/domain/incident/incident_test.go`.
 
 ### 3.3 Evidence Upload Isolation & Offline Spooling ([#139](https://github.com/fadhlur-alaudin86/SiagaKita/issues/139))
-- [ ] Validate incident existence in backend `Handler.UploadEvidence` before creating directories or saving files.
-- [ ] Implement `LocalStorageService.savePendingEvidence` and offline evidence spooling in Flutter Mobile.
-- [ ] Create `scripts/prune_orphaned_evidence.py` and purge orphaned volume folders.
-- [ ] Add test cases asserting zero disk writes on invalid evidence upload attempts.
+- [x] Validate incident existence in backend `Handler.UploadEvidence` before creating directories or saving files.
+- [x] Implement `LocalStorageService.savePendingEvidence` and offline evidence spooling in Flutter Mobile.
+- [x] Create `scripts/prune_orphaned_evidence.py` and purge orphaned volume folders.
+- [x] Add test cases asserting zero disk writes on invalid evidence upload attempts.
 
 ### 3.4 UI Resilience & Fast Adaptive Synchronization ([#140](https://github.com/fadhlur-alaudin86/SiagaKita/issues/140))
-- [ ] Prioritize pending cancellation over active incident retrieval on reconnect in `_onConnectivityChanged()`.
-- [ ] Differentiate cancellation attribution in `_startStatusPolling()` to show accurate user cancellation SnackBar.
-- [ ] Implement adaptive 2-3 second status synchronization during active transitions.
-- [ ] Add widget and regression tests for UI state transitions in `mobile-flutter/test/`.
+- [x] Prioritize pending cancellation over active incident retrieval on reconnect in `_onConnectivityChanged()`.
+- [x] Differentiate cancellation attribution in `_startStatusPolling()` to show accurate user cancellation SnackBar.
+- [x] Implement adaptive 2-3 second status synchronization during active transitions.
+- [x] Add widget and regression tests for UI state transitions in `mobile-flutter/test/`.
 
 ---
 

@@ -114,15 +114,22 @@ def autocomplete_and_close(repo, issue_num, reason="completed"):
 def extract_issues(text, pr_num=None):
     """Extracts closing issues and parent tracking issues from text."""
     parent_clause_pattern = re.compile(
-        r'(?mi)^[ \t-]*(?:parent(?:\s+issues?)?|refs?|related\s+to)\s*:\s*(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)'
+        r'(?mi)^[ \t-]*(?:parent(?:\s+issues?|\s+epic)?|refs?|related\s+to|part\s+of(?:\s+epic)?)\s*:\s*\[?(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
     )
     parent_issues = set()
     for match in parent_clause_pattern.finditer(text):
         clause = match.group(1)
         parent_issues.update(re.findall(r'#(\d+)', clause))
 
+    inline_parent_pattern = re.compile(
+        r'(?:under\s+parent(?:\s+epic)?|part\s+of\s+epic)\s*\[?(#\d+)',
+        re.IGNORECASE
+    )
+    for match in inline_parent_pattern.finditer(text):
+        parent_issues.add(match.group(1).lstrip('#'))
+
     closing_clause_pattern = re.compile(
-        r'(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+(?:sub-?issues?|sub-?tasks?|issues?|tasks?|bugs?)?\s*:?\s*(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
+        r'(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+(?:sub-?issues?|sub-?tasks?|issues?|tasks?|bugs?)?\s*:?\s*\[?(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
         re.IGNORECASE
     )
     closing_issues = set()
@@ -131,7 +138,7 @@ def extract_issues(text, pr_num=None):
         closing_issues.update(re.findall(r'#(\d+)', clause))
 
     standalone_colon_pattern = re.compile(
-        r'(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved):?\s*(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
+        r'(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved):?\s*\[?(#\d+(?:[\s,]+(?:and\s+)?#\d+)*)',
         re.IGNORECASE
     )
     for match in standalone_colon_pattern.finditer(text):
