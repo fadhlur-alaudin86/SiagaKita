@@ -23,6 +23,8 @@ graph TD
     P2 --> P10["10: Gamification Badges (#32, #33)"]
     P1 --> P11["11: Email OTP Gateway Resend (#45)"]
     P1 --> P12["12: Mobile FTUE & Permissions (#107)"]
+    P7 --> P13["13: SOS Offline/Online Sync Resilience (#136)"]
+    P9 --> P13
 ```
 
 | Plan | Document | Target Issues | Parent | Primary Stack | Status | Core Objective |
@@ -39,6 +41,7 @@ graph TD
 | **10** | [`10-gamification-badges.md`](./10-gamification-badges.md) | [#32](https://github.com/fadhlur-alaudin86/SiagaKita/issues/32), [#33](https://github.com/fadhlur-alaudin86/SiagaKita/issues/33) | [#8](https://github.com/fadhlur-alaudin86/SiagaKita/issues/8) | Go, Flutter Mobile | Merged | Automated badge evaluation engine upon incident resolution and mobile profile badge grid. |
 | **11** | [`11-email-otp-gateway-migration.md`](./11-email-otp-gateway-migration.md) | [#45](https://github.com/fadhlur-alaudin86/SiagaKita/issues/45) | - | Go, REST API | Backlog (P2) | Migrate email OTP gateway to Resend HTTPS REST API (port 443) with verified domain SPF/DKIM. |
 | **12** | [`12-mobile-ftue-onboarding-permissions.md`](./12-mobile-ftue-onboarding-permissions.md) | [#107](https://github.com/fadhlur-alaudin86/SiagaKita/issues/107) | - | Flutter Mobile | Merged (`PR #108`) | First-launch visual onboarding carousel, contextual permission primer, and offline SOS guard. |
+| **13** | [`13-sos-offline-online-sync-resilience.md`](./13-sos-offline-online-sync-resilience.md) | [#137](https://github.com/fadhlur-alaudin86/SiagaKita/issues/137), [#138](https://github.com/fadhlur-alaudin86/SiagaKita/issues/138), [#139](https://github.com/fadhlur-alaudin86/SiagaKita/issues/139), [#140](https://github.com/fadhlur-alaudin86/SiagaKita/issues/140) | [#136](https://github.com/fadhlur-alaudin86/SiagaKita/issues/136) | Go, Flutter Mobile | Backlog (P1) | Eliminate offline cancellation leaks, stuck grace period, volume UUID mismatches, and UI resurrection race conditions. |
 
 ---
 
