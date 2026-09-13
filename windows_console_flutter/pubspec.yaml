@@ -91,13 +91,13 @@ dev_dependencies:
 flutter_launcher_icons:
   windows:
     generate: true
-    image_path: "../mobile-flutter/lib/components/app_icon.png"
+    image_path: "assets/images/app_icon.png"
   macos:
     generate: true
-    image_path: "../mobile-flutter/lib/components/app_icon.png"
+    image_path: "assets/images/app_icon.png"
   linux:
     generate: true
-    image_path: "../mobile-flutter/lib/components/app_icon.png"
+    image_path: "assets/images/app_icon.png"
 
 msix_config:
   display_name: SiagaKita Console
@@ -105,7 +105,7 @@ msix_config:
   publisher: CN=SiagaKita, O=SiagaKita, L=Banda Aceh, S=Aceh, C=ID
   identity_name: com.siagakita.console
   msix_version: 1.0.0.0
-  logo_path: assets/app_icon.png
+  logo_path: assets/images/app_icon.png
   capabilities: internetClient, location
   install_certificate: true # Otomatis instal sertifikat self-signed saat build di lokal
 
@@ -122,9 +122,7 @@ flutter:
 
   assets:
     - assets/audio/
-    - assets/audio/alarm.mp3
-    - assets/app_icon.png
-    - assets/logo_siagakita_transparant.png
+    - assets/images/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
