@@ -10,7 +10,7 @@
 | Date Created | 2026-09-13 |
 | GitHub Issues | [#134](https://github.com/fadhlur-alaudin86/SiagaKita/issues/134) |
 | Parent Plan | `.planning/05-assets-devops-hygiene.md` |
-| Status | In Progress |
+| Status | In Review |
 
 ---
 
@@ -59,4 +59,4 @@
 | 2 | Pubspec & Launcher Icons | Done | 2026-09-13 | Updated `pubspec.yaml` and regenerated launcher icons |
 | 3 | In-App Screen Updates | Done | 2026-09-13 | Updated login, about, and desktop shell screens |
 | 4 | Verification | Done | 2026-09-13 | `verify_pipeline.py` passed with 100% scorecard |
-| 5 | CI + Review | Pending | 2026-09-13 | Pull request targeting `dev` |
+| 5 | CI + Review | Done | 2026-09-13 | Pull request targeting dev ([#135](https://github.com/fadhlur-alaudin86/SiagaKita/pull/135)) |
