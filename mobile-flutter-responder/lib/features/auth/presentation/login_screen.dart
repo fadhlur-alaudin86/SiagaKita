@@ -125,10 +125,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.shield_outlined,
-                    size: 72,
-                    color: AppColors.warningAmber,
+                  Center(
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 16,
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Image.asset(
+                        'assets/images/app_icon.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, e, s) => const Icon(
+                          Icons.shield_outlined,
+                          size: 56,
+                          color: AppColors.warningAmber,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(

@@ -305,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         clipBehavior: Clip.antiAlias,
         child: Image.asset(
-          'lib/components/logo_siagakita_transparant.png',
+          'assets/images/app_icon.png',
           fit: BoxFit.cover,
           errorBuilder: (_, e, s) =>
               Icon(Icons.shield, size: 55, color: primaryColor),

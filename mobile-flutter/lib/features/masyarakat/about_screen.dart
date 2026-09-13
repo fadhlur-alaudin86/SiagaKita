@@ -41,10 +41,17 @@ class AboutScreen extends StatelessWidget {
                 color: Colors.orange.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.health_and_safety,
-                size: 64,
-                color: Colors.orange,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Image.asset(
+                  'assets/images/app_icon.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, e, s) => const Icon(
+                    Icons.health_and_safety,
+                    size: 64,
+                    color: Colors.orange,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 24),

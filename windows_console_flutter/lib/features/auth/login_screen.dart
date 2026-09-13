@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/logo_siagakita_transparant.png',
+                    'assets/images/app_icon.png',
                     width: 150,
                     height: 150,
                     fit: BoxFit.contain,
