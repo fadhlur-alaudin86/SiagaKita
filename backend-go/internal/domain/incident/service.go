@@ -65,23 +65,33 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest) (*Trigge
 	existing, _ := s.repo.FindActiveByReporter(reporterID)
 	if existing != nil {
 		return &TriggerSOSResponse{
-			IncidentID: existing.ID,
-			Status:     existing.Status,
-			Message:    "SOS sudah aktif.",
+			IncidentID:   existing.ID,
+			Status:       existing.Status,
+			IncidentType: existing.IncidentType,
+			Message:      "SOS sudah aktif.",
 		}, nil
 	}
 
 	trustLabel, _ := s.repo.GetTrustLabel(reporterID)
 
+	status := StatusGracePeriod
+	incidentType := IncidentTypeUnknown
+	if req.IncidentType != "" && validIncidentTypes[req.IncidentType] {
+		incidentType = req.IncidentType
+	}
+	if req.SkipGracePeriod || (req.IncidentType != "" && validIncidentTypes[req.IncidentType]) {
+		status = StatusBroadcasting
+	}
+
 	inc := &Incident{
 		ReporterID:         reporterID,
 		Latitude:           req.Latitude,
 		Longitude:          req.Longitude,
-		IncidentType:       IncidentTypeUnknown,
+		IncidentType:       incidentType,
 		UrgencyLevel:       "critical",
 		AddressDetail:      &req.AddressDetail,
 		ReporterTrustLabel: trustLabel,
-		Status:             StatusGracePeriod,
+		Status:             status,
 		CreatedAt:          time.Now(),
 		UpdatedAt:          time.Now(),
 	}
@@ -90,15 +100,28 @@ func (s *Service) TriggerSOS(reporterID string, req *TriggerSOSRequest) (*Trigge
 		return nil, err
 	}
 
+	if inc.Status == StatusBroadcasting {
+		if s.OnBroadcast != nil {
+			s.OnBroadcast(inc.ID)
+		}
+		return &TriggerSOSResponse{
+			IncidentID:   inc.ID,
+			Status:       inc.Status,
+			IncidentType: inc.IncidentType,
+			Message:      "SOS diterima dan langsung disiarkan.",
+		}, nil
+	}
+
 	// Auto-promote: jadwalkan promosi grace_period → broadcasting setelah 15 detik
 	ctx, cancel := context.WithCancel(context.Background())
 	s.graceTimers.Store(inc.ID, cancel)
 	go s.autoPromoteGracePeriod(ctx, inc.ID)
 
 	return &TriggerSOSResponse{
-		IncidentID: inc.ID,
-		Status:     inc.Status,
-		Message:    "SOS diterima. Pilih jenis darurat atau tunggu 10 detik untuk dikirim otomatis.",
+		IncidentID:   inc.ID,
+		Status:       inc.Status,
+		IncidentType: inc.IncidentType,
+		Message:      "SOS diterima. Pilih jenis darurat atau tunggu 10 detik untuk dikirim otomatis.",
 	}, nil
 }
 
@@ -119,13 +142,20 @@ func (s *Service) UpdateType(incidentID, reporterID, incidentType string) error 
 	if inc.ReporterID != reporterID {
 		return ErrUnauthorized
 	}
-	if inc.Status != "grace_period" {
+
+	isGracePeriod := inc.Status == StatusGracePeriod
+	isEarlyBroadcastingUnknown := inc.Status == StatusBroadcasting && inc.IncidentType == IncidentTypeUnknown && time.Since(inc.CreatedAt) <= 30*time.Second
+
+	if !isGracePeriod && !isEarlyBroadcastingUnknown {
 		return errors.New("tipe hanya bisa diubah saat grace period")
 	}
 	if err := s.repo.UpdateType(incidentID, incidentType); err != nil {
 		return err
 	}
-	return s.repo.UpdateStatus(incidentID, "broadcasting")
+	if isGracePeriod {
+		return s.repo.UpdateStatus(incidentID, StatusBroadcasting)
+	}
+	return nil
 }
 
 // PromoteToBroadcasting mengubah status grace_period → broadcasting tanpa mengubah tipe.
@@ -141,7 +171,13 @@ func (s *Service) PromoteToBroadcasting(incidentID, reporterID string) error {
 	if inc.ReporterID != reporterID {
 		return ErrUnauthorized
 	}
-	return s.repo.UpdateStatus(incidentID, "broadcasting")
+	if inc.Status == StatusBroadcasting {
+		return nil
+	}
+	if inc.Status != StatusGracePeriod {
+		return errors.New("hanya bisa dipromosikan dari grace period")
+	}
+	return s.repo.UpdateStatus(incidentID, StatusBroadcasting)
 }
 
 // autoPromoteGracePeriod secara otomatis mempromosikan incident dari grace_period ke broadcasting

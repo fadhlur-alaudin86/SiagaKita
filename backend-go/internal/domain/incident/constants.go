@@ -8,13 +8,14 @@ const (
 
 // Incident Lifecycle Statuses
 const (
-	StatusGracePeriod = "grace_period"
-	StatusCanceled    = "canceled"
-	StatusResolved    = "resolved"
-	StatusFalseAlarm  = "false_alarm"
-	StatusHandled     = "handled"
-	StatusHandling    = "handling"
-	StatusEnRoute     = "en_route"
+	StatusGracePeriod  = "grace_period"
+	StatusBroadcasting = "broadcasting"
+	StatusCanceled     = "canceled"
+	StatusResolved     = "resolved"
+	StatusFalseAlarm   = "false_alarm"
+	StatusHandled      = "handled"
+	StatusHandling     = "handling"
+	StatusEnRoute      = "en_route"
 )
 
 // Agency Operational Statuses

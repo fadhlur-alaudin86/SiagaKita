@@ -192,6 +192,9 @@ TriggerSOSResponse:
     status:
       type: string
       example: "broadcasting"
+    incident_type:
+      type: string
+      example: "medical"
     message:
       type: string
 

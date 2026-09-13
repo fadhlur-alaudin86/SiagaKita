@@ -36,6 +36,15 @@
               address_detail:
                 type: string
                 example: "Jl. Sudirman No. 1, Jakarta"
+              incident_type:
+                type: string
+                enum: [general, medical, fire, crime, rescue, disaster, accident]
+                example: "medical"
+                description: "Pre-selected emergency category (optional, e.g. when synced from offline queue)."
+              skip_grace_period:
+                type: boolean
+                example: true
+                description: "Whether to skip grace period and broadcast immediately (optional)."
     responses:
       '200':
         description: SOS triggered successfully
