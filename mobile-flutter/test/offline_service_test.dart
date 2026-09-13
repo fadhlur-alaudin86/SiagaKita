@@ -118,6 +118,28 @@ void main() {
         expect(await OfflineService.getCooldownEndTime(), isNull);
       },
     );
+
+    test(
+      'savePendingEvidence, getPendingEvidence, and clearPendingEvidence delegates correctly',
+      () async {
+        expect(await OfflineService.getPendingEvidence(), isNull);
+
+        await OfflineService.savePendingEvidence(
+          frontPath: '/tmp/test_front.jpg',
+          rearPath: '/tmp/test_rear.jpg',
+          audioPath: '/tmp/test_audio.m4a',
+        );
+
+        final pending = await OfflineService.getPendingEvidence();
+        expect(pending, isNotNull);
+        expect(pending!['front_path'], equals('/tmp/test_front.jpg'));
+        expect(pending['rear_path'], equals('/tmp/test_rear.jpg'));
+        expect(pending['audio_path'], equals('/tmp/test_audio.m4a'));
+
+        await OfflineService.clearPendingEvidence();
+        expect(await OfflineService.getPendingEvidence(), isNull);
+      },
+    );
   });
 
   group('OfflineService Cancellation Purge Scenario', () {

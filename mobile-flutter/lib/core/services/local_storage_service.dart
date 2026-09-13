@@ -63,6 +63,7 @@ class LocalStorageService {
   static const String _keyCooldownEndTime = 'sos_cooldown_end_time';
   static const String _keyLastCancelledIncidentId =
       'last_cancelled_incident_id';
+  static const String _keyPendingEvidence = 'pending_evidence';
 
   static Future<void> savePendingSOS({
     required String localId,
@@ -151,6 +152,38 @@ class LocalStorageService {
 
   static Future<void> clearCooldownEndTime() async {
     await _sosQueueBox?.delete(_keyCooldownEndTime);
+  }
+
+  static Future<void> savePendingEvidence({
+    required String frontPath,
+    required String rearPath,
+    required String audioPath,
+  }) async {
+    final data = <String, dynamic>{
+      'front_path': frontPath,
+      'rear_path': rearPath,
+      'audio_path': audioPath,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+    await _sosQueueBox?.put(_keyPendingEvidence, data);
+  }
+
+  static Map<String, dynamic>? getPendingEvidence() {
+    final val = _sosQueueBox?.get(_keyPendingEvidence);
+    if (val == null) return null;
+    if (val is Map) {
+      return Map<String, dynamic>.from(val);
+    }
+    if (val is String) {
+      try {
+        return jsonDecode(val) as Map<String, dynamic>;
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  static Future<void> clearPendingEvidence() async {
+    await _sosQueueBox?.delete(_keyPendingEvidence);
   }
 
   // ─── Incident Cache ─────────────────────────────────────────────────────────

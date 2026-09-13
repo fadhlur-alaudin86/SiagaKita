@@ -84,4 +84,26 @@ class OfflineService {
   static Future<void> clearCooldownEndTime() async {
     await LocalStorageService.clearCooldownEndTime();
   }
+
+  // ─── Pending Evidence ────────────────────────────────────────────────────
+
+  static Future<void> savePendingEvidence({
+    required String frontPath,
+    required String rearPath,
+    required String audioPath,
+  }) async {
+    await LocalStorageService.savePendingEvidence(
+      frontPath: frontPath,
+      rearPath: rearPath,
+      audioPath: audioPath,
+    );
+  }
+
+  static Future<Map<String, dynamic>?> getPendingEvidence() async {
+    return LocalStorageService.getPendingEvidence();
+  }
+
+  static Future<void> clearPendingEvidence() async {
+    await LocalStorageService.clearPendingEvidence();
+  }
 }

@@ -450,6 +450,11 @@ class _HomeScreenState extends State<HomeScreen>
     } else if (_sosPhase == 'idle') {
       _checkActiveIncident();
     }
+
+    // 3. Jika SOS aktif dan sudah diakui oleh server, kirim bukti yang tersisa di spool
+    if (_sosUploadStatus == 'sent' && _activeIncident != null) {
+      _uploadSpooledEvidence(_activeIncident!.incidentId);
+    }
   }
 
   // ─── Check active incident on load ──────────────────────────────────────────
@@ -1077,6 +1082,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       if (wasCancelled) {
+        await _purgeSpooledEvidenceFiles();
         IncidentService.cancelSOS(
               accessToken: widget.accessToken,
               incidentId: serverId,
@@ -1089,6 +1095,9 @@ class _HomeScreenState extends State<HomeScreen>
               OfflineService.savePendingCancelSOS(serverId);
             });
         _cancelledLocalId = null;
+      } else {
+        // Upload spooled evidence jika ada bukti yang direkam saat offline
+        _uploadSpooledEvidence(serverId);
       }
     } on SOSBannedException catch (e) {
       OfflineService.clearPendingSOS();
@@ -1314,14 +1323,124 @@ class _HomeScreenState extends State<HomeScreen>
       // Mikrofon tidak tersedia atau ditolak
     }
 
-    // 4. Upload ke server (best-effort, tidak memblokir UI)
-    await IncidentService.uploadEvidence(
-      accessToken: widget.accessToken,
-      incidentId: incidentId,
-      photoFile: frontPhotoFile,
-      rearPhotoFile: rearPhotoFile,
-      audioFile: audioFile,
-    );
+    // 4. Periksa apakah insiden sudah diakui oleh server dan koneksi aktif
+    final bool isServerConfirmed =
+        _sosUploadStatus == 'sent' &&
+        _activeIncident != null &&
+        _activeIncident!.incidentId == incidentId &&
+        ConnectivityService.isOnline.value;
+
+    if (!isServerConfirmed) {
+      // Spool evidence paths secara lokal agar tidak mengirim ID sementara ke server
+      await OfflineService.savePendingEvidence(
+        frontPath: frontPhotoFile?.path ?? '',
+        rearPath: rearPhotoFile?.path ?? '',
+        audioPath: audioFile?.path ?? '',
+      );
+      return;
+    }
+
+    // 5. Upload ke server jika ID server valid dan terhubung
+    try {
+      await IncidentService.uploadEvidence(
+        accessToken: widget.accessToken,
+        incidentId: incidentId,
+        photoFile: frontPhotoFile,
+        rearPhotoFile: rearPhotoFile,
+        audioFile: audioFile,
+      );
+    } catch (_) {
+      // Jika upload gagal, spool ke local storage untuk retry
+      await OfflineService.savePendingEvidence(
+        frontPath: frontPhotoFile?.path ?? '',
+        rearPath: rearPhotoFile?.path ?? '',
+        audioPath: audioFile?.path ?? '',
+      );
+    }
+  }
+
+  Future<void> _uploadSpooledEvidence(String serverId) async {
+    if (!ConnectivityService.isOnline.value) return;
+    try {
+      final pending = await OfflineService.getPendingEvidence();
+      if (pending == null) return;
+
+      final frontPath = pending['front_path'] as String?;
+      final rearPath = pending['rear_path'] as String?;
+      final audioPath = pending['audio_path'] as String?;
+
+      final frontFile =
+          (frontPath != null &&
+              frontPath.isNotEmpty &&
+              File(frontPath).existsSync())
+          ? File(frontPath)
+          : null;
+      final rearFile =
+          (rearPath != null &&
+              rearPath.isNotEmpty &&
+              File(rearPath).existsSync())
+          ? File(rearPath)
+          : null;
+      final audioFile =
+          (audioPath != null &&
+              audioPath.isNotEmpty &&
+              File(audioPath).existsSync())
+          ? File(audioPath)
+          : null;
+
+      if (frontFile == null && rearFile == null && audioFile == null) {
+        await OfflineService.clearPendingEvidence();
+        return;
+      }
+
+      await IncidentService.uploadEvidence(
+        accessToken: widget.accessToken,
+        incidentId: serverId,
+        photoFile: frontFile,
+        rearPhotoFile: rearFile,
+        audioFile: audioFile,
+      );
+
+      await OfflineService.clearPendingEvidence();
+
+      try {
+        if (frontFile != null && await frontFile.exists()) {
+          await frontFile.delete();
+        }
+        if (rearFile != null && await rearFile.exists()) {
+          await rearFile.delete();
+        }
+        if (audioFile != null && await audioFile.exists()) {
+          await audioFile.delete();
+        }
+      } catch (_) {}
+    } catch (_) {
+      /* tetap tersimpan di pending evidence untuk retry berikutnya */
+    }
+  }
+
+  Future<void> _purgeSpooledEvidenceFiles() async {
+    try {
+      final pending = await OfflineService.getPendingEvidence();
+      if (pending != null) {
+        final frontPath = pending['front_path'] as String?;
+        final rearPath = pending['rear_path'] as String?;
+        final audioPath = pending['audio_path'] as String?;
+        if (frontPath != null && frontPath.isNotEmpty) {
+          final f = File(frontPath);
+          if (f.existsSync()) f.deleteSync();
+        }
+        if (rearPath != null && rearPath.isNotEmpty) {
+          final f = File(rearPath);
+          if (f.existsSync()) f.deleteSync();
+        }
+        if (audioPath != null && audioPath.isNotEmpty) {
+          final f = File(audioPath);
+          if (f.existsSync()) f.deleteSync();
+        }
+      }
+    } catch (_) {}
+    await OfflineService.clearPendingEvidence();
   }
 
   // ─── Fast Status Polling (setiap 10 detik saat SOS aktif) ─────────────────
@@ -1842,6 +1961,7 @@ class _HomeScreenState extends State<HomeScreen>
       await OfflineService.clearPendingSOS();
       await OfflineService.clearPendingIncidentType();
       await OfflineService.clearPendingCancelSOS();
+      await _purgeSpooledEvidenceFiles();
       _cancelledLocalId = null;
 
       if (mounted) {
@@ -1871,6 +1991,7 @@ class _HomeScreenState extends State<HomeScreen>
     // ── KASUS 2: SOS sudah pernah masuk server dan memiliki ID server valid ──
     _userInitiatedCancel = true;
     await OfflineService.saveLastCancelledIncidentId(incidentId);
+    await _purgeSpooledEvidenceFiles();
 
     if (mounted) {
       setState(() {

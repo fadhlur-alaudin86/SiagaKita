@@ -116,6 +116,29 @@ void main() {
         expect(LocalStorageService.getLastCancelledIncidentId(), isNull);
       },
     );
+
+    test(
+      'savePendingEvidence, getPendingEvidence, and clearPendingEvidence',
+      () async {
+        expect(LocalStorageService.getPendingEvidence(), isNull);
+
+        await LocalStorageService.savePendingEvidence(
+          frontPath: '/data/user/0/cache/front.jpg',
+          rearPath: '/data/user/0/cache/rear.jpg',
+          audioPath: '/data/user/0/cache/audio.m4a',
+        );
+
+        final evidence = LocalStorageService.getPendingEvidence();
+        expect(evidence, isNotNull);
+        expect(evidence!['front_path'], equals('/data/user/0/cache/front.jpg'));
+        expect(evidence['rear_path'], equals('/data/user/0/cache/rear.jpg'));
+        expect(evidence['audio_path'], equals('/data/user/0/cache/audio.m4a'));
+        expect(evidence['timestamp'], isNotNull);
+
+        await LocalStorageService.clearPendingEvidence();
+        expect(LocalStorageService.getPendingEvidence(), isNull);
+      },
+    );
   });
 
   group('Incident Cache & TTL', () {
