@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'notification_service.dart';
 
 /// SessionService manages encrypted persistence of JWT tokens, user metadata,
