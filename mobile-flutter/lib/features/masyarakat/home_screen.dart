@@ -75,8 +75,10 @@ class _HomeScreenState extends State<HomeScreen>
   ActiveIncident? _activeIncident;
   bool _showSOSSentBanner = false;
   Timer? _locationUpdateTimer;
-  Timer? _statusCheckTimer; // polling cepat (10 detik) khusus saat SOS aktif
+  Timer?
+  _statusCheckTimer; // polling cepat adaptif (3 detik) khusus saat SOS aktif
   bool _isLoadingActiveIncident = true;
+  bool _userInitiatedCancel = false;
 
   // ─── Telemetri SOS (Tahap 4) ──────────────────────────────────────────────────
   int _nextUpdateCountdown =
@@ -401,10 +403,29 @@ class _HomeScreenState extends State<HomeScreen>
   void _onConnectivityChanged() async {
     if (!ConnectivityService.isOnline.value) return;
 
-    // Jika internet kembali aktif, segera retry upload SOS offline
-    if (_pendingIncidentId != null && _sosUploadStatus == 'sending') {
-      final pendingSos = await OfflineService.getPendingSOS();
-      if (pendingSos != null && pendingSos['local_id'] == _pendingIncidentId) {
+    // 1. Prioritas Utama: Selesaikan pembatalan pending SEBELUM memeriksa active incident
+    final pendingCancel = await OfflineService.getPendingCancelSOS();
+    if (pendingCancel != null) {
+      try {
+        await IncidentService.cancelSOS(
+          accessToken: widget.accessToken,
+          incidentId: pendingCancel,
+        );
+        await OfflineService.clearPendingCancelSOS();
+      } catch (e) {
+        if (e is SOSConflictException || e.toString().contains('409')) {
+          await OfflineService.clearPendingCancelSOS();
+        }
+      }
+    }
+
+    // 2. Jika internet kembali aktif, segera retry upload SOS offline HANYA JIKA SOS MASIH AKTIF
+    final pendingSos = await OfflineService.getPendingSOS();
+    if (_pendingIncidentId != null &&
+        _sosPhase != 'idle' &&
+        _sosUploadStatus == 'sending' &&
+        pendingSos != null) {
+      if (pendingSos['local_id'] == _pendingIncidentId) {
         _attemptSOSUpload(
           lat: pendingSos['latitude'] as double,
           lng: pendingSos['longitude'] as double,
@@ -436,9 +457,16 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _checkActiveIncident() async {
     setState(() => _isLoadingActiveIncident = true);
 
-    // Cek apakah ada SOS pending di offline cache (sebelum hit API)
+    // Cek apakah ada cancel SOS pending
+    final pendingCancel = await OfflineService.getPendingCancelSOS();
+    final lastCancelled = OfflineService.getLastCancelledIncidentId();
+    if (pendingCancel != null) {
+      _attemptSOSCancelBackground(pendingCancel);
+    }
+
+    // Cek apakah ada SOS pending di offline cache (hanya jika TIDAK sedang dalam status pembatalan)
     final pendingSos = await OfflineService.getPendingSOS();
-    if (pendingSos != null) {
+    if (pendingSos != null && pendingCancel == null) {
       final localId = pendingSos['local_id'] as String;
       final lat = pendingSos['latitude'] as double;
       final lng = pendingSos['longitude'] as double;
@@ -474,21 +502,30 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
-    // Cek apakah ada cancel SOS pending
-    final pendingCancel = await OfflineService.getPendingCancelSOS();
-    if (pendingCancel != null) {
-      _attemptSOSCancelBackground(pendingCancel);
-    }
-
     try {
       final active = await IncidentService.getActive(
         accessToken: widget.accessToken,
       );
       if (mounted) {
+        // GUARD: Jika server mengembalikan insiden aktif, tetapi insiden ini
+        // telah dibatalkan oleh user (matches pendingCancel atau lastCancelled),
+        // JANGAN hidupkan kembali UI atau getaran!
+        if (active != null &&
+            (active.incidentId == pendingCancel ||
+                active.incidentId == lastCancelled)) {
+          setState(() {
+            _activeIncident = null;
+            _isLoadingActiveIncident = false;
+            _sosPhase = 'idle';
+            _sosUploadStatus = 'idle';
+          });
+          return;
+        }
+
         setState(() {
           _activeIncident = active;
           _isLoadingActiveIncident = false;
-          // Jika ada active dari server, berari pending offline sudah sinkron atau tidak relevan
+          // Jika ada active dari server, berarti pending offline sudah sinkron atau tidak relevan
           if (active != null && pendingSos != null) {
             OfflineService.clearPendingSOS();
             _pendingIncidentId = null;
@@ -556,7 +593,9 @@ class _HomeScreenState extends State<HomeScreen>
             _lastLocationUpdate = now;
             _sosTransmitting = true;
             _nextUpdateCountdown = 3;
-            // Jangan set _sosUploadStatus di sini — hanya dari polling status
+            if (_sosUploadStatus == 'sending') {
+              _sosUploadStatus = 'sent';
+            }
           });
         }
       } catch (_) {
@@ -1261,7 +1300,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _startStatusPolling() {
     _statusCheckTimer?.cancel();
-    _statusCheckTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    _statusCheckTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
       if (!mounted || _activeIncident == null) return;
       try {
         final active = await IncidentService.getActive(
@@ -1271,6 +1310,17 @@ class _HomeScreenState extends State<HomeScreen>
         if (active == null) {
           _stopVibration();
           _stopLocationUpdates();
+          final currentIncidentId = _activeIncident?.incidentId;
+          final lastCancelled = OfflineService.getLastCancelledIncidentId();
+          final isUserCancelled =
+              _userInitiatedCancel ||
+              (currentIncidentId != null && currentIncidentId == lastCancelled);
+
+          _userInitiatedCancel = false;
+          if (currentIncidentId != null && currentIncidentId == lastCancelled) {
+            OfflineService.clearLastCancelledIncidentId();
+          }
+
           setState(() {
             _activeIncident = null;
             _sosPhase = 'idle';
@@ -1288,7 +1338,11 @@ class _HomeScreenState extends State<HomeScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Status SOS telah diselesaikan oleh instansi.'.tr(context),
+                  isUserCancelled
+                      ? 'Panggilan SOS telah dibatalkan.'.tr(context)
+                      : 'Status SOS telah diselesaikan oleh instansi.'.tr(
+                          context,
+                        ),
                 ),
                 backgroundColor: Colors.green,
                 duration: const Duration(seconds: 5),
@@ -1741,14 +1795,54 @@ class _HomeScreenState extends State<HomeScreen>
     final incidentId = _activeIncident?.incidentId ?? _pendingIncidentId;
     if (incidentId == null) return;
 
-    if (_sosUploadStatus == 'sending') {
-      _cancelledLocalId = _pendingIncidentId;
-    }
-
     final isOnline = ConnectivityService.isOnline.value;
+
+    // Cek apakah insiden ini murni lokal (belum pernah sukses diakui oleh server)
+    final bool isLocalOnly =
+        _sosUploadStatus == 'sending' ||
+        (_pendingIncidentId != null && _sosUploadStatus != 'sent');
 
     _stopVibration();
     _stopLocationUpdates();
+    _sosRetryTimer?.cancel();
+    _graceTimer?.cancel();
+    _statusCheckTimer?.cancel();
+
+    if (isLocalOnly) {
+      // ── KASUS 1: SOS offline/belum terkirim dibatalkan sebelum masuk server ──
+      // Bersihkan antrean lokal sepenuhnya dan batalkan timer. Jangan kirim ke server!
+      await OfflineService.clearPendingSOS();
+      await OfflineService.clearPendingIncidentType();
+      await OfflineService.clearPendingCancelSOS();
+      _cancelledLocalId = null;
+
+      if (mounted) {
+        setState(() {
+          _activeIncident = null;
+          _sosPhase = 'idle';
+          _sosUploadStatus = 'idle';
+          _tapCount = 0;
+          _volunteerPosition = null;
+          _pendingIncidentId = null;
+          _isTriggeringSOS = false;
+        });
+        UserModel.currentUser.value = UserModel.currentUser.value.copyWith(
+          isSOSActive: false,
+        );
+        _startCooldown();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Panggilan SOS telah dibatalkan.'.tr(context)),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+      return;
+    }
+
+    // ── KASUS 2: SOS sudah pernah masuk server dan memiliki ID server valid ──
+    _userInitiatedCancel = true;
+    await OfflineService.saveLastCancelledIncidentId(incidentId);
 
     if (mounted) {
       setState(() {
@@ -1777,7 +1871,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     if (!isOnline) {
-      OfflineService.savePendingCancelSOS(incidentId);
+      await OfflineService.savePendingCancelSOS(incidentId);
       _attemptSOSCancelBackground(incidentId);
       return;
     }
@@ -1787,16 +1881,24 @@ class _HomeScreenState extends State<HomeScreen>
         accessToken: widget.accessToken,
         incidentId: incidentId,
       );
-    } catch (_) {
-      OfflineService.savePendingCancelSOS(incidentId);
-      _attemptSOSCancelBackground(incidentId);
+      await OfflineService.clearPendingCancelSOS();
+    } catch (e) {
+      if (e is SOSConflictException || e.toString().contains('409')) {
+        await OfflineService.clearPendingCancelSOS();
+      } else {
+        await OfflineService.savePendingCancelSOS(incidentId);
+        _attemptSOSCancelBackground(incidentId);
+      }
     }
   }
 
   void _attemptSOSCancelBackground(String incidentId) async {
     bool isCanceled = false;
     while (!isCanceled) {
-      await Future.delayed(const Duration(seconds: 5));
+      if (!ConnectivityService.isOnline.value) {
+        await Future.delayed(const Duration(seconds: 2));
+        continue;
+      }
       try {
         await IncidentService.cancelSOS(
           accessToken: widget.accessToken,
@@ -1804,8 +1906,14 @@ class _HomeScreenState extends State<HomeScreen>
         );
         await OfflineService.clearPendingCancelSOS();
         isCanceled = true;
-      } catch (_) {
-        // Abaikan, loop terus tiap 5 detik
+      } catch (e) {
+        // Hentikan infinite loop jika status HTTP 409 Conflict (sudah batal/selesai)
+        if (e is SOSConflictException || e.toString().contains('409')) {
+          await OfflineService.clearPendingCancelSOS();
+          isCanceled = true;
+          break;
+        }
+        await Future.delayed(const Duration(seconds: 3));
       }
     }
   }
