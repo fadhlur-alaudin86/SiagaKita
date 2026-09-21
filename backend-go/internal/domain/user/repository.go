@@ -434,12 +434,18 @@ func (r *Repository) SubmitVolunteerRegistration(userID string, experience strin
 			return err
 		}
 
-		// Insert setiap sertifikat
-		for _, cert := range certs {
-			if err := tx.Exec(`
-				INSERT INTO volunteer_certifications (user_id, certificate_type, document_url, status)
-				VALUES (?, ?, ?, 'pending')
-			`, userID, cert["type"], cert["url"]).Error; err != nil {
+		// Batch insert sertifikat jika ada
+		if len(certs) > 0 {
+			entities := make([]VolunteerCertification, 0, len(certs))
+			for _, cert := range certs {
+				entities = append(entities, VolunteerCertification{
+					UserID:          userID,
+					CertificateType: cert["type"],
+					DocumentURL:     cert["url"],
+					Status:          string(KYCStatusPending),
+				})
+			}
+			if err := tx.Create(&entities).Error; err != nil {
 				return err
 			}
 		}
