@@ -1,7 +1,8 @@
 # Database Entity-Relationship Diagram (ERD) — SiagaKita
 
-> **Active Schema:** Schema v12 (PostgreSQL 15)  
-> **Documentation Source:** [`docs/DATABASE_SCHEMA.md`](../DATABASE_SCHEMA.md)
+> **Active Schema:** Schema v13 (PostgreSQL 15)  
+> **Documentation Source:** [`docs/DATABASE_SCHEMA.md`](../DATABASE_SCHEMA.md)  
+> **Architecture Invariant:** As of Schema v13 (Migration 021), all state machine, category, status, and role columns use domain-constrained `VARCHAR` with explicit SQL `CHECK` constraints instead of PostgreSQL ENUM types for zero-downtime deployment safety.
 
 ---
 
@@ -16,7 +17,7 @@ erDiagram
         uuid id PK "gen_random_uuid()"
         varchar email UK "Unique lowercase email"
         varchar password_hash "Bcrypt hash (cost 10)"
-        user_role role "superadmin, admin, agency, agency_personnel, volunteer, civilian"
+        varchar role "superadmin, admin, agency, agency_personnel, volunteer, civilian"
         boolean is_active "Default true"
         boolean is_email_verified "Default false"
         boolean is_phone_verified "Default false"
@@ -34,7 +35,7 @@ erDiagram
         varchar kyc_ktp_url "KTP photo URL"
         boolean is_verified_volunteer "Auto-updated via trigger on cert approval"
         text volunteer_experience
-        blood_type_enum blood_type "A, B, AB, O, UNKNOWN"
+        varchar blood_type "A, B, AB, O, UNKNOWN"
         text allergies
         text medical_conditions
         varchar emergency_contact_name
@@ -78,7 +79,7 @@ erDiagram
         uuid id PK "gen_random_uuid()"
         uuid account_id UK, FK "References users(id) - agency login"
         varchar name "e.g., Polsek Tebet, Damkar Jaksel"
-        agency_type type "police, fire, medical, sar"
+        varchar type "police, fire, medical, sar"
         varchar city_code "Kemendagri regional code"
         varchar hotline_number
         float8 latitude "Base coordinates"
@@ -104,10 +105,10 @@ erDiagram
     incidents {
         uuid id PK "gen_random_uuid()"
         uuid reporter_id FK "References users(id)"
-        incident_category incident_type "'medical', 'fire', 'crime', 'rescue', 'general', 'unknown'"
+        varchar incident_type "'medical', 'fire', 'crime', 'rescue', 'general', 'unknown'"
         float8 latitude "GPS Coordinate"
         float8 longitude "GPS Coordinate"
-        incident_status status "'grace_period', 'broadcasting', 'handled', 'resolved', 'false_alarm', 'canceled'"
+        varchar status "'grace_period', 'broadcasting', 'handled', 'resolved', 'false_alarm', 'canceled'"
         text address_detail
         varchar reporter_trust_label "'verified', 'standard', 'unverified'"
         varchar urgency_level "'critical', 'high', 'medium'"
@@ -124,7 +125,7 @@ erDiagram
         uuid id PK "gen_random_uuid()"
         uuid incident_id FK "References incidents(id)"
         uuid responder_id FK "References users(id)"
-        response_status status "'en_route', 'on_scene', 'waiting_review', 'completed', 'canceled', 'rejected'"
+        varchar status "'en_route', 'on_scene', 'waiting_review', 'completed', 'canceled', 'rejected'"
         timestamptz accepted_at
         timestamptz completed_at
         text proof_photo_url "Mission completion proof"
@@ -136,7 +137,7 @@ erDiagram
     incident_reports {
         uuid id PK "gen_random_uuid()"
         uuid reporter_id FK "References users(id)"
-        incident_category incident_type "'medical', 'fire', 'crime', 'rescue', 'general'"
+        varchar incident_type "'medical', 'fire', 'crime', 'rescue', 'general'"
         int urgency_level "0=low, 1=medium, 2=critical"
         float8 latitude
         float8 longitude
@@ -167,7 +168,7 @@ erDiagram
         uuid user_id FK "References users(id)"
         varchar certificate_type "PMI, BASARNAS, Damkar, etc."
         text document_url
-        cert_status status "'pending', 'approved', 'rejected', 'expired'"
+        varchar status "'pending', 'approved', 'rejected', 'expired'"
         uuid verified_by FK "References users(id) - admin verifier"
         timestamptz verified_at
         text rejection_reason

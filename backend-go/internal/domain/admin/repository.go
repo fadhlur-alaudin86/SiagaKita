@@ -10,6 +10,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+
+	"siagakita-backend/internal/domain/user"
 )
 
 // Repository handles all DB operations for the admin domain.
@@ -45,18 +47,18 @@ func (r *Repository) GetPendingKYC() ([]VolunteerKYC, error) {
 		FROM users u
 		JOIN user_profiles p ON p.user_id = u.id
 		JOIN volunteer_certifications vc ON vc.user_id = u.id
-		WHERE vc.status = 'pending'
+		WHERE vc.status = ?
 		  AND u.deleted_at IS NULL
 		GROUP BY u.id, u.email, p.full_name, p.phone_number, p.nik, p.kyc_ktp_url, p.volunteer_experience
 		ORDER BY submitted_at ASC
-	`).Scan(&rows).Error
+	`, user.KYCStatusPending).Scan(&rows).Error
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]VolunteerKYC, 0, len(rows))
 	for _, r2 := range rows {
-		certs, err := r.getCertsForUser(r2.UserID, "pending")
+		certs, err := r.getCertsForUser(r2.UserID, string(user.KYCStatusPending))
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +71,7 @@ func (r *Repository) GetPendingKYC() ([]VolunteerKYC, error) {
 			NIKPhotoURL:         r2.NIKPhotoURL,
 			VolunteerExperience: r2.VolunteerExperience,
 			Certs:               certs,
-			KYCStatus:           "pending",
+			KYCStatus:           string(user.KYCStatusPending),
 			SubmittedAt:         r2.SubmittedAt,
 		})
 	}
@@ -109,7 +111,7 @@ func (r *Repository) ApproveKYC(userID, verifiedBy string) error {
 		// 1. Cek apakah ada sertifikat pending untuk user ini
 		var count int64
 		if err := tx.Table("volunteer_certifications").
-			Where("user_id = ? AND status = 'pending'", userID).
+			Where("user_id = ? AND status = ?", userID, user.KYCStatusPending).
 			Count(&count).Error; err != nil {
 			return err
 		}
@@ -120,9 +122,9 @@ func (r *Repository) ApproveKYC(userID, verifiedBy string) error {
 		// 2. Approve semua sertifikat pending
 		if err := tx.Exec(`
 			UPDATE volunteer_certifications
-			SET status = 'approved', verified_by = ?
-			WHERE user_id = ? AND status = 'pending'
-		`, verifiedBy, userID).Error; err != nil {
+			SET status = ?, verified_by = ?
+			WHERE user_id = ? AND status = ?
+		`, user.KYCStatusApproved, verifiedBy, userID, user.KYCStatusPending).Error; err != nil {
 			return err
 		}
 		// 3. Tandai profil sebagai relawan terverifikasi
@@ -152,7 +154,7 @@ func (r *Repository) RejectKYC(userID, verifiedBy, reason string) error {
 		// 1. Cek apakah ada sertifikat pending untuk user ini
 		var count int64
 		if err := tx.Table("volunteer_certifications").
-			Where("user_id = ? AND status = 'pending'", userID).
+			Where("user_id = ? AND status = ?", userID, user.KYCStatusPending).
 			Count(&count).Error; err != nil {
 			return err
 		}
@@ -165,9 +167,9 @@ func (r *Repository) RejectKYC(userID, verifiedBy, reason string) error {
 		_ = reason // will be used when we add rejection_reason column
 		return tx.Exec(`
 			UPDATE volunteer_certifications
-			SET status = 'rejected', verified_by = ?
-			WHERE user_id = ? AND status = 'pending'
-		`, verifiedBy, userID).Error
+			SET status = ?, verified_by = ?
+			WHERE user_id = ? AND status = ?
+		`, user.KYCStatusRejected, verifiedBy, userID, user.KYCStatusPending).Error
 	})
 }
 
@@ -412,10 +414,10 @@ func (r *Repository) GetPendingWargaKYC() ([]WargaKYCItem, error) {
 		       p.updated_at AS submitted_at
 		FROM users u
 		JOIN user_profiles p ON p.user_id = u.id
-		WHERE p.nik_verification_status = 'pending'
+		WHERE p.nik_verification_status = ?
 		  AND u.deleted_at IS NULL
 		ORDER BY p.updated_at ASC
-	`).Scan(&rows).Error
+	`, user.KYCStatusPending).Scan(&rows).Error
 	return rows, err
 }
 
@@ -423,18 +425,18 @@ func (r *Repository) GetPendingWargaKYC() ([]WargaKYCItem, error) {
 func (r *Repository) ApproveWargaKYC(userID string) error {
 	return r.db.Exec(`
 		UPDATE user_profiles
-		SET nik_verification_status = 'approved', updated_at = NOW()
-		WHERE user_id = ? AND nik_verification_status = 'pending'
-	`, userID).Error
+		SET nik_verification_status = ?, updated_at = NOW()
+		WHERE user_id = ? AND nik_verification_status = ?
+	`, user.KYCStatusApproved, userID, user.KYCStatusPending).Error
 }
 
 // RejectWargaKYC menolak verifikasi NIK warga.
 func (r *Repository) RejectWargaKYC(userID string) error {
 	return r.db.Exec(`
 		UPDATE user_profiles
-		SET nik_verification_status = 'rejected', updated_at = NOW()
-		WHERE user_id = ? AND nik_verification_status = 'pending'
-	`, userID).Error
+		SET nik_verification_status = ?, updated_at = NOW()
+		WHERE user_id = ? AND nik_verification_status = ?
+	`, user.KYCStatusRejected, userID, user.KYCStatusPending).Error
 }
 
 // ─── Agency & Admin Listings ──────────────────────────────────────────────────
