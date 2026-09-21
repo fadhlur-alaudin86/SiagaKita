@@ -1,5 +1,9 @@
 package admin
 
+// Purpose: Database persistence for administrative operations including KYC queues, user listings, and system audit trails.
+// Data & Logic Flow: Queries multi-table relational joins, updates profile verification statuses, and creates audit records within transactions.
+// Key Components: Repository struct, GetPendingVolunteers, ReviewVolunteer, GetUsers, UpdateUserRole, LogAudit.
+
 import (
 	"fmt"
 	"time"

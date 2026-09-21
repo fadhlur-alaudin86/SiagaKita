@@ -1,3 +1,7 @@
+// Purpose: Primary civilian citizen home screen managing live SOS countdowns, active emergency tracking, telemetry, and quick-action emergency reporting.
+// Data & Logic Flow: Listens to LocationController and MobileWSService streams, triggers panic/SOS sequences via IncidentService, coordinates background sensors, and displays active incident tracking widgets.
+// Key Components: HomeScreen StatefulWidget, _HomeScreenState, SOS active monitoring and countdown flows.
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

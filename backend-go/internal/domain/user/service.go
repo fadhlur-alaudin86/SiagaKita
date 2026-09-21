@@ -1,5 +1,9 @@
 package user
 
+// Purpose: User management, authentication, profile updates, and role workflows across civilians, volunteers, and personnel.
+// Data & Logic Flow: Validates user registration/login inputs, manages password hashing and JWT sessions, coordinates OTP verification, and delegates DB operations to Repository.
+// Key Components: Service struct, Register, Login, ChangePassword, UpdateProfile, UploadAvatar, SubmitVolunteerApplication.
+
 import (
 	"context"
 	"errors"
@@ -60,9 +64,14 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 	existingUser, err := s.repo.FindByEmail(req.Email)
 	if err == nil {
 		// Jika email ada tapi BELUM verified (karena timeout OTP sebelumnya), hapus yang lama
-		profile, _ := s.repo.FindProfile(existingUser.ID)
+		profile, profileErr := s.repo.FindProfile(existingUser.ID)
+		if profileErr != nil && !errors.Is(profileErr, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("gagal memeriksa profil user: %w", profileErr)
+		}
 		if profile != nil && !profile.IsEmailVerified {
-			_ = s.repo.DeleteUserByEmail(req.Email)
+			if delErr := s.repo.DeleteUserByEmail(req.Email); delErr != nil {
+				return nil, fmt.Errorf("gagal menghapus akun belum terverifikasi sebelumnya: %w", delErr)
+			}
 		} else {
 			return nil, errors.New("email sudah terdaftar")
 		}
@@ -92,7 +101,9 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 	// Kirim OTP ke email SETELAH transaksi DB commit.
 	// Jika gagal → hard-delete user (ON DELETE CASCADE menghapus user_profiles).
 	if err := s.otpSvc.RequestEmailOTP(ctx, req.Email, "register"); err != nil {
-		_ = s.repo.DeleteUserByEmail(req.Email) // cascade delete user_profiles
+		if delErr := s.repo.DeleteUserByEmail(req.Email); delErr != nil {
+			utils.Error().Err(delErr).Str("email", req.Email).Msg("Failed to rollback user creation after OTP email dispatch failure")
+		}
 		return nil, fmt.Errorf("gagal mengirim OTP ke email: %w", err)
 	}
 

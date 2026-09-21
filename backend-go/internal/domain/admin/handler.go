@@ -1,5 +1,9 @@
 package admin
 
+// Purpose: Administrative endpoints for volunteer KYC verification, user access management, and dispatch auditing.
+// Data & Logic Flow: Enforces Admin role verification, executes administrative review operations via Service, and logs audit events.
+// Key Components: Handler struct, GetPendingVolunteers, ReviewVolunteer, GetUsers, UpdateUserRole, BanUserFromSOS.
+
 import (
 	"errors"
 	"fmt"

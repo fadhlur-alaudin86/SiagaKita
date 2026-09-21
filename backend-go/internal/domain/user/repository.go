@@ -1,5 +1,9 @@
 package user
 
+// Purpose: Data persistence layer for user identities, profiles, volunteer badges, emergency contacts, and audit logs.
+// Data & Logic Flow: Executes relational GORM queries, handles database transactions, and manages upsert operations for profile records.
+// Key Components: Repository struct, FindByEmail, FindProfile, CreateUserWithProfile, UpdateProfile, GetEmergencyContacts.
+
 import (
 	"fmt"
 	"time"

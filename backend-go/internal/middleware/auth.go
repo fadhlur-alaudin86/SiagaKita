@@ -168,8 +168,11 @@ func BanCheck(db *gorm.DB) fiber.Handler {
 		if row.IsSOSBanned {
 			// Jika ban sementara dan masa berlakunya sudah lewat, unban otomatis
 			if row.BannedUntil != nil && time.Now().After(*row.BannedUntil) {
-				_ = db.Exec("UPDATE user_profiles SET is_sos_banned = FALSE, banned_until = NULL WHERE user_id = ?", userID).Error
-				return c.Next()
+				if err := db.Exec("UPDATE user_profiles SET is_sos_banned = FALSE, banned_until = NULL WHERE user_id = ?", userID).Error; err != nil {
+					utils.Warn().Err(err).Str("userID", userID).Msg("Failed to auto-lift expired SOS ban")
+				} else {
+					return c.Next()
+				}
 			}
 			return utils.ErrorResponse(c, fiber.StatusForbidden, "Akun Anda saat ini diblokir dari fitur SOS. Hubungi admin.")
 		}

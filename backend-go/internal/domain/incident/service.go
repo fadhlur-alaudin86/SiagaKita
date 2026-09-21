@@ -1,5 +1,9 @@
 package incident
 
+// Purpose: Core business logic orchestrator for emergency incident lifecycles, SOS triggers, response assignments, and volunteer XP gamification.
+// Data & Logic Flow: Receives validated domain requests from Handler, manages transaction boundaries and distributed locking via Redis, coordinates notifications, and persists updates via Repository.
+// Key Components: Service struct, TriggerSOS, UpdateIncidentType, CancelIncident, ResolveIncident, AgencyReviewVolunteer.
+
 import (
 	"context"
 	"errors"

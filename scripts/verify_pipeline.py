@@ -317,7 +317,86 @@ def check_code_formatting(repo_root, fix=False):
     # 4.3 Clean Text & Icon Minimization Audit
     clean_text_passed = check_clean_text_hygiene(repo_root)
 
-    return all_passed and clean_text_passed
+    # 4.4 Architecture Header Audit (Rule F)
+    arch_headers_passed = check_architecture_headers(repo_root)
+
+    return all_passed and clean_text_passed and arch_headers_passed
+
+
+def check_architecture_headers(repo_root):
+    """Verifies that non-trivial Go domain files and modified client feature files (>300 lines) feature architecture headers (Rule F)."""
+    print("\n[INFO] Auditing Architecture Headers (Rule F)...")
+    domain_dir = os.path.join(repo_root, "backend-go", "internal", "domain")
+    violations = []
+    if os.path.exists(domain_dir):
+        for root, _, files in os.walk(domain_dir):
+            for f in files:
+                if f.endswith(".go") and not f.endswith("_test.go"):
+                    fpath = os.path.join(root, f)
+                    with open(fpath, "r", encoding="utf-8", errors="ignore") as file:
+                        lines = file.readlines()
+                    if len(lines) > 300 and not any("Purpose:" in l for l in lines[:15]):
+                        rel = os.path.relpath(fpath, repo_root)
+                        violations.append(f"{rel} ({len(lines)} lines)")
+
+    # Also audit modified or staged client Dart files (>300 lines)
+    try:
+        diff_res = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD"],
+            cwd=repo_root, capture_output=True, text=True
+        )
+        if diff_res.returncode == 0:
+            for rel in diff_res.stdout.splitlines():
+                if "features/" in rel and rel.endswith(".dart") and not rel.endswith("_test.dart"):
+                    fpath = os.path.join(repo_root, rel)
+                    if os.path.exists(fpath):
+                        with open(fpath, "r", encoding="utf-8", errors="ignore") as file:
+                            lines = file.readlines()
+                        if len(lines) > 300 and not any("Purpose:" in l for l in lines[:15]):
+                            violations.append(f"{rel} ({len(lines)} lines)")
+    except Exception:
+        pass
+
+    if violations:
+        print(f"[FAIL] Found {len(violations)} non-trivial domain file(s) missing architecture header:")
+        for v in violations:
+            print(f"  - {v}")
+        print("[HINT] Add Purpose, Data & Logic Flow, and Key Components header comment at top of file per Rule F.")
+        return False
+
+    print("[PASS] Architecture headers verified on all major domain source files.")
+    return True
+
+
+def check_silent_database_errors(repo_root):
+    """Enforces Silent Failure Hunter policy:
+    Scans Go backend domain and service code for unhandled critical database operations (_ = db. or _ = tx.)."""
+    print("\n[INFO] Auditing Silent Failure: Unchecked database operations (_ = db./tx.)...")
+    backend_internal = os.path.join(repo_root, "backend-go", "internal")
+    if not os.path.exists(backend_internal):
+        return True
+
+    pattern = re.compile(r"_\s*=\s*(?:db\.|tx\.|s\.repo\.|r\.db\.|r\.queries\.)")
+    violations = []
+    for root, _, files in os.walk(backend_internal):
+        for f in files:
+            if f.endswith(".go") and not f.endswith("_test.go"):
+                fpath = os.path.join(root, f)
+                rel = os.path.relpath(fpath, repo_root)
+                with open(fpath, "r", encoding="utf-8", errors="ignore") as file:
+                    for idx, line in enumerate(file, 1):
+                        if pattern.search(line):
+                            violations.append((rel, idx, line.strip()))
+
+    if violations:
+        print(f"[FAIL] Found {len(violations)} unchecked database operation(s):")
+        for r, l, code in violations:
+            print(f"  - {r}:{l}: {code}")
+        print("[HINT] Inspect and handle errors from database mutations or log with utils.Warn()/utils.Error().")
+        return False
+
+    print("[PASS] Silent database error audit verified (0 unchecked database mutations found).")
+    return True
 
 
 def check_code_linters(repo_root):
@@ -389,7 +468,10 @@ def check_code_linters(repo_root):
             else:
                 print(f"[PASS] {label} static analysis passed with 0 issues.")
 
-    return all_passed
+    # 5.4 Silent Database Error Audit
+    silent_db_passed = check_silent_database_errors(repo_root)
+
+    return all_passed and silent_db_passed
 
 
 def run_regression_tests(repo_root):

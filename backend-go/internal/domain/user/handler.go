@@ -1,5 +1,9 @@
 package user
 
+// Purpose: Fiber HTTP route handlers for authentication, user profiles, volunteer onboarding, and emergency contacts.
+// Data & Logic Flow: Parses and validates incoming HTTP requests, checks authorization context, delegates business logic to Service, and formats JSON responses.
+// Key Components: Handler struct, Register, Login, VerifyRegisterOTP, GetProfile, UpdateProfile, GetEmergencyContacts.
+
 import (
 	"errors"
 	"strings"
