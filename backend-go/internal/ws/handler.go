@@ -196,74 +196,90 @@ func (h *Handler) onUpdateLocation(userID string, payload interface{}) {
 
 	switch role {
 	case "masyarakat":
-		// Cari SOS aktif milik user ini
-		inc, err := h.incRepo.FindActiveByReporter(userID)
-		if err != nil {
-			utils.Error().Err(err).Str("user_id", userID).Msg("[WS] Failed to query active SOS for reporter")
-		} else if inc != nil {
-			// Update di DB
-			if err := h.incRepo.UpdateLocation(inc.ID, lat, lng); err != nil {
-				utils.Error().Err(err).Str("incident_id", inc.ID).Msg("[WS] Failed to update incident location in DB")
-			}
-
-			msg := hub.Message{
-				Event: "REPORTER_LOCATION_UPDATE",
-				Payload: map[string]interface{}{
-					"sos_id":       inc.ID,
-					fieldUserID:    userID,
-					fieldLatitude:  lat,
-					fieldLongitude: lng,
-				},
-			}
-
-			// Broadcast ke relawan yang sedang handle
-			responses, err := h.incRepo.FindResponsesByIncident(inc.ID)
-			if err != nil {
-				utils.Error().Err(err).Str("incident_id", inc.ID).Msg("[WS] Failed to query incident responses")
-			} else {
-				for _, r := range responses {
-					if r.Status == "on_scene" || r.Status == statusEnRoute {
-						_ = h.hub.SendToUser(r.ResponderID, msg)
-					}
-				}
-			}
-
-			// Broadcast ke Agency & Admin
-			h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin")
-		}
+		h.handleReporterLocationUpdate(userID, lat, lng)
 	case "relawan":
-		// Cari misi aktif milik relawan ini
-		resp, err := h.incRepo.GetActiveResponse(userID)
-		if err != nil {
-			utils.Error().Err(err).Str("user_id", userID).Msg("[WS] Failed to query active response for volunteer")
-		} else if resp != nil {
-			// Update di DB
-			if err := h.incRepo.UpdateResponseLocation(resp.IncidentID, userID, lat, lng, nil); err != nil {
-				utils.Error().Err(err).Str("incident_id", resp.IncidentID).Msg("[WS] Failed to update response location in DB")
-			}
+		h.handleVolunteerLocationUpdate(userID, lat, lng)
+	}
+}
 
-			msg := hub.Message{
-				Event: "VOLUNTEER_LOCATION_UPDATE",
-				Payload: map[string]interface{}{
-					fieldIncidentID: resp.IncidentID,
-					fieldUserID:     userID,
-					fieldLatitude:   lat,
-					fieldLongitude:  lng,
-				},
-			}
+func (h *Handler) handleReporterLocationUpdate(userID string, lat, lng float64) {
+	// Cari SOS aktif milik user ini
+	inc, err := h.incRepo.FindActiveByReporter(userID)
+	if err != nil {
+		utils.Error().Err(err).Str("user_id", userID).Msg("[WS] Failed to query active SOS for reporter")
+		return
+	}
+	if inc == nil {
+		return
+	}
 
-			// Broadcast ke korban (reporter)
-			inc, err := h.incRepo.FindByID(resp.IncidentID)
-			if err != nil {
-				utils.Error().Err(err).Str("incident_id", resp.IncidentID).Msg("[WS] Failed to query incident for volunteer location")
-			} else if inc != nil {
-				_ = h.hub.SendToUser(inc.ReporterID, msg)
-			}
+	// Update di DB
+	if err := h.incRepo.UpdateLocation(inc.ID, lat, lng); err != nil {
+		utils.Error().Err(err).Str("incident_id", inc.ID).Msg("[WS] Failed to update incident location in DB")
+	}
 
-			// Broadcast ke Agency & Admin
-			h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin")
+	msg := hub.Message{
+		Event: "REPORTER_LOCATION_UPDATE",
+		Payload: map[string]interface{}{
+			"sos_id":       inc.ID,
+			fieldUserID:    userID,
+			fieldLatitude:  lat,
+			fieldLongitude: lng,
+		},
+	}
+
+	// Broadcast ke relawan yang sedang handle
+	responses, err := h.incRepo.FindResponsesByIncident(inc.ID)
+	if err != nil {
+		utils.Error().Err(err).Str("incident_id", inc.ID).Msg("[WS] Failed to query incident responses")
+	} else {
+		for _, r := range responses {
+			if r.Status == "on_scene" || r.Status == statusEnRoute {
+				_ = h.hub.SendToUser(r.ResponderID, msg)
+			}
 		}
 	}
+
+	// Broadcast ke Agency & Admin
+	h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin")
+}
+
+func (h *Handler) handleVolunteerLocationUpdate(userID string, lat, lng float64) {
+	// Cari misi aktif milik relawan ini
+	resp, err := h.incRepo.GetActiveResponse(userID)
+	if err != nil {
+		utils.Error().Err(err).Str("user_id", userID).Msg("[WS] Failed to query active response for volunteer")
+		return
+	}
+	if resp == nil {
+		return
+	}
+
+	// Update di DB
+	if err := h.incRepo.UpdateResponseLocation(resp.IncidentID, userID, lat, lng, nil); err != nil {
+		utils.Error().Err(err).Str("incident_id", resp.IncidentID).Msg("[WS] Failed to update response location in DB")
+	}
+
+	msg := hub.Message{
+		Event: "VOLUNTEER_LOCATION_UPDATE",
+		Payload: map[string]interface{}{
+			fieldIncidentID: resp.IncidentID,
+			fieldUserID:     userID,
+			fieldLatitude:   lat,
+			fieldLongitude:  lng,
+		},
+	}
+
+	// Broadcast ke korban (reporter)
+	inc, err := h.incRepo.FindByID(resp.IncidentID)
+	if err != nil {
+		utils.Error().Err(err).Str("incident_id", resp.IncidentID).Msg("[WS] Failed to query incident for volunteer location")
+	} else if inc != nil {
+		_ = h.hub.SendToUser(inc.ReporterID, msg)
+	}
+
+	// Broadcast ke Agency & Admin
+	h.hub.BroadcastToRoles(msg, "", "agency", "admin", "superadmin")
 }
 
 func (h *Handler) onTriggerSOS(userID string, payload interface{}) {

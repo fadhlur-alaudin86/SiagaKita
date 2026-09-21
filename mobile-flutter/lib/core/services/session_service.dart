@@ -1,4 +1,9 @@
+// Purpose: Secure local persistence and session lifecycle management for authentication tokens and user profile metadata.
+// Data & Logic Flow: Stores encrypted JWT access and refresh tokens in FlutterSecureStorage, caches non-sensitive user metadata in SharedPreferences, and handles token rotation.
+// Key Components: SessionService class, SessionData model, secure storage accessors.
+
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
@@ -33,10 +38,11 @@ class SessionService {
         return legacyToken;
       }
       return null;
-    } catch (_) {
-      // Fallback ke SharedPreferences jika hardware keystore mengalami error platform
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_keyToken);
+    } catch (e) {
+      debugPrint(
+        '[SessionService] Failed to read token from secure storage: $e',
+      );
+      return null;
     }
   }
 
@@ -44,7 +50,8 @@ class SessionService {
   static Future<String?> getRefreshToken() async {
     try {
       return await _secureStorage.read(key: _keyRefreshToken);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[SessionService] Failed to read refresh token: $e');
       return null;
     }
   }
