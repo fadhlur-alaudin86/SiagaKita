@@ -1,3 +1,7 @@
+// Purpose: Primary Windows desktop console shell providing navigation, KYC badge notifications, and administrative domain routing.
+// Data & Logic Flow: Authenticates admin credentials, polls pending volunteer verification counters, and renders active management pages.
+// Key Components: AdminShell StatefulWidget, _AdminShellState, sidebar navigation, KYC counters.
+
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -66,7 +70,9 @@ class _AdminShellState extends State<AdminShell> {
         final List data = jsonDecode(res.body)['data'] ?? [];
         if (mounted) setState(() => _pendingKycCount = data.length);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AdminShell] _fetchKycCount error: $e');
+    }
   }
 
   static const _titles = {

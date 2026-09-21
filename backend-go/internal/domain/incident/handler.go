@@ -26,12 +26,24 @@ import (
 )
 
 type Handler struct {
+	ctx                     context.Context
 	svc                     *Service
 	cfg                     *config.Config
 	hub                     *hub.Hub
 	rdb                     *redis.Client
 	OnPushEmergency         func(incidentID, incidentType, address, reporterID string, lat, lon float64)
 	OnPushMissionAssignment func(personnelUserID, incidentID, incidentType, address string, lat, lon float64)
+}
+
+func (h *Handler) SetContext(ctx context.Context) {
+	h.ctx = ctx
+}
+
+func (h *Handler) appContext() context.Context {
+	if h.ctx != nil {
+		return h.ctx
+	}
+	return context.Background()
 }
 
 func NewHandler(svc *Service, cfg *config.Config, h *hub.Hub, rdb *redis.Client) *Handler {
@@ -621,6 +633,9 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 	result.Message = i18n.T(c, result.Message)
 
 	go func() {
+		if h.appContext().Err() != nil {
+			return
+		}
 		h.broadcastEventToAgencies(hub.Message{
 			Event:   "SOS_STATUS_UPDATE",
 			Payload: map[string]interface{}{FieldIncidentID: incidentID},
@@ -632,7 +647,7 @@ func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
 		})
 		// Notify candidate volunteers that the incident has been claimed
 		if h.rdb != nil && h.hub != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			ctx, cancel := context.WithTimeout(h.appContext(), 3*time.Second)
 			defer cancel()
 			key := "dispatch:incident:" + incidentID + ":volunteers"
 			volunteers, _ := h.rdb.SMembers(ctx, key).Result()
@@ -688,6 +703,9 @@ func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
 	}
 
 	go func() {
+		if h.appContext().Err() != nil {
+			return
+		}
 		h.broadcastEventToAgencies(hub.Message{
 			Event:   EventSOSStatusUpdate,
 			Payload: map[string]interface{}{FieldIncidentID: incidentID},
@@ -751,6 +769,9 @@ func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
 	}
 
 	go func() {
+		if h.appContext().Err() != nil {
+			return
+		}
 		h.broadcastEventToAgencies(hub.Message{
 			Event:   EventSOSStatusUpdate,
 			Payload: map[string]interface{}{FieldIncidentID: incidentID},
@@ -790,6 +811,9 @@ func (h *Handler) AgencyReviewVolunteer(c *fiber.Ctx) error {
 	}
 
 	go func() {
+		if h.appContext().Err() != nil {
+			return
+		}
 		h.broadcastEventToAgencies(hub.Message{
 			Event:   EventSOSStatusUpdate,
 			Payload: map[string]interface{}{FieldIncidentID: incidentID},
