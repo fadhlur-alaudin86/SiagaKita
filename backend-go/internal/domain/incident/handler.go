@@ -1,5 +1,9 @@
 package incident
 
+// Purpose: Fiber HTTP route handlers and request/response serialization for incident and emergency dispatch endpoints.
+// Data & Logic Flow: Parses HTTP request payloads, validates user context and roles, dispatches execution to Service, broadcasts real-time WebSocket events via Hub, and writes standardized JSON responses.
+// Key Components: Handler struct, TriggerSOS, UpdateType, CancelSOS, ResolveSOS, UploadEvidence, AgencyReviewVolunteer.
+
 import (
 	"context"
 	"errors"

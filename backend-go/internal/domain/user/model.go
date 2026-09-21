@@ -1,5 +1,9 @@
 package user
 
+// Purpose: Data models and DTO structs for user authentication, roles, profiles, and emergency contacts.
+// Data & Logic Flow: Encapsulates user entity schemas mapped to PostgreSQL tables, handles password hash validation and role constants.
+// Key Components: User, UserProfile, VolunteerProfile, EmergencyContact, AuthResponse, RegisterRequest.
+
 import (
 	"strings"
 	"time"

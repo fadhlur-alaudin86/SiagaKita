@@ -1,5 +1,9 @@
 package incident
 
+// Purpose: Database persistence and query engine for incidents, responses, assignments, and reporting.
+// Data & Logic Flow: Executes dual-driver queries via pgxpool/sqlc for high-throughput reads and GORM transactions for relational state mutations.
+// Key Components: Repository struct, dual-driver pool, CRUD queries for incidents, responses, and volunteer assignments.
+
 import (
 	"context"
 	"errors"
@@ -8,6 +12,7 @@ import (
 	"time"
 
 	"siagakita-backend/internal/database/sqlc"
+	"siagakita-backend/internal/utils"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -640,12 +645,14 @@ func (r *Repository) PersonnelUpdateStatus(incidentID, personnelID, newStatus, p
 		if err != nil {
 			// Jika belum ada record response (klaim pertama), buat baru
 			var agencyAccountID string
-			_ = tx.Raw(`
+			if scanErr := tx.Raw(`
 				SELECT a.account_id 
 				FROM agencies a 
 				JOIN agency_personnels ap ON ap.agency_id = a.id 
 				WHERE ap.user_id = ?
-			`, personnelID).Scan(&agencyAccountID).Error
+			`, personnelID).Scan(&agencyAccountID).Error; scanErr != nil && !errors.Is(scanErr, gorm.ErrRecordNotFound) {
+				utils.Warn().Err(scanErr).Str("personnelID", personnelID).Msg("Failed to query agency account ID for responder")
+			}
 
 			statusToSet := newStatus
 			if statusToSet == "handling" {

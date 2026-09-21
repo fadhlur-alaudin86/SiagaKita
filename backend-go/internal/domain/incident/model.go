@@ -1,5 +1,9 @@
 package incident
 
+// Purpose: Relational database entity definitions and JSON transfer schemas for incidents, emergency responses, and volunteer assignments.
+// Data & Logic Flow: Mapped to PostgreSQL tables via GORM tags, serialized to/from HTTP payloads and WebSocket broadcasts.
+// Key Components: Incident, IncidentResponse, IncidentEvent, VolunteerAssignment, CitizenReport.
+
 import (
 	"encoding/json"
 	"time"

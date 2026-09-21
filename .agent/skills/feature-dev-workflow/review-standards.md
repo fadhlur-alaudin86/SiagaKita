@@ -84,7 +84,7 @@ Ensures errors are explicitly handled and failures are never silently swallowed.
 
 | Category | Verification Item | PASS Criteria | FAIL Criteria |
 |---|---|---|---|
-| **Go Ignored Errors** | Error return value inspection | Every error is checked (`if err != nil`) and wrapped with `%w` | Using `_ = fn()` on I/O, DB, JSON parsing, or cryptography calls |
+| **Go Ignored Errors** | Error return value inspection | Every error is checked (`if err != nil`) and wrapped with `%w`; automated audit in `verify_pipeline.py` checks `_ = db.` / `_ = tx.` | Using `_ = fn()` on I/O, DB, JSON parsing, or cryptography calls |
 | **Go Context Leaks** | Timed context cancellation | Every `context.WithTimeout` / `WithCancel` has an immediate `defer cancel()` | Context created without `defer cancel()`, leaking timers/goroutines |
 | **Dart Empty Catch** | Async exception handling | `catch (e, stack)` logs the error and surfaces user feedback | Empty `try { ... } catch (e) {}` blocks without logs or UI state updates |
 | **Flutter Mounted Check** | Post-await `BuildContext` safety | Verifies `if (!context.mounted) return;` before navigation or Snackbars | Calling `Navigator.of(context)` across an `await` boundary without mounted check |
@@ -125,7 +125,7 @@ Ensures that code changes remain strictly scoped, surgical, free of speculative 
 | **Surgical Scope** | Diff lines traceability | 100% of modified lines trace directly to the requirement | "Improving" or reformatting adjacent untouched functions or lines |
 | **Simplicity & YAGNI** | Code complexity | Minimal direct implementation without speculative interfaces/generics | Adding speculative configuration options or unused helper wrappers |
 | **Orphan Cleanup** | Self-created dead code | All imports, variables, and helpers made obsolete by the change are pruned | Leaving self-created orphaned imports or unused symbols |
-| **Architecture Headers** | File documentation | Newly added/refactored files start with Purpose, Data Flow, and Components header | Creating source files without architectural header comments |
+| **Architecture Headers** | File documentation | Newly added/refactored files start with Purpose, Data Flow, and Components header; automated check in `verify_pipeline.py` audits non-trivial files (>300 lines) | Creating source files without architectural header comments |
 | **Visual Breathing Room** | Code formatting spacing | 2 blank lines between major functions, structs, and handlers | Cramped code lacking visual breathing room between execution phases |
 
 ---
