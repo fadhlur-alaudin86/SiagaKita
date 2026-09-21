@@ -38,8 +38,10 @@ import (
 const envProduction = "production"
 
 func main() {
-	// ── 0. Init Logger ────────────────────────────────────────────────────────
+	// ── 0. Init Logger & Root Context ──────────────────────────────────────────
 	utils.InitLogger(os.Getenv("GO_ENV") == envProduction)
+	appCtx, cancelApp := context.WithCancel(context.Background())
+	defer cancelApp()
 
 	// ── 1. Load Config ────────────────────────────────────────────────────────
 	cfg := config.Load()
@@ -90,6 +92,7 @@ func main() {
 	incidentRepo := incidentDomain.NewRepository(db, pgxPool)
 	incidentSvc := incidentDomain.NewService(incidentRepo, rdb)
 	incidentHandler := incidentDomain.NewHandler(incidentSvc, cfg, wsHub, rdb)
+	incidentHandler.SetContext(appCtx)
 
 	// Notification domain (FCM push notifications)
 	notificationSender, err := notificationDomain.NewSender(cfg.FirebaseCredentialsFile, cfg.FirebaseCredentialsJSON)
@@ -101,14 +104,14 @@ func main() {
 
 	// Wire push notification callbacks into incidentHandler
 	incidentHandler.OnPushEmergency = func(incidentID, incidentType, address, reporterID string, lat, lon float64) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(appCtx, 10*time.Second)
 		defer cancel()
 		if err := notificationSvc.BroadcastEmergencySOS(ctx, incidentID, incidentType, address, reporterID, lat, lon); err != nil {
 			utils.Error().Err(err).Str("incident_id", incidentID).Msg("[Main] Failed to broadcast emergency push notification")
 		}
 	}
 	incidentHandler.OnPushMissionAssignment = func(personnelUserID, incidentID, incidentType, address string, lat, lon float64) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(appCtx, 10*time.Second)
 		defer cancel()
 		if err := notificationSvc.SendDirectMissionAssignment(ctx, personnelUserID, incidentID, incidentType, address, lat, lon); err != nil {
 			utils.Error().Err(err).Str("incident_id", incidentID).Str("personnel_id", personnelUserID).Msg("[Main] Failed to send mission assignment push")
@@ -224,7 +227,7 @@ func main() {
 	v1.Post("/notifications/register-token", authMw, userHandler.UpdateFCMToken)
 
 	// ── Users (protected - civilian/volunteer only) ────────────────────────────
-	users := v1.Group("/users", authMw, sessionMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db, rdb))
+	users := v1.Group("/users", authMw, sessionMw, middleware.CitizenVolunteer(), middleware.TouchLastActive(db, rdb, appCtx))
 	users.Post("/biodata", userHandler.SaveBiodata)
 	users.Get("/profile", userHandler.GetProfile)
 	users.Put("/profile", userHandler.UpdateProfile)
@@ -361,6 +364,7 @@ func main() {
 	<-quit
 
 	utils.Info().Msg("[Main] Shutting down gracefully...")
+	cancelApp()
 	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelShutdown()
 

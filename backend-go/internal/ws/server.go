@@ -32,6 +32,7 @@ func NewServer(h *hub.Hub, rdb *redis.Client, db *gorm.DB, cfg *config.Config) *
 		Addr:              addr,
 		Handler:           mux,
 		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       15 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
 }

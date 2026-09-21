@@ -298,7 +298,9 @@ class _HomeScreenState extends State<HomeScreen>
           _stopVibration();
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[HomeScreen] _checkActiveSOS error: $e');
+    }
   }
 
   // ─── Vibration ───────────────────────────────────────────────────────────────
@@ -869,10 +871,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     // Kirim update availability ke server (background)
     if (currentUser.isAvailableForMission) {
-      UserService.updateAvailability(
-        widget.accessToken,
-        false,
-      ).catchError((_) {});
+      UserService.updateAvailability(widget.accessToken, false).catchError((e) {
+        debugPrint('[HomeScreen] updateAvailability error: $e');
+      });
     }
 
     // Ambil posisi GPS di background
@@ -1417,7 +1418,9 @@ class _HomeScreenState extends State<HomeScreen>
         if (audioFile != null && await audioFile.exists()) {
           await audioFile.delete();
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[HomeScreen] file delete error: $e');
+      }
     } catch (_) {
       /* tetap tersimpan di pending evidence untuk retry berikutnya */
     }
@@ -1443,7 +1446,9 @@ class _HomeScreenState extends State<HomeScreen>
           if (f.existsSync()) f.deleteSync();
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[HomeScreen] _purgeSpooledEvidenceFiles error: $e');
+    }
     await OfflineService.clearPendingEvidence();
   }
 
