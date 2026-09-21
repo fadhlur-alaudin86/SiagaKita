@@ -1,5 +1,13 @@
 package otp
 
+// Purpose: OTP (One-Time Password) generation, delivery dispatch, and verification service for multi-channel authentication.
+// Data & Logic Flow: Generates cryptographically secure numeric tokens, caches active tokens and rate-limit cooldowns in Redis, dispatches delivery via WhatsApp (Fonnte) or Email (SMTP) gateways, and executes atomic verification to prevent replay attacks.
+// Key Components: Service interface, service struct, RequestOTP, VerifyOTP, RequestEmailOTP, VerifyEmailOTP.
+//
+// Architecture Note:
+// The Service interface abstraction decouples domain consumer services (e.g. auth and user handlers) from external third-party messaging transports (Fonnte/SMTP).
+// This architectural boundary enables zero-network mock injection for high-speed, deterministic unit testing across authentication pipelines.
+
 import (
 	"context"
 	"errors"
