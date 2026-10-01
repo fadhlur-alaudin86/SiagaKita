@@ -68,7 +68,7 @@ dependencies:
   cached_network_image: ^4.0.0
 
   # File picker
-  file_picker: ^12.2.0
+  file_picker: ^13.1.0
   google_fonts: ^8.2.1
 
   # UUID generator (untuk X-Idempotency-Key header di aksi kritis console)
