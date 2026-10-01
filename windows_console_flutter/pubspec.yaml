@@ -53,7 +53,7 @@ dependencies:
   fl_chart: ^1.2.0
 
   # Secure storage (JWT)
-  flutter_secure_storage: ^11.1.1
+  flutter_secure_storage: ^11.2.0
 
   # Date/time formatting
   intl: ^0.20.2
@@ -62,7 +62,7 @@ dependencies:
   url_launcher: ^6.3.1
 
   # PDF viewer (untuk sertifikat relawan — Linux/Windows/macOS/Android/iOS)
-  pdfrx: ^2.3.2
+  pdfrx: ^2.6.5
 
   # Network image dengan cache & placeholder
   cached_network_image: ^4.0.0
