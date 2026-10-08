@@ -38,6 +38,29 @@ void main() async {
   runApp(const SiagaKitaApp());
 }
 
+// Applies the Inter font per TextStyle. Needed because google_fonts v9
+// types its xxxTextTheme helpers with a different TextTheme class, while
+// TextStyle itself is shared, so per-style mapping stays version-agnostic.
+TextTheme _interTextTheme(TextTheme base) {
+  return TextTheme(
+    displayLarge: GoogleFonts.inter(textStyle: base.displayLarge),
+    displayMedium: GoogleFonts.inter(textStyle: base.displayMedium),
+    displaySmall: GoogleFonts.inter(textStyle: base.displaySmall),
+    headlineLarge: GoogleFonts.inter(textStyle: base.headlineLarge),
+    headlineMedium: GoogleFonts.inter(textStyle: base.headlineMedium),
+    headlineSmall: GoogleFonts.inter(textStyle: base.headlineSmall),
+    titleLarge: GoogleFonts.inter(textStyle: base.titleLarge),
+    titleMedium: GoogleFonts.inter(textStyle: base.titleMedium),
+    titleSmall: GoogleFonts.inter(textStyle: base.titleSmall),
+    bodyLarge: GoogleFonts.inter(textStyle: base.bodyLarge),
+    bodyMedium: GoogleFonts.inter(textStyle: base.bodyMedium),
+    bodySmall: GoogleFonts.inter(textStyle: base.bodySmall),
+    labelLarge: GoogleFonts.inter(textStyle: base.labelLarge),
+    labelMedium: GoogleFonts.inter(textStyle: base.labelMedium),
+    labelSmall: GoogleFonts.inter(textStyle: base.labelSmall),
+  );
+}
+
 class SiagaKitaApp extends StatefulWidget {
   const SiagaKitaApp({super.key});
 
@@ -81,7 +104,7 @@ class _SiagaKitaAppState extends State<SiagaKitaApp> {
                 surface: darkCardColor,
                 onSurface: Colors.white,
               ),
-              textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+              textTheme: _interTextTheme(ThemeData.dark().textTheme),
               appBarTheme: const AppBarTheme(
                 backgroundColor: darkBgColor,
                 elevation: 0,
