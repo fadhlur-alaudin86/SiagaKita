@@ -1,6 +1,6 @@
 ---
 name: component-mapping
-description: Maps UI components and screens across Flutter Mobile (Citizen/Volunteer) and Flutter Desktop (Console/Admin) to Go Fiber backend routes, database tables/queries, and WebSocket events in docs/COMPONENT_MAPPING.md to enforce Multi-Client Parity.
+description: Map Flutter screens to Go routes, DB tables, and WS events. Use when checking multi-client parity.
 ---
 
 # Component Mapping Skill — SiagaKita

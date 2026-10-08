@@ -1,10 +1,6 @@
 ---
 name: caveman
-description: >
-  Token-efficient communication mode. Compresses conversational output by removing
-  fluff, filler words, and decorative elements while preserving 100% technical accuracy,
-  verbatim code snippets, exact error messages, and Clean Text compliance.
-  Trigger: "caveman mode", "token efficient", "be brief", "less tokens", "/caveman".
+description: Reply with token-efficient technical output without fluff. Use when user requests brevity or low-token mode.
 ---
 
 # Caveman Communication Mode

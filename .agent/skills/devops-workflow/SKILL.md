@@ -1,6 +1,6 @@
 ---
 name: devops-workflow
-description: Manage CI/CD pipelines, branching strategy, VPS deployments, rollbacks, and GitHub workflow files for SiagaKita. Use this skill when asked to adjust pipelines, versioning, or deployment infrastructure.
+description: Manage CI/CD, branching, versioning, VPS deploys, and rollbacks. Use when changing pipelines, releases, or deployment infrastructure.
 ---
 
 ## Trigger Keywords

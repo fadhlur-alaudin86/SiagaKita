@@ -1,6 +1,6 @@
 ---
 name: gh-project-manager
-description: Manage GitHub Issues, milestones, labels, sprint planning, and progress tracking for SiagaKita via gh CLI. Use this skill when asked to organize project backlogs, sprints, or issue statuses.
+description: Manage GitHub issues, milestones, labels, and sprints via gh CLI. Use when planning backlogs or tracking progress.
 ---
 
 ## Trigger Keywords

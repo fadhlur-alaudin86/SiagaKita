@@ -19,7 +19,7 @@ Sub-file of [SKILL.md](SKILL.md).
 | Dimension | Minor Updates (Autonomous Execution) | Major Updates (Proposal & Review Required) |
 |---|---|---|
 | **Scope** | Technical gotchas, CLI flags, path corrections, testing tips, database tricks, catalog synchronization. | CI/CD pipelines, review gates, branching strategy, database rollback policies, new skills. |
-| **Target Files** | `testing.md`, `postgres-patterns.md`, `backend-standards.md`, `flutter-standards.md`, `.agent/skills/README.md`. | `.github/workflows/*.yml`, `review-standards.md`, `devops-workflow/SKILL.md`, `GEMINI.md`. |
+| **Target Files** | `testing.md`, `postgres-patterns.md`, `backend-standards.md`, `flutter-standards.md`, `.agent/skills/README.md`. | `.github/workflows/*.yml`, `review-standards.md`, `devops-workflow/SKILL.md`, `GEMINI.md`, `AGENTS.md`, `opencode.jsonc`, `.opencode/commands/*.md`. |
 | **Execution** | Applied directly in active branch before PR creation. | Staged as a `learning_proposal.md` artifact + `/grill-me` recommendation in chat. |
 | **Git Commit** | Dedicated commit on topic branch: `docs(workflow): ...` or `chore(skills): ...`. | Never commit uninstructed; opens dedicated PR only after user approval. |
 | **Human Review** | Reviewed as part of the overall feature PR diff. | Discussed interactively via `/grill-me` before code is touched. |
