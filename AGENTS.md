@@ -27,7 +27,7 @@ If a skill mentions only the Antigravity name, use the OpenCode equivalent above
 
 - Backend: `go test ./...`, `go vet ./...`, `gofmt -l .`
 - Mobile/Desktop: `flutter analyze`, `dart format --output=none --set-exit-if-changed .`
-- Pipeline gate: `python3 scripts/verify_pipeline.py --fast` for iterations, full `python3 scripts/verify_pipeline.py` before PR.
+- Pipeline gate: `python3 scripts/verify_pipeline.py --fast` for iterations, full `python3 scripts/verify_pipeline.py` before PR (`--skip-vuln` only in offline sandboxes).
 - Backlog parity: `python3 scripts/sync_backlog_status.py --check`
 
 ## Constraints
