@@ -62,7 +62,8 @@ feature/F-XXX/sub-mobile  ─┘                                ↓
 |----------|---------|--------|
 | `ci-dev.yml` | Push/PR to `dev` | Conditional linting & build checks (based on modified paths) |
 | `ci-main.yml` | PR to `main` | Full CI across all components + Docker build validation |
-| `release-deploy.yml` | Push tag `v*.*.*` | Docker build+push + VPS deploy + health check rollback + GitHub Release |
+| `release-deploy.yml` | Push tag `v*.*.*` | Docker build+push + Trivy image gate (blocks on critical CVEs) + VPS deploy + health check rollback + GitHub Release |
+| `codeql.yml` | PR/push touching `backend-go/**`, weekly schedule | Taint-tracking analysis for Go (Dart excluded: unsupported by CodeQL) |
 | `auto-tag.yml` | Push to `main` with changes to `VERSION` | Auto-creates a git tag matching `VERSION` file |
 | `labeler.yml` | PR open/synchronize | Automatically labels PRs based on modified paths |
 | `issue-status-labeler.yml` | PR open/review/merge | Automates issue status transitions (`status: in-review`, `status: ready`, closes on merge) |
