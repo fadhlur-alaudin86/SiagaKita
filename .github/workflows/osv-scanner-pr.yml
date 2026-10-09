@@ -1,0 +1,19 @@
+name: OSV-Scanner PR Scan
+
+# Fails the PR when it introduces new vulnerable dependencies (Go modules
+# plus Flutter pubspec locks). Full-tree scheduled scans are intentionally
+# out of scope; Dependabot plus govulncheck cover the steady state.
+on:
+  pull_request:
+    branches: [dev]
+  merge_group:
+    branches: [dev]
+
+permissions:
+  actions: read
+  security-events: write
+  contents: read
+
+jobs:
+  scan-pr:
+    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.6.0"
