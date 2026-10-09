@@ -130,8 +130,9 @@ class IncidentService {
             headers: {'Authorization': 'Bearer $accessToken'},
           )
           .timeout(_defaultTimeout);
-    } catch (_) {
+    } catch (e) {
       // Silent fail - SOS tetap aktif, status update di iterasi berikutnya
+      debugPrint('[IncidentService] Status update failed, retry next tick: $e');
     }
   }
 
@@ -191,8 +192,11 @@ class IncidentService {
             body: jsonEncode({'latitude': latitude, 'longitude': longitude}),
           )
           .timeout(_defaultTimeout);
-    } catch (_) {
+    } catch (e) {
       // Silent fail - lokasi diupdate di timer interval berikutnya
+      debugPrint(
+        '[IncidentService] Location update failed, retry next tick: $e',
+      );
     }
   }
 
@@ -231,8 +235,9 @@ class IncidentService {
       }
 
       await request.send().timeout(const Duration(seconds: 30));
-    } catch (_) {
+    } catch (e) {
       // Best-effort - jika gagal, abaikan (tidak mempengaruhi SOS aktif)
+      debugPrint('[IncidentService] Best-effort call ignored: $e');
     }
   }
 
@@ -301,7 +306,9 @@ class IncidentService {
                 ),
               )
               .toList();
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[IncidentService] Skip corrupt cached history: $e');
+        }
       }
       Error.throwWithStackTrace(
         IncidentException('Periksa koneksi internet. Gagal memuat riwayat: $e'),
@@ -385,7 +392,11 @@ class IncidentService {
                 ),
               )
               .toList();
-        } catch (_) {}
+        } catch (e) {
+          debugPrint(
+            '[IncidentService] Skip corrupt cached reporter history: $e',
+          );
+        }
       }
       Error.throwWithStackTrace(
         IncidentException('Periksa koneksi internet. Gagal memuat riwayat: $e'),

@@ -228,7 +228,9 @@ class _MapScreenState extends State<MapScreen>
             radius: 5.0,
           );
           if (mounted) setState(() => _nearbySOS = results);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[MapScreen] Nearby SOS refresh failed: $e');
+        }
       } else {
         if (mounted) setState(() => _nearbySOS = []);
       }

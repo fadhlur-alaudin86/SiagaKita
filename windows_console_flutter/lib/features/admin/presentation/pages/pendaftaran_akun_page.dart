@@ -189,7 +189,9 @@ class _FormInstansiState extends State<_FormInstansi> {
           _reverseGeocode(point);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[PendaftaranAkun] Location search failed: $e');
+    }
     setState(() => _loading = false);
   }
 
@@ -225,7 +227,9 @@ class _FormInstansiState extends State<_FormInstansi> {
           }
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[PendaftaranAkun] Reverse geocode failed: $e');
+    }
   }
 
   @override

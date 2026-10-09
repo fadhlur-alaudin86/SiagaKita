@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
@@ -200,8 +201,11 @@ void onStart(ServiceInstance service) async {
               )
               .timeout(const Duration(seconds: 8));
         }
-      } catch (_) {
+      } catch (e) {
         // Silent fail — akan dicoba di interval berikutnya
+        debugPrint(
+          '[BackgroundService] SOS location sync failed, retry next tick: $e',
+        );
       }
     });
   }
@@ -220,7 +224,7 @@ void onStart(ServiceInstance service) async {
   // ─── Regular Background Loop (setiap 30 detik) ───────────────────────────
   Timer.periodic(const Duration(seconds: 30), (timer) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('session_token');
+    final token = await SessionService.getToken();
     if (token == null) return;
 
     final baseUrl = ApiConfig.baseUrl;
@@ -233,7 +237,9 @@ void onStart(ServiceInstance service) async {
             headers: {'Authorization': 'Bearer $token'},
           )
           .timeout(const Duration(seconds: 10));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[BackgroundService] Ping failed, ignored: $e');
+    }
 
     // 2. LOCATION: Cek apakah fitur "On Duty" aktif (Relawan)
     // Hanya kirim lokasi relawan jika bukan sedang dalam mode SOS
@@ -277,7 +283,11 @@ void onStart(ServiceInstance service) async {
             }
           }
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint(
+          '[BackgroundService] On-duty sync failed, retry next interval: $e',
+        );
+      }
     } else if (!isSosActive) {
       if (service is AndroidServiceInstance) {
         service.setForegroundNotificationInfo(

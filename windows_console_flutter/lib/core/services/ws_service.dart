@@ -99,7 +99,9 @@ class WsService extends ChangeNotifier {
       if (_connected) {
         try {
           _channel?.sink.add(jsonEncode({'event': 'PING', 'payload': {}}));
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[WsService] Heartbeat ping failed: $e');
+        }
       }
     });
 

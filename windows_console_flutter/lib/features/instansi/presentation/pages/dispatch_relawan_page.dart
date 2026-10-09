@@ -195,7 +195,9 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
       }
       _volunteerLocationsNotifier.value = updated;
       if (mounted) setState(() {});
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DispatchRelawan] Volunteer location parse failed: $e');
+    }
   }
 
   void _moveMapToIncident(IncidentModel incident) {

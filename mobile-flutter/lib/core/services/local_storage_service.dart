@@ -90,7 +90,9 @@ class LocalStorageService {
     if (val is String) {
       try {
         return jsonDecode(val) as Map<String, dynamic>;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[LocalStorage] Skip corrupt pending SOS: $e');
+      }
     }
     return null;
   }
@@ -177,7 +179,9 @@ class LocalStorageService {
     if (val is String) {
       try {
         return jsonDecode(val) as Map<String, dynamic>;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[LocalStorage] Skip corrupt pending evidence: $e');
+      }
     }
     return null;
   }
@@ -402,7 +406,9 @@ class LocalStorageService {
           final decoded = jsonDecode(legacyPendingSos) as Map<String, dynamic>;
           await _sosQueueBox?.put(_keyPendingSos, decoded);
           await prefs.remove(_keyPendingSos);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[LocalStorage] Skip corrupt legacy pending SOS: $e');
+        }
       }
 
       // 2. Pending Cancel SOS
@@ -437,7 +443,9 @@ class LocalStorageService {
           final decoded = jsonDecode(legacyHistory) as List<dynamic>;
           await cacheIncidents('cached_my_history', decoded);
           await prefs.remove('cached_my_history');
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[LocalStorage] Skip corrupt legacy history: $e');
+        }
       }
 
       // 6. Cached Reporter History
@@ -448,7 +456,9 @@ class LocalStorageService {
           final decoded = jsonDecode(legacyReporterHistory) as List<dynamic>;
           await cacheIncidents('cached_reporter_history', decoded);
           await prefs.remove('cached_reporter_history');
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[LocalStorage] Skip corrupt legacy reporter history: $e');
+        }
       }
 
       // 7. Failed Reports
@@ -459,7 +469,9 @@ class LocalStorageService {
         for (final item in legacyFailedReports) {
           try {
             list.add(jsonDecode(item) as Map<String, dynamic>);
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('[LocalStorage] Skip corrupt legacy report entry: $e');
+          }
         }
         await _reportQueueBox?.put(_keyFailedReports, list);
         await prefs.remove(_keyFailedReports);
@@ -473,7 +485,9 @@ class LocalStorageService {
           final decoded = jsonDecode(legacyMyReports) as List<dynamic>;
           await cacheMyReports(decoded);
           await prefs.remove(_keyCachedMyReports);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[LocalStorage] Skip corrupt legacy my-reports: $e');
+        }
       }
 
       await prefs.setBool(migrationFlag, true);

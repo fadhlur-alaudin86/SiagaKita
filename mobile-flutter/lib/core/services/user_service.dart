@@ -38,7 +38,9 @@ class UserService {
       if (cachedStr != null) {
         try {
           return UserModel.fromJson(jsonDecode(cachedStr));
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[UserService] Skip corrupt cached profile: $e');
+        }
       }
       Error.throwWithStackTrace(
         Exception('Periksa koneksi internet. Kesalahan memuat profil: $e'),
@@ -313,8 +315,9 @@ class UserService {
       await http
           .get(Uri.parse('$_baseUrl/users/ping'), headers: _headers(token))
           .timeout(const Duration(seconds: 10));
-    } catch (_) {
+    } catch (e) {
       // Abaikan error ping — tidak perlu menampilkan error ke user
+      debugPrint('[UserService] Ping ignored: $e');
     }
   }
 
