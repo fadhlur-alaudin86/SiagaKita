@@ -31,10 +31,10 @@ OS-specific install hints are printed by the script (apt/brew/winget).
 
 ### Services and first run
 
-1. `cp infrastructure/.env-example infrastructure/.env` (if missing) and fill secrets.
-2. `cd infrastructure && docker compose up -d postgres redis`.
-3. `cd ../backend-go && go run cmd/migrate/main.go up`, then `go run cmd/api/main.go` (Swagger UI at `http://localhost:8080/docs/`).
-4. `cd ../mobile-flutter && flutter pub get && flutter run`; desktop: `cd ../windows_console_flutter && flutter run -d linux`.
+1. `cp infrastructure/.env.example infrastructure/.env.dev` (if missing) and fill secrets.
+2. `cd infrastructure && docker compose up -d --build` (PostgreSQL, Redis, Go API; migrations apply automatically on backend boot; Swagger UI at `http://localhost:8080/docs/`).
+3. Backend alternative (native, for backend developers): `cd backend-go && go run cmd/migrate/main.go up`, then `go run cmd/api/main.go`.
+4. `cd ../mobile-flutter && flutter pub get && flutter run` (pass `--dart-define-from-file=../infrastructure/.env.dev` when the app needs env values); desktop: `cd ../windows_console_flutter && flutter run -d linux`.
 5. Install repo git hooks once: `./scripts/install_git_hooks.sh` (auto-formats staged Go/Dart on commit).
 6. Sanity gate: `python3 scripts/verify_pipeline.py --fast`.
 
