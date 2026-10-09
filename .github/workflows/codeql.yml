@@ -1,0 +1,43 @@
+name: CodeQL Analysis (Go)
+
+# Taint-tracking analysis for backend-go beyond gosec patterns.
+# Dart/Flutter are not supported by CodeQL and stay covered by
+# flutter analyze plus the osv-scanner PR gate.
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - 'backend-go/**'
+  push:
+    branches: [dev]
+    paths:
+      - 'backend-go/**'
+  schedule:
+    - cron: '0 5 * * 1'
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (go)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4.38.3
+        with:
+          languages: go
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4.38.3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4.38.3
+        with:
+          category: "/language:go"

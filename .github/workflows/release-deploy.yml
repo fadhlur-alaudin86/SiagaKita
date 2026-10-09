@@ -48,9 +48,26 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/siagakita-api:${{ steps.get_version.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/siagakita-api:latest
 
+  # ─── Job 1b: Trivy image gate (blocks deploy on critical CVEs) ─────
+  trivy-gate:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/siagakita-api:${{ needs.build-and-push.outputs.version }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
   # ─── Job 2: Deploy ke VPS via SSH ──────────────────────────────────────────
   deploy-to-vps:
-    needs: build-and-push
+    needs: [build-and-push, trivy-gate]
     runs-on: ubuntu-latest
     steps:
       - name: SSH and Deploy
