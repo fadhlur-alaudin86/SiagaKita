@@ -16,20 +16,24 @@ Map<String, String> _headersWithIdempotency(String token) => {
   'X-Idempotency-Key': _newIdempotencyKey(),
 };
 
+/// Batas waktu request reguler (upload multipart memakai batas tersendiri).
+const _kRequestTimeout = Duration(seconds: 15);
+const _kUploadTimeout = Duration(seconds: 60);
+
 /// Helper untuk eksekusi HTTP dengan auto-retry saat 401 Unauthorized
 Future<http.Response> _requestWithRetry(
   String token,
   Future<http.Response> Function(String activeToken) sendFn,
 ) async {
   final activeToken = await AuthService.getAccessToken() ?? token;
-  var resp = await sendFn(activeToken);
+  var resp = await sendFn(activeToken).timeout(_kRequestTimeout);
 
   if (resp.statusCode == 401) {
     debugPrint('[ApiService] 401 Unauthorized. Attempting refresh...');
     final refreshed = await AuthService.refreshToken();
     if (refreshed != null) {
       debugPrint('[ApiService] Token refreshed. Retrying request...');
-      resp = await sendFn(refreshed);
+      resp = await sendFn(refreshed).timeout(_kRequestTimeout);
     }
   }
   return resp;
@@ -146,11 +150,11 @@ Future<http.StreamedResponse> _authedMultipart(
   http.MultipartRequest Function(String activeToken) buildReq,
 ) async {
   final activeToken = await AuthService.getAccessToken() ?? token;
-  var streamed = await buildReq(activeToken).send();
+  var streamed = await buildReq(activeToken).send().timeout(_kUploadTimeout);
   if (streamed.statusCode == 401) {
     final refreshed = await AuthService.refreshToken();
     if (refreshed != null) {
-      streamed = await buildReq(refreshed).send();
+      streamed = await buildReq(refreshed).send().timeout(_kUploadTimeout);
     }
   }
   return streamed;
