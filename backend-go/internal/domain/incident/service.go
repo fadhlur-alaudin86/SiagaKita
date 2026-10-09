@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"regexp"
 	"sync"
 	"time"
 
@@ -422,6 +423,16 @@ func (s *Service) CreateReport(reporterID string, req *CreateReportRequest, phot
 }
 
 func (s *Service) GetReports(status string) ([]IncidentReportResponse, error) {
+	// Status comes from a user query param and is concatenated into a Raw
+	// query fragment (value itself stays bound). Restrict to a safe alphabet
+	// so no SQL metacharacters can reach the statement. GORM rebinds the
+	// bound `?` to postgres `$N` itself; do not hand-write `$N` here.
+	if status != "" {
+		valid, _ := regexp.MatchString(`^[a-z_]{1,32}$`, status)
+		if !valid {
+			return nil, ErrInvalidReportStatus
+		}
+	}
 	return s.repo.FindReports(status)
 }
 

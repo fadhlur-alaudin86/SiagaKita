@@ -21,4 +21,7 @@ var (
 
 	// ErrSOSBanned indicates the user account has been disabled from triggering SOS due to prior violations.
 	ErrSOSBanned = errors.New("sos_banned: akun Anda dinonaktifkan dari fitur SOS karena pelanggaran berulang")
+
+	// ErrInvalidReportStatus indicates a report status filter failed allowlist validation.
+	ErrInvalidReportStatus = errors.New("invalid report status filter")
 )

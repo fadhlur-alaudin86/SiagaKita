@@ -177,8 +177,7 @@ func (s *Service) ConsoleLogin(ctx context.Context, req *LoginRequest) (*AuthRes
 	// Ambil full_name dari admin_profiles jika ada
 	var fullName *string
 	if user.Role == "admin" || user.Role == "superadmin" {
-		var ap AdminProfile
-		if err := s.repo.db.Where("user_id = ?", user.ID).First(&ap).Error; err == nil {
+		if ap, err := s.repo.FindAdminProfile(user.ID); err == nil {
 			fullName = ap.FullName
 		}
 	}
@@ -412,11 +411,17 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string, badgeN
 			}
 
 			// Simpan JTI baru ke Redis (menggantikan session lama)
-			_ = s.rdb.Set(ctx, sessionKey, jti, s.cfg.JWTAccessTTL)
-			_ = s.rdb.Set(ctx, refreshKey, refreshJTI, s.cfg.JWTRefreshTTL)
+			if err := s.rdb.Set(ctx, sessionKey, jti, s.cfg.JWTAccessTTL).Err(); err != nil {
+				utils.Error().Err(err).Str("user_id", user.ID).Msg("[AuthService] Failed to persist login session JTI")
+			}
+			if err := s.rdb.Set(ctx, refreshKey, refreshJTI, s.cfg.JWTRefreshTTL).Err(); err != nil {
+				utils.Error().Err(err).Str("user_id", user.ID).Msg("[AuthService] Failed to persist login refresh JTI")
+			}
 		} else {
 			// Console roles: per-JTI tracking (multi-device support)
-			_ = s.rdb.Set(ctx, "refresh_jti:"+refreshJTI, "valid", s.cfg.JWTRefreshTTL)
+			if err := s.rdb.Set(ctx, "refresh_jti:"+refreshJTI, "valid", s.cfg.JWTRefreshTTL).Err(); err != nil {
+				utils.Error().Err(err).Str("user_id", user.ID).Msg("[AuthService] Failed to persist console login refresh JTI")
+			}
 		}
 	}
 
@@ -480,8 +485,12 @@ func (s *Service) verifyRefreshTokenReplay(ctx context.Context, userID, role, ol
 		storedJTI, err := s.rdb.Get(ctx, refreshKey).Result()
 		if err != nil || storedJTI != oldJTI {
 			// Replay attack terdeteksi di luar grace period! Revoke seluruh sesi aktif
-			_ = s.rdb.Del(ctx, "session:"+userID)
-			_ = s.rdb.Del(ctx, "refresh_token:"+userID)
+			if delErr := s.rdb.Del(ctx, "session:"+userID).Err(); delErr != nil {
+				utils.Error().Err(delErr).Str("user_id", userID).Msg("[AuthService] Failed to revoke session during replay handling")
+			}
+			if delErr := s.rdb.Del(ctx, "refresh_token:"+userID).Err(); delErr != nil {
+				utils.Error().Err(delErr).Str("user_id", userID).Msg("[AuthService] Failed to revoke refresh token during replay handling")
+			}
 			return ErrTokenReused
 		}
 		return nil
@@ -493,7 +502,9 @@ func (s *Service) verifyRefreshTokenReplay(ctx context.Context, userID, role, ol
 	if err != nil || val != "valid" {
 		return ErrTokenReused
 	}
-	_ = s.rdb.Del(ctx, jtiKey)
+	if delErr := s.rdb.Del(ctx, jtiKey).Err(); delErr != nil {
+		utils.Error().Err(delErr).Str("jti_key", jtiKey).Msg("[AuthService] Failed to consume console refresh JTI")
+	}
 	return nil
 }
 
@@ -506,8 +517,7 @@ func (s *Service) resolveUserFullName(user *User) *string {
 			fullName = profile.FullName
 		}
 	case RoleAdmin, RoleSuperAdmin:
-		var ap AdminProfile
-		if err := s.repo.db.Where("user_id = ?", user.ID).First(&ap).Error; err == nil {
+		if ap, err := s.repo.FindAdminProfile(user.ID); err == nil {
 			fullName = ap.FullName
 		}
 	case RoleAgencyPersonnel:
@@ -532,10 +542,16 @@ func (s *Service) saveRotatedSession(ctx context.Context, user *User, resp *Auth
 	}
 
 	if user.Role == RoleCivilian || user.Role == RoleVolunteer {
-		_ = s.rdb.Set(ctx, "session:"+user.ID, newAccessJTI, s.cfg.JWTAccessTTL)
-		_ = s.rdb.Set(ctx, "refresh_token:"+user.ID, newRefreshJTI, s.cfg.JWTRefreshTTL)
+		if err := s.rdb.Set(ctx, "session:"+user.ID, newAccessJTI, s.cfg.JWTAccessTTL).Err(); err != nil {
+			utils.Error().Err(err).Str("user_id", user.ID).Msg("[AuthService] Failed to persist rotated session JTI")
+		}
+		if err := s.rdb.Set(ctx, "refresh_token:"+user.ID, newRefreshJTI, s.cfg.JWTRefreshTTL).Err(); err != nil {
+			utils.Error().Err(err).Str("user_id", user.ID).Msg("[AuthService] Failed to persist rotated refresh JTI")
+		}
 	} else {
-		_ = s.rdb.Set(ctx, "refresh_jti:"+newRefreshJTI, "valid", s.cfg.JWTRefreshTTL)
+		if err := s.rdb.Set(ctx, "refresh_jti:"+newRefreshJTI, "valid", s.cfg.JWTRefreshTTL).Err(); err != nil {
+			utils.Error().Err(err).Str("user_id", user.ID).Msg("[AuthService] Failed to persist console refresh JTI")
+		}
 	}
 
 	respBytes, err := sonic.Marshal(resp)

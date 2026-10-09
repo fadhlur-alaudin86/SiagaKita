@@ -362,6 +362,13 @@ func (r *Repository) FindPersonnelByUserID(userID string) (*AgencyPersonnel, err
 	return &p, err
 }
 
+// FindAdminProfile retrieves an admin_profiles row by user_id.
+func (r *Repository) FindAdminProfile(userID string) (*AdminProfile, error) {
+	var ap AdminProfile
+	err := r.db.Where("user_id = ?", userID).First(&ap).Error
+	return &ap, err
+}
+
 // FindPersonnelByBadgeNumber retrieves an agency_personnels row by badge_number.
 func (r *Repository) FindPersonnelByBadgeNumber(badge string) (*AgencyPersonnel, error) {
 	var p AgencyPersonnel

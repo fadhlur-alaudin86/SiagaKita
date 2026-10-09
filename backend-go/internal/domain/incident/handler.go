@@ -481,6 +481,9 @@ func (h *Handler) GetReports(c *fiber.Ctx) error {
 	status := c.Query("status", "")
 	reports, err := h.svc.GetReports(status)
 	if err != nil {
+		if errors.Is(err, ErrInvalidReportStatus) {
+			return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, reports)

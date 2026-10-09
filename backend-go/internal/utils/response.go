@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"strings"
+
 	"siagakita-backend/internal/i18n"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,6 +14,35 @@ type APIResponse struct {
 	Code    string      `json:"code,omitempty"`
 	Message string      `json:"message,omitempty"`
 	Data    interface{} `json:"data,omitempty"`
+}
+
+// internalErrorMarkers lists substrings that reveal driver or storage
+// internals and must never reach clients. Messages containing them are
+// replaced with a generic, translatable failure message (detail stays logged
+// by callers via zerolog).
+var internalErrorMarkers = []string{
+	"record not found",
+	"duplicate key",
+	"violates unique constraint",
+	"violates foreign key constraint",
+	"violates check constraint",
+	"pq:",
+	"gorm:",
+	"dial tcp",
+	"connection refused",
+	"SQLSTATE",
+}
+
+// sanitizeMessage replaces driver/storage-internal error text with a safe
+// generic message. Intended user-facing messages pass through untouched.
+func sanitizeMessage(message string) string {
+	lowered := strings.ToLower(message)
+	for _, marker := range internalErrorMarkers {
+		if strings.Contains(lowered, marker) {
+			return "Terjadi kesalahan pada server"
+		}
+	}
+	return message
 }
 
 // defaultErrorCode maps HTTP status to a generic machine-readable code so
@@ -69,14 +100,15 @@ func CreatedResponse(c *fiber.Ctx, data interface{}) error {
 // The message is automatically localized according to the request's Accept-Language.
 // A generic machine-readable code derived from the status is always included;
 // use ErrorResponseWithCode for semantic codes clients can switch on.
+// Driver-internal text is redacted to a generic message before sending.
 func ErrorResponse(c *fiber.Ctx, status int, message string) error {
-	translated := i18n.Translate(i18n.GetLocale(c), message)
+	translated := i18n.Translate(i18n.GetLocale(c), sanitizeMessage(message))
 	return c.Status(status).JSON(APIResponse{Success: false, Code: defaultErrorCode(status), Message: translated})
 }
 
 // ErrorResponseWithCode returns an error response with an explicit semantic
 // code (e.g. ERR_EMAIL_TAKEN) for client branching. Message stays displayable.
 func ErrorResponseWithCode(c *fiber.Ctx, status int, code, message string) error {
-	translated := i18n.Translate(i18n.GetLocale(c), message)
+	translated := i18n.Translate(i18n.GetLocale(c), sanitizeMessage(message))
 	return c.Status(status).JSON(APIResponse{Success: false, Code: code, Message: translated})
 }
