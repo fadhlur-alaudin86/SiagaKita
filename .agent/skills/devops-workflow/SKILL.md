@@ -67,7 +67,7 @@ feature/F-XXX/sub-mobile  ─┘                                ↓
 | `auto-tag.yml` | Push to `main` with changes to `VERSION` | Auto-creates a git tag matching `VERSION` file |
 | `labeler.yml` | PR open/synchronize | Automatically labels PRs based on modified paths |
 | `issue-status-labeler.yml` | PR open/review/merge | Automates issue status transitions (`status: in-review`, `status: ready`, closes on merge) |
-| `auto-merge-dev.yml` | PR open/review to `dev` | Enables automatic squash-merge to `dev` upon 1 approval & passing CI checks |
+| `auto-merge-dev.yml` | PR open/review to `dev`, 30-min schedule | Enables automatic squash-merge to `dev` upon 1 approval & passing CI checks; merges dev into behind PR branches so CI re-runs |
 | `osv-scanner-pr.yml` | PR to `dev` | Fails on newly introduced vulnerable dependencies (Go + Flutter locks) |
 
 ## Versioning Flow
