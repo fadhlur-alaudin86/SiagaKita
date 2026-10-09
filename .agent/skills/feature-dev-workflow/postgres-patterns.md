@@ -63,6 +63,8 @@ WHERE status IN ('PENDING', 'DISPATCHED', 'IN_PROGRESS');
 | Timestamp | `timestamptz` | `timestamp` | Stores UTC offset; prevents time zone ambiguity in disaster audit logs. |
 | Sequential ID | `bigint` / `BIGSERIAL` | `integer`, random `uuid` v4 | `bigint` avoids key exhaustion and maintains sequential B-tree locality without fragmentation. |
 | Text / Strings | `text` | `varchar(255)` | In PostgreSQL, `text` and `varchar` have identical performance; enforce lengths at domain/application validation. |
+
+> **Scoped exception (Schema v13):** state-machine, category, status, and role columns use domain-constrained `VARCHAR` with explicit SQL `CHECK` constraints instead (see migration 021). ENUM types cannot gain values inside transaction blocks, which breaks zero-downtime `golang-migrate` deploys. New free-text columns still default to `text`.
 | Monetary / Points | `numeric(10,2)` / `integer` (cents) | `float`, `double precision` | Prevents floating-point rounding errors. |
 | Status Flags | `boolean` | `varchar(1)`, `int` | Clean 1-byte representation optimized for indexing. |
 | Flexible Payloads | `jsonb` | `json` | Stored in decomposed binary format supporting GIN indexing and fast lookups. |

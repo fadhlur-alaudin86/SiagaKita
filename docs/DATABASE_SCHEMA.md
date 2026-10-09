@@ -6,7 +6,7 @@ This document serves as the primary technical specification for the SiagaKita Po
 
 ## Schema Overview
 
-- **Active Version**: Schema v13 (Migrations 001 through 021)
+- **Active Version**: Schema v13 (Migrations 001 through 023)
 - **Database Engine**: PostgreSQL 15+
 - **Driver**: `jackc/pgx/v5` via `pgxpool.Pool` (Raw SQL, ORM-free)
 - **Migration Engine**: `golang-migrate` embedded in Go binary
@@ -25,7 +25,7 @@ This document serves as the primary technical specification for the SiagaKita Po
 7. [Database Triggers](#7-database-triggers)
 8. [Entity Relationship Model](#8-entity-relationship-model)
 9. [Architecture & Design Rationale](#9-architecture--design-rationale)
-10. [Sequential Migration History (001–020)](#10-sequential-migration-history-001020)
+10. [Sequential Migration History (001–023)](#10-sequential-migration-history-001023)
 
 ---
 
@@ -138,7 +138,7 @@ CREATE TABLE public.users (
     id            uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     email         varchar(100) NOT NULL UNIQUE,
     password_hash varchar(255) NOT NULL,
-    role          user_role NOT NULL DEFAULT 'civilian',
+    role          varchar(30) NOT NULL DEFAULT 'civilian', -- CHECK (role IN (...)) per 021
     created_at    timestamptz DEFAULT now() NOT NULL,
     deleted_at    timestamptz
 );
@@ -163,7 +163,7 @@ CREATE TABLE public.user_profiles (
     sos_strike_count        int DEFAULT 0,
     is_sos_banned           boolean DEFAULT false,
     banned_until            timestamptz,
-    blood_type              blood_type_enum DEFAULT 'UNKNOWN',
+    blood_type              varchar(10) DEFAULT 'UNKNOWN', -- CHECK blood group set per 021
     allergies               text,
     medical_conditions      text,
     height_cm               int CHECK (height_cm > 0),
@@ -261,10 +261,10 @@ Stores real-time high-priority emergency alerts triggered by citizens.
 CREATE TABLE public.incidents (
     id                   uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     reporter_id          uuid REFERENCES users(id),
-    incident_type        incident_category NOT NULL DEFAULT 'unknown',
+    incident_type        varchar(50) NOT NULL DEFAULT 'unknown', -- CHECK categories per 021
     latitude             numeric(10,8) NOT NULL,
     longitude            numeric(11,8) NOT NULL,
-    status               incident_status DEFAULT 'grace_period',
+    status               varchar(30) DEFAULT 'grace_period', -- CHECK lifecycle per 021
     urgency_level        varchar(10) DEFAULT 'unknown',
     reporter_trust_label varchar(20) DEFAULT 'standard',
     address_detail       varchar(500),
@@ -474,7 +474,7 @@ For the comprehensive interactive Mermaid ERD diagram, see [`docs/design/databas
 
 ---
 
-## 10. Sequential Migration History (001–022)
+## 10. Sequential Migration History (001–023)
 
 | Version | Migration Script | Scope & Description |
 |---|---|---|
