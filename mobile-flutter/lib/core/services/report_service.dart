@@ -264,7 +264,9 @@ class ReportService {
               .toList();
           final offlineReports = await getFailedReports();
           return [...offlineReports, ...serverReports];
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[ReportService] Skip corrupt cached report: $e');
+        }
       }
       Error.throwWithStackTrace(
         ReportException('Periksa koneksi internet. Gagal memuat laporan: $e'),

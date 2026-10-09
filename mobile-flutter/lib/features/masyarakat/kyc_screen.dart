@@ -473,7 +473,9 @@ class _KycScreenState extends State<KycScreen> {
                       );
                     }
                   }
-                } catch (_) {}
+                } catch (e) {
+                  debugPrint('[KycScreen] Skip unparsable birth date: $e');
+                }
               }
               final picked = await showDatePicker(
                 context: context,
