@@ -33,7 +33,7 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 	result, err := h.svc.Register(c.Context(), &req)
 	if err != nil {
 		if errors.Is(err, ErrEmailTaken) {
-			return utils.ErrorResponseWithCode(c, fiber.StatusConflict, "ERR_EMAIL_TAKEN", err.Error())
+			return utils.ErrorResponseWithCode(c, fiber.StatusConflict, "ERR_EMAIL_TAKEN", "Email sudah terdaftar")
 		}
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
