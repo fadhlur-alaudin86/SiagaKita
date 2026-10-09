@@ -489,16 +489,7 @@ func (h *Handler) broadcastSOS(incidentID string) {
 		if userID == reporterID {
 			continue
 		}
-		// Cek role dari Redis cache dulu, fallback ke DB
-		var role string
-		roleKey := fmt.Sprintf("user:role:%s", userID)
-		role, roleErr := h.rdb.Get(ctx, roleKey).Result()
-		if roleErr != nil || role == "" {
-			h.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
-			if role != "" {
-				h.rdb.Set(ctx, roleKey, role, time.Hour)
-			}
-		}
+		role := h.resolveUserRole(ctx, userID)
 		if role == "agency" || role == "admin" || role == "superadmin" {
 			if err := h.hub.SendToUser(userID, msg); err == nil {
 				sent++
@@ -507,6 +498,21 @@ func (h *Handler) broadcastSOS(incidentID string) {
 	}
 
 	utils.Info().Str("incident_id", incidentID).Int("sent_count", sent).Msg("[WS] SOS broadcast completed")
+}
+
+// resolveUserRole reads the role from Redis cache with DB fallback.
+// Redis misses and errors both fall through to the database.
+func (h *Handler) resolveUserRole(ctx context.Context, userID string) string {
+	roleKey := fmt.Sprintf("user:role:%s", userID)
+	if role, err := h.rdb.Get(ctx, roleKey).Result(); err == nil && role != "" {
+		return role
+	}
+	var role string
+	h.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
+	if role != "" {
+		h.rdb.Set(ctx, roleKey, role, time.Hour)
+	}
+	return role
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
