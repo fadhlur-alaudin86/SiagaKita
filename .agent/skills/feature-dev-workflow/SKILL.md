@@ -1,6 +1,6 @@
 ---
 name: feature-dev-workflow
-description: Contract-first feature development pipeline for SiagaKita (Go Fiber + Flutter). From Backlog Overview to PR to dev. Adapted from fast-prototyping-workflow for the Go+Flutter stack.
+description: Build Go Fiber + Flutter features contract-first from backlog to PR. Use when adding endpoints, screens, migrations, or dispatch.
 ---
 
 ## Trigger Keywords
@@ -17,11 +17,11 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 | Step | Action | Artifacts |
 |------|--------|-----------|
 | -3 | **Backlog Overview** — Run `python3 scripts/sync_backlog_status.py --check` (or `--fix`) to audit documentation parity + fetch issues via `gh` + read `DATABASE_SCHEMA.md` + read `stacks.md`. Print compact summary. User picks target. | Inline summary + parity audit |
-| -2 | **Discovery** — Explore codebase, inspect target domain, ask **5 clarifying questions**. Formulate plan and get user confirmation. | Discovery notes, 5 Q&A, Plan (in memory) |
+| -2 | **Discovery** — Explore codebase, inspect target domain, ask up to **5 clarifying questions** via native questioning tool. Write plan to `docs/backlog/features/F-XXX-name.md` first (mandatory file-backed plan), then get user confirmation. | Discovery notes, 5 Q&A, Plan (file-backed) |
 | -1 | **Resolve Backlog** — Match/create GitHub Issue. Check parent plan in `.planning/`. Create `docs/backlog/features/F-XXX-name.md` using full template linking to parent plan. | Feature log file |
 | 0 | **Branch & Assign** — Create `feature/F-XXX-name` from `dev`. Update issue label to `status: in-progress`, assign to active account (`--add-assignee "@me"`), and add comment to issue. | Git branch |
 | 1 | **Read Mapping** — Inspect Go domain handler, DB schema (`docs/DATABASE_SCHEMA.md`), ERD (`docs/design/database-erd.md`), Activity/State diagrams (`docs/design/activity-diagrams.md`), API endpoints, and Flutter screens. | Discovery notes |
-| 2 | **API Contract** — Extend `docs/api/paths/<domain>.yaml` with new endpoint(s) (OpenAPI 3.0). Add new schemas to `docs/api/components/schemas.yaml` if needed. Verify at `http://localhost:8080/docs`. | Updated domain YAML |
+| 2 | **API Contract** — Extend `docs/api/paths/<domain>.yaml` with new endpoint(s) (OpenAPI 3.0). Add new schemas to `docs/api/components/schemas.yaml` if needed. Verify via Swagger UI at `http://localhost:8080/docs` when interactive, or headless via `curl -s localhost:8080/openapi.yaml | head -50` plus schema diff. | Updated domain YAML |
 | 3 | **DB Migration** — Read `docs/DATABASE_SCHEMA.md` & `docs/design/database-erd.md`, write paired SQL migrations (`NNN_name.up.sql` & `NNN_name.down.sql`) in `backend-go/migrations/`. Update schema docs AND update Mermaid ERD. | Paired SQL migrations + updated schema + updated ERD |
 | 4 | **Backend Implementation** — Implement handler, service, repository in `backend-go/internal/domain/<name>/`. If lifecycle states or actor capabilities change, update `docs/design/activity-diagrams.md` or `use-case-diagrams.md`. | Go source files + updated diagrams |
 | 5 | **Flutter Implementation** — Implement screens/widgets/services in `mobile-flutter/` and/or `windows_console_flutter/`. | Dart source files |
@@ -36,7 +36,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 1. **Check Backlog First** — Run `gh issue list` before starting work to avoid duplicates.
 2. **Create Feature Log at Step -1** — Write full log template to `docs/backlog/features/F-XXX-name.md` and link to parent plan in `.planning/` if part of an epic.
 3. **Update Log per Step** — Mark progress completed with timestamp and decision rationale.
-4. **Confirm Before Writing** — Ask user approval before modifying backend, DB, or Flutter files.
+4. **Confirm Before Writing** — Write discovery plan to `docs/backlog/features/F-XXX-name.md` first, then ask user approval via native questioning tool (`ask_question` on Antigravity, `question` on OpenCode) before modifying backend, DB, or Flutter files.
 5. **Decision Logging** — Document every non-trivial design choice in the Decisions Log.
 6. **Resume Protocol** — If interrupted or handing off, read feature log first → resume at first pending step.
 6a. **Parent Tracker Automation** — When all sub-issues of a parent tracking issue/epic are merged, automation marks parent checklists `[x]` and transitions the label to `status: ready`. Final issue closure is left to human/tech lead verification.

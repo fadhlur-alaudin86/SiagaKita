@@ -1,6 +1,6 @@
 ---
 name: gh-project-manager
-description: Manage GitHub Issues, milestones, labels, sprint planning, and progress tracking for SiagaKita via gh CLI. Use this skill when asked to organize project backlogs, sprints, or issue statuses.
+description: Manage GitHub issues, milestones, labels, and sprints via gh CLI. Use when planning backlogs or tracking progress.
 ---
 
 ## Trigger Keywords
@@ -15,7 +15,7 @@ Read [stacks.md](../stacks.md) for configuration details (repo name, label conve
 
 - `gh` CLI installed and authenticated (`gh auth status`)
 - `jq` installed
-- Access to repo `SuperBypassUdinnn/SIAGAKITA`
+- Access to repo `fadhlur-alaudin86/SiagaKita`
 
 ## Configuration
 
@@ -50,25 +50,25 @@ Example: Sprint 25 (v1.0.25) — 15 August 2026
 ### List Issues
 ```bash
 # All open issues
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA
+gh issue list --repo fadhlur-alaudin86/SiagaKita
 
 # Filter by label
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA --label "status: in-progress"
+gh issue list --repo fadhlur-alaudin86/SiagaKita --label "status: in-progress"
 
 # Filter by milestone
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA --milestone "Sprint 25 (v1.0.25)"
+gh issue list --repo fadhlur-alaudin86/SiagaKita --milestone "Sprint 25 (v1.0.25)"
 
 # Filter by assignee
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA --assignee "@me"
+gh issue list --repo fadhlur-alaudin86/SiagaKita --assignee "@me"
 
 # JSON output for scripting
-gh issue list --repo SuperBypassUdinnn/SIAGAKITA --json number,title,assignees,labels,milestone,state
+gh issue list --repo fadhlur-alaudin86/SiagaKita --json number,title,assignees,labels,milestone,state
 ```
 
 ### Create Issue
 ```bash
 gh issue create \
-  --repo SuperBypassUdinnn/SIAGAKITA \
+  --repo fadhlur-alaudin86/SiagaKita \
   --title "F-014: Volunteer Dispatch from Console" \
   --body "**Description:**\n...\n\n**Acceptance Criteria:**\n- [ ] ..." \
   --label "type: feature" \
@@ -178,7 +178,7 @@ gh issue list --repo fadhlur-alaudin86/SiagaKita \
 
 1. **Read stacks.md first** — before creating or modifying anything.
 2. **Check for duplicates before creating** — always run `gh issue list` to verify a similar issue doesn't already exist.
-3. **Mandatory comments & Assignee** — every status change (label change) must be accompanied by an explanatory comment detailing reason/progress. When picking up work or transitioning an issue to `status: in-progress`, ALWAYS assign the issue to the active developer/agent account (`--add-assignee "@me"`).
+3. **Mandatory comments & Assignee** — every status change (label change) must be accompanied by an explanatory comment detailing reason/progress. When picking up work or transitioning an issue to `status: in-progress`, ALWAYS assign the issue to the active developer/agent account (`--add-assignee "@me"`). If `@me` fails to resolve (service-account context), resolve login first via `ME=$(gh api user -q .login)` and pass `--add-assignee "$ME"` explicitly.
 4. **Milestone assignment** — every new issue must be assigned to an appropriate active milestone.
 5. **Do not close issue without merge** — issues are only closed after the PR merges to `dev`.
 6. **F-XXX numbering** — use GitHub issue number as ID. Title format is always `F-<number>: <description>`.

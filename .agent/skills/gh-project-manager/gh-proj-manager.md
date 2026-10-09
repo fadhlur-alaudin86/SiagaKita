@@ -13,7 +13,7 @@ Sub-file of [SKILL.md](SKILL.md).
 | Edit issue labels | `gh issue edit <N> --repo fadhlur-alaudin86/SiagaKita --add-label "..."` |
 | Add comment | `gh issue comment <N> --repo fadhlur-alaudin86/SiagaKita --body "..."` |
 | Close issue | `gh issue close <N> --repo fadhlur-alaudin86/SiagaKita --reason completed` |
-| Assign issue | `gh issue edit <N> --repo fadhlur-alaudin86/SiagaKita --add-assignee "@me"` |
+| Assign issue | `gh issue edit <N> --repo fadhlur-alaudin86/SiagaKita --add-assignee "@me"` (fallback: `ME=$(gh api user -q .login)` then `--add-assignee "$ME"`) |
 | List milestones | `gh api repos/fadhlur-alaudin86/SiagaKita/milestones` |
 | Create milestone | `gh api repos/fadhlur-alaudin86/SiagaKita/milestones --method POST -f title="..."` |
 

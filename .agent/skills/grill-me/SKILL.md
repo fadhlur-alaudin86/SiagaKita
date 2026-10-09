@@ -1,6 +1,6 @@
 ---
 name: grill-me
-description: A relentless architectural interview protocol to sharpen plans, technical designs, state lifecycles, and database schemas before implementation. Uses a Design Tree Frontier approach with explicit recommendations.
+description: Interview plans relentlessly via design-tree frontier rounds. Use when aligning architecture before implementation.
 ---
 
 # Grill-Me Skill — SiagaKita
@@ -40,7 +40,7 @@ The `grill-me` skill conducts an exhaustive, relentless interview to pressure-te
 Present each round using the structured questioning format:
 - Group related questions or ask sequentially.
 - Prefix recommended options with `(Recommended)`.
-- Use the `ask_question` tool when running interactively in agentic pairing mode.
+- Use the `ask_question` tool when running interactively in agentic pairing mode (Antigravity). In OpenCode, use the native `question` tool with the same frontier-round structure.
 
 Format per round:
 ```text

@@ -1,6 +1,6 @@
 ---
 name: karpathy-guidelines
-description: Behavioral guidelines to reduce common LLM coding mistakes in SiagaKita. Enforces thinking before coding, simplicity first (KISS/YAGNI), surgical edits without side-effects, and goal-driven execution across Go Fiber and Flutter codebases.
+description: Enforce surgical, simple, goal-driven coding across Go and Flutter. Use when writing, reviewing, or refactoring code.
 license: MIT
 ---
 
@@ -16,7 +16,7 @@ Behavioral guidelines to reduce common AI assistant and developer coding pitfall
 
 Before writing or modifying code:
 - **State Assumptions Explicitly**: If an issue or user prompt leaves room for interpretation, declare the working assumption before acting.
-- **Inspect Before Asking**: Never ask the user questions that can be answered by exploring the codebase via `grep_search`, `find_by_name`, `view_file`, or `codegraph`.
+- **Inspect Before Asking**: Never ask the user questions that can be answered by exploring the codebase. Tool mapping (Antigravity → OpenCode): `grep_search` → `grep`, `find_by_name` → `glob`, `view_file` → `read`, `codegraph` → `codegraph_explore` via `execute`.
 - **Surface Multiple Interpretations**: If a requirement has multiple viable architectural paths, present them with pros and cons rather than choosing silently.
 - **Push Back on Complexity**: If a simpler alternative exists, state it directly and recommend the cleaner approach.
 - **Halt on Uncertainty**: If a domain rule, state transition, or schema relation is ambiguous, pause immediately, identify the exact ambiguity, and ask for clarification.

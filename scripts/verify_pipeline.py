@@ -9,7 +9,7 @@ Verifies:
 4. Regression unit tests (Go Fiber) and static analysis (Flutter)
 
 Usage:
-  python3 scripts/verify_pipeline.py [--fast] [--run-tests] [--skip-tests]
+  python3 scripts/verify_pipeline.py [--fast] [--run-tests] [--skip-tests] [--skip-vuln]
 """
 
 import os
@@ -399,7 +399,7 @@ def check_silent_database_errors(repo_root):
     return True
 
 
-def check_code_linters(repo_root):
+def check_code_linters(repo_root, skip_vuln=False):
     """Runs golangci-lint, go vet, govulncheck, and flutter analyze across all workspaces."""
     print("\n--- 5. Static Analysis, Linters & Security (golangci-lint, govulncheck & flutter analyze) ---")
     all_passed = True
@@ -432,13 +432,17 @@ def check_code_linters(repo_root):
             print("[PASS] golangci-lint passed cleanly with 0 issues.")
 
         print("[INFO] Running govulncheck in backend-go...")
-        govulncheck_cmd = None
-        if shutil.which("govulncheck"):
-            govulncheck_cmd = ["govulncheck", "./..."]
-        elif os.path.exists(os.path.expanduser("~/go/bin/govulncheck")):
-            govulncheck_cmd = [os.path.expanduser("~/go/bin/govulncheck"), "./..."]
-        elif shutil.which("go"):
-            govulncheck_cmd = ["go", "run", "golang.org/x/vuln/cmd/govulncheck@latest", "./..."]
+        if skip_vuln:
+            print("[SKIP] govulncheck skipped due to --skip-vuln flag (use in offline sandboxes).")
+            govulncheck_cmd = None
+        else:
+            govulncheck_cmd = None
+            if shutil.which("govulncheck"):
+                govulncheck_cmd = ["govulncheck", "./..."]
+            elif os.path.exists(os.path.expanduser("~/go/bin/govulncheck")):
+                govulncheck_cmd = [os.path.expanduser("~/go/bin/govulncheck"), "./..."]
+            elif shutil.which("go"):
+                govulncheck_cmd = ["go", "run", "golang.org/x/vuln/cmd/govulncheck@v1.8.0", "./..."]
 
         if govulncheck_cmd:
             res_vuln = subprocess.run(govulncheck_cmd, cwd=backend_dir)
@@ -448,7 +452,8 @@ def check_code_linters(repo_root):
             else:
                 print("[PASS] govulncheck passed cleanly with 0 vulnerabilities.")
         else:
-            print("[WARN] Neither govulncheck nor go was found to execute vulnerability checks.")
+            if not skip_vuln:
+                print("[WARN] Neither govulncheck nor go was found to execute vulnerability checks.")
 
     # 5.2 Flutter Static Analysis
     flutter_apps = [
@@ -528,6 +533,7 @@ def main():
     parser.add_argument("--fast", action="store_true", help="Skip running unit tests and analyzer (audits contracts, migrations, formatting, and sync)")
     parser.add_argument("--format", action="store_true", help="Automatically format Go (gofmt -w) and Dart (dart format) source files across all workspaces")
     parser.add_argument("--skip-tests", action="store_true", help="Explicitly skip regression test suite execution")
+    parser.add_argument("--skip-vuln", action="store_true", help="Skip govulncheck (use in offline sandboxes without network for module fetch)")
     args = parser.parse_args()
 
     repo_root = find_repo_root()
@@ -556,7 +562,7 @@ def main():
         print("[SKIP] Linter, security, and static analysis skipped due to --fast flag.")
         results.append(("Static Analysis & Linters", True))
     else:
-        results.append(("Static Analysis & Linters", check_code_linters(repo_root)))
+        results.append(("Static Analysis & Linters", check_code_linters(repo_root, skip_vuln=args.skip_vuln)))
 
     # 6. Regression Unit Tests
     if args.fast or args.skip_tests:

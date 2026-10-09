@@ -1,11 +1,6 @@
 ---
 name: cavecrew
-description: >
-  Decision guide for delegating tasks to compact subagents (investigator, builder, reviewer)
-  with compressed context and structured output. Conserves parent context budget across long sessions
-  while strictly adhering to the Clean Text and Icon Minimization Policy.
-  Trigger: "delegate to subagent", "use cavecrew", "spawn investigator", "spawn builder",
-  "spawn reviewer", "save context", "compressed subagent".
+description: Delegate tasks to compact subagents with structured outputs. Use when splitting investigation, build, or review work.
 ---
 
 # Cavecrew Subagent Delegation Guide
