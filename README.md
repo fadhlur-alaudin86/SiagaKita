@@ -89,31 +89,24 @@ All commits must follow the format: `<type>(<scope>): <short description>`
 To run the project locally:
 
 1. Ensure Docker, Go, and Flutter are installed on your machine.
-2. Navigate to `infrastructure/` and configure `.env` based on `.env-example`.
-3. Start database and caching services using Docker Compose:
+2. Navigate to `infrastructure/` and configure `.env.dev` based on `.env.example`.
+3. Start the backend stack (PostgreSQL, Redis, Go API) using Docker Compose:
    ```bash
-   cd infrastructure && docker compose up -d postgres redis
+   cd infrastructure && docker compose up -d --build
    ```
-4. Run database migrations to bring the schema up to date:
-   ```bash
-   cd backend-go && go run cmd/migrate/main.go up
-   ```
-5. Run the backend server:
-   ```bash
-   go run cmd/api/main.go
-   ```
-   Interactive Swagger UI documentation will be available at `http://localhost:8080/docs/*`.
+   The backend container applies pending database migrations automatically on boot. Interactive Swagger UI documentation will be available at `http://localhost:8080/docs/`.
+4. Backend alternative (native, for backend developers): `cd backend-go && go run cmd/migrate/main.go up`, then `go run cmd/api/main.go`.
 6. Run the mobile application:
    ```bash
-   cd ../mobile-flutter && flutter run --dart-define-from-file=../infrastructure/.env
+   cd ../mobile-flutter && flutter run --dart-define-from-file=../infrastructure/.env.dev
    ```
 7. Run the desktop console application:
    ```bash
-   cd ../windows_console_flutter && flutter run -d linux --dart-define-from-file=../infrastructure/.env
+   cd ../windows_console_flutter && flutter run -d linux --dart-define-from-file=../infrastructure/.env.dev
    ```
 8. Run the official agency responder mobile application:
    ```bash
-   cd ../mobile-flutter-responder && flutter run --dart-define-from-file=../infrastructure/.env
+   cd ../mobile-flutter-responder && flutter run --dart-define-from-file=../infrastructure/.env.dev
    ```
 
 ## Documentation & AI Agent Skills
