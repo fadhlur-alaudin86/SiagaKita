@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/models/models.dart';
+import '../../../../core/localization/app_localization.dart';
 import '../../../../core/services/api_services.dart';
 import '../../../../core/constants/api_constants.dart';
 
@@ -858,18 +859,27 @@ class _ReportDetailPanelState extends State<_ReportDetailPanel> {
               side: const BorderSide(color: Colors.white24),
             ),
             onSelected: (v) => setState(() => _selectedUrgency = v),
-            itemBuilder: (ctx) => const [
+            itemBuilder: (ctx) => [
               PopupMenuItem(
                 value: 0,
-                child: Text('Rendah', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'Rendah'.tr(ctx),
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               PopupMenuItem(
                 value: 1,
-                child: Text('Sedang', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'Sedang'.tr(ctx),
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               PopupMenuItem(
                 value: 2,
-                child: Text('Tinggi', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'Tinggi'.tr(ctx),
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
             child: Container(

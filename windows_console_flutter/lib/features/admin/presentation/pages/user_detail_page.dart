@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/localization/app_localization.dart';
 import '../../../../core/models/models.dart';
 import '../../../../core/services/api_services.dart';
 
@@ -62,23 +63,29 @@ class _UserDetailPageState extends State<UserDetailPage>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
-        title: const Text(
-          'Setujui Verifikasi NIK?',
+        title: Text(
+          'Setujui Verifikasi NIK?'.tr(context),
           style: TextStyle(color: Colors.white),
         ),
-        content: const Text(
-          'Pastikan foto KTP dan selfie cocok.',
+        content: Text(
+          'Pastikan foto KTP dan selfie cocok.'.tr(context),
           style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+            child: Text(
+              'Batal'.tr(context),
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Setujui', style: TextStyle(color: Colors.white)),
+            child: Text(
+              'Setujui'.tr(context),
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -86,7 +93,7 @@ class _UserDetailPageState extends State<UserDetailPage>
     if (ok != true) return;
     if (await AdminApiService.approveWargaKyc(widget.token, widget.userId) &&
         mounted) {
-      _snack('Verifikasi NIK disetujui', Colors.green);
+      _snack('Verifikasi NIK disetujui'.tr(context), Colors.green);
       _load();
     }
   }
@@ -96,23 +103,29 @@ class _UserDetailPageState extends State<UserDetailPage>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E2537),
-        title: const Text(
-          'Tolak Verifikasi NIK?',
+        title: Text(
+          'Tolak Verifikasi NIK?'.tr(context),
           style: TextStyle(color: Colors.white),
         ),
-        content: const Text(
-          'Pengguna diminta upload ulang.',
+        content: Text(
+          'Pengguna diminta upload ulang.'.tr(context),
           style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+            child: Text(
+              'Batal'.tr(context),
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Tolak', style: TextStyle(color: Colors.white)),
+            child: Text(
+              'Tolak'.tr(context),
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -378,7 +391,7 @@ class _UserDetailPageState extends State<UserDetailPage>
                                   ),
                                 ),
                                 icon: const Icon(Icons.close, size: 16),
-                                label: const Text('Tolak'),
+                                label: Text('Tolak'.tr(context)),
                                 onPressed: _rejectKyc,
                               ),
                             ],
