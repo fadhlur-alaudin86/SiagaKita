@@ -209,6 +209,8 @@ class UserService {
       );
 
       request.headers['Authorization'] = 'Bearer $accessToken';
+      request.headers['Accept-Language'] =
+          ApiConfig.headers()['Accept-Language']!;
       request.fields['experience'] = experience;
 
       // Kirim semua spesialisasi sebagai satu string (Map<String,String> tidak bisa duplikat key)

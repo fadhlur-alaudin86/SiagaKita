@@ -595,7 +595,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       Navigator.pop(context); // close loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal membatalkan laporan: $e'),
+          content: Text('${'Gagal membatalkan laporan: '.tr(context)}$e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -627,7 +627,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       Navigator.pop(context); // close loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal mengirim ulang: $e'),
+          content: Text('${'Gagal mengirim ulang: '.tr(context)}$e'),
           backgroundColor: Colors.red,
         ),
       );
