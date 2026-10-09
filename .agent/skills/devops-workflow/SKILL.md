@@ -54,6 +54,7 @@ feature/F-XXX/sub-mobile  ─┘                                ↓
 - Require PR (no direct pushes — only merges from `dev`)
 - Require `ci-main` status checks to pass
 - **Rebase Merge MANDATORY** for PRs from `dev` to `main` (fast-forward linear history, preserves atomic commits from `dev` for automated release notes).
+- When finishing work, load global `finishing-a-development-branch` to decide integration; use `using-git-worktrees` for isolated feature work and `resolving-merge-conflicts` when rebases collide.
 
 ## CI/CD Workflow Reference
 
@@ -159,6 +160,7 @@ All team members MUST follow Conventional Commits to ensure automated release no
 9. **Major Workflow Evolution Protocol** — Any proposed modifications to GitHub Actions workflows (`.github/workflows/*.yml`), branching models, or deployment automation are classified as Major Evolutions. Draft a structured proposal in `learning_proposal.md` and recommend `/grill-me` alignment before implementing changes. See `feature-dev-workflow/workflow-evolution.md`.
 10. **Update docs** — whenever workflow files or deployment architecture change, update `docs/skills/devops-workflow-docs.md`.
 11. **Enforce Dependency Invariants** — prohibit arbitrary dependency upgrades or major bumps within feature development branches.
+12. **Live Docs Before Upgrades** — before adding or upgrading any Go/Flutter dependency, query `context7` (resolve-library-id, then query-docs) for breaking changes and migration notes, and link them in the PR description.
 12. **Automated Pre-Flight Verification** — Run `python3 scripts/verify_pipeline.py` (or `--fast` for intermediate iterations) before opening or recommending PR merges to ensure schema, contract, localization, and test suite health.
 13. **Milestone Planning Archiving** — When preparing a release PR to `main` with a bumped `VERSION`, move all completed plans in `.planning/` (`Merged`) to `.planning/archive/v<VERSION>/` and update `.planning/README.md`.
 

@@ -99,6 +99,7 @@ Example:
   }
   ```
 - **No Swallowed Errors**: Never discard errors with `_ = fn()`. If an error is truly benign, log it or explicitly document why it is ignored.
+- For sentinel errors, custom error types, and `errors.Join` design, load the global `golang-error-handling` skill; this standard's ECC idiom stays the baseline.
 
 ## Standard 7 — Context & Timeout Control
 
@@ -108,6 +109,7 @@ Example:
   defer cancel()
   ```
 - **Prevent Goroutine Leaks**: Any background goroutine MUST monitor `ctx.Done()` for graceful termination.
+- For goroutine lifecycle, channel ownership, and worker-pool design (WebSocket hub, background workers), load the global `golang-concurrency` skill.
 
 ## Standard 8 — Zero Value Safety
 
@@ -118,6 +120,7 @@ Example:
 
 - Run `gosec ./...` locally before submitting major backend changes to detect unchecked errors, weak random generators, and SQL injection vectors.
 - Ensure all secrets (JWT secrets, DB credentials, SMTP/Fonnte API keys) are loaded exclusively through environment variables (`config.go`).
+- When touching auth, JWT, cryptography, file uploads, or raw SQL, load the global `golang-security` skill first and apply its checklist before implementation.
 
 ## Standard 10 — Conventional Commits (MANDATORY)
 

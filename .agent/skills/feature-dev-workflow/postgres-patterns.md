@@ -3,6 +3,8 @@
 PostgreSQL 15 architecture and query optimization standards with the `pgx/v5` driver for SiagaKita. Adapted from ECC (*Everything Claude Code*) high-performance engineering principles.  
 Sub-file of [SKILL.md](SKILL.md).
 
+Load the global `supabase-postgres-best-practices` skill for query and schema performance review; these local pgx patterns stay authoritative.
+
 ---
 
 ## 1. Core Principles & Philosophy

@@ -48,7 +48,7 @@ Before the agent opens a Pull Request to `dev`, the agent MUST execute the autom
 
 ## 1. Security Review Checklist
 
-Ensures the codebase is free of injection vulnerabilities, credential leakage, and unauthorized access.
+Ensures the codebase is free of injection vulnerabilities, credential leakage, and unauthorized access. At Step 7, run the global `golang-security` skill in addition to this checklist and record findings in the feature log audit report.
 
 | Category | Verification Item | PASS Criteria | FAIL Criteria |
 |---|---|---|---|
@@ -89,6 +89,8 @@ Ensures errors are explicitly handled and failures are never silently swallowed.
 | **Dart Empty Catch** | Async exception handling | `catch (e, stack)` logs the error and surfaces user feedback | Empty `try { ... } catch (e) {}` blocks without logs or UI state updates |
 | **Flutter Mounted Check** | Post-await `BuildContext` safety | Verifies `if (!context.mounted) return;` before navigation or Snackbars | Calling `Navigator.of(context)` across an `await` boundary without mounted check |
 | **Goroutine Safety** | Background worker lifecycle | Goroutines monitor `ctx.Done()` for graceful termination | Background goroutines launched without cancellation channels (*orphan workers*) |
+
+Apply the global `golang-concurrency` skill when auditing channel direction, shared maps, and race-prone WS paths.
 
 ---
 
@@ -144,3 +146,5 @@ After completing the self-review at Step 7, record the summary in the feature lo
 - [x] Karpathy & Surgical Review: PASS (Diff is 100% surgical, no speculative over-engineering, architecture headers present)
 - [x] Dependency Determinism: PASS (No unapproved dependency upgrades, lockfiles intact)
 ```
+
+For an independent second pass, load global `requesting-code-review` (Standards + Spec axes); run global `verification-before-completion` before claiming green.

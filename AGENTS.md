@@ -8,6 +8,11 @@ This file is the OpenCode entrypoint. Canonical governance remains in `GEMINI.md
 2. Read `.agent/rules/localization.md` for the 5 localization invariants.
 3. Read `.agent/skills/README.md` + `.agent/skills/stacks.md` to select the active skill.
 4. Read the active skill `SKILL.md` under `.agent/skills/<skill>/` before acting.
+5. Recall domain-relevant memories (past gotchas, agreed decisions) before planning.
+
+## Session End
+
+Persist technical gotchas and agreed architectural decisions via memory plus Markdown mirror. Never store secrets or tokens. Notify the user of what was stored.
 
 ## Tool Mapping
 
@@ -34,5 +39,6 @@ If a skill mentions only the Antigravity name, use the OpenCode equivalent above
 
 - Dual-support: do not duplicate `.agent/skills/` into `.opencode/skills/`. Single source is `.agent/skills/`, registered via `opencode.jsonc`.
 - No uninstructed commits, pushes, or PRs.
+- Before any push, confirm `gh api user -q .login` shows an account with write access (active `gh` account flips between sessions; git uses it via credential helper).
 - Written artifacts in formal technical English. Chat adapts to user language.
 - Keep `GEMINI.md` canonical. Propose `AGENTS.md` changes via minor workflow update, major governance changes via `/grill-me`.

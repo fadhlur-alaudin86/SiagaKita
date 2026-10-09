@@ -40,6 +40,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 5. **Decision Logging** — Document every non-trivial design choice in the Decisions Log.
 6. **Resume Protocol** — If interrupted or handing off, read feature log first → resume at first pending step.
 6a. **Parent Tracker Automation** — When all sub-issues of a parent tracking issue/epic are merged, automation marks parent checklists `[x]` and transitions the label to `status: ready`. Final issue closure is left to human/tech lead verification.
+6b. **Live Docs Before Upgrades** — Before adding or upgrading any Go/Flutter dependency, query `context7` for breaking changes and migration notes, and record the link in the Decisions Log.
 
 ### Backend (Go Fiber)
 7. **Read Schema First** — Read `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md` before writing migrations.
@@ -76,6 +77,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 30. **Unit Tests per Handler** — Cover 4 mandatory scenarios: success, empty result, invalid input, DB error.
 31. **Isolated Tests** — No shared state, fast (< 1s per file).
 32. **Update Feature Log** — Record test command and status in feature log.
+32a. **Stubborn Bugs** — For races, leaks, flaky or intermittent failures, load global `systematic-debugging` (use `diagnosing-bugs` for hard regressions) before changing code.
 
 ### GitHub Sync, Pre-PR Review & Merge Strategy
 33. **Step 0 → Branch Sync, in-progress & Assignee**: Always synchronize `dev` with remote first: `git checkout dev && git pull origin dev && git checkout -b <branch>`. Then assign and label issue: `gh issue edit <N> --add-label "status: in-progress" --remove-label "status: ready,status: in-review,status: done" --add-assignee "@me"` + explanatory comment.
