@@ -49,7 +49,7 @@ func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Koordinat latitude dan longitude tidak valid")
 	}
 
-	ctx, canceled := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, canceled := context.WithTimeout(c.Context(), 3*time.Second)
 	defer canceled()
 
 	if err := h.rdb.GeoAdd(ctx, relawanGeoKey, &redis.GeoLocation{
@@ -85,7 +85,7 @@ func (h *Handler) GetOnlineStatus(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
 	}
 
-	ctx, canceled := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, canceled := context.WithTimeout(c.Context(), 3*time.Second)
 	defer canceled()
 
 	statusMap := make(map[string]bool)
@@ -143,7 +143,7 @@ func (h *Handler) GetNearbyVolunteers(c *fiber.Ctx) error {
 		}
 	}
 
-	ctx, canceled := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, canceled := context.WithTimeout(c.Context(), 3*time.Second)
 	defer canceled()
 
 	locations, err := h.rdb.GeoRadius(ctx, relawanGeoKey, lng, lat, &redis.GeoRadiusQuery{ //nolint:staticcheck
@@ -210,6 +210,8 @@ func (h *Handler) SMSFallback(c *fiber.Ctx) error {
 // broadcastEmergency finds nearby volunteers via Redis GEORADIUS and sends
 // INCOMING_EMERGENCY to all online volunteers within 5 km.
 func broadcastEmergency(rdb *redis.Client, h *hub.Hub, incidentID interface{}, reporterID string, lat, lng float64) {
+	// Detached worker: outlives the request, so Background with a tight
+	// timeout is correct here (no fiber context available).
 	ctx, canceled := context.WithTimeout(context.Background(), 5*time.Second)
 	defer canceled()
 
