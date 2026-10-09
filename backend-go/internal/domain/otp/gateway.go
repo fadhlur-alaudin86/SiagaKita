@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // Gateway mendefinisikan kontrak pengiriman pesan OTP (SMS/WhatsApp).
@@ -59,7 +60,7 @@ func (g *fonnteGateway) Send(phone, message string) error {
 	req.Header.Set("Authorization", g.token)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 	if err != nil {
 		return fmt.Errorf("otp/gateway: request ke Fonnte gagal: %w", err)
 	}
