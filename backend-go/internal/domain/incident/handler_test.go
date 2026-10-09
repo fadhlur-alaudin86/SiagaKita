@@ -2,6 +2,8 @@ package incident
 
 import (
 	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,6 +13,7 @@ import (
 
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/hub"
+	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
@@ -150,6 +153,96 @@ func TestPersonnelUpdateStatus_Validation(t *testing.T) {
 			t.Errorf("expected 400, got %d", resp.StatusCode)
 		}
 	})
+}
+
+func TestCancelSOS_Handler(t *testing.T) {
+	db := getTestDB()
+	if db == nil {
+		t.Skip("PostgreSQL test database unavailable, skipping integration test")
+	}
+
+	var testUserID string
+	if err := db.Raw("SELECT id FROM users WHERE role = 'civilian' LIMIT 1").Scan(&testUserID).Error; err != nil || testUserID == "" {
+		t.Skip("No civilian user found in test database, skipping test")
+	}
+
+	newIncident := func(status string) *Incident {
+		inc := &Incident{
+			ReporterID:   testUserID,
+			Latitude:     -6.2088,
+			Longitude:    106.8456,
+			IncidentType: "medical",
+			Status:       status,
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		}
+		if err := db.Create(inc).Error; err != nil {
+			t.Fatalf("failed to create incident: %v", err)
+		}
+		return inc
+	}
+
+	cases := []struct {
+		name       string
+		setup      func() string
+		userID     string
+		wantStatus int
+		wantCode   string
+	}{
+		{
+			name:       "success",
+			setup:      func() string { return newIncident(StatusBroadcasting).ID },
+			userID:     testUserID,
+			wantStatus: http.StatusOK,
+			wantCode:   "",
+		},
+		{
+			name:       "unauthorized",
+			setup:      func() string { return newIncident(StatusBroadcasting).ID },
+			userID:     "00000000-0000-0000-0000-000000000000",
+			wantStatus: http.StatusForbidden,
+			wantCode:   "ERR_FORBIDDEN",
+		},
+		{
+			name:       "not_found",
+			setup:      func() string { return "00000000-0000-0000-0000-000000000000" },
+			userID:     testUserID,
+			wantStatus: http.StatusInternalServerError,
+			wantCode:   "ERR_INTERNAL",
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			incidentID := tt.setup()
+			defer db.Exec("DELETE FROM incidents WHERE id = ?", incidentID)
+
+			repo := NewRepository(db)
+			svc := NewService(repo, nil)
+			h := NewHandler(svc, &config.Config{}, hub.New(), nil)
+
+			app := fiber.New()
+			app.Post("/api/v1/incidents/:id/canceled", func(c *fiber.Ctx) error {
+				c.Locals("userID", tt.userID)
+				return h.CancelSOS(c)
+			})
+
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/incidents/"+incidentID+"/canceled", nil)
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("expected %d, got %d", tt.wantStatus, resp.StatusCode)
+			}
+			body, _ := io.ReadAll(resp.Body)
+			var res utils.APIResponse
+			_ = json.Unmarshal(body, &res)
+			if res.Code != tt.wantCode {
+				t.Errorf("expected code %q, got %q", tt.wantCode, res.Code)
+			}
+		})
+	}
 }
 
 func TestUploadEvidence_NonExistentIncident_Returns404(t *testing.T) {
