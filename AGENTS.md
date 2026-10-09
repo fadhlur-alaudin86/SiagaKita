@@ -39,5 +39,6 @@ If a skill mentions only the Antigravity name, use the OpenCode equivalent above
 
 - Dual-support: do not duplicate `.agent/skills/` into `.opencode/skills/`. Single source is `.agent/skills/`, registered via `opencode.jsonc`.
 - No uninstructed commits, pushes, or PRs.
+- Before any push, confirm `gh api user -q .login` shows an account with write access (active `gh` account flips between sessions; git uses it via credential helper).
 - Written artifacts in formal technical English. Chat adapts to user language.
 - Keep `GEMINI.md` canonical. Propose `AGENTS.md` changes via minor workflow update, major governance changes via `/grill-me`.
