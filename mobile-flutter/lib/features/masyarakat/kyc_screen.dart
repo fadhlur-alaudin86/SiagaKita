@@ -151,7 +151,7 @@ class _KycScreenState extends State<KycScreen> {
     } catch (e) {
       if (mounted) {
         final msg = e.toString().replaceFirst('Exception: ', '');
-        final isNikDuplicate = msg.contains('sudah terdaftar');
+        final isNikDuplicate = e is KycException && e.code == 'ERR_NIK_TAKEN';
         _showSnack(
           isNikDuplicate ? msg : msg,
           isNikDuplicate ? Colors.red.shade700 : Colors.red,
