@@ -247,17 +247,23 @@ class _SosAktifPageState extends State<SosAktifPage> {
       );
       if (ok && mounted) {
         _showSnack(
-          'Ditandai sebagai alarm palsu. Strike diberikan.',
+          'Ditandai sebagai alarm palsu. Strike diberikan.'.tr(context),
           Colors.orange,
         );
         setState(() => _selected = null);
         _load();
       } else if (mounted) {
-        _showSnack('Gagal menandai alarm palsu. Coba lagi.', Colors.red);
+        _showSnack(
+          'Gagal menandai alarm palsu. Coba lagi.'.tr(context),
+          Colors.red,
+        );
       }
     } catch (_) {
       if (mounted) {
-        _showSnack('Gagal menandai alarm palsu. Periksa koneksi.', Colors.red);
+        _showSnack(
+          'Gagal menandai alarm palsu. Periksa koneksi.'.tr(context),
+          Colors.red,
+        );
       }
     }
   }

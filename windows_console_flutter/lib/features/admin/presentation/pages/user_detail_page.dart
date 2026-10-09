@@ -91,8 +91,11 @@ class _UserDetailPageState extends State<UserDetailPage>
       ),
     );
     if (ok != true) return;
-    if (await AdminApiService.approveWargaKyc(widget.token, widget.userId) &&
-        mounted) {
+    final approved = await AdminApiService.approveWargaKyc(
+      widget.token,
+      widget.userId,
+    );
+    if (approved.ok && mounted) {
       _snack('Verifikasi NIK disetujui'.tr(context), Colors.green);
       _load();
     }
@@ -131,9 +134,12 @@ class _UserDetailPageState extends State<UserDetailPage>
       ),
     );
     if (ok != true) return;
-    if (await AdminApiService.rejectWargaKyc(widget.token, widget.userId) &&
-        mounted) {
-      _snack('Verifikasi NIK ditolak', Colors.orange);
+    final rejected = await AdminApiService.rejectWargaKyc(
+      widget.token,
+      widget.userId,
+    );
+    if (rejected.ok && mounted) {
+      _snack('Verifikasi NIK ditolak'.tr(context), Colors.orange);
       _load();
     }
   }
