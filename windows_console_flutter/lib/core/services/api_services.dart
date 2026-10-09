@@ -432,20 +432,50 @@ class AdminApiService {
         .toList();
   }
 
-  static Future<bool> approveWargaKyc(String token, String id) async {
-    final resp = await _authedPost(
-      Uri.parse(ApiConstants.adminWargaKycApprove(id)),
-      token,
-    );
-    return resp.statusCode == 200;
+  static Future<({bool ok, String? message, String? code})> approveWargaKyc(
+    String token,
+    String id,
+  ) async {
+    try {
+      final resp = await _authedPost(
+        Uri.parse(ApiConstants.adminWargaKycApprove(id)),
+        token,
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
+    } catch (e) {
+      return (ok: false, message: e.toString(), code: null);
+    }
   }
 
-  static Future<bool> rejectWargaKyc(String token, String id) async {
-    final resp = await _authedPost(
-      Uri.parse(ApiConstants.adminWargaKycReject(id)),
-      token,
-    );
-    return resp.statusCode == 200;
+  static Future<({bool ok, String? message, String? code})> rejectWargaKyc(
+    String token,
+    String id,
+  ) async {
+    try {
+      final resp = await _authedPost(
+        Uri.parse(ApiConstants.adminWargaKycReject(id)),
+        token,
+      );
+      final body = jsonDecode(resp.body) as Map<String, dynamic>?;
+      final msg =
+          (body?['data'] is Map ? body!['data']['message'] : null) ??
+          body?['message'];
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
+    } catch (e) {
+      return (ok: false, message: e.toString(), code: null);
+    }
   }
 
   static Future<({bool ok, String? message, String? code})> banUser(

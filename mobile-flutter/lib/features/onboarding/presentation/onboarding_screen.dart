@@ -33,33 +33,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
   bool _isNavigating = false;
 
-  final List<_OnboardingSlide> _slides = const [
+  static const int _slideCount = 3;
+
+  List<_OnboardingSlide> _slides(BuildContext context) => [
     _OnboardingSlide(
       icon: Icons.crisis_alert_rounded,
       iconColor: Color(0xFFFF4D4D),
-      badgeText: 'RESPONS CEPAT',
+      badgeText: 'RESPONS CEPAT'.tr(context),
       badgeColor: Color(0xFFFF4D4D),
-      title: 'SOS Darurat Seketika',
+      title: 'SOS Darurat Seketika'.tr(context),
       description:
-          'Kirim sinyal bahaya seketika dalam hitungan detik dengan siaga countdown dan transmisi lokasi presisi ke pos komando.',
+          'Kirim sinyal bahaya seketika dalam hitungan detik dengan siaga countdown dan transmisi lokasi presisi ke pos komando.'
+              .tr(context),
     ),
     _OnboardingSlide(
       icon: Icons.shield_outlined,
       iconColor: Color(0xFFFF7418),
-      badgeText: 'KOMUNITAS SIAGA',
+      badgeText: 'KOMUNITAS SIAGA'.tr(context),
       badgeColor: Color(0xFFFF7418),
-      title: 'Jaringan Relawan & Instansi',
+      title: 'Jaringan Relawan & Instansi'.tr(context),
       description:
-          'Terhubung langsung dengan tim relawan terverifikasi serta armada instansi resmi (Damkar, Medis, Polisi) di sekitar Anda.',
+          'Terhubung langsung dengan tim relawan terverifikasi serta armada instansi resmi (Damkar, Medis, Polisi) di sekitar Anda.'
+              .tr(context),
     ),
     _OnboardingSlide(
       icon: Icons.family_restroom_rounded,
       iconColor: Color(0xFF18A3FF),
-      badgeText: 'KESELAMATAN KELUARGA',
+      badgeText: 'KESELAMATAN KELUARGA'.tr(context),
       badgeColor: Color(0xFF18A3FF),
-      title: 'Zonasi & Perlindungan Keluarga',
+      title: 'Zonasi & Perlindungan Keluarga'.tr(context),
       description:
-          'Pantau radius aman keluarga tercinta secara real-time dan dapatkan notifikasi otomatis saat terjadi insiden darurat.',
+          'Pantau radius aman keluarga tercinta secara real-time dan dapatkan notifikasi otomatis saat terjadi insiden darurat.'
+              .tr(context),
     ),
   ];
 
@@ -98,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _nextPage() {
-    if (_currentPage < _slides.length - 1) {
+    if (_currentPage < _slideCount - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -114,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     const Color cardColor = Color(0xFF162A5A);
     const Color primaryColor = Color(0xFFFF7418);
 
-    final isLastPage = _currentPage == _slides.length - 1;
+    final isLastPage = _currentPage == _slides(context).length - 1;
 
     return Scaffold(
       backgroundColor: darkBgColor,
@@ -142,12 +147,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: _slides.length,
+                itemCount: _slides(context).length,
                 onPageChanged: (index) {
                   setState(() => _currentPage = index);
                 },
                 itemBuilder: (ctx, index) {
-                  final slide = _slides[index];
+                  final slide = _slides(context)[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 28.0),
                     child: Column(
@@ -245,7 +250,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   // Indicator Dots
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_slides.length, (index) {
+                    children: List.generate(_slides(context).length, (index) {
                       final isActive = _currentPage == index;
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 250),

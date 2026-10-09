@@ -27,6 +27,7 @@ class KycScreen extends StatefulWidget {
 class _KycScreenState extends State<KycScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nikCtrl = TextEditingController();
+  final _nikFocus = FocusNode();
   final _nameCtrl = TextEditingController();
   final _placeOfBirthCtrl = TextEditingController();
   final _birthDateCtrl = TextEditingController();
@@ -50,6 +51,7 @@ class _KycScreenState extends State<KycScreen> {
   @override
   void dispose() {
     _nikCtrl.dispose();
+    _nikFocus.dispose();
     _nameCtrl.dispose();
     _placeOfBirthCtrl.dispose();
     _birthDateCtrl.dispose();
@@ -162,6 +164,7 @@ class _KycScreenState extends State<KycScreen> {
             baseOffset: 0,
             extentOffset: _nikCtrl.text.length,
           );
+          _nikFocus.requestFocus();
         }
       }
     } finally {
@@ -365,6 +368,7 @@ class _KycScreenState extends State<KycScreen> {
           SizedBox(height: 8.h(context)),
           TextFormField(
             controller: _nikCtrl,
+            focusNode: _nikFocus,
             maxLength: 16,
             keyboardType: TextInputType.number,
             inputFormatters: [

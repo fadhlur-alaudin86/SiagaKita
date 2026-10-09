@@ -29,6 +29,18 @@ const (
 	IncidentTypeUnknown = "unknown"
 )
 
+// Report Lifecycle Statuses (mirrors chk_incident_reports_status, migration 021)
+const (
+	ReportStatusReceived      = "received"
+	ReportStatusSent          = "sent"
+	ReportStatusProcessing    = "processing"
+	ReportStatusInvestigating = "investigating"
+	ReportStatusHandled       = "handled"
+	ReportStatusResolved      = "resolved"
+	ReportStatusRejected      = "rejected"
+	ReportStatusCanceled      = "canceled"
+)
+
 // Actions for WebSocket and Audit payloads
 const (
 	ActionAgencyHandle      = "agency_handle"

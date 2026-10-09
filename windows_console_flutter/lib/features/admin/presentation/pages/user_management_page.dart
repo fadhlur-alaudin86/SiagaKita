@@ -940,7 +940,8 @@ class _InstansiTabViewState extends State<_InstansiTabView> {
           _loading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[UserManagement] Agencies load failed: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -949,9 +950,9 @@ class _InstansiTabViewState extends State<_InstansiTabView> {
   Widget build(BuildContext context) {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_agencies.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'Belum ada instansi.',
+          'Belum ada instansi.'.tr(context),
           style: TextStyle(color: Colors.white54),
         ),
       );
@@ -1048,7 +1049,8 @@ class _AdminTabViewState extends State<_AdminTabView> {
           _loading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[UserManagement] Admins load failed: $e');
       if (mounted) setState(() => _loading = false);
     }
   }

@@ -308,12 +308,20 @@ class AppLocalization {
     'Medis / Rumah Sakit': 'Medical / Hospital',
     'Rekaman Audio': 'Audio Recording',
     'Fokus Lokasi': 'Focus Location',
+    'Belum ada instansi.': 'No agencies yet.',
     'Tolak Verifikasi NIK?': 'Reject NIK Verification?',
     'Setujui Verifikasi NIK?': 'Approve NIK Verification?',
     'Pengguna diminta upload ulang.': 'User is asked to re-upload.',
     'Pastikan foto KTP dan selfie cocok.':
         'Make sure the ID photo and selfie match.',
     'Verifikasi NIK disetujui': 'NIK verification approved',
+    'Verifikasi NIK ditolak': 'NIK verification rejected',
+    'Ditandai sebagai alarm palsu. Strike diberikan.':
+        'Flagged as false alarm. Strike issued.',
+    'Gagal menandai alarm palsu. Coba lagi.':
+        'Failed to flag false alarm. Try again.',
+    'Gagal menandai alarm palsu. Periksa koneksi.':
+        'Failed to flag false alarm. Check connection.',
   };
 
   static String _translateInternal(String languageCode, String text) {

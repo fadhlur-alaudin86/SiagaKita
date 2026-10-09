@@ -24,4 +24,12 @@ var (
 
 	// ErrInvalidReportStatus indicates a report status filter failed allowlist validation.
 	ErrInvalidReportStatus = errors.New("invalid report status filter")
+
+	// validReportStatus mirrors chk_incident_reports_status (migration 021).
+	validReportStatus = map[string]bool{
+		ReportStatusReceived: true, ReportStatusSent: true,
+		ReportStatusProcessing: true, ReportStatusInvestigating: true,
+		ReportStatusHandled: true, ReportStatusResolved: true,
+		ReportStatusRejected: true, ReportStatusCanceled: true,
+	}
 )
