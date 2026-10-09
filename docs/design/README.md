@@ -2,7 +2,7 @@
 
 Welcome to the central visual architecture and design specification catalog for **SiagaKita**.
 
-All diagrams in this directory are authored in **Mermaid.js** directly within markdown documents. They render natively in GitHub, Antigravity IDE, and modern Markdown editors without requiring external static image exports.
+All diagrams in this directory are authored in **Mermaid.js** directly within markdown documents. They render natively in GitHub and modern Markdown editors without requiring external static image exports.
 
 ---
 
