@@ -67,6 +67,7 @@ feature/F-XXX/sub-mobile  ─┘                                ↓
 | `labeler.yml` | PR open/synchronize | Automatically labels PRs based on modified paths |
 | `issue-status-labeler.yml` | PR open/review/merge | Automates issue status transitions (`status: in-review`, `status: ready`, closes on merge) |
 | `auto-merge-dev.yml` | PR open/review to `dev` | Enables automatic squash-merge to `dev` upon 1 approval & passing CI checks |
+| `osv-scanner-pr.yml` | PR to `dev` | Fails on newly introduced vulnerable dependencies (Go + Flutter locks) |
 
 ## Versioning Flow
 
@@ -146,6 +147,7 @@ All team members MUST follow Conventional Commits to ensure automated release no
 2. **Monthly Grouped Maintenance (Dependabot)**: Minor and patch dependency upgrades are managed on a scheduled monthly cadence via `.github/dependabot.yml` targeting `dev`. To prevent sequential rebase congestion and lockfile (`go.sum`, `pubspec.lock`) collision waterfalls, Dependabot version updates MUST use Grouped Version Updates (`groups`) with `patterns: ["*"]` and `update-types: ["minor", "patch"]`. This consolidates updates into a single monthly PR per ecosystem (`backend-dependencies`, `mobile-dependencies`, `desktop-dependencies`) with `type: chore` and component labels, requiring full CI validation before merging.
 3. **Prohibition of Automated Major Upgrades**: Major version bumps (e.g. `flutter pub upgrade --major-versions` or breaking Go package version shifts) must NEVER be executed automatically in CI or routine maintenance PRs. Major upgrades represent breaking changes, platform SDK migrations, or peer dependency conflicts, and must always be executed as dedicated spike/migration tasks with explicit architectural alignment and regression testing.
 4. **Continuous Vulnerability Auditing**: Backend Go code must pass `govulncheck` in CI to prevent deploying packages with known CVEs.
+5. **Supply-Chain Gates**: Every PR to `dev` runs `osv-scanner-pr.yml` (fails on newly introduced vulnerable Go/Flutter dependencies). Secret push protection is enabled on the repository; never commit credentials to bypass it.
 
 ## Agent Rules
 
