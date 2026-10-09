@@ -118,6 +118,8 @@ To run the project locally:
 
 ## Documentation & AI Agent Skills
 
+New contributor? Start with [docs/SETUP.md](docs/SETUP.md) (workstation check + OpenCode/Antigravity paths), or run `./scripts/setup_workstation.sh`.
+
 For comprehensive documentation and guides:
 *   [docs/README.md](docs/README.md): Main technical documentation catalog.
 *   [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md): Go Fiber backend architecture, DDD layout, and security guards.
