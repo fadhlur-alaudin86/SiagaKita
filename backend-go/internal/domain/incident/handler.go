@@ -500,6 +500,9 @@ func (h *Handler) UpdateReportStatus(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Status wajib diisi")
 	}
 	if err := h.svc.UpdateReportStatus(id, body.Status, body.UrgencyLevel); err != nil {
+		if errors.Is(err, ErrInvalidReportStatus) {
+			return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
+		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{FieldUpdated: true})

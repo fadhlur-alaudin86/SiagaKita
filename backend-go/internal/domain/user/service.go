@@ -16,6 +16,7 @@ import (
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/domain/otp"
 	"siagakita-backend/internal/hub"
+	"siagakita-backend/internal/i18n"
 	"siagakita-backend/internal/utils"
 
 	"github.com/bytedance/sonic"
@@ -405,7 +406,7 @@ func (s *Service) buildAuthResponseWithName(user *User, fullName *string, badgeN
 					Event: "FORCE_LOGOUT",
 					Payload: map[string]string{
 						"reason":     "session_replaced",
-						fieldMessage: "Akun ini telah login di perangkat lain. Anda telah dikeluarkan.",
+						fieldMessage: i18n.Translate(s.hub.LocaleOf(user.ID), "Akun ini telah login di perangkat lain. Anda telah dikeluarkan."),
 					},
 				})
 			}

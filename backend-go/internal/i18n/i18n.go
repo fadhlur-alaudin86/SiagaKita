@@ -74,6 +74,7 @@ var idToEn = map[string]string{
 	"Tipe insiden diperbarui, SOS sedang disiarkan.":                                 "Incident type updated, SOS is broadcasting.",
 	"SOS sedang disiarkan ke relawan dan instansi terdekat.":                         "SOS is broadcasting to nearby volunteers and agencies.",
 	"Panggilan SOS berhasil dibatalkan.":                                             "SOS call successfully canceled.",
+	"Akun ini telah login di perangkat lain. Anda telah dikeluarkan.":                "This account signed in on another device. You have been signed out.",
 	"Terhubung ke SiagaKita real-time engine":                                        "Connected to the SiagaKita real-time engine",
 	"SOS diterima. Batalkan dalam 10 detik jika ini bukan darurat.":                  "SOS received. Cancel within 10 seconds if this is not an emergency.",
 	"SOS dibatalkan":                       "SOS canceled",

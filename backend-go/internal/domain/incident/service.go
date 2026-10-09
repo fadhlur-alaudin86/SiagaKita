@@ -441,6 +441,9 @@ func (s *Service) GetReportsByUser(userID string) ([]IncidentReportResponse, err
 }
 
 func (s *Service) UpdateReportStatus(id, status string, urgency *int) error {
+	if !validReportStatus[status] {
+		return ErrInvalidReportStatus
+	}
 	return s.repo.UpdateReportStatus(id, status, urgency)
 }
 
