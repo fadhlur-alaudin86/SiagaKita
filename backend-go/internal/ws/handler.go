@@ -122,11 +122,9 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	connID := fmt.Sprintf("%s-%s", userID, claims.JTI)
 
 	// Negotiate locale once at handshake: explicit ?lang= wins, then header.
-	locale := i18n.LocaleID
+	locale := i18n.ParseAcceptLanguage(r.Header.Get("Accept-Language"))
 	if lang := r.URL.Query().Get("lang"); lang != "" {
 		locale = i18n.NormalizeLocale(lang)
-	} else {
-		locale = i18n.ParseAcceptLanguage(r.Header.Get("Accept-Language"))
 	}
 
 	h.hub.Register(userID, claims.Role, connID, conn, locale)
