@@ -17,8 +17,8 @@
 ## Project Configuration
 
 ```
-Repo Owner     : SuperBypassUdinnn
-Repo Name      : SuperBypassUdinnn/SIAGAKITA
+Repo Owner     : fadhlur-alaudin86
+Repo Name      : fadhlur-alaudin86/SiagaKita
 Default Branch : main
 Dev Branch     : dev
 ```
