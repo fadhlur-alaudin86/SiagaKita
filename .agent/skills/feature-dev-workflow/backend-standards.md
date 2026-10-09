@@ -109,6 +109,7 @@ Example:
   defer cancel()
   ```
 - **Prevent Goroutine Leaks**: Any background goroutine MUST monitor `ctx.Done()` for graceful termination.
+- For goroutine lifecycle, channel ownership, and worker-pool design (WebSocket hub, background workers), load the global `golang-concurrency` skill.
 
 ## Standard 8 — Zero Value Safety
 

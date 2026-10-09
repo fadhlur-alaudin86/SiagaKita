@@ -90,6 +90,8 @@ Ensures errors are explicitly handled and failures are never silently swallowed.
 | **Flutter Mounted Check** | Post-await `BuildContext` safety | Verifies `if (!context.mounted) return;` before navigation or Snackbars | Calling `Navigator.of(context)` across an `await` boundary without mounted check |
 | **Goroutine Safety** | Background worker lifecycle | Goroutines monitor `ctx.Done()` for graceful termination | Background goroutines launched without cancellation channels (*orphan workers*) |
 
+Apply the global `golang-concurrency` skill when auditing channel direction, shared maps, and race-prone WS paths.
+
 ---
 
 ## 4. Clean Code & Dead Code Elimination Checklist
