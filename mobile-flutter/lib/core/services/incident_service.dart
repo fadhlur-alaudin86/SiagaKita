@@ -450,7 +450,8 @@ class IncidentService {
       return data
           .map((e) => NearbyIncident.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[IncidentService] Nearby fetch failed, trying cache: $e');
       final cached = LocalStorageService.getCachedIncidents(
         'cached_nearby_sos',
       );
@@ -505,7 +506,8 @@ class IncidentService {
       final data = body['data'];
       if (data == null) return null;
       return ActiveResponseModel.fromJson(data as Map<String, dynamic>);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[IncidentService] Active response fetch failed: $e');
       return null;
     }
   }
@@ -531,8 +533,9 @@ class IncidentService {
             }),
           )
           .timeout(_defaultTimeout);
-    } catch (_) {
+    } catch (e) {
       // Silent fail — lokasi diupdate di iterasi berikutnya
+      debugPrint('[IncidentService] Response location update failed: $e');
     }
   }
 
@@ -727,6 +730,21 @@ class ActiveIncident {
 
 // ─── NearbyIncident ───────────────────────────────────────────────────────────
 
+/// Shared localized incident-type label (Indonesian base, translated).
+String incidentTypeLabel(String incidentType) {
+  const labels = {
+    'medical': 'Medis / Kesehatan',
+    'fire': 'Kebakaran',
+    'crime': 'Kejahatan',
+    'rescue': 'SAR / Penyelamatan',
+    'accident': 'Kecelakaan',
+    'disaster': 'Bencana Alam',
+    'general': 'Umum',
+    'unknown': 'Tidak Diketahui',
+  };
+  return AppLocalization.translate(labels[incidentType] ?? incidentType);
+}
+
 class NearbyIncident {
   final String id;
   final String incidentType;
@@ -787,26 +805,14 @@ class NearbyIncident {
         return '${diff.inHours} ${AppLocalization.translate('jam lalu')}';
       }
       return '${diff.inDays} ${AppLocalization.translate('hari lalu')}';
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[IncidentService] timeAgo parse failed: $e');
       return '';
     }
   }
 
   /// Label tipe insiden.
-  String get typeLabel {
-    const labels = {
-      'medical': 'Medis / Kesehatan',
-      'fire': 'Kebakaran',
-      'crime': 'Kejahatan',
-      'rescue': 'SAR / Penyelamatan',
-      'accident': 'Kecelakaan',
-      'disaster': 'Bencana Alam',
-      'general': 'Umum',
-      'unknown': 'Tidak Diketahui',
-    };
-    final label = labels[incidentType] ?? incidentType;
-    return AppLocalization.translate(label);
-  }
+  String get typeLabel => incidentTypeLabel(incidentType);
 
   /// Ikon tipe insiden
   IconData get typeIcon {
@@ -905,17 +911,5 @@ class ActiveResponseModel {
         acceptedAt: json['accepted_at'] as String,
       );
 
-  String get typeLabel {
-    const labels = {
-      'medical': 'Medis / Kesehatan',
-      'fire': 'Kebakaran',
-      'crime': 'Kejahatan',
-      'rescue': 'SAR / Penyelamatan',
-      'accident': 'Kecelakaan',
-      'disaster': 'Bencana Alam',
-      'general': 'Umum',
-      'unknown': 'Tidak Diketahui',
-    };
-    return labels[incidentType] ?? incidentType;
-  }
+  String get typeLabel => incidentTypeLabel(incidentType);
 }
