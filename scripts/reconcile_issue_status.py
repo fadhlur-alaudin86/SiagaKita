@@ -87,8 +87,12 @@ def autocomplete_checklist(repo, issue_num):
     return False
 
 
-def autocomplete_and_close(repo, issue_num, reason="completed"):
-    """Marks checkboxes [x], sets label status: done, and closes issue if open."""
+def autocomplete_and_close(repo, issue_num, reason="completed", close_issue=True):
+    """Marks checkboxes [x] and sets label status: done.
+    Closes the issue only when close_issue is True. Merge-driven paths
+    must pass False: final closure belongs to human/tech-lead review,
+    since acceptance criteria may legitimately outlive the merge
+    (multi-PR issues, pending release proofs)."""
     code, out, _ = run_cmd(f'gh issue view "{issue_num}" --repo "{repo}" --json state,stateReason')
     if code != 0:
         print(f"Issue #{issue_num} not found, skipping.")
@@ -106,7 +110,7 @@ def autocomplete_and_close(repo, issue_num, reason="completed"):
 
     autocomplete_checklist(repo, issue_num)
 
-    if state == "OPEN":
+    if state == "OPEN" and close_issue:
         print(f"Closing issue #{issue_num} with reason: {reason}")
         run_cmd(f'gh issue close "{issue_num}" --repo "{repo}" --reason {reason}')
 
@@ -308,8 +312,8 @@ def reconcile_merged_prs(repo, limit=25):
             if state == "OPEN":
                 print(f"[Reconciliation] Auto-completing open issue #{issue_num} from merged PR #{curr_pr_num}")
                 set_issue_assignee(repo, issue_num, curr_pr_author)
-                autocomplete_and_close(repo, issue_num)
-                msg = f"**Status Update (Auto-Reconciled):** PR #{curr_pr_num} ({curr_pr_title}) telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."
+                autocomplete_and_close(repo, issue_num, close_issue=False)
+                msg = f"**Status Update (Auto-Reconciled):** PR #{curr_pr_num} ({curr_pr_title}) telah dimerge ke `dev`. Checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`. Penutupan akhir oleh tech lead."
                 run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "{msg}"')
             elif "status: done" not in labels:
                 print(f"[Reconciliation] Ensuring status: done for closed issue #{issue_num}")
@@ -396,16 +400,16 @@ def handle_event(repo):
                     run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number} ({pr_title}) telah diajukan untuk review."')
             elif pr_action == "closed" and pr_merged:
                 set_issue_assignee(repo, issue_num, pr_author)
-                autocomplete_and_close(repo, issue_num)
-                run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number} telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
+                autocomplete_and_close(repo, issue_num, close_issue=False)
+                run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number} telah dimerge ke `dev`. Checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`. Penutupan akhir oleh tech lead."')
 
         elif event_name == "pull_request_review" and review_state == "approved":
             set_issue_status(repo, issue_num, "status: ready")
             run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number} telah diapprove oleh @{reviewer} dan siap dimerge (`status: ready`)."')
 
         elif event_name == "push":
-            autocomplete_and_close(repo, issue_num)
-            run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number or ""} telah dimerge ke `dev`. Seluruh checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`."')
+            autocomplete_and_close(repo, issue_num, close_issue=False)
+            run_cmd(f'gh issue comment "{issue_num}" --repo "{repo}" --body "**Status Update:** PR #{pr_number or ""} telah dimerge ke `dev`. Checklist tugas ditandai selesai (`[x]`) dan label diperbarui menjadi `status: done`. Penutupan akhir oleh tech lead."')
 
     # Process parent tracking issues
     for parent_num in parent_issues:

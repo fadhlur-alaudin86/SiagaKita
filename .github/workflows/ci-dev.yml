@@ -250,6 +250,28 @@ jobs:
         run: flutter analyze --fatal-infos
 
   # ─── Instant Issue Status & Parent Tracker Reconciliation ────────────────
+  reconcile-pr:
+    # Auto-merge produces no push/PR-closed runs, so reconcile on every PR
+    # event instead. Idempotent: skips closed issues, marks done only.
+    needs: [changes]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconcile Linked Issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/reconcile_issue_status.py --reconcile --limit 15
+
+  # ─── Instant Issue Status & Parent Tracker Reconciliation ────────────────
   reconcile-dev:
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
