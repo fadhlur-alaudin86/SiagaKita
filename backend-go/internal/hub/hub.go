@@ -25,6 +25,7 @@ type Client struct {
 	Conn   *websocket.Conn
 	Role   string
 	ConnID string // UUID unik per koneksi (untuk Unregister tepat sasaran)
+	Locale string // id atau en, dinegosiasikan saat handshake
 }
 
 // Hub maintains the map of active WebSocket connections.
@@ -48,11 +49,11 @@ func New() *Hub {
 // Register adds a connection for the given userID and role.
 // For mobile roles: replaces any existing connection (single-session).
 // For console roles: appends to the existing list (multi-session).
-func (h *Hub) Register(userID, role, connID string, conn *websocket.Conn) {
+func (h *Hub) Register(userID, role, connID string, conn *websocket.Conn, locale string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	newClient := &Client{Conn: conn, Role: role, ConnID: connID}
+	newClient := &Client{Conn: conn, Role: role, ConnID: connID, Locale: locale}
 
 	if consoleRoles[role] {
 		// Console: tambah ke slice (multi-device)
@@ -95,6 +96,18 @@ func (h *Hub) Unregister(userID, connID string) {
 		h.clients[userID] = updated
 		utils.Info().Str("user_id", userID).Str("conn_id", connID).Int("remaining_conns", len(updated)).Msg("[Hub] User connection removed (other conns remain)")
 	}
+}
+
+// LocaleOf returns the negotiated locale of the user's first connection,
+// defaulting to Indonesian when offline or unset.
+func (h *Hub) LocaleOf(userID string) string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	if clients, ok := h.clients[userID]; ok && len(clients) > 0 && clients[0].Locale != "" {
+		return clients[0].Locale
+	}
+	return "id"
 }
 
 // SendToUser sends a Message to ALL connections of a specific user.

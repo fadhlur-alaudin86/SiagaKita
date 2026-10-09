@@ -74,6 +74,10 @@ var idToEn = map[string]string{
 	"Tipe insiden diperbarui, SOS sedang disiarkan.":                                 "Incident type updated, SOS is broadcasting.",
 	"SOS sedang disiarkan ke relawan dan instansi terdekat.":                         "SOS is broadcasting to nearby volunteers and agencies.",
 	"Panggilan SOS berhasil dibatalkan.":                                             "SOS call successfully canceled.",
+	"Terhubung ke SiagaKita real-time engine":                                        "Connected to the SiagaKita real-time engine",
+	"SOS diterima. Batalkan dalam 10 detik jika ini bukan darurat.":                  "SOS received. Cancel within 10 seconds if this is not an emergency.",
+	"SOS dibatalkan":                       "SOS canceled",
+	"Relawan %s sedang menuju lokasi kamu": "Volunteer %s is on the way to your location",
 	"sos_banned: akun Anda dinonaktifkan dari fitur SOS karena pelanggaran berulang": "sos_banned: your account is banned from the SOS feature due to repeated violations",
 	"Akun Anda dinonaktifkan dari fitur SOS karena pelanggaran berulang":             "Your account is banned from the SOS feature due to repeated violations",
 	"tipe hanya bisa diubah saat grace period":                                       "Incident type can only be changed during the grace period",
@@ -126,23 +130,23 @@ func GetLocale(c *fiber.Ctx) string {
 	}
 
 	if loc, ok := c.Locals("locale").(string); ok && loc != "" {
-		return normalizeLocale(loc)
+		return NormalizeLocale(loc)
 	}
 
 	if q := c.Query("lang"); q != "" {
-		return normalizeLocale(q)
+		return NormalizeLocale(q)
 	}
 
 	acceptLang := c.Get("Accept-Language")
 	if acceptLang != "" {
-		return parseAcceptLanguage(acceptLang)
+		return ParseAcceptLanguage(acceptLang)
 	}
 
 	return LocaleID
 }
 
 // normalizeLocale normalizes common locale codes to "id" or "en".
-func normalizeLocale(code string) string {
+func NormalizeLocale(code string) string {
 	code = strings.ToLower(strings.TrimSpace(code))
 	if strings.HasPrefix(code, "en") {
 		return LocaleEN
@@ -152,7 +156,7 @@ func normalizeLocale(code string) string {
 
 // parseAcceptLanguage parses an Accept-Language header value and determines
 // whether English or Indonesian is preferred.
-func parseAcceptLanguage(header string) string {
+func ParseAcceptLanguage(header string) string {
 	parts := strings.Split(header, ",")
 	for _, part := range parts {
 		tag := strings.TrimSpace(strings.Split(part, ";")[0])

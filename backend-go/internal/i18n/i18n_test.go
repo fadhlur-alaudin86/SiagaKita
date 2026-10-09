@@ -21,9 +21,9 @@ func TestParseAcceptLanguage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parseAcceptLanguage(tt.header)
+			got := ParseAcceptLanguage(tt.header)
 			if got != tt.expected {
-				t.Errorf("parseAcceptLanguage(%q) = %q, want %q", tt.header, got, tt.expected)
+				t.Errorf("ParseAcceptLanguage(%q) = %q, want %q", tt.header, got, tt.expected)
 			}
 		})
 	}
