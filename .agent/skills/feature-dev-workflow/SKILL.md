@@ -77,6 +77,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 30. **Unit Tests per Handler** — Cover 4 mandatory scenarios: success, empty result, invalid input, DB error.
 31. **Isolated Tests** — No shared state, fast (< 1s per file).
 32. **Update Feature Log** — Record test command and status in feature log.
+32a. **Stubborn Bugs** — For races, leaks, flaky or intermittent failures, load global `systematic-debugging` (use `diagnosing-bugs` for hard regressions) before changing code.
 
 ### GitHub Sync, Pre-PR Review & Merge Strategy
 33. **Step 0 → Branch Sync, in-progress & Assignee**: Always synchronize `dev` with remote first: `git checkout dev && git pull origin dev && git checkout -b <branch>`. Then assign and label issue: `gh issue edit <N> --add-label "status: in-progress" --remove-label "status: ready,status: in-review,status: done" --add-assignee "@me"` + explanatory comment.
