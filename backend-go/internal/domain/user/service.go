@@ -73,7 +73,7 @@ func (s *Service) Register(ctx context.Context, req *RegisterRequest) (*Register
 				return nil, fmt.Errorf("gagal menghapus akun belum terverifikasi sebelumnya: %w", delErr)
 			}
 		} else {
-			return nil, errors.New("email sudah terdaftar")
+			return nil, ErrEmailTaken
 		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
@@ -678,7 +678,7 @@ func (s *Service) SubmitKYC(c *fiber.Ctx, userID, nik, fullName, placeOfBirth, d
 	err = s.repo.SubmitKYC(userID, nik, fullName, placeOfBirth, dateOfBirth, ktpPublicURL, selfiePublicURL)
 	if err != nil {
 		if errors.Is(err, ErrNIKAlreadyUsed) {
-			return errors.New("NIK ini sudah terdaftar pada akun lain. Pastikan NIK yang Anda masukkan benar")
+			return fmt.Errorf("NIK ini sudah terdaftar pada akun lain. Pastikan NIK yang Anda masukkan benar: %w", ErrNIKAlreadyUsed)
 		}
 		return err
 	}

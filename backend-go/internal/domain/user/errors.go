@@ -10,6 +10,9 @@ var (
 	// ErrNIKAlreadyUsed indicates the NIK has already been registered by another user profile.
 	ErrNIKAlreadyUsed = errors.New("NIK_ALREADY_USED")
 
+	// ErrEmailTaken indicates the email is already registered. Message matches the i18n dictionary key.
+	ErrEmailTaken = errors.New("Email sudah terdaftar")
+
 	// ErrTokenReused indicates a refresh token replay attack or an expired refresh token reuse.
 	ErrTokenReused = errors.New("ERR_TOKEN_REUSED: Token refresh telah kedaluwarsa atau digunakan kembali")
 )
