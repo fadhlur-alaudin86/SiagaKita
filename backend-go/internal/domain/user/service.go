@@ -177,8 +177,7 @@ func (s *Service) ConsoleLogin(ctx context.Context, req *LoginRequest) (*AuthRes
 	// Ambil full_name dari admin_profiles jika ada
 	var fullName *string
 	if user.Role == "admin" || user.Role == "superadmin" {
-		var ap AdminProfile
-		if err := s.repo.db.Where("user_id = ?", user.ID).First(&ap).Error; err == nil {
+		if ap, err := s.repo.FindAdminProfile(user.ID); err == nil {
 			fullName = ap.FullName
 		}
 	}
@@ -518,8 +517,7 @@ func (s *Service) resolveUserFullName(user *User) *string {
 			fullName = profile.FullName
 		}
 	case RoleAdmin, RoleSuperAdmin:
-		var ap AdminProfile
-		if err := s.repo.db.Where("user_id = ?", user.ID).First(&ap).Error; err == nil {
+		if ap, err := s.repo.FindAdminProfile(user.ID); err == nil {
 			fullName = ap.FullName
 		}
 	case RoleAgencyPersonnel:

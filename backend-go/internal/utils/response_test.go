@@ -240,3 +240,49 @@ func TestSuccessResponse_OmitsCode(t *testing.T) {
 		}
 	}
 }
+
+func TestErrorResponse_RedactsInternals(t *testing.T) {
+	internals := []string{
+		"record not found",
+		`pq: duplicate key value violates unique constraint "users_email_key"`,
+		"dial tcp 10.0.0.1:5432: connection refused",
+	}
+	for _, msg := range internals {
+		app := fiber.New()
+		app.Get("/test-redact", func(c *fiber.Ctx) error {
+			return ErrorResponse(c, fiber.StatusInternalServerError, msg)
+		})
+
+		resp, err := app.Test(httptest.NewRequest(http.MethodGet, "/test-redact", nil))
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		var res APIResponse
+		_ = json.Unmarshal(body, &res)
+		if res.Code != "ERR_INTERNAL" {
+			t.Errorf("expected code ERR_INTERNAL, got %q", res.Code)
+		}
+		if res.Message == msg {
+			t.Errorf("internal text leaked to client: %q", msg)
+		}
+	}
+}
+
+func TestErrorResponse_PreservesUserMessages(t *testing.T) {
+	app := fiber.New()
+	app.Get("/test-user-msg", func(c *fiber.Ctx) error {
+		return ErrorResponse(c, fiber.StatusBadRequest, "NIK harus 16 digit")
+	})
+
+	resp, err := app.Test(httptest.NewRequest(http.MethodGet, "/test-user-msg", nil))
+	if err != nil {
+		t.Fatalf("app.Test failed: %v", err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var res APIResponse
+	_ = json.Unmarshal(body, &res)
+	if res.Message != "NIK harus 16 digit" {
+		t.Errorf("user-facing message altered: %q", res.Message)
+	}
+}
