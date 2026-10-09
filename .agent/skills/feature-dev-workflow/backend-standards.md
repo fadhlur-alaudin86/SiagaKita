@@ -99,6 +99,7 @@ Example:
   }
   ```
 - **No Swallowed Errors**: Never discard errors with `_ = fn()`. If an error is truly benign, log it or explicitly document why it is ignored.
+- For sentinel errors, custom error types, and `errors.Join` design, load the global `golang-error-handling` skill; this standard's ECC idiom stays the baseline.
 
 ## Standard 7 — Context & Timeout Control
 

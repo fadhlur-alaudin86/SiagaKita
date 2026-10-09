@@ -86,6 +86,7 @@ func TestHandlerName(t *testing.T) {
 - **Deterministic** — No dependency on unmocked `time.Now()` or random values.
 - **Fast** — Execution takes < 1 second per file.
 - **Race detector** — Always run with `-race` flag.
+- For advanced patterns (parallel tests, fuzzing, fixtures, leak detection), load the global `golang-testing` skill.
 
 ### Test File Naming
 
@@ -169,6 +170,8 @@ For the following critical components, tests **MUST** be written prior to implem
 1. **RED**: Write a table-driven test defining success and edge cases. Run `go test` and verify that the test **FAILS** (red).
 2. **GREEN**: Write the minimal implementation in handler/service/repository until the test **PASSES** (green).
 3. **REFACTOR**: Clean up code, verify YAGNI and the 3-layer architecture rule, and rerun tests.
+
+Load the global `tdd` skill when running this cycle test-first.
 
 ### 2. Pragmatic Testing for Flutter UI
 - **Widget & Service Testing**: Write unit/widget tests once the UI structure is established to verify navigation flows, Dio error states, and Provider state changes.
