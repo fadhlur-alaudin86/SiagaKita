@@ -8,6 +8,7 @@ import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_config.dart';
+import '../localization/app_localization.dart';
 import '../models/mission_history_model.dart';
 import 'local_storage_service.dart';
 
@@ -127,7 +128,7 @@ class IncidentService {
       await http
           .post(
             Uri.parse('$_baseUrl/incidents/$incidentId/broadcast'),
-            headers: {'Authorization': 'Bearer $accessToken'},
+            headers: ApiConfig.headers(token: accessToken),
           )
           .timeout(_defaultTimeout);
     } catch (e) {
@@ -145,7 +146,7 @@ class IncidentService {
     final response = await _req(
       () => http.post(
         Uri.parse('$_baseUrl/incidents/$incidentId/canceled'),
-        headers: {'Authorization': 'Bearer $accessToken'},
+        headers: ApiConfig.headers(token: accessToken),
       ),
       timeout: _sosTimeout,
     );
@@ -216,7 +217,8 @@ class IncidentService {
     try {
       final uri = Uri.parse('$_baseUrl/incidents/$incidentId/evidence');
       final request = http.MultipartRequest('POST', uri)
-        ..headers['Authorization'] = 'Bearer $accessToken';
+        ..headers['Authorization'] = 'Bearer $accessToken'
+        ..headers['Accept-Language'] = ApiConfig.headers()['Accept-Language']!;
 
       if (photoFile != null && photoFile.existsSync()) {
         request.files.add(
@@ -249,7 +251,7 @@ class IncidentService {
     final response = await _req(
       () => http.get(
         Uri.parse('$_baseUrl/incidents/active'),
-        headers: {'Authorization': 'Bearer $accessToken'},
+        headers: ApiConfig.headers(token: accessToken),
       ),
     );
     if (response.statusCode != 200) return null;
@@ -270,7 +272,7 @@ class IncidentService {
       final response = await _req(
         () => http.get(
           Uri.parse('$_baseUrl/incidents/my-history'),
-          headers: {'Authorization': 'Bearer $accessToken'},
+          headers: ApiConfig.headers(token: accessToken),
         ),
       );
       if (response.statusCode != 200) {
@@ -358,7 +360,7 @@ class IncidentService {
       final response = await _req(
         () => http.get(
           Uri.parse('$_baseUrl/incidents/reporter-history'),
-          headers: {'Authorization': 'Bearer $accessToken'},
+          headers: ApiConfig.headers(token: accessToken),
         ),
       );
       if (response.statusCode != 200) {
@@ -421,7 +423,7 @@ class IncidentService {
             Uri.parse(
               '$_baseUrl/incidents/nearby?lat=$lat&lng=$lng&radius=$radius',
             ),
-            headers: {'Authorization': 'Bearer $accessToken'},
+            headers: ApiConfig.headers(token: accessToken),
           )
           .timeout(_defaultTimeout);
       if (response.statusCode != 200) {
@@ -474,7 +476,7 @@ class IncidentService {
     final response = await _req(
       () => http.post(
         Uri.parse('$_baseUrl/incidents/$incidentId/accept'),
-        headers: {'Authorization': 'Bearer $accessToken'},
+        headers: ApiConfig.headers(token: accessToken),
       ),
       timeout: _sosTimeout,
     );
@@ -495,7 +497,7 @@ class IncidentService {
       final response = await _req(
         () => http.get(
           Uri.parse('$_baseUrl/incidents/my-active-response'),
-          headers: {'Authorization': 'Bearer $accessToken'},
+          headers: ApiConfig.headers(token: accessToken),
         ),
       );
       if (response.statusCode != 200) return null;
@@ -543,7 +545,8 @@ class IncidentService {
   }) async {
     final uri = Uri.parse('$_baseUrl/incidents/$incidentId/volunteer-complete');
     final request = http.MultipartRequest('POST', uri)
-      ..headers['Authorization'] = 'Bearer $accessToken';
+      ..headers['Authorization'] = 'Bearer $accessToken'
+      ..headers['Accept-Language'] = ApiConfig.headers()['Accept-Language']!;
 
     if (photoFile.existsSync()) {
       request.files.add(
@@ -774,16 +777,22 @@ class NearbyIncident {
     try {
       final dt = DateTime.parse(createdAt).toLocal();
       final diff = DateTime.now().difference(dt);
-      if (diff.inMinutes < 1) return 'Baru saja';
-      if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-      if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-      return '${diff.inDays} hari lalu';
+      if (diff.inMinutes < 1) {
+        return AppLocalization.translate('Baru saja');
+      }
+      if (diff.inMinutes < 60) {
+        return '${diff.inMinutes} ${AppLocalization.translate('menit lalu')}';
+      }
+      if (diff.inHours < 24) {
+        return '${diff.inHours} ${AppLocalization.translate('jam lalu')}';
+      }
+      return '${diff.inDays} ${AppLocalization.translate('hari lalu')}';
     } catch (_) {
       return '';
     }
   }
 
-  /// Label tipe insiden dalam Bahasa Indonesia.
+  /// Label tipe insiden.
   String get typeLabel {
     const labels = {
       'medical': 'Medis / Kesehatan',
@@ -795,7 +804,8 @@ class NearbyIncident {
       'general': 'Umum',
       'unknown': 'Tidak Diketahui',
     };
-    return labels[incidentType] ?? incidentType;
+    final label = labels[incidentType] ?? incidentType;
+    return AppLocalization.translate(label);
   }
 
   /// Ikon tipe insiden

@@ -711,7 +711,7 @@ class _DispatchRelawanPageState extends State<DispatchRelawanPage> {
                   ),
                 ),
                 icon: const Icon(Icons.my_location, size: 16),
-                label: const Text('Fokus Lokasi'),
+                label: Text('Fokus Lokasi'.tr(context)),
                 onPressed: () => _moveMapToIncident(incident),
               ),
             ],

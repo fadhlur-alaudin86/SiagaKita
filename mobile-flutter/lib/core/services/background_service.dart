@@ -165,6 +165,7 @@ void onStart(ServiceInstance service) async {
       final prefs = await SharedPreferences.getInstance();
       final token = await SessionService.getToken();
       final sosActive = prefs.getBool('bg_sos_active') ?? false;
+      final lang = prefs.getString('language_code') ?? 'id';
 
       if (token == null || !sosActive) {
         stopSOSTimer();
@@ -193,6 +194,7 @@ void onStart(ServiceInstance service) async {
                 headers: {
                   'Authorization': 'Bearer $token',
                   'Content-Type': 'application/json',
+                  'Accept-Language': lang,
                 },
                 body: jsonEncode({
                   'latitude': position.latitude,
@@ -226,6 +228,7 @@ void onStart(ServiceInstance service) async {
     final prefs = await SharedPreferences.getInstance();
     final token = await SessionService.getToken();
     if (token == null) return;
+    final lang = prefs.getString('language_code') ?? 'id';
 
     final baseUrl = ApiConfig.baseUrl;
 
@@ -234,7 +237,10 @@ void onStart(ServiceInstance service) async {
       await http
           .get(
             Uri.parse('$baseUrl/users/ping'),
-            headers: {'Authorization': 'Bearer $token'},
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept-Language': lang,
+            },
           )
           .timeout(const Duration(seconds: 10));
     } catch (e) {
@@ -267,6 +273,7 @@ void onStart(ServiceInstance service) async {
                   headers: {
                     'Authorization': 'Bearer $token',
                     'Content-Type': 'application/json',
+                    'Accept-Language': lang,
                   },
                   body: jsonEncode({
                     'latitude': position.latitude,

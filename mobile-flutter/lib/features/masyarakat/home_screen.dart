@@ -2085,7 +2085,7 @@ class _HomeScreenState extends State<HomeScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text('OK'.tr(ctx)),
           ),
         ],
       ),

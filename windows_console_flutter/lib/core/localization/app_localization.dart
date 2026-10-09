@@ -302,6 +302,18 @@ class AppLocalization {
     'Relawan Penanggung Jawab': 'Responding Volunteer',
     'Broadcast Ulang': 'Re-broadcast',
     'Tangani oleh Petugas Instansi': 'Handle by Agency Personnel',
+    'Kepolisian': 'Police',
+    'Tim SAR': 'SAR Team',
+    'Pemadam Kebakaran': 'Fire Department',
+    'Medis / Rumah Sakit': 'Medical / Hospital',
+    'Rekaman Audio': 'Audio Recording',
+    'Fokus Lokasi': 'Focus Location',
+    'Tolak Verifikasi NIK?': 'Reject NIK Verification?',
+    'Setujui Verifikasi NIK?': 'Approve NIK Verification?',
+    'Pengguna diminta upload ulang.': 'User is asked to re-upload.',
+    'Pastikan foto KTP dan selfie cocok.':
+        'Make sure the ID photo and selfie match.',
+    'Verifikasi NIK disetujui': 'NIK verification approved',
   };
 
   static String _translateInternal(String languageCode, String text) {

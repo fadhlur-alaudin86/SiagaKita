@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/localization/app_localization.dart';
 
 class PendaftaranAkunPage extends StatefulWidget {
   final String token;
@@ -260,28 +261,34 @@ class _FormInstansiState extends State<_FormInstansi> {
             side: BorderSide.none,
           ),
           onSelected: (v) => setState(() => _type = v),
-          itemBuilder: (ctx) => const [
+          itemBuilder: (ctx) => [
             PopupMenuItem(
               value: 'police',
-              child: Text('Kepolisian', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'Kepolisian'.tr(ctx),
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             PopupMenuItem(
               value: 'fire',
               child: Text(
-                'Pemadam Kebakaran',
+                'Pemadam Kebakaran'.tr(ctx),
                 style: TextStyle(color: Colors.white),
               ),
             ),
             PopupMenuItem(
               value: 'medical',
               child: Text(
-                'Medis / Rumah Sakit',
+                'Medis / Rumah Sakit'.tr(ctx),
                 style: TextStyle(color: Colors.white),
               ),
             ),
             PopupMenuItem(
               value: 'sar',
-              child: Text('Tim SAR', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'Tim SAR'.tr(ctx),
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
           child: Container(

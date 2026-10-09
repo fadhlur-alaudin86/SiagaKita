@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 import '../../../../core/models/models.dart';
+import '../../../../core/localization/app_localization.dart';
 import '../../../../core/services/api_services.dart';
 import '../../../../core/constants/api_constants.dart';
 
@@ -1052,7 +1053,10 @@ class _ReportHistoryDetailDialogState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Rekaman Audio', style: TextStyle(color: Colors.white70)),
+          Text(
+            'Rekaman Audio'.tr(context),
+            style: TextStyle(color: Colors.white70),
+          ),
           Row(
             children: [
               IconButton(

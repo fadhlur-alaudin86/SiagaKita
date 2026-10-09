@@ -61,6 +61,24 @@ func TestRegister_DuplicateContract(t *testing.T) {
 	if res.Code != "ERR_BAD_REQUEST" {
 		t.Errorf("expected code ERR_BAD_REQUEST, got %q", res.Code)
 	}
+
+	// Same request in English: message translates, code stays identical.
+	reqEN := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewReader([]byte("{invalid-json")))
+	reqEN.Header.Set("Content-Type", "application/json")
+	reqEN.Header.Set("Accept-Language", "en")
+	respEN, err := app.Test(reqEN)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	bodyEN, _ := io.ReadAll(respEN.Body)
+	var resEN utils.APIResponse
+	_ = json.Unmarshal(bodyEN, &resEN)
+	if resEN.Code != "ERR_BAD_REQUEST" {
+		t.Errorf("expected code ERR_BAD_REQUEST in en, got %q", resEN.Code)
+	}
+	if resEN.Message != "Invalid request body" {
+		t.Errorf("expected English message, got %q", resEN.Message)
+	}
 }
 
 func TestRefreshToken_Handler(t *testing.T) {

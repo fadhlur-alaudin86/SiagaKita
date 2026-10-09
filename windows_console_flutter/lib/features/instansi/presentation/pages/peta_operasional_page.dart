@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/models/models.dart';
+import '../../../../core/localization/app_localization.dart';
 import '../../../../core/services/api_services.dart';
 import '../../../../core/services/ws_service.dart';
 
@@ -355,7 +356,10 @@ class _PetaOperasionalPageState extends State<PetaOperasionalPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup', style: TextStyle(color: Colors.white54)),
+            child: Text(
+              'Tutup'.tr(context),
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
         ],
       ),

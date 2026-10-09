@@ -13,6 +13,7 @@ import (
 	"siagakita-backend/internal/config"
 	"siagakita-backend/internal/domain/incident"
 	"siagakita-backend/internal/hub"
+	"siagakita-backend/internal/i18n"
 	"siagakita-backend/internal/utils"
 
 	"github.com/redis/go-redis/v9"
@@ -120,13 +121,21 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	// pada Hub multi-conn (console roles bisa punya banyak koneksi aktif).
 	connID := fmt.Sprintf("%s-%s", userID, claims.JTI)
 
-	h.hub.Register(userID, claims.Role, connID, conn)
+	// Negotiate locale once at handshake: explicit ?lang= wins, then header.
+	locale := i18n.LocaleID
+	if lang := r.URL.Query().Get("lang"); lang != "" {
+		locale = i18n.NormalizeLocale(lang)
+	} else {
+		locale = i18n.ParseAcceptLanguage(r.Header.Get("Accept-Language"))
+	}
+
+	h.hub.Register(userID, claims.Role, connID, conn, locale)
 	defer h.hub.Unregister(userID, connID)
 
 	// Send welcome message
 	_ = h.hub.SendToUser(userID, hub.Message{
 		Event:   "CONNECTED",
-		Payload: map[string]string{fieldUserID: userID, fieldMessage: "Terhubung ke SiagaKita real-time engine"},
+		Payload: map[string]string{fieldUserID: userID, fieldMessage: i18n.Translate(locale, "Terhubung ke SiagaKita real-time engine")},
 	})
 
 	h.readLoop(userID, conn)
@@ -317,7 +326,7 @@ func (h *Handler) onTriggerSOS(userID string, payload interface{}) {
 		Payload: map[string]interface{}{
 			"sos_id":       inc.ID,
 			"grace_period": int(gracePeriod.Seconds()),
-			fieldMessage:   "SOS diterima. Batalkan dalam 10 detik jika ini bukan darurat.",
+			fieldMessage:   i18n.Translate(h.hub.LocaleOf(userID), "SOS diterima. Batalkan dalam 10 detik jika ini bukan darurat."),
 		},
 	})
 
@@ -345,7 +354,7 @@ func (h *Handler) onCancelSOS(userID string, payload interface{}) {
 
 	_ = h.hub.SendToUser(userID, hub.Message{
 		Event:   "SOS_CANCELLED",
-		Payload: map[string]string{fieldMessage: "SOS dibatalkan"},
+		Payload: map[string]string{fieldMessage: i18n.Translate(h.hub.LocaleOf(userID), "SOS dibatalkan")},
 	})
 
 	utils.Info().Str("sos_id", sosID).Str("user_id", userID).Msg("[WS] SOS canceled")
@@ -384,7 +393,7 @@ func (h *Handler) onAcceptRescue(responderID string, payload interface{}) {
 			"responder_id":   responderID,
 			"responder_name": responderName,
 			"status":         statusEnRoute,
-			fieldMessage:     fmt.Sprintf("Relawan %s sedang menuju lokasi kamu", responderName),
+			fieldMessage:     i18n.Translate(h.hub.LocaleOf(inc.ReporterID), "Relawan %s sedang menuju lokasi kamu", responderName),
 		},
 	})
 
