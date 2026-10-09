@@ -27,7 +27,9 @@ var (
 
 	// validReportStatus mirrors chk_incident_reports_status (migration 021).
 	validReportStatus = map[string]bool{
-		"received": true, "sent": true, "processing": true, "investigating": true,
-		"handled": true, "resolved": true, "rejected": true, "canceled": true,
+		ReportStatusReceived: true, ReportStatusSent: true,
+		ReportStatusProcessing: true, ReportStatusInvestigating: true,
+		ReportStatusHandled: true, ReportStatusResolved: true,
+		ReportStatusRejected: true, ReportStatusCanceled: true,
 	}
 )
