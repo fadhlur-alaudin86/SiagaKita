@@ -158,3 +158,85 @@ func TestErrorResponse(t *testing.T) {
 		t.Errorf("expected translated message 'Invalid or expired token', got %q", res.Message)
 	}
 }
+
+func TestErrorResponse_DefaultCode(t *testing.T) {
+	cases := []struct {
+		status int
+		code   string
+	}{
+		{fiber.StatusBadRequest, "ERR_BAD_REQUEST"},
+		{fiber.StatusUnauthorized, "ERR_UNAUTHORIZED"},
+		{fiber.StatusForbidden, "ERR_FORBIDDEN"},
+		{fiber.StatusNotFound, "ERR_NOT_FOUND"},
+		{fiber.StatusConflict, "ERR_CONFLICT"},
+		{fiber.StatusInternalServerError, "ERR_INTERNAL"},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.code, func(t *testing.T) {
+			app := fiber.New()
+			app.Get("/test-code", func(c *fiber.Ctx) error {
+				return ErrorResponse(c, tt.status, "Pesan")
+			})
+
+			resp, err := app.Test(httptest.NewRequest(http.MethodGet, "/test-code", nil))
+			if err != nil {
+				t.Fatalf("app.Test failed: %v", err)
+			}
+			body, _ := io.ReadAll(resp.Body)
+			var res APIResponse
+			_ = json.Unmarshal(body, &res)
+			if res.Code != tt.code {
+				t.Errorf("expected code %q, got %q", tt.code, res.Code)
+			}
+		})
+	}
+}
+
+func TestErrorResponseWithCode(t *testing.T) {
+	app := fiber.New()
+	app.Get("/test-code", func(c *fiber.Ctx) error {
+		return ErrorResponseWithCode(c, fiber.StatusConflict, "ERR_EMAIL_TAKEN", "Email sudah terdaftar")
+	})
+
+	for _, lang := range []string{"id", "en"} {
+		req := httptest.NewRequest(http.MethodGet, "/test-code", nil)
+		req.Header.Set("Accept-Language", lang)
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("app.Test failed: %v", err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		var res APIResponse
+		_ = json.Unmarshal(body, &res)
+		if resp.StatusCode != http.StatusConflict {
+			t.Errorf("expected 409, got %d", resp.StatusCode)
+		}
+		if res.Code != "ERR_EMAIL_TAKEN" {
+			t.Errorf("[%s] expected code ERR_EMAIL_TAKEN, got %q", lang, res.Code)
+		}
+		if res.Message == "" {
+			t.Errorf("[%s] expected displayable message, got empty", lang)
+		}
+	}
+}
+
+func TestSuccessResponse_OmitsCode(t *testing.T) {
+	app := fiber.New()
+	app.Get("/test-ok", func(c *fiber.Ctx) error {
+		return SuccessResponse(c, fiber.Map{"item": "sensor-1"})
+	})
+
+	resp, err := app.Test(httptest.NewRequest(http.MethodGet, "/test-ok", nil))
+	if err != nil {
+		t.Fatalf("app.Test failed: %v", err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if json.Valid(body) {
+		var raw map[string]interface{}
+		_ = json.Unmarshal(body, &raw)
+		if _, present := raw["code"]; present {
+			t.Errorf("expected no code field on success, got %v", raw["code"])
+		}
+	}
+}

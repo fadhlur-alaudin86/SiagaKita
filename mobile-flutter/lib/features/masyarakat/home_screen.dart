@@ -419,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen>
         );
         await OfflineService.clearPendingCancelSOS();
       } catch (e) {
-        if (e is SOSConflictException || e.toString().contains('409')) {
+        if (e is SOSConflictException) {
           await OfflineService.clearPendingCancelSOS();
         }
       }
@@ -2041,7 +2041,7 @@ class _HomeScreenState extends State<HomeScreen>
       );
       await OfflineService.clearPendingCancelSOS();
     } catch (e) {
-      if (e is SOSConflictException || e.toString().contains('409')) {
+      if (e is SOSConflictException) {
         await OfflineService.clearPendingCancelSOS();
       } else {
         await OfflineService.savePendingCancelSOS(incidentId);
@@ -2066,7 +2066,7 @@ class _HomeScreenState extends State<HomeScreen>
         isCanceled = true;
       } catch (e) {
         // Hentikan infinite loop jika status HTTP 409 Conflict (sudah batal/selesai)
-        if (e is SOSConflictException || e.toString().contains('409')) {
+        if (e is SOSConflictException) {
           await OfflineService.clearPendingCancelSOS();
           isCanceled = true;
           break;

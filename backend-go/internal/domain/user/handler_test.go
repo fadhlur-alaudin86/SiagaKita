@@ -3,6 +3,9 @@ package user
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,6 +29,39 @@ const (
 	fieldRefreshToken = "refresh_token"
 	testJWTSecret     = "test-jwt-secret-key-32-chars-long!"
 )
+
+func TestRegister_DuplicateContract(t *testing.T) {
+	// Service wraps duplicates around sentinels; handlers map them to 409 codes.
+	if !errors.Is(fmt.Errorf("wrap: %w", ErrEmailTaken), ErrEmailTaken) {
+		t.Errorf("ErrEmailTaken must survive wrapping")
+	}
+	nikErr := fmt.Errorf("NIK ini sudah terdaftar pada akun lain: %w", ErrNIKAlreadyUsed)
+	if !errors.Is(nikErr, ErrNIKAlreadyUsed) {
+		t.Errorf("ErrNIKAlreadyUsed must survive wrapping")
+	}
+
+	// Validation path carries the default 400 code without touching the DB.
+	cfg := &config.Config{}
+	h := NewHandler(&Service{cfg: cfg})
+	app := fiber.New()
+	app.Post("/api/v1/auth/register", h.Register)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewReader([]byte("{invalid-json")))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var res utils.APIResponse
+	_ = json.Unmarshal(body, &res)
+	if res.Code != "ERR_BAD_REQUEST" {
+		t.Errorf("expected code ERR_BAD_REQUEST, got %q", res.Code)
+	}
+}
 
 func TestRefreshToken_Handler(t *testing.T) {
 	cfg := &config.Config{

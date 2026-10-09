@@ -32,6 +32,9 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 	}
 	result, err := h.svc.Register(c.Context(), &req)
 	if err != nil {
+		if errors.Is(err, ErrEmailTaken) {
+			return utils.ErrorResponseWithCode(c, fiber.StatusConflict, "ERR_EMAIL_TAKEN", "Email sudah terdaftar")
+		}
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 	return utils.CreatedResponse(c, result)
@@ -277,6 +280,9 @@ func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
 	}
 
 	if err := h.svc.SubmitKYC(c, userID, nik, fullName, placeOfBirth, dateOfBirth); err != nil {
+		if errors.Is(err, ErrNIKAlreadyUsed) {
+			return utils.ErrorResponseWithCode(c, fiber.StatusConflict, "ERR_NIK_TAKEN", err.Error())
+		}
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
 	return utils.SuccessResponse(c, fiber.Map{

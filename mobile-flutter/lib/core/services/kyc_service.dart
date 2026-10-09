@@ -4,6 +4,14 @@ import 'package:http/http.dart' as http;
 import '../constants/api_config.dart';
 
 /// KycService menangani API calls untuk verifikasi identitas NIK warga.
+class KycException implements Exception {
+  final String message;
+  final String? code;
+  const KycException(this.message, [this.code]);
+  @override
+  String toString() => message;
+}
+
 class KycService {
   static const String _baseUrl = ApiConfig.baseUrl;
   static const _timeout = Duration(seconds: 30);
@@ -59,7 +67,12 @@ class KycService {
     final body = jsonDecode(res.body) as Map<String, dynamic>;
 
     if (res.statusCode != 200 && res.statusCode != 201) {
-      throw Exception(body['error'] ?? 'Gagal mengajukan verifikasi NIK');
+      throw KycException(
+        body['message'] as String? ??
+            body['error'] as String? ??
+            'Gagal mengajukan verifikasi NIK',
+        body['code'] as String?,
+      );
     }
   }
 }

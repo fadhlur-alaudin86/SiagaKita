@@ -15,6 +15,10 @@ ErrorResponse:
     success:
       type: boolean
       example: false
+    code:
+      type: string
+      description: Machine-readable error code for client branching (e.g. ERR_EMAIL_TAKEN). Generic codes derive from HTTP status when no semantic code applies.
+      example: "ERR_EMAIL_TAKEN"
     message:
       type: string
       example: "Token tidak valid atau sudah kedaluwarsa"
