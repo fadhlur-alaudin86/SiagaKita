@@ -7,6 +7,9 @@ on:
       - dev
   pull_request_review:
     types: [submitted]
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   enable-auto-merge:
@@ -26,3 +29,27 @@ jobs:
             echo "Enabling auto-merge (squash) for PR #$PR_NUMBER on $REPO..."
             gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash --delete-branch || echo "Auto-merge already enabled or pending requirements."
           fi
+
+  update-stale-branches:
+    # Strict required checks block auto-merge on behind branches. This sweep
+    # merges dev into them so CI re-runs and auto-merge can proceed.
+    # Conflicting branches are left for humans (update would fail anyway).
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Merge dev into behind PR branches
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          for pr in $(gh pr list --repo "$REPO" --base dev --state open --json number --jq '.[].number'); do
+            state=$(gh pr view "$pr" --repo "$REPO" --json mergeStateStatus --jq '.mergeStateStatus')
+            if [ "$state" = "BEHIND" ]; then
+              echo "PR #$pr is behind dev, updating..."
+              gh pr update-branch "$pr" --repo "$REPO" --merge \
+                || gh pr comment "$pr" --repo "$REPO" --body "Auto-update failed. Please rebase this branch onto dev manually."
+            fi
+          done
