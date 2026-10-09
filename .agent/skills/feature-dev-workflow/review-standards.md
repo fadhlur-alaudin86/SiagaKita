@@ -146,3 +146,5 @@ After completing the self-review at Step 7, record the summary in the feature lo
 - [x] Karpathy & Surgical Review: PASS (Diff is 100% surgical, no speculative over-engineering, architecture headers present)
 - [x] Dependency Determinism: PASS (No unapproved dependency upgrades, lockfiles intact)
 ```
+
+For an independent second pass, load global `requesting-code-review` (Standards + Spec axes); run global `verification-before-completion` before claiming green.

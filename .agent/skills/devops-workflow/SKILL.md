@@ -54,6 +54,7 @@ feature/F-XXX/sub-mobile  ─┘                                ↓
 - Require PR (no direct pushes — only merges from `dev`)
 - Require `ci-main` status checks to pass
 - **Rebase Merge MANDATORY** for PRs from `dev` to `main` (fast-forward linear history, preserves atomic commits from `dev` for automated release notes).
+- When finishing work, load global `finishing-a-development-branch` to decide integration; use `using-git-worktrees` for isolated feature work and `resolving-merge-conflicts` when rebases collide.
 
 ## CI/CD Workflow Reference
 
