@@ -88,6 +88,7 @@ var idToEn = map[string]string{
 	"laporan tidak ditemukan":                                                        "Report not found",
 	"hanya laporan dengan status 'sent' atau 'pending' yang dapat dibatalkan":        "Only reports with 'sent' or 'pending' status can be canceled",
 	"conflict: incident cannot be canceled at its current status":                    "Conflict: incident cannot be canceled at its current status",
+	"invalid report status filter":                                                   "Invalid report status filter",
 	"Relawan tidak ditemukan":                                                        "Volunteer not found",
 	"Misi berhasil diterima. Segera menuju lokasi.":                                  "Mission accepted successfully. Proceed to the location immediately.",
 	"Misi telah selesai. Bukti telah diverifikasi.":                                  "Mission completed. Evidence has been verified.",
