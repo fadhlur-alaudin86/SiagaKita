@@ -118,6 +118,7 @@ Example:
 
 - Run `gosec ./...` locally before submitting major backend changes to detect unchecked errors, weak random generators, and SQL injection vectors.
 - Ensure all secrets (JWT secrets, DB credentials, SMTP/Fonnte API keys) are loaded exclusively through environment variables (`config.go`).
+- When touching auth, JWT, cryptography, file uploads, or raw SQL, load the global `golang-security` skill first and apply its checklist before implementation.
 
 ## Standard 10 — Conventional Commits (MANDATORY)
 

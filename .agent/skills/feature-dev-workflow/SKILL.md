@@ -40,6 +40,7 @@ Read [stacks.md](../stacks.md) for project configurations (repo, branches, miles
 5. **Decision Logging** — Document every non-trivial design choice in the Decisions Log.
 6. **Resume Protocol** — If interrupted or handing off, read feature log first → resume at first pending step.
 6a. **Parent Tracker Automation** — When all sub-issues of a parent tracking issue/epic are merged, automation marks parent checklists `[x]` and transitions the label to `status: ready`. Final issue closure is left to human/tech lead verification.
+6b. **Live Docs Before Upgrades** — Before adding or upgrading any Go/Flutter dependency, query `context7` for breaking changes and migration notes, and record the link in the Decisions Log.
 
 ### Backend (Go Fiber)
 7. **Read Schema First** — Read `docs/DATABASE_SCHEMA.md` and `docs/design/database-erd.md` before writing migrations.

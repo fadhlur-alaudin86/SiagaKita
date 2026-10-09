@@ -48,7 +48,7 @@ Before the agent opens a Pull Request to `dev`, the agent MUST execute the autom
 
 ## 1. Security Review Checklist
 
-Ensures the codebase is free of injection vulnerabilities, credential leakage, and unauthorized access.
+Ensures the codebase is free of injection vulnerabilities, credential leakage, and unauthorized access. At Step 7, run the global `golang-security` skill in addition to this checklist and record findings in the feature log audit report.
 
 | Category | Verification Item | PASS Criteria | FAIL Criteria |
 |---|---|---|---|
