@@ -15,6 +15,8 @@ import (
 	"math/rand"
 	"time"
 
+	"siagakita-backend/internal/utils"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -100,7 +102,9 @@ func (s *service) RequestOTP(ctx context.Context, phone string) error {
 		code,
 	)
 	if err := s.waGateway.Send(phone, message); err != nil {
-		_ = s.rdb.Del(ctx, otpKey(phone), phoneCooldownKey(phone))
+		if delErr := s.rdb.Del(ctx, otpKey(phone), phoneCooldownKey(phone)).Err(); delErr != nil {
+			utils.Warn().Err(delErr).Str("phone", phone).Msg("[OTPService] Failed to clear OTP keys after WA send failure")
+		}
 		return fmt.Errorf("otp: kirim WA gagal: %w", err)
 	}
 
@@ -133,7 +137,9 @@ func (s *service) RequestEmailOTP(ctx context.Context, email, purpose string) er
 
 	subject, body := buildEmailContent(purpose, code)
 	if err := s.emailGateway.SendEmail(email, subject, body); err != nil {
-		_ = s.rdb.Del(ctx, key, emailCooldownKey(email))
+		if delErr := s.rdb.Del(ctx, key, emailCooldownKey(email)).Err(); delErr != nil {
+			utils.Warn().Err(delErr).Str("email", email).Msg("[OTPService] Failed to clear OTP keys after email send failure")
+		}
 		return fmt.Errorf("otp: kirim email gagal: %w", err)
 	}
 
@@ -157,7 +163,9 @@ func (s *service) verifyFromRedis(ctx context.Context, key, code, label string) 
 	if stored != code {
 		return ErrInvalidOTP
 	}
-	_ = s.rdb.Del(ctx, key) // anti-replay
+	if delErr := s.rdb.Del(ctx, key).Err(); delErr != nil {
+		utils.Warn().Err(delErr).Msg("[OTPService] Failed to consume OTP key after successful verify")
+	}
 	return nil
 }
 

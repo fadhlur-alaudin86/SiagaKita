@@ -492,8 +492,8 @@ func (h *Handler) broadcastSOS(incidentID string) {
 		// Cek role dari Redis cache dulu, fallback ke DB
 		var role string
 		roleKey := fmt.Sprintf("user:role:%s", userID)
-		role, _ = h.rdb.Get(ctx, roleKey).Result()
-		if role == "" {
+		role, roleErr := h.rdb.Get(ctx, roleKey).Result()
+		if roleErr != nil || role == "" {
 			h.db.Raw("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
 			if role != "" {
 				h.rdb.Set(ctx, roleKey, role, time.Hour)
