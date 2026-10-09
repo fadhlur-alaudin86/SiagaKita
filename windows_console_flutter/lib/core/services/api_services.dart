@@ -326,7 +326,7 @@ class AdminApiService {
     }
   }
 
-  static Future<({bool ok, String? message})> approveVolunteer(
+  static Future<({bool ok, String? message, String? code})> approveVolunteer(
     String token,
     String id,
   ) async {
@@ -340,13 +340,17 @@ class AdminApiService {
       final msg =
           (body?['data'] is Map ? body!['data']['message'] : null) ??
           body?['message'];
-      return (ok: resp.statusCode == 200, message: msg?.toString());
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
     } catch (e) {
-      return (ok: false, message: e.toString());
+      return (ok: false, message: e.toString(), code: null);
     }
   }
 
-  static Future<({bool ok, String? message})> rejectVolunteer(
+  static Future<({bool ok, String? message, String? code})> rejectVolunteer(
     String token,
     String id,
     String reason,
@@ -362,9 +366,13 @@ class AdminApiService {
       final msg =
           (body?['data'] is Map ? body!['data']['message'] : null) ??
           body?['message'];
-      return (ok: resp.statusCode == 200, message: msg?.toString());
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
     } catch (e) {
-      return (ok: false, message: e.toString());
+      return (ok: false, message: e.toString(), code: null);
     }
   }
 
@@ -436,7 +444,7 @@ class AdminApiService {
     return resp.statusCode == 200;
   }
 
-  static Future<({bool ok, String? message})> banUser(
+  static Future<({bool ok, String? message, String? code})> banUser(
     String token,
     String id,
     String reason,
@@ -452,13 +460,17 @@ class AdminApiService {
       final msg =
           (body?['data'] is Map ? body!['data']['message'] : null) ??
           body?['message'];
-      return (ok: resp.statusCode == 200, message: msg?.toString());
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
     } catch (e) {
-      return (ok: false, message: e.toString());
+      return (ok: false, message: e.toString(), code: null);
     }
   }
 
-  static Future<({bool ok, String? message})> unbanUser(
+  static Future<({bool ok, String? message, String? code})> unbanUser(
     String token,
     String id,
   ) async {
@@ -471,13 +483,17 @@ class AdminApiService {
       final msg =
           (body?['data'] is Map ? body!['data']['message'] : null) ??
           body?['message'];
-      return (ok: resp.statusCode == 200, message: msg?.toString());
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
     } catch (e) {
-      return (ok: false, message: e.toString());
+      return (ok: false, message: e.toString(), code: null);
     }
   }
 
-  static Future<({bool ok, String? message})> resetStrike(
+  static Future<({bool ok, String? message, String? code})> resetStrike(
     String token,
     String id,
   ) async {
@@ -490,9 +506,13 @@ class AdminApiService {
       final msg =
           (body?['data'] is Map ? body!['data']['message'] : null) ??
           body?['message'];
-      return (ok: resp.statusCode == 200, message: msg?.toString());
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
     } catch (e) {
-      return (ok: false, message: e.toString());
+      return (ok: false, message: e.toString(), code: null);
     }
   }
 
@@ -530,7 +550,7 @@ class AdminApiService {
         .toList();
   }
 
-  static Future<({bool ok, String? message})> createRank(
+  static Future<({bool ok, String? message, String? code})> createRank(
     String token,
     RankModel rank,
   ) async {
@@ -547,13 +567,14 @@ class AdminApiService {
       return (
         ok: resp.statusCode == 200 || resp.statusCode == 201,
         message: msg?.toString(),
+        code: body?['code']?.toString(),
       );
     } catch (e) {
-      return (ok: false, message: e.toString());
+      return (ok: false, message: e.toString(), code: null);
     }
   }
 
-  static Future<({bool ok, String? message})> updateRank(
+  static Future<({bool ok, String? message, String? code})> updateRank(
     String token,
     RankModel rank,
   ) async {
@@ -567,13 +588,17 @@ class AdminApiService {
       final msg =
           (body?['data'] is Map ? body!['data']['message'] : null) ??
           body?['message'];
-      return (ok: resp.statusCode == 200, message: msg?.toString());
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
     } catch (e) {
-      return (ok: false, message: e.toString());
+      return (ok: false, message: e.toString(), code: null);
     }
   }
 
-  static Future<({bool ok, String? message})> deleteRank(
+  static Future<({bool ok, String? message, String? code})> deleteRank(
     String token,
     String id,
   ) async {
@@ -586,9 +611,13 @@ class AdminApiService {
       final msg =
           (body?['data'] is Map ? body!['data']['message'] : null) ??
           body?['message'];
-      return (ok: resp.statusCode == 200, message: msg?.toString());
+      return (
+        ok: resp.statusCode == 200,
+        message: msg?.toString(),
+        code: body?['code']?.toString(),
+      );
     } catch (e) {
-      return (ok: false, message: e.toString());
+      return (ok: false, message: e.toString(), code: null);
     }
   }
 
