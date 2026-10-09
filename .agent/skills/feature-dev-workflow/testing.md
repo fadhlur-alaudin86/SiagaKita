@@ -119,6 +119,8 @@ flutter test test/features/incident/dispatch_test.dart
 flutter test --coverage
 ```
 
+Load global `flutter-add-widget-test` for component tests, `flutter-add-integration-test` for user flows, and `dart-collect-coverage` for LCOV reports.
+
 ### Flutter Test Pattern
 
 ```dart
