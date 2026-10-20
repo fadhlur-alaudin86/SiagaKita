@@ -1,0 +1,112 @@
+# docker-compose.demo.yml - Disposable demo stack for a single DigitalOcean droplet.
+#
+# Purpose: Run the complete SiagaKita stack (PostgreSQL, Redis, backend, Nginx) on
+#          one demo droplet that is destroyed after the exhibition.
+# Data & Logic Flow: docker compose up -d -> locally built backend image (after
+#          docker load) -> migrations were already applied by siagakita-migrate ->
+#          Nginx serves plain HTTP on port 80.
+# Key Components: postgres, redis, backend (local image), nginx (nginx.demo.conf).
+#
+# Differences from docker-compose.prod.yml:
+#   1. The backend uses a local image `siagakita-api:<IMAGE_TAG>` shipped with
+#      docker save/scp, not an image from Docker Hub.
+#   2. Nginx publishes port 80 only and uses nginx.demo.conf (no TLS, no 443 redirect).
+#   3. There is no ./ssl volume because HTTP-only mode carries no certificate.
+#   4. env_file points at .env.demo instead of .env.prod.
+#
+# This file is deliberately standalone rather than an override of the prod file, so
+# replacing the Nginx volume stays deterministic instead of depending on how Docker
+# Compose merges volumes for the same target path.
+
+services:
+  # 1. Relational database (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: siagakita_postgres
+    restart: always
+    env_file:
+      - .env.demo
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - siagakita_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. In-memory cache (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: siagakita_redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD} --notify-keyspace-events Ex
+    env_file:
+      - .env.demo
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - siagakita_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # 3. Go backend - local image shipped from the workstation
+  backend:
+    image: siagakita-api:${IMAGE_TAG:-1.1.0-demo}
+    container_name: siagakita_backend
+    restart: always
+    env_file:
+      - .env.demo
+    expose:
+      - "8080"   # REST API
+      - "8081"   # WebSocket
+    volumes:
+      - /opt/siagakita/uploads:/app/uploads
+      - /opt/siagakita/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - siagakita_network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # 4. Nginx reverse proxy - HTTP only (port 80)
+  nginx:
+    image: nginx:alpine
+    container_name: siagakita_nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.demo.conf:/etc/nginx/nginx.conf:ro
+      - /opt/siagakita/uploads:/app/uploads:ro
+      - /opt/siagakita/console-web:/app/console-web:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - siagakita_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+networks:
+  siagakita_network:
+    driver: bridge
