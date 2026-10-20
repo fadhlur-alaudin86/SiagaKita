@@ -94,7 +94,7 @@ Skipping this leaves the database empty and the backend failing every query.
 
 ### 2.6 Demo Seed Data
 
-`scripts/demo/seed_demo_data.sql` is a standalone, idempotent SQL file (fixed UUIDs + `ON CONFLICT DO NOTHING`) executed after migrations. All demo accounts share the password `Siaga#Demo2026` (bcrypt cost 12, matching the application's `user` service).
+`scripts/demo/seed_demo_data.sql` is a standalone, idempotent SQL file (fixed UUIDs + `ON CONFLICT DO NOTHING`) executed after migrations. All demo accounts share one demo password supplied out of band. Only its bcrypt hash (cost 12, matching the application's `user` service) is committed, so the seeder stays self-contained while the plaintext never enters the public repository. The checks read `SIAGAKITA_DEMO_PASSWORD` or the git-ignored `env/demo.secrets.env`.
 
 | Role | Account | Purpose |
 | :--- | :--- | :--- |

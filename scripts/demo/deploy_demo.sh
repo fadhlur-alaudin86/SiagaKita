@@ -181,7 +181,7 @@ if [[ "$HEALTH_OK" == "1" ]]; then
   printf '   Console (web): http://localhost:8080/console/ after the SSH tunnel\n'
   printf '                  ssh -i <key> -N -L 8080:127.0.0.1:80 root@%s\n' "$DROPLET_IP"
   printf '   Health       : http://%s/health\n' "$DROPLET_IP"
-  printf '   Password     : Siaga#Demo2026\n'
+  printf '   Password     : %s\n' "${SIAGAKITA_DEMO_PASSWORD:-see the operator package (SIAGAKITA_DEMO_PASSWORD)}"
   printf '===============================================================\n'
   printf ' Build the clients against this endpoint next:\n'
   printf '   cd mobile-flutter && flutter build apk --release \\\n'

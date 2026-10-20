@@ -19,6 +19,7 @@ Exit code 0 = all checks passed, 1 = at least one failure (details printed).
 import base64
 import json
 import os
+import pathlib
 import socket
 import struct
 import sys
@@ -26,7 +27,6 @@ import time
 import urllib.error
 import urllib.request
 
-PASSWORD = "Siaga#Demo2026"
 DEFAULT_PORT = 80
 
 
@@ -74,7 +74,9 @@ class DemoClient:
 
     def login(self, email, endpoint):
         status, body = self.request(
-            "POST", f"/api/v1/auth/{endpoint}", {"email": email, "password": PASSWORD}
+            "POST",
+            f"/api/v1/auth/{endpoint}",
+            {"email": email, "password": demo_password()},
         )
         if status != 200:
             raise RuntimeError(f"login failed for {email}: HTTP {status} {body}")
@@ -332,6 +334,28 @@ def run(host, port):
     else:
         print("RESULT: ALL CHECKS PASSED - demo stack is ready for visitors")
     return report
+
+
+def demo_password() -> str:
+    """Resolve the shared demo password without storing it in the repository.
+
+    The password is deliberately absent from the source tree: this repository is
+    public, and the value is only needed when running the checks by hand. Set
+    SIAGAKITA_DEMO_PASSWORD, or keep the value in the git-ignored
+    env/demo.secrets.env file shipped in the operator package.
+    """
+    value = os.environ.get("SIAGAKITA_DEMO_PASSWORD")
+    if value:
+        return value
+    secrets = pathlib.Path(__file__).resolve().parents[2] / "env" / "demo.secrets.env"
+    if secrets.is_file():
+        for line in secrets.read_text(encoding="utf-8").splitlines():
+            if line.startswith("SIAGAKITA_DEMO_PASSWORD="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    raise SystemExit(
+        "SIAGAKITA_DEMO_PASSWORD is not set. Export it, or create "
+        "env/demo.secrets.env containing SIAGAKITA_DEMO_PASSWORD=<password>."
+    )
 
 
 def main():

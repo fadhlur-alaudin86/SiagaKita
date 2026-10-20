@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pathlib
 import sys
 import time
 import urllib.error
@@ -29,7 +30,6 @@ import urllib.request
 
 from playwright.sync_api import sync_playwright
 
-PASSWORD = "Siaga#Demo2026"
 CHROME_CANDIDATES = (
     "/usr/bin/google-chrome-stable",
     "/usr/bin/brave",
@@ -85,7 +85,7 @@ class Api:
 
     def login(self, email: str, endpoint: str = "login") -> str:
         status, body = self.call(
-            "POST", f"/auth/{endpoint}", {"email": email, "password": PASSWORD}
+            "POST", f"/auth/{endpoint}", {"email": email, "password": demo_password()}
         )
         if status != 200:
             raise SystemExit(f"login {email} -> HTTP {status} {body}")
@@ -96,6 +96,28 @@ def check(results: list[bool], ok: bool, label: str, detail: str = "") -> None:
     results.append(bool(ok))
     suffix = f" -> {detail}" if detail else ""
     print(f"{'PASS' if ok else 'FAIL'}  {label}{suffix}")
+
+
+def demo_password() -> str:
+    """Resolve the shared demo password without storing it in the repository.
+
+    The password is deliberately absent from the source tree: this repository is
+    public, and the value is only needed when running the checks by hand. Set
+    SIAGAKITA_DEMO_PASSWORD, or keep the value in the git-ignored
+    env/demo.secrets.env file shipped in the operator package.
+    """
+    value = os.environ.get("SIAGAKITA_DEMO_PASSWORD")
+    if value:
+        return value
+    secrets = pathlib.Path(__file__).resolve().parents[2] / "env" / "demo.secrets.env"
+    if secrets.is_file():
+        for line in secrets.read_text(encoding="utf-8").splitlines():
+            if line.startswith("SIAGAKITA_DEMO_PASSWORD="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    raise SystemExit(
+        "SIAGAKITA_DEMO_PASSWORD is not set. Export it, or create "
+        "env/demo.secrets.env containing SIAGAKITA_DEMO_PASSWORD=<password>."
+    )
 
 
 def main() -> int:
@@ -189,7 +211,7 @@ def main() -> int:
 
         if count >= 2:
             ok_email = type_into(inputs.nth(0), ROOT_EMAIL)
-            ok_pass = type_into(inputs.nth(1), PASSWORD)
+            ok_pass = type_into(inputs.nth(1), demo_password())
             check(results, ok_email and ok_pass, "credentials entered into the form")
             page.keyboard.press("Enter")
             page.wait_for_timeout(10_000)

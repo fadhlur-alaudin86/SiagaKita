@@ -179,4 +179,4 @@ fi
 printf '\n[bootstrap] === public endpoint check ===\n'
 curl -fsS --max-time 10 http://127.0.0.1/health && printf '\n' || printf '[bootstrap] health endpoint not reachable yet\n'
 
-printf '\n[bootstrap] Stack is up. Demo accounts password: Siaga#Demo2026\n'
+printf '\n[bootstrap] Stack is up. Demo account credentials are in the operator package (DEMO_FLOW.md).\n'

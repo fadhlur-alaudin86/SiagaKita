@@ -11,7 +11,12 @@ every demo account. Related: [README.md](./README.md) for deployment and
 Every demo account shares one password. These accounts exist only on the disposable
 exhibition droplet and are destroyed with it.
 
-> **Password for all accounts: `Siaga#Demo2026`**
+> **Password for all accounts: one shared demo password, supplied out of band.**
+>
+> It is deliberately absent from this repository, which is public. The printed
+> credential card in the operator package carries the value; here it is read from
+> `SIAGAKITA_DEMO_PASSWORD` (or the git-ignored `env/demo.secrets.env`), which is
+> also what `smoke_test.py` and `smoke_test_console.py` expect.
 
 | # | Role | Email | Signs in on | Lands on |
 | :--- | :--- | :--- | :--- | :--- |

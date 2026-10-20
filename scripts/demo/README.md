@@ -66,7 +66,7 @@ A fresh droplet takes roughly 3 to 6 minutes for step 2: Docker installation dom
 
 ## Demo accounts
 
-Every account in this table uses the password `Siaga#Demo2026`.
+Every account in this table uses one shared demo password. The value is not stored in this repository (it is public): export `SIAGAKITA_DEMO_PASSWORD`, or keep it in the git-ignored `env/demo.secrets.env` that ships in the operator package. The smoke tests read the same two sources and stop with an instruction when neither is present.
 
 | Role | Email | Login endpoint | Used for |
 | :--- | :--- | :--- | :--- |
