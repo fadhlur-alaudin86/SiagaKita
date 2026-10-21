@@ -143,10 +143,11 @@ The DigitalOcean API token lived at `/tmp/opencode/do-token` and is gone after t
 reboot. Retrieve it again from the DigitalOcean control panel, then:
 
 ```bash
-export DO_API_TOKEN=$(cat /tmp/opencode/do-token)
-doctl compute droplet delete siagakita-demo --force
+./scripts/demo/destroy_droplet.sh          # asks for the droplet name
 ```
 
-If the droplet was provisioned with the `firewall` strategy, remove that too:
-`doctl compute firewall delete siagakita-demo-fw --force`. With the `userdata`
-strategy the boundary is `ufw` inside the droplet and disappears with it.
+The script reads `/tmp/opencode/do-token`, accepts `DO_API_TOKEN` or
+`DIGITALOCEAN_ACCESS_TOKEN`, deletes the `siagakita-demo-fw` Cloud Firewall when
+the `firewall` strategy was used, and polls the droplet list to prove the name is
+gone. With the `userdata` strategy the boundary is `ufw` inside the droplet and
+disappears with it.

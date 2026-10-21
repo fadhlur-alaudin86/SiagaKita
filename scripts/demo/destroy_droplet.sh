@@ -33,12 +33,20 @@ done
 
 command -v doctl >/dev/null 2>&1 || fail "doctl not found in PATH."
 
+# Accept either variable name so a caller that already exported doctl's own
+# DIGITALOCEAN_ACCESS_TOKEN is not rejected.
+if [[ -z "${DO_API_TOKEN:-}" ]]; then
+  DO_API_TOKEN="${DIGITALOCEAN_ACCESS_TOKEN:-}"
+fi
+
 if [[ -z "${DO_API_TOKEN:-}" ]]; then
   TOKEN_FILE="${DO_TOKEN_FILE:-/tmp/opencode/do-token}"
-  [[ -f "$TOKEN_FILE" ]] || fail "DO_API_TOKEN is unset and $TOKEN_FILE is missing."
+  [[ -f "$TOKEN_FILE" ]] || fail "No token: set DO_API_TOKEN or DIGITALOCEAN_ACCESS_TOKEN, or write $TOKEN_FILE."
   DO_API_TOKEN="$(tr -d '\n\r' < "$TOKEN_FILE")"
-  export DO_API_TOKEN
 fi
+
+# doctl authenticates from DIGITALOCEAN_ACCESS_TOKEN, not from DO_API_TOKEN.
+export DIGITALOCEAN_ACCESS_TOKEN="$DO_API_TOKEN"
 
 DROPLET_ID="$(doctl compute droplet list --format ID,Name --no-header \
   | awk -v n="$DROPLET_NAME" '$2==n {print $1}' | head -1)"
