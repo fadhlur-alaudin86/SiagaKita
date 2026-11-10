@@ -1,0 +1,36 @@
+# Weak-network test overlay (stage 1 of the weak-network simulation plan).
+# Adds a toxiproxy service in front of the backend so clients can be pointed
+# at degraded REST/WS paths while the rest of the stack stays healthy.
+#
+# Usage (from this directory):
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml up -d toxiproxy
+#
+# Compose interpolates ${VARS} in docker-compose.yml from a file literally
+# named `.env` in this directory (NOT from env_file). A local symlink
+# `.env -> .env.dev` provides them; recreate it if missing:
+#   ln -sfn .env.dev .env
+#
+# Control API (localhost only): http://127.0.0.1:8474
+# Clients select this topology via: --dart-define-from-file=.env.weaknet
+services:
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:latest
+    container_name: siagakita_toxiproxy
+    restart: unless-stopped
+    # -host=0.0.0.0 overrides the image default (localhost) so the control API
+    # is reachable through the published loopback port.
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    volumes:
+      - ./toxiproxy.test.json:/config/toxiproxy.json:ro
+    ports:
+      # Control API bound to loopback only: the harness toggles toxics here,
+      # and the unauthenticated API must not be reachable from LAN/tailnet.
+      - "127.0.0.1:8474:8474"
+      # Proxy listeners must be reachable by emulator (host NAT) and by
+      # physical devices on the tailnet, so they bind on all interfaces.
+      - "10000:10000" # REST proxy listener -> backend:8080
+      - "10001:10001" # WS proxy listener  -> backend:8081
+    depends_on:
+      - backend
+    networks:
+      - siagakita_network

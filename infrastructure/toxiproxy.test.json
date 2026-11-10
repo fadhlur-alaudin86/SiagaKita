@@ -1,0 +1,14 @@
+[
+  {
+    "name": "rest_api",
+    "listen": "0.0.0.0:10000",
+    "upstream": "backend:8080",
+    "enabled": true
+  },
+  {
+    "name": "ws_realtime",
+    "listen": "0.0.0.0:10001",
+    "upstream": "backend:8081",
+    "enabled": true
+  }
+]
