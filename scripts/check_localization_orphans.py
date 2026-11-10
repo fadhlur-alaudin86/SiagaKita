@@ -2,7 +2,7 @@
 """
 check_localization_orphans.py — Detect orphaned translation keys in SiagaKita Flutter dictionaries.
 
-Validates Localization Invariant #5 (GEMINI.md):
+Validates Localization Invariant #5 (AGENTS.md):
 "Prune Unused Entries: When deleting or refactoring UI text, immediately prune orphaned
 dictionary entries in app_localization.dart. Never leave dead, prototype, or duplicate
 keys in the dictionary."
