@@ -12,11 +12,16 @@ import (
 	"time"
 
 	"siagakita-backend/internal/config"
+	"siagakita-backend/internal/domain/admin"
+	"siagakita-backend/internal/domain/agency"
+	"siagakita-backend/internal/domain/user"
 	"siagakita-backend/internal/hub"
 	"siagakita-backend/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupTestApp(h *Handler) *fiber.App {
@@ -340,5 +345,89 @@ func TestUploadEvidence_UnauthorizedReporter_Returns403(t *testing.T) {
 	}
 	if len(entries) != 0 {
 		t.Errorf("expected upload dir to be empty, found %d entries", len(entries))
+	}
+}
+
+// TestUnauthenticatedHandlersReturn401 verifies that every handler which reads
+// auth locals returns HTTP 401 with a Rule B machine-readable code
+// (ERR_UNAUTHORIZED) instead of panicking into a 500 when the auth middleware
+// did not populate locals. Each affected route is registered WITHOUT auth
+// middleware and WITHOUT setting userID locals, so the comma-ok guard is the
+// only thing standing between the request and a nil-map panic.
+func TestUnauthenticatedHandlersReturn401(t *testing.T) {
+	incH := NewHandler(&Service{}, &config.Config{}, hub.New(), nil)
+	agH := agency.NewHandler(&agency.Service{})
+	adH := admin.NewHandler(&admin.Service{}, &config.Config{})
+	usH := user.NewHandler(&user.Service{})
+
+	tests := []struct {
+		name   string
+		method string
+		path   string
+		handle fiber.Handler
+	}{
+		// Incident (reporter)
+		{"TriggerSOS", fiber.MethodPost, "/api/v1/incidents/trigger", incH.TriggerSOS},
+		{"UpdateType", fiber.MethodPatch, "/api/v1/incidents/inc-1/type", incH.UpdateType},
+		{"Broadcast", fiber.MethodPost, "/api/v1/incidents/inc-1/broadcast", incH.Broadcast},
+		{"CancelSOS", fiber.MethodPost, "/api/v1/incidents/inc-1/canceled", incH.CancelSOS},
+		{"UploadEvidence", fiber.MethodPost, "/api/v1/incidents/inc-1/evidence", incH.UploadEvidence},
+		{"GetActive", fiber.MethodGet, "/api/v1/incidents/active", incH.GetActive},
+		{"GetHistory", fiber.MethodGet, "/api/v1/incidents/reporter-history", incH.GetHistory},
+		{"MarkFalseAlarm", fiber.MethodPost, "/api/v1/incidents/inc-1/mark-false-alarm", incH.MarkFalseAlarm},
+		{"Resolve", fiber.MethodPost, "/api/v1/incidents/inc-1/resolve", incH.Resolve},
+		{"CreateReport", fiber.MethodPost, "/api/v1/reports", incH.CreateReport},
+		{"CancelReport", fiber.MethodPost, "/api/v1/reports/inc-1/canceled", incH.CancelReport},
+		{"GetMyReports", fiber.MethodGet, "/api/v1/reports/my", incH.GetMyReports},
+		// Incident (volunteer)
+		{"GetNearby", fiber.MethodGet, "/api/v1/incidents/nearby", incH.GetNearby},
+		{"AcceptSOS", fiber.MethodPost, "/api/v1/incidents/inc-1/accept", incH.AcceptSOS},
+		{"AgencyHandleSOS", fiber.MethodPost, "/api/v1/incidents/inc-1/agency-handle", incH.AgencyHandleSOS},
+		{"VolunteerCompleteSOS", fiber.MethodPost, "/api/v1/incidents/inc-1/volunteer-complete", incH.VolunteerCompleteSOS},
+		{"GetMissionHistory", fiber.MethodGet, "/api/v1/incidents/my-history", incH.GetMissionHistory},
+		{"GetVolunteerBadges", fiber.MethodGet, "/api/v1/volunteer/badges", incH.GetVolunteerBadges},
+		{"GetMyActiveResponse", fiber.MethodGet, "/api/v1/incidents/my-active-response", incH.GetMyActiveResponse},
+		{"UpdateResponseLocation", fiber.MethodPut, "/api/v1/incidents/inc-1/response-location", incH.UpdateResponseLocation},
+		// Incident (personnel)
+		{"PersonnelUpdateStatus", fiber.MethodPost, "/api/v1/incidents/inc-1/personnel-status", incH.PersonnelUpdateStatus},
+		{"GetPersonnelActiveMission", fiber.MethodGet, "/api/v1/incidents/responder/active-mission", incH.GetPersonnelActiveMission},
+		// Agency
+		{"AgencyCreatePersonnel", fiber.MethodPost, "/api/v1/agencies/personnels", agH.CreatePersonnel},
+		{"AgencyGetMyProfile", fiber.MethodGet, "/api/v1/agencies/me", agH.GetMyProfile},
+		// Admin
+		{"AdminCreateAdmin", fiber.MethodPost, "/api/v1/admin/admins", adH.CreateAdmin},
+		// User
+		{"UserSaveBiodata", fiber.MethodPost, "/api/v1/users/biodata", usH.SaveBiodata},
+		{"UserGetProfile", fiber.MethodGet, "/api/v1/users/profile", usH.GetProfile},
+		{"UserUpdateProfile", fiber.MethodPut, "/api/v1/users/profile", usH.UpdateProfile},
+		{"UserRequestPhoneVerification", fiber.MethodPost, "/api/v1/users/phone/request-otp", usH.RequestPhoneVerification},
+		{"UserConfirmPhoneOTP", fiber.MethodPost, "/api/v1/users/phone/verify-otp", usH.ConfirmPhoneOTP},
+		{"UserSubmitKYC", fiber.MethodPost, "/api/v1/users/kyc", usH.SubmitKYC},
+		{"UserGetKYCStatus", fiber.MethodGet, "/api/v1/users/kyc/status", usH.GetKYCStatus},
+		{"UserSubmitVolunteerRegistration", fiber.MethodPost, "/api/v1/users/volunteer/register", usH.SubmitVolunteerRegistration},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app := fiber.New()
+			app.Add(tt.method, tt.path, tt.handle)
+
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			resp, err := app.Test(req)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			require.Equal(t, fiber.StatusUnauthorized, resp.StatusCode, "handler must not panic into 500")
+
+			var envelope struct {
+				Success bool   `json:"success"`
+				Code    string `json:"code"`
+				Message string `json:"message"`
+			}
+			require.NoError(t, json.NewDecoder(resp.Body).Decode(&envelope))
+			assert.False(t, envelope.Success)
+			assert.Equal(t, "ERR_UNAUTHORIZED", envelope.Code, "Rule B machine-readable code")
+			assert.NotEmpty(t, envelope.Message)
+		})
 	}
 }

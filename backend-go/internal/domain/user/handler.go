@@ -133,7 +133,10 @@ func (h *Handler) RefreshToken(c *fiber.Ctx) error {
 
 // ─── POST /api/v1/users/biodata  [Auth required — civilian/volunteer] ─────────
 func (h *Handler) SaveBiodata(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	var req BiodataRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
@@ -146,7 +149,10 @@ func (h *Handler) SaveBiodata(c *fiber.Ctx) error {
 
 // ─── GET /api/v1/users/profile  [Auth required — civilian/volunteer] ──────────
 func (h *Handler) GetProfile(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	profile, err := h.svc.GetProfile(userID)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusNotFound, "Profil tidak ditemukan")
@@ -156,7 +162,10 @@ func (h *Handler) GetProfile(c *fiber.Ctx) error {
 
 // ─── PUT /api/v1/users/profile  [Auth required — civilian/volunteer] ──────────
 func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	var req UpdateProfileRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
@@ -173,7 +182,10 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 
 // ─── POST /api/v1/users/phone/request-otp  [Auth required] ───────────────────
 func (h *Handler) RequestPhoneVerification(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	var req PhoneUpdateRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
@@ -194,7 +206,10 @@ func (h *Handler) RequestPhoneVerification(c *fiber.Ctx) error {
 
 // ─── POST /api/v1/users/phone/verify-otp  [Auth required] ────────────────────
 func (h *Handler) ConfirmPhoneOTP(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	var req VerifyPhoneRequest
 	if err := c.BodyParser(&req); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Body request tidak valid")
@@ -260,7 +275,10 @@ func (h *Handler) ResendOTP(c *fiber.Ctx) error {
 // POST /api/v1/users/kyc  [Auth required — civilian/volunteer]
 // Menerima multipart/form-data: nik, full_name, ktp (file), selfie (file)
 func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	nik := c.FormValue("nik")
 	fullName := c.FormValue("full_name")
@@ -293,7 +311,10 @@ func (h *Handler) SubmitKYC(c *fiber.Ctx) error {
 
 // GET /api/v1/users/kyc/status  [Auth required — civilian/volunteer]
 func (h *Handler) GetKYCStatus(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	resp, err := h.svc.GetKYCStatus(userID)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusNotFound, "Data profil tidak ditemukan")
@@ -305,7 +326,10 @@ func (h *Handler) GetKYCStatus(c *fiber.Ctx) error {
 
 // POST /api/v1/users/volunteer/register  [Auth required — civilian]
 func (h *Handler) SubmitVolunteerRegistration(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	var req RegisterVolunteerRequest
 	if err := c.BodyParser(&req); err != nil {
