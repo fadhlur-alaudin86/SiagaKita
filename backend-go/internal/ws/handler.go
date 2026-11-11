@@ -63,6 +63,14 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// wsPingInterval is the per-connection WebSocket ping (keepalive) interval.
+// It is a package-level var so tests can shorten it.
+var wsPingInterval = 30 * time.Second
+
+// wsReadDeadline is the per-connection read deadline refreshed on activity and
+// pongs. It is a package-level var so tests can shorten it.
+var wsReadDeadline = 90 * time.Second
+
 // Handler is the WebSocket handler that processes real-time SOS events.
 type Handler struct {
 	hub     *hub.Hub
@@ -141,11 +149,32 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 // readLoop blocks and reads incoming messages from the client connection.
 func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
-	_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
 	conn.SetPongHandler(func(string) error {
-		_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+		_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
 		return nil
 	})
+
+	// Per-connection ping ticker: keep idle connections alive by sending ping
+	// control frames. The client's pong (existing pong handler above) refreshes
+	// the read deadline, so an idle client is no longer reaped every ~90 s.
+	// The ticker stops when readLoop returns (connection closed).
+	stopPing := make(chan struct{})
+	defer close(stopPing)
+	go func() {
+		ticker := time.NewTicker(wsPingInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(5*time.Second)); err != nil {
+					return
+				}
+			case <-stopPing:
+				return
+			}
+		}
+	}()
 
 	for {
 		_, raw, err := conn.ReadMessage()
@@ -157,7 +186,7 @@ func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
 		}
 
 		// Perpanjang deadline setiap ada pesan masuk (termasuk PING heartbeat)
-		_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+		_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
 
 		var msg hub.Message
 		if err := json.Unmarshal(raw, &msg); err != nil {

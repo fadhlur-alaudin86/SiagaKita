@@ -678,6 +678,8 @@ class AppLocalization {
     'Penjaga Malam': 'Night Watch',
     'Respon Kilat': 'Rapid Response',
     'Medis Siaga': 'Guardian Healer',
+    'Terlalu banyak permintaan. Coba lagi nanti.':
+        'Too many requests. Please try again later.',
   };
 
   static Locale currentLocale = localeId;

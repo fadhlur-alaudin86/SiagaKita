@@ -57,6 +57,7 @@ var idToEn = map[string]string{
 	"Profil berhasil diperbarui":                       "Profile successfully updated",
 	"User tidak ditemukan":                             "User not found",
 	"Tunggu 1 menit sebelum meminta kode baru":         "Please wait 1 minute before requesting a new code",
+	"Terlalu banyak permintaan. Coba lagi nanti.":      "Too many requests. Please try again later.",
 	"NIK ini sudah terdaftar pada akun lain. Pastikan NIK yang Anda masukkan benar": "This NIK is already registered on another account. Ensure the NIK you entered is correct",
 	"Token refresh telah kedaluwarsa atau digunakan kembali":                        "Refresh token has expired or was reused",
 

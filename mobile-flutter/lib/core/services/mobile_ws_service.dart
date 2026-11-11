@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../constants/api_config.dart';
@@ -68,6 +69,10 @@ class MobileWsService extends ChangeNotifier {
   bool _forceLoggedOut = false;
   Timer? _reconnectTimer;
 
+  /// Consecutive connect failures; reset to 0 on a successful connection.
+  int _reconnectAttempt = 0;
+  final _random = Random();
+
   Stream<MobileWsMessage> get eventStream => _controller.stream;
   bool get isConnected => _connected;
 
@@ -75,12 +80,23 @@ class MobileWsService extends ChangeNotifier {
   bool get isForceLoggedOut => _forceLoggedOut;
 
   /// Mulai koneksi WebSocket.
+  //
+  // _doConnect is fire-and-forget: connection failures are handled by
+  // _scheduleReconnect, so the returned future is intentionally not awaited.
+  // ignore: unawaited_futures
   void connect() {
     if (_disposed || _forceLoggedOut) return;
     _doConnect();
   }
 
-  void _doConnect() {
+  /// Attempts a WebSocket handshake and only treats it as successful once
+  /// `ready` completes. `WebSocketChannel.connect` does not await the
+  /// underlying connect future, so connection failures surface as stream
+  /// errors (`addError`) rather than as a thrown exception here. Resetting the
+  /// backoff counter is therefore deferred until after a verified handshake,
+  /// which keeps the exponential backoff growing across repeated failures
+  /// instead of collapsing back to ~1 s on every attempt.
+  Future<void> _doConnect() async {
     try {
       final uri = Uri.parse(
         '${ApiConfig.wsUrl}?token=$token&lang=${AppLocalization.currentLocaleCode}',
@@ -91,7 +107,11 @@ class MobileWsService extends ChangeNotifier {
         onError: _onError,
         onDone: _onDone,
       );
+      // Verify the handshake before marking the connection successful.
+      await _channel!.ready;
       _connected = true;
+      // Verified successful connection: reset the backoff attempt counter.
+      _reconnectAttempt = 0;
       debugPrint('[MobileWS] Connected');
       _controller.add(
         const MobileWsMessage(event: MobileWsEvent.connected, payload: {}),
@@ -144,12 +164,48 @@ class MobileWsService extends ChangeNotifier {
   }
 
   void _scheduleReconnect() {
-    // Jangan reconnect jika sesi sudah di-force logout atau di-dispose
+    // Jangan reconnect jika sesi sudah di-force logout atau di-dispose.
     if (_disposed || _forceLoggedOut) return;
-    _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(const Duration(seconds: 5), () {
+    // Jangan gandakan jadwal: jika timer reconnect masih menunggu, jangan
+    // menjadwalkan lagi atau meng-increment attempt (mencegah _onError dan
+    // _onDone dari satu kegagalan yang sama dari menjadwalkan dua kali).
+    if (_reconnectTimer != null) return;
+    final delay = computeReconnectDelay(
+      attempt: _reconnectAttempt,
+      random: _random,
+    );
+    _reconnectAttempt++;
+    _reconnectTimer = Timer(delay, () {
+      _reconnectTimer = null;
+      // ignore: unawaited_futures
       if (!_disposed && !_forceLoggedOut) _doConnect();
     });
+  }
+
+  /// Exponential backoff with ±20% jitter.
+  ///
+  /// delay = min(cap, base * 2^attempt), then jittered by ±20% of the capped
+  /// value. [random] is injected so the function is pure and deterministic in
+  /// tests. Returns a non-negative duration.
+  static Duration computeReconnectDelay({
+    required int attempt,
+    Duration base = const Duration(seconds: 1),
+    Duration cap = const Duration(seconds: 60),
+    Random? random,
+  }) {
+    final r = random ?? Random();
+    var delayMs = base.inMilliseconds.toDouble();
+    for (var i = 0; i < attempt; i++) {
+      delayMs *= 2;
+    }
+    if (delayMs > cap.inMilliseconds.toDouble()) {
+      delayMs = cap.inMilliseconds.toDouble();
+    }
+    final jitter = delayMs * 0.2;
+    final offset = (r.nextDouble() * 2 - 1) * jitter; // [-jitter, +jitter]
+    var resultMs = delayMs + offset;
+    if (resultMs < 0) resultMs = 0;
+    return Duration(milliseconds: resultMs.round());
   }
 
   /// Mengirim koordinat lokasi via WebSocket (real-time).

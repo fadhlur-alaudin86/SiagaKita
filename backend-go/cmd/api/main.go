@@ -188,6 +188,12 @@ func main() {
 		utils.Info().Msg("[Docs] Swagger UI available at http://localhost:" + cfg.HTTPPort + "/docs")
 	}
 
+	// Rate limiters (per-IP fixed window) for abuse-prone routes. Each limiter
+	// tracks its own IP→window map, so auth and incident-write buckets are
+	// independent.
+	authRateLimiter := middleware.NewRateLimiter(10, time.Minute, 10_000)
+	writeRateLimiter := middleware.NewRateLimiter(30, time.Minute, 10_000)
+
 	// ── API v1 Routes ──────────────────────────────────────────────────────────
 	v1 := app.Group("/api/v1")
 	authMw := middleware.Auth(cfg)
@@ -198,15 +204,15 @@ func main() {
 	auth := v1.Group("/auth")
 
 	// Mobile Citizen/Volunteer
-	auth.Post("/register", userHandler.Register)
+	auth.Post("/register", middleware.RateLimit(authRateLimiter), userHandler.Register)
 	auth.Post("/verify-register-otp", userHandler.VerifyRegisterOTP)
-	auth.Post("/login", userHandler.Login)
+	auth.Post("/login", middleware.RateLimit(authRateLimiter), userHandler.Login)
 	auth.Post("/verify-login-otp", userHandler.VerifyLoginOTP)
 
 	// Lupa password
 	auth.Post("/forgot-password", userHandler.ForgotPassword)
 	auth.Post("/reset-password", userHandler.ResetPassword)
-	auth.Post("/resend-otp", userHandler.ResendOTP)
+	auth.Post("/resend-otp", middleware.RateLimit(authRateLimiter), userHandler.ResendOTP)
 
 	// Desktop Console (superadmin, admin, agency)
 	auth.Post("/console/login", userHandler.ConsoleLogin)
@@ -218,7 +224,7 @@ func main() {
 	auth.Post("/refresh-token", userHandler.RefreshToken)
 
 	// OTP WhatsApp (phone verification)
-	auth.Post("/request-otp", otpHandler.RequestOTP)
+	auth.Post("/request-otp", middleware.RateLimit(authRateLimiter), otpHandler.RequestOTP)
 	auth.Post("/verify-otp", otpHandler.VerifyOTP)
 
 	// FCM device token registration (all authenticated mobile roles: civilian, volunteer, agency_personnel)
@@ -254,7 +260,7 @@ func main() {
 	incidents.Get("/missions/history", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetMissionHistory)
 	incidents.Get("/reporter-history", sessionMw, incidentHandler.GetHistory)
 	incidents.Get("/nearby", sessionMw, middleware.VolunteerOnly(), incidentHandler.GetNearby)
-	incidents.Post("/trigger", sessionMw, middleware.BanCheck(db), incidentHandler.TriggerSOS)
+	incidents.Post("/trigger", sessionMw, middleware.BanCheck(db), middleware.RateLimit(writeRateLimiter), incidentHandler.TriggerSOS)
 	incidents.Patch("/:id/type", sessionMw, incidentHandler.UpdateType)
 	incidents.Post("/:id/broadcast", sessionMw, incidentHandler.Broadcast)
 	incidents.Post("/:id/canceled", sessionMw, incidentHandler.CancelSOS)
@@ -279,7 +285,7 @@ func main() {
 	// endpoint lama: incidents.Post("/:id/resolve", middleware.ConsoleOnly(), incidentHandler.Resolve) // bisa tetap ada atau diganti, kita pakai agency-resolve sekarang
 
 	reports := v1.Group("/reports", authMw)
-	reports.Post("", middleware.BanCheck(db), incidentHandler.CreateReport)
+	reports.Post("", middleware.BanCheck(db), middleware.RateLimit(writeRateLimiter), incidentHandler.CreateReport)
 	reports.Get("/my", incidentHandler.GetMyReports)
 	reports.Get("", middleware.ConsoleOnly(), incidentHandler.GetReports)
 	reports.Post("/:id/canceled", incidentHandler.CancelReport)
@@ -399,6 +405,24 @@ func newFiberConfig() fiber.Config {
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  120 * time.Second,
+		// Trusted-proxy hardening for c.IP() (used by the rate-limiter).
+		// EnableTrustedProxyCheck makes c.IP() honor X-Forwarded-For only when
+		// the direct connection comes from a listed proxy; direct clients fall
+		// back to the real remote address and cannot spoof their IP via
+		// X-Forwarded-For to evade rate limits. EnableIPValidation makes
+		// c.IP() return the first valid IP from the header rather than the raw
+		// header value. Operators behind a public cloud load balancer should
+		// replace TrustedProxies with the balancer's actual IP(s); otherwise
+		// per-IP rate limiting keys on the balancer IP.
+		EnableTrustedProxyCheck: true,
+		EnableIPValidation:      true,
+		ProxyHeader:             fiber.HeaderXForwardedFor,
+		TrustedProxies: []string{
+			"127.0.0.0/8",    // loopback (same-host reverse proxies)
+			"10.0.0.0/8",     // RFC 1918 private
+			"172.16.0.0/12",  // RFC 1918 private
+			"192.168.0.0/16", // RFC 1918 private
+		},
 	}
 }
 
