@@ -1112,7 +1112,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       if (wasCancelled) {
-        await _purgeSpooledEvidenceFiles();
+        await OfflineService.purgeSpooledEvidence();
         IncidentService.cancelSOS(
               accessToken: widget.accessToken,
               incidentId: serverId,
@@ -1130,8 +1130,11 @@ class _HomeScreenState extends State<HomeScreen>
         _uploadSpooledEvidence(serverId);
       }
     } on SOSBannedException catch (e) {
+      // SOS was dropped before delivery; pending SOS and its spooled evidence
+      // must not outlive each other.
       OfflineService.clearPendingSOS();
       OfflineService.clearPendingIncidentType();
+      await OfflineService.purgeSpooledEvidence();
       _sosUploadInFlight = false;
       if (!mounted) return;
       // SOS banned → batalkan grace period
@@ -1453,32 +1456,6 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (_) {
       /* tetap tersimpan di pending evidence untuk retry berikutnya */
     }
-  }
-
-  Future<void> _purgeSpooledEvidenceFiles() async {
-    try {
-      final pending = await OfflineService.getPendingEvidence();
-      if (pending != null) {
-        final frontPath = pending['front_path'] as String?;
-        final rearPath = pending['rear_path'] as String?;
-        final audioPath = pending['audio_path'] as String?;
-        if (frontPath != null && frontPath.isNotEmpty) {
-          final f = File(frontPath);
-          if (f.existsSync()) f.deleteSync();
-        }
-        if (rearPath != null && rearPath.isNotEmpty) {
-          final f = File(rearPath);
-          if (f.existsSync()) f.deleteSync();
-        }
-        if (audioPath != null && audioPath.isNotEmpty) {
-          final f = File(audioPath);
-          if (f.existsSync()) f.deleteSync();
-        }
-      }
-    } catch (e) {
-      debugPrint('[HomeScreen] _purgeSpooledEvidenceFiles error: $e');
-    }
-    await OfflineService.clearPendingEvidence();
   }
 
   // ─── Fast Status Polling (setiap 10 detik saat SOS aktif) ─────────────────
@@ -2028,7 +2005,7 @@ class _HomeScreenState extends State<HomeScreen>
       await OfflineService.clearPendingSOS();
       await OfflineService.clearPendingIncidentType();
       await OfflineService.clearPendingCancelSOS();
-      await _purgeSpooledEvidenceFiles();
+      await OfflineService.purgeSpooledEvidence();
       _cancelledLocalId = null;
 
       if (mounted) {
@@ -2058,7 +2035,7 @@ class _HomeScreenState extends State<HomeScreen>
     // ── KASUS 2: SOS sudah pernah masuk server dan memiliki ID server valid ──
     _userInitiatedCancel = true;
     await OfflineService.saveLastCancelledIncidentId(incidentId);
-    await _purgeSpooledEvidenceFiles();
+    await OfflineService.purgeSpooledEvidence();
 
     if (mounted) {
       setState(() {
