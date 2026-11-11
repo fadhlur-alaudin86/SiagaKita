@@ -28,6 +28,7 @@ import '../../core/services/mobile_ws_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/services/offline_service.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/services/permission_service.dart';
 import '../permissions/presentation/permission_primer_screen.dart';
 import 'report_screen.dart';
 import 'widgets/home_widgets.dart';
@@ -66,9 +67,20 @@ class _HomeScreenState extends State<HomeScreen>
   String _sosPhase = 'idle'; // 'idle' | 'gracePeriod' | 'broadcasting'
   bool _isTriggeringSOS = false;
   // Status upload SOS ke server
-  // 'idle' | 'sending' | 'sent' | 'failed'
+  // 'idle' | 'sending' | 'sent' | 'retrying' | 'failed'
   String _sosUploadStatus = 'idle';
   Timer? _sosRetryTimer;
+
+  // Guards against stacking duplicate retry timers while an upload is in flight.
+  bool _sosUploadInFlight = false;
+
+  // ─── Evidence permission pre-flight (F3) ───────────────────────────────────
+  // One-shot per SOS activation: camera/microphone checked + requested at most
+  // once, then denied types are skipped for the rest of this SOS. Reset when a
+  // new SOS starts (_triggerSOS). Never re-prompts inside retry loops.
+  bool _evidencePermissionsPreflighted = false;
+  bool _evidenceSkipCamera = false;
+  bool _evidenceSkipMicrophone = false;
 
   // ─── Grace Period State ─────────────────────────────────────────────────────
   int _graceCountdown = 10;
@@ -81,6 +93,9 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _locationUpdateTimer;
   Timer?
   _statusCheckTimer; // polling cepat adaptif (3 detik) khusus saat SOS aktif
+  Timer?
+  _adoptionRetryTimer; // bounded retry saat init-time GET /incidents/active gagal
+  int _adoptionRetryCount = 0; // percobaan retry adopsi (maks 3)
   bool _isLoadingActiveIncident = true;
   bool _userInitiatedCancel = false;
 
@@ -284,6 +299,18 @@ class _HomeScreenState extends State<HomeScreen>
       );
       if (!mounted) return;
       if (active == null) {
+        // While the SOS is unacknowledged, a null active response must not
+        // reset local state or wipe an undelivered pending SOS.
+        final pending = await OfflineService.getPendingSOS();
+        if (evaluateSosPollDecision(
+              uploadStatus: _sosUploadStatus,
+              pendingSos: pending,
+              userCancelled: false,
+            ) ==
+            SosPollDecision.retry) {
+          return;
+        }
+
         _stopVibration();
         _stopLocationUpdates();
         setState(() {
@@ -293,7 +320,10 @@ class _HomeScreenState extends State<HomeScreen>
           _tapCount = 0;
         });
       } else {
-        setState(() => _activeIncident = active);
+        setState(() {
+          _activeIncident = active;
+          _sosUploadStatus = 'sent';
+        });
         if (active.isBeingHandled) {
           _stopVibration();
         }
@@ -394,6 +424,7 @@ class _HomeScreenState extends State<HomeScreen>
     _graceTimer?.cancel();
     _sosRetryTimer?.cancel();
     _countdownTimer?.cancel();
+    _adoptionRetryTimer?.cancel();
     _vibrationTimer?.cancel();
     _sosCooldownTimer?.cancel();
     _wsSub?.cancel();
@@ -524,6 +555,7 @@ class _HomeScreenState extends State<HomeScreen>
         if (active != null &&
             (active.incidentId == pendingCancel ||
                 active.incidentId == lastCancelled)) {
+          _resetAdoptionRetry();
           setState(() {
             _activeIncident = null;
             _isLoadingActiveIncident = false;
@@ -542,7 +574,12 @@ class _HomeScreenState extends State<HomeScreen>
             _pendingIncidentId = null;
             _sosPhase = 'idle'; // Nanti ditimpa kalau server bilang dia aktif
           }
+          if (active != null) {
+            _sosUploadStatus =
+                'sent'; // server-confirmed active incident is delivered
+          }
         });
+        _resetAdoptionRetry();
         if (active != null) {
           _startLocationUpdates();
           _startStatusPolling();
@@ -551,7 +588,27 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } catch (_) {
       if (mounted) setState(() => _isLoadingActiveIncident = false);
+      _scheduleAdoptionRetry();
     }
+  }
+
+  /// Bounded retry adopsi setelah init-time GET /incidents/active gagal
+  /// (misal TimeoutException saat boot). Maks 3 percobaan, jeda ~5 detik.
+  void _scheduleAdoptionRetry() {
+    if (!mounted) return;
+    if (_adoptionRetryCount >= 3) return;
+    _adoptionRetryTimer?.cancel();
+    _adoptionRetryCount++;
+    _adoptionRetryTimer = Timer(const Duration(seconds: 5), () async {
+      if (!mounted) return;
+      if (_adoptionRetryCount >= 3) return;
+      await _checkActiveIncident();
+    });
+  }
+
+  void _resetAdoptionRetry() {
+    _adoptionRetryTimer?.cancel();
+    _adoptionRetryCount = 0;
   }
 
   // ─── GPS Location Update (setiap 10 detik) ───────────────────────────────────
@@ -859,6 +916,12 @@ class _HomeScreenState extends State<HomeScreen>
       _sosPhase = 'gracePeriod';
       _graceCountdown = 10;
       _sosUploadStatus = 'sending';
+      // F3: reset pre-flight guard so the new SOS runs its own one-shot check.
+      _evidencePermissionsPreflighted = false;
+      // F4A: reset per-SOS cancel flags so a NEW SOS is not wiped by the first
+      // successful status poll of a previous (cancelled) SOS session.
+      _userInitiatedCancel = false;
+      _cancelledLocalId = null;
     });
     _startGracePeriodCountdown();
 
@@ -877,6 +940,13 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     // Ambil posisi GPS di background
+    //
+    // F4: Google Location Accuracy dialog is purely platform behavior. This is
+    // a single one-shot request (awaited once, no retry loop re-requests
+    // location). If the dialog/disable triggers, LocationService throws and the
+    // catch blocks below cancel gracefully with a snackbar instead of blocking
+    // or looping the SOS flow. See infrastructure/README.md for the emulator
+    // prerequisite (enable Google Location Accuracy before E2E).
     double lat = 0.0;
     double lng = 0.0;
     String? address;
@@ -980,7 +1050,9 @@ class _HomeScreenState extends State<HomeScreen>
     required String triggeredBy,
     required String localId,
   }) {
+    if (_sosUploadInFlight) return;
     _sosRetryTimer?.cancel();
+    _sosUploadInFlight = true;
     _performSOSUpload(
       lat: lat,
       lng: lng,
@@ -998,12 +1070,19 @@ class _HomeScreenState extends State<HomeScreen>
     required String localId,
   }) async {
     // Hentikan jika sudah tidak relevan (dibatalkan user / sudah ada server ID)
-    if (!mounted) return;
-    if (_sosPhase == 'idle') return;
+    if (!mounted) {
+      _sosUploadInFlight = false;
+      return;
+    }
+    if (_sosPhase == 'idle') {
+      _sosUploadInFlight = false;
+      return;
+    }
     // Cek apakah masih relevan: pendingId harus match ATAU activeIncident sudah punya server ID
     if (_pendingIncidentId != null &&
         _pendingIncidentId != localId &&
         _activeIncident?.incidentId != localId) {
+      _sosUploadInFlight = false;
       return;
     }
 
@@ -1059,6 +1138,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       // Bersihkan pending SOS karena berhasil masuk ke server
       await OfflineService.clearPendingSOS();
+      _sosUploadInFlight = false;
       if (pendingType != null && serverStatus == 'broadcasting') {
         await OfflineService.clearPendingIncidentType();
       }
@@ -1087,7 +1167,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       if (wasCancelled) {
-        await _purgeSpooledEvidenceFiles();
+        await OfflineService.purgeSpooledEvidence();
         IncidentService.cancelSOS(
               accessToken: widget.accessToken,
               incidentId: serverId,
@@ -1105,13 +1185,20 @@ class _HomeScreenState extends State<HomeScreen>
         _uploadSpooledEvidence(serverId);
       }
     } on SOSBannedException catch (e) {
+      // SOS was dropped before delivery; pending SOS and its spooled evidence
+      // must not outlive each other.
       OfflineService.clearPendingSOS();
       OfflineService.clearPendingIncidentType();
+      await OfflineService.purgeSpooledEvidence();
+      _sosUploadInFlight = false;
       if (!mounted) return;
       // SOS banned → batalkan grace period
       _cancelGracePeriodLocally();
       _showSOSBannedDialog(e.toString());
     } catch (_) {
+      // Jika gagal, reset penangga agar percobaan berikutnya via
+      // _attemptSOSUpload (poller retry) tidak menjadi no-op permanen.
+      _sosUploadInFlight = false;
       if (!mounted) return;
       setState(() => _sosUploadStatus = 'sending');
       // Retry setiap 5 detik selama phase masih aktif
@@ -1269,63 +1356,73 @@ class _HomeScreenState extends State<HomeScreen>
     File? rearPhotoFile;
     File? audioFile;
 
-    // 1. Ambil foto dari kamera depan
-    try {
-      final cameras = await availableCameras();
-      final frontCamera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.front,
-        orElse: () => cameras.first,
-      );
-      final controller = CameraController(
-        frontCamera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-      );
-      await controller.initialize();
-      final xFile = await controller.takePicture();
-      await controller.dispose();
-      frontPhotoFile = File(xFile.path);
-    } catch (_) {
-      // Kamera depan tidak tersedia atau ditolak
-    }
+    // F3: one-shot permission pre-flight — checks camera + microphone once,
+    // requests at most once, skips denied types, never re-prompts in retries.
+    await _runEvidencePermissionPreflight();
 
-    // 2. Ambil foto dari kamera belakang
-    try {
-      final cameras = await availableCameras();
-      final rearCamera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-      final controller = CameraController(
-        rearCamera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-      );
-      await controller.initialize();
-      final xFile = await controller.takePicture();
-      await controller.dispose();
-      rearPhotoFile = File(xFile.path);
-    } catch (_) {
-      // Kamera belakang tidak tersedia atau ditolak
-    }
-
-    // 3. Rekam audio 5 detik
-    try {
-      final dir = await getTemporaryDirectory();
-      final audioPath =
-          '${dir.path}/sos_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      final recorder = AudioRecorder();
-      if (await recorder.hasPermission()) {
-        await recorder.start(
-          const RecordConfig(encoder: AudioEncoder.aacLc),
-          path: audioPath,
+    // 1. Ambil foto dari kamera depan (dilewati jika izin kamera ditolak)
+    if (!_evidenceSkipCamera) {
+      try {
+        final cameras = await availableCameras();
+        final frontCamera = cameras.firstWhere(
+          (c) => c.lensDirection == CameraLensDirection.front,
+          orElse: () => cameras.first,
         );
-        await Future.delayed(const Duration(seconds: 5));
-        await recorder.stop();
-        audioFile = File(audioPath);
+        final controller = CameraController(
+          frontCamera,
+          ResolutionPreset.medium,
+          enableAudio: false,
+        );
+        await controller.initialize();
+        final xFile = await controller.takePicture();
+        await controller.dispose();
+        frontPhotoFile = File(xFile.path);
+      } catch (_) {
+        // Kamera depan tidak tersedia atau ditolak
       }
-    } catch (_) {
-      // Mikrofon tidak tersedia atau ditolak
+    }
+
+    // 2. Ambil foto dari kamera belakang (dilewati jika izin kamera ditolak)
+    if (!_evidenceSkipCamera) {
+      try {
+        final cameras = await availableCameras();
+        final rearCamera = cameras.firstWhere(
+          (c) => c.lensDirection == CameraLensDirection.back,
+          orElse: () => cameras.first,
+        );
+        final controller = CameraController(
+          rearCamera,
+          ResolutionPreset.medium,
+          enableAudio: false,
+        );
+        await controller.initialize();
+        final xFile = await controller.takePicture();
+        await controller.dispose();
+        rearPhotoFile = File(xFile.path);
+      } catch (_) {
+        // Kamera belakang tidak tersedia atau ditolak
+      }
+    }
+
+    // 3. Rekam audio 5 detik (dilewati jika izin mikrofon ditolak)
+    if (!_evidenceSkipMicrophone) {
+      try {
+        final dir = await getTemporaryDirectory();
+        final audioPath =
+            '${dir.path}/sos_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final recorder = AudioRecorder();
+        if (await recorder.hasPermission()) {
+          await recorder.start(
+            const RecordConfig(encoder: AudioEncoder.aacLc),
+            path: audioPath,
+          );
+          await Future.delayed(const Duration(seconds: 5));
+          await recorder.stop();
+          audioFile = File(audioPath);
+        }
+      } catch (_) {
+        // Mikrofon tidak tersedia atau ditolak
+      }
     }
 
     // 4. Periksa apakah insiden sudah diakui oleh server dan koneksi aktif
@@ -1360,6 +1457,45 @@ class _HomeScreenState extends State<HomeScreen>
         frontPath: frontPhotoFile?.path ?? '',
         rearPath: rearPhotoFile?.path ?? '',
         audioPath: audioFile?.path ?? '',
+      );
+    }
+  }
+
+  // ─── Evidence permission pre-flight (F3) ───────────────────────────────────
+
+  /// F3: one-shot permission pre-flight for evidence capture, run once per SOS
+  /// activation. Checks camera + microphone status via PermissionService,
+  /// requests at most once, then records which evidence types to skip. Shows at
+  /// most one localized info message. Never re-prompts inside retry loops.
+  Future<void> _runEvidencePermissionPreflight() async {
+    if (_evidencePermissionsPreflighted) return;
+    _evidencePermissionsPreflighted = true;
+
+    bool cameraAllowed = await PermissionService.hasCameraPermission();
+    if (!cameraAllowed) {
+      cameraAllowed = (await Permission.camera.request()).isGranted;
+    }
+    bool micAllowed = await PermissionService.hasMicrophonePermission();
+    if (!micAllowed) {
+      micAllowed = (await Permission.microphone.request()).isGranted;
+    }
+
+    final decision = evaluateEvidencePreflight(
+      cameraAllowed: cameraAllowed,
+      microphoneAllowed: micAllowed,
+    );
+    _evidenceSkipCamera = decision.skipCamera;
+    _evidenceSkipMicrophone = decision.skipMicrophone;
+
+    if (decision.showInfoMessage && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Izin kamera/mikrofon ditolak - bukti dilewati'.tr(context),
+          ),
+          backgroundColor: Colors.orange.shade700,
+          duration: const Duration(seconds: 4),
+        ),
       );
     }
   }
@@ -1426,32 +1562,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  Future<void> _purgeSpooledEvidenceFiles() async {
-    try {
-      final pending = await OfflineService.getPendingEvidence();
-      if (pending != null) {
-        final frontPath = pending['front_path'] as String?;
-        final rearPath = pending['rear_path'] as String?;
-        final audioPath = pending['audio_path'] as String?;
-        if (frontPath != null && frontPath.isNotEmpty) {
-          final f = File(frontPath);
-          if (f.existsSync()) f.deleteSync();
-        }
-        if (rearPath != null && rearPath.isNotEmpty) {
-          final f = File(rearPath);
-          if (f.existsSync()) f.deleteSync();
-        }
-        if (audioPath != null && audioPath.isNotEmpty) {
-          final f = File(audioPath);
-          if (f.existsSync()) f.deleteSync();
-        }
-      }
-    } catch (e) {
-      debugPrint('[HomeScreen] _purgeSpooledEvidenceFiles error: $e');
-    }
-    await OfflineService.clearPendingEvidence();
-  }
-
   // ─── Fast Status Polling (setiap 10 detik saat SOS aktif) ─────────────────
 
   void _startStatusPolling() {
@@ -1464,14 +1574,58 @@ class _HomeScreenState extends State<HomeScreen>
         );
         if (!mounted) return;
         if (active == null) {
-          _stopVibration();
-          _stopLocationUpdates();
           final currentIncidentId = _activeIncident?.incidentId;
           final lastCancelled = OfflineService.getLastCancelledIncidentId();
           final isUserCancelled =
               _userInitiatedCancel ||
               (currentIncidentId != null && currentIncidentId == lastCancelled);
 
+          final pending = await OfflineService.getPendingSOS();
+          final decision = evaluateSosPollDecision(
+            uploadStatus: _sosUploadStatus,
+            pendingSos: pending,
+            userCancelled: isUserCancelled,
+          );
+
+          if (decision == SosPollDecision.retry) {
+            // Undelivered pending SOS: keep SOS alive, schedule exactly one
+            // retry (the timer field is cancelled first in _attemptSOSUpload,
+            // so duplicate timers cannot stack), and surface the state.
+            if (!mounted) return;
+            setState(() => _sosUploadStatus = 'retrying');
+            if (pending != null) {
+              _attemptSOSUpload(
+                lat: pending['latitude'] as double,
+                lng: pending['longitude'] as double,
+                addressDetail: pending['address_detail'] as String?,
+                triggeredBy: 'user',
+                localId: pending['local_id'] as String,
+              );
+            }
+            return;
+          }
+
+          // Re-verify with a fresh snapshot before wiping: a concurrent POST
+          // may have committed the incident after this poll's GET returned null.
+          if (!isUserCancelled) {
+            if (!mounted) return;
+            final recheck = await IncidentService.getActive(
+              accessToken: widget.accessToken,
+            );
+            if (!mounted) return;
+            if (recheck != null) {
+              setState(() {
+                _activeIncident = recheck;
+                _sosUploadStatus = 'sent';
+              });
+              _startLocationUpdates();
+              if (!recheck.isBeingHandled) _startVibration();
+              return;
+            }
+          }
+
+          _stopVibration();
+          _stopLocationUpdates();
           _userInitiatedCancel = false;
           if (currentIncidentId != null && currentIncidentId == lastCancelled) {
             OfflineService.clearLastCancelledIncidentId();
@@ -1489,6 +1643,10 @@ class _HomeScreenState extends State<HomeScreen>
             _pendingIncidentId = null;
             _isTriggeringSOS = false;
           });
+          // Clear any Hive-persisted pending_sos / spooled evidence left behind by
+          // a discarded SOS so a later app start cannot resurrect it as "retrying".
+          await OfflineService.clearPendingSOS();
+          await OfflineService.purgeSpooledEvidence();
           _startCooldown();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1720,6 +1878,10 @@ class _HomeScreenState extends State<HomeScreen>
       case 'sent':
         color = Colors.green;
         label = 'Sent'.tr(context);
+        break;
+      case 'retrying':
+        color = Colors.orange;
+        label = 'Belum terkirim - mencoba ulang'.tr(context);
         break;
       case 'failed':
         color = Colors.red;
@@ -1970,7 +2132,7 @@ class _HomeScreenState extends State<HomeScreen>
       await OfflineService.clearPendingSOS();
       await OfflineService.clearPendingIncidentType();
       await OfflineService.clearPendingCancelSOS();
-      await _purgeSpooledEvidenceFiles();
+      await OfflineService.purgeSpooledEvidence();
       _cancelledLocalId = null;
 
       if (mounted) {
@@ -2000,7 +2162,7 @@ class _HomeScreenState extends State<HomeScreen>
     // ── KASUS 2: SOS sudah pernah masuk server dan memiliki ID server valid ──
     _userInitiatedCancel = true;
     await OfflineService.saveLastCancelledIncidentId(incidentId);
-    await _purgeSpooledEvidenceFiles();
+    await OfflineService.purgeSpooledEvidence();
 
     if (mounted) {
       setState(() {
@@ -2091,4 +2253,64 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+}
+
+/// Decision the status poller makes when GET /incidents/active returns null.
+enum SosPollDecision { resolve, retry }
+
+/// Returns whether the poller should [resolve] (wipe) the SOS or [retry]
+/// (keep an undelivered pending SOS alive and re-attempt upload).
+///
+/// Resolves only when the upload was acknowledged (status `'sent'` and no
+/// pending record remains) or the user initiated the cancel. Any other case
+/// — a pending SOS record exists or the upload status is not `'sent'` —
+/// retries so an undelivered SOS is never discarded.
+SosPollDecision evaluateSosPollDecision({
+  required String uploadStatus,
+  required Map<String, dynamic>? pendingSos,
+  required bool userCancelled,
+}) {
+  final acknowledged = uploadStatus == 'sent' && pendingSos == null;
+  if (userCancelled || acknowledged) {
+    return SosPollDecision.resolve;
+  }
+  return SosPollDecision.retry;
+}
+
+/// Result of the one-shot evidence permission pre-flight (F3).
+///
+/// All fields are pure: no OS calls are made here, so the decision is safe to
+/// assert in unit tests.
+class EvidencePreflightResult {
+  /// Skip capturing the front/rear camera photo.
+  final bool skipCamera;
+
+  /// Skip recording the 5 s audio clip.
+  final bool skipMicrophone;
+
+  /// Show a single localized info message explaining the skip.
+  final bool showInfoMessage;
+
+  const EvidencePreflightResult({
+    required this.skipCamera,
+    required this.skipMicrophone,
+    required this.showInfoMessage,
+  });
+}
+
+/// Pure decision for evidence pre-flight: given whether camera and microphone
+/// permissions are granted, returns which evidence types to skip and whether a
+/// single info message should be shown. Denied or permanently denied types are
+/// skipped for the rest of this SOS; at most one info message is shown.
+EvidencePreflightResult evaluateEvidencePreflight({
+  required bool cameraAllowed,
+  required bool microphoneAllowed,
+}) {
+  final skipCamera = !cameraAllowed;
+  final skipMicrophone = !microphoneAllowed;
+  return EvidencePreflightResult(
+    skipCamera: skipCamera,
+    skipMicrophone: skipMicrophone,
+    showInfoMessage: skipCamera || skipMicrophone,
+  );
 }

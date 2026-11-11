@@ -108,7 +108,10 @@ func (h *Handler) RejectKYC(c *fiber.Ctx) error {
 
 // POST /api/v1/admin/admins  [SuperAdminOnly]
 func (h *Handler) CreateAdmin(c *fiber.Ctx) error {
-	callerID := c.Locals("userID").(string)
+	callerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	var req CreateAdminRequest
 	if err := c.BodyParser(&req); err != nil {

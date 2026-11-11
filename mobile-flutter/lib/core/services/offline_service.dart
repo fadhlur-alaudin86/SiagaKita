@@ -106,4 +106,12 @@ class OfflineService {
   static Future<void> clearPendingEvidence() async {
     await LocalStorageService.clearPendingEvidence();
   }
+
+  // ─── Pending Evidence Purge ──────────────────────────────────────────
+  /// Delete spooled evidence files + the `pending_evidence` entry. Call only
+  /// when a pending SOS is being discarded without delivery (never while a
+  /// pending SOS still exists, and never after evidence already uploaded).
+  static Future<void> purgeSpooledEvidence() async {
+    await LocalStorageService.purgeSpooledEvidence();
+  }
 }

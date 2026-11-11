@@ -16,7 +16,10 @@ func NewHandler(svc *Service) *Handler {
 
 // POST /api/v1/agencies/personnels  [AgencyOnly]
 func (h *Handler) CreatePersonnel(c *fiber.Ctx) error {
-	callerID := c.Locals("userID").(string)
+	callerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	var req CreatePersonnelRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -34,7 +37,10 @@ func (h *Handler) CreatePersonnel(c *fiber.Ctx) error {
 
 // GET /api/v1/agencies/me  [AgencyOnly]
 func (h *Handler) GetMyProfile(c *fiber.Ctx) error {
-	callerID := c.Locals("userID").(string)
+	callerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	profile, err := h.svc.GetMyProfile(callerID)
 	if err != nil {

@@ -1,3 +1,7 @@
+// Purpose: Citizen-side active-SOS UI widgets: a tap-to-confirm SOS button and an active-emergency banner showing the live incident countdown and transmission state.
+// Data & Logic Flow: The parent supplies isSOSActive, tap count/threshold, callbacks, and incident/position state; SOSActionButton counts taps and invokes onTap once the required threshold is met, while ActiveSOSBanner renders the active incident banner (countdown, transmitting/signal-lost, volunteer position, upload status) via localization and responsive helpers.
+// Key Components: SOSActionButton, ActiveSOSBanner.
+
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/services/incident_service.dart';
@@ -355,17 +359,18 @@ class ActiveSOSBanner extends StatelessWidget {
                 Icon(
                   Icons.stream,
                   size: 12.cw(context, min: 10, max: 12),
-                  color: uploadStatus == 'sending'
+                  color: uploadStatus == 'sending' || uploadStatus == 'retrying'
                       ? Colors.orangeAccent
                       : Colors.greenAccent,
                 ),
                 SizedBox(width: 4.w(context)),
                 Text(
-                  uploadStatus == 'sending'
+                  uploadStatus == 'sending' || uploadStatus == 'retrying'
                       ? 'Mengirim ulang...'.tr(context)
                       : 'Streaming Real-time'.tr(context),
                   style: TextStyle(
-                    color: uploadStatus == 'sending'
+                    color:
+                        uploadStatus == 'sending' || uploadStatus == 'retrying'
                         ? Colors.orangeAccent
                         : Colors.greenAccent,
                     fontSize: 10.csp(context, min: 9, max: 11),

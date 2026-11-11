@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"siagakita-backend/internal/config"
@@ -61,6 +62,31 @@ var upgrader = websocket.Upgrader{
 		}
 		return false
 	},
+}
+
+// wsPingIntervalNs is the per-connection WebSocket ping (keepalive) interval,
+// stored in nanoseconds for atomic access. It is a package-level var so tests
+// can shorten it without racing readLoop's concurrent readers.
+var wsPingIntervalNs atomic.Int64
+
+// wsReadDeadlineNs is the per-connection read deadline refreshed on activity and
+// pongs, stored in nanoseconds for atomic access. It is a package-level var so
+// tests can shorten it without racing readLoop's concurrent readers.
+var wsReadDeadlineNs atomic.Int64
+
+func init() {
+	wsPingIntervalNs.Store(int64(30 * time.Second))
+	wsReadDeadlineNs.Store(int64(90 * time.Second))
+}
+
+// wsPingInterval returns the current keepalive ping interval.
+func wsPingInterval() time.Duration {
+	return time.Duration(wsPingIntervalNs.Load())
+}
+
+// wsReadDeadline returns the current per-connection read deadline.
+func wsReadDeadline() time.Duration {
+	return time.Duration(wsReadDeadlineNs.Load())
 }
 
 // Handler is the WebSocket handler that processes real-time SOS events.
@@ -141,11 +167,32 @@ func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 // readLoop blocks and reads incoming messages from the client connection.
 func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
-	_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline()))
 	conn.SetPongHandler(func(string) error {
-		_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+		_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline()))
 		return nil
 	})
+
+	// Per-connection ping ticker: keep idle connections alive by sending ping
+	// control frames. The client's pong (existing pong handler above) refreshes
+	// the read deadline, so an idle client is no longer reaped every ~90 s.
+	// The ticker stops when readLoop returns (connection closed).
+	stopPing := make(chan struct{})
+	defer close(stopPing)
+	go func() {
+		ticker := time.NewTicker(wsPingInterval())
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(5*time.Second)); err != nil {
+					return
+				}
+			case <-stopPing:
+				return
+			}
+		}
+	}()
 
 	for {
 		_, raw, err := conn.ReadMessage()
@@ -157,7 +204,7 @@ func (h *Handler) readLoop(userID string, conn *websocket.Conn) {
 		}
 
 		// Perpanjang deadline setiap ada pesan masuk (termasuk PING heartbeat)
-		_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+		_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline()))
 
 		var msg hub.Message
 		if err := json.Unmarshal(raw, &msg); err != nil {

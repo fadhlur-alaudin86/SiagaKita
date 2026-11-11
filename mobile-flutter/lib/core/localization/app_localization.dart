@@ -33,6 +33,8 @@ class AppLocalization {
         'SiagaKita needs location access so that help can be immediately directed to you accurately during an emergency.',
     'Mohon aktifkan izin lokasi secara manual melalui pengaturan aplikasi.':
         'Please enable location permission manually through app settings.',
+    'Izin kamera/mikrofon ditolak - bukti dilewati':
+        'Camera/microphone permission denied - evidence skipped',
     'TAMPILAN & AKSESIBILITAS': 'DISPLAY & ACCESSIBILITY',
     'Bahasa': 'Language',
     'AKUN & KEAMANAN': 'ACCOUNT & SECURITY',
@@ -543,6 +545,7 @@ class AppLocalization {
         'SOS call canceled (Waiting for connection)...',
     'Status SOS telah diselesaikan oleh instansi.':
         'SOS status has been resolved by the agency.',
+    'Belum terkirim - mencoba ulang': 'Not delivered - retrying',
     'Ambil Foto KTP': 'Take ID Card Photo',
     'Ambil Foto Profil (Selfie)': 'Take Profile Photo (Selfie)',
     'Sesuai KTP': 'As per ID Card',

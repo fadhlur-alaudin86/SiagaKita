@@ -41,14 +41,14 @@ OS-specific install hints are printed by the script (apt/brew/winget).
 ## Part B — OpenCode path
 
 1. Install the OpenCode CLI (see https://opencode.ai/docs). Antigravity-only contributors may skip this.
-2. Session start (mandatory, from `AGENTS.md`): read `GEMINI.md`, `.agent/rules/localization.md`, `.agent/skills/README.md` + `stacks.md`, then the active skill `SKILL.md`. Recall domain-relevant memories before planning.
+2. Session start (mandatory, from `AGENTS.md`): read `AGENTS.md` (canonical governance), `.agent/rules/localization.md`, `.agent/skills/README.md` + `stacks.md`, then the active skill `SKILL.md`. Recall domain-relevant memories before planning.
 3. Skills resolve from `./.agent/skills` via `opencode.jsonc` (single source, no `.opencode/` duplication). Load with the `skill` tool or `@<skill-id>` mention.
 4. Interactive interviews use the native `question` tool in frontier rounds.
 5. Session end: persist gotchas and decisions via memory plus Markdown mirror, then notify the user.
 
 ## Part C — Antigravity path
 
-1. Open the repo folder; governance root is `GEMINI.md` (canonical).
+1. Open the repo folder; governance root is `AGENTS.md` (canonical; `GEMINI.md` is a redirect stub).
 2. Skill catalog is `.agent/skills/README.md`; stack config is `.agent/skills/stacks.md`. Read both before acting, then the active `<skill>/SKILL.md`.
 3. Trigger keywords per skill are listed in each `SKILL.md` and the catalog table.
 4. Interactive pairing uses the `ask_question` tool; dual-tool tables in each skill map Antigravity names to OpenCode equivalents.

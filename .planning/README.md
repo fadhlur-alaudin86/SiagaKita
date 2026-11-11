@@ -55,7 +55,7 @@ Before declaring a phase complete and deploying to production:
    - All REST API endpoints follow the unified envelope: `{ "code": 200, "message": "...", "data": ... }`.
    - Error responses include standardized machine-readable error codes (e.g. `ERR_TOKEN_EXPIRED`, `ERR_INVALID_XP_RANGE`).
 2. **Localization Governance**:
-   - 100% adherence to `.agent/rules/localization.md` and `GEMINI.md`.
+   - 100% adherence to `.agent/rules/localization.md` and `AGENTS.md`.
    - Zero hardcoded client strings; full dictionary parity (`id` and `en`) in `app_localization.dart` across all Flutter clients.
    - All unused/orphaned keys pruned.
 3. **Automated Quality Verification**:

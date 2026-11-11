@@ -68,7 +68,10 @@ func NewHandler(svc *Service, cfg *config.Config, h *hub.Hub, rdb *redis.Client)
 
 // POST /api/v1/incidents/trigger
 func (h *Handler) TriggerSOS(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	var req TriggerSOSRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -92,7 +95,10 @@ func (h *Handler) TriggerSOS(c *fiber.Ctx) error {
 
 // PATCH /api/v1/incidents/:id/type - pilih tipe di grace period
 func (h *Handler) UpdateType(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	var req UpdateTypeRequest
@@ -116,7 +122,10 @@ func (h *Handler) UpdateType(c *fiber.Ctx) error {
 
 // POST /api/v1/incidents/:id/broadcast - grace period timeout, tipe tetap 'unknown'
 func (h *Handler) Broadcast(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	if err := h.svc.PromoteToBroadcasting(incidentID, reporterID); err != nil {
@@ -135,7 +144,10 @@ func (h *Handler) Broadcast(c *fiber.Ctx) error {
 
 // POST /api/v1/incidents/:id/canceled
 func (h *Handler) CancelSOS(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	if err := h.svc.CancelSOS(incidentID, reporterID); err != nil {
@@ -162,7 +174,10 @@ func (h *Handler) CancelSOS(c *fiber.Ctx) error {
 // Menerima foto kamera depan (1 file) dan audio (1 file, max 5 detik) sebagai bukti situasi SOS.
 // Dipanggil secara background SETELAH insiden masuk fase broadcasting.
 func (h *Handler) UploadEvidence(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	// 1. Verifikasi eksistensi dan otorisasi insiden TERLEBIH DAHULU sebelum menyentuh file system
@@ -276,7 +291,10 @@ func (h *Handler) UpdateLocation(c *fiber.Ctx) error {
 
 // GET /api/v1/incidents/active
 func (h *Handler) GetActive(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	resp, err := h.svc.GetActive(reporterID)
 	if err != nil {
@@ -288,7 +306,10 @@ func (h *Handler) GetActive(c *fiber.Ctx) error {
 
 // GET /api/v1/incidents/my-history
 func (h *Handler) GetHistory(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	resp, err := h.svc.GetHistory(reporterID)
 	if err != nil {
@@ -309,7 +330,10 @@ func (h *Handler) GetAllActive(c *fiber.Ctx) error {
 
 // POST /api/v1/incidents/:id/mark-false-alarm
 func (h *Handler) MarkFalseAlarm(c *fiber.Ctx) error {
-	adminID := c.Locals("userID").(string)
+	adminID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	var req MarkFalseAlarmRequest
@@ -343,7 +367,10 @@ func (h *Handler) MarkFalseAlarm(c *fiber.Ctx) error {
 
 // POST /api/v1/incidents/:id/resolve
 func (h *Handler) Resolve(c *fiber.Ctx) error {
-	responderID := c.Locals("userID").(string)
+	responderID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	resp, err := h.svc.Resolve(incidentID, responderID)
@@ -421,7 +448,10 @@ func processReportAudio(audioFiles []*multipart.FileHeader, uploadDir, baseURL, 
 
 // POST /api/v1/reports - Jalur B laporan warga (multipart/form-data)
 func (h *Handler) CreateReport(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	req, errMsg := parseReportRequest(c)
 	if errMsg != "" {
@@ -448,7 +478,10 @@ func (h *Handler) CreateReport(c *fiber.Ctx) error {
 
 // POST /api/v1/reports/:id/canceled - membatalkan laporan warga
 func (h *Handler) CancelReport(c *fiber.Ctx) error {
-	reporterID := c.Locals("userID").(string)
+	reporterID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	reportID := c.Params("id")
 
 	if err := h.svc.CancelReport(reportID, reporterID); err != nil {
@@ -468,7 +501,10 @@ func (h *Handler) CancelReport(c *fiber.Ctx) error {
 
 // GET /api/v1/reports/my - riwayat laporan milik user yang sedang login
 func (h *Handler) GetMyReports(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	reports, err := h.svc.GetReportsByUser(userID)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
@@ -593,7 +629,10 @@ func (h *Handler) notifyReporter(incidentID, event string, payload map[string]in
 // GET /api/v1/incidents/nearby?lat=&lng=&radius=5
 // Hanya untuk volunteer - mengembalikan SOS aktif dalam radius tertentu.
 func (h *Handler) GetNearby(c *fiber.Ctx) error {
-	volunteerID := c.Locals("userID").(string)
+	volunteerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	latStr := c.Query("lat")
 	lngStr := c.Query("lng")
 	radiusStr := c.Query("radius", "5")
@@ -625,7 +664,10 @@ func (h *Handler) GetNearby(c *fiber.Ctx) error {
 // POST /api/v1/incidents/:id/accept
 // Relawan menerima SOS dan siap menuju lokasi.
 func (h *Handler) AcceptSOS(c *fiber.Ctx) error {
-	volunteerID := c.Locals("userID").(string)
+	volunteerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	if incidentID == "" {
@@ -701,7 +743,10 @@ func parseFloat(s string) float64 {
 
 // POST /api/v1/incidents/:id/agency-handle [ConsoleOnly]
 func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
-	agencyID := c.Locals("userID").(string)
+	agencyID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	if err := h.svc.AgencyHandleSOS(incidentID, agencyID); err != nil {
@@ -740,7 +785,10 @@ func (h *Handler) AgencyHandleSOS(c *fiber.Ctx) error {
 
 // POST /api/v1/incidents/:id/volunteer-complete [VolunteerOnly] (Multipart)
 func (h *Handler) VolunteerCompleteSOS(c *fiber.Ctx) error {
-	volunteerID := c.Locals("userID").(string)
+	volunteerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	form, err := c.MultipartForm()
@@ -874,7 +922,10 @@ func (h *Handler) AgencyResolveSOS(c *fiber.Ctx) error {
 // GET /api/v1/incidents/my-history [VolunteerOnly]
 // GET /api/v1/incidents/missions/history [VolunteerOnly]
 func (h *Handler) GetMissionHistory(c *fiber.Ctx) error {
-	volunteerID := c.Locals("userID").(string)
+	volunteerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	page := c.QueryInt("page", 1)
 	limit := c.QueryInt("limit", 20)
 
@@ -888,7 +939,10 @@ func (h *Handler) GetMissionHistory(c *fiber.Ctx) error {
 
 // GET /api/v1/volunteer/badges [VolunteerOnly]
 func (h *Handler) GetVolunteerBadges(c *fiber.Ctx) error {
-	volunteerID := c.Locals("userID").(string)
+	volunteerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	badges, err := h.svc.GetVolunteerBadges(volunteerID)
 	if err != nil {
@@ -900,7 +954,10 @@ func (h *Handler) GetVolunteerBadges(c *fiber.Ctx) error {
 
 // GET /api/v1/incidents/my-active-response [VolunteerOnly]
 func (h *Handler) GetMyActiveResponse(c *fiber.Ctx) error {
-	volunteerID := c.Locals("userID").(string)
+	volunteerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	resp, err := h.svc.GetActiveResponse(volunteerID)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat misi aktif")
@@ -910,7 +967,10 @@ func (h *Handler) GetMyActiveResponse(c *fiber.Ctx) error {
 
 // PUT /api/v1/incidents/:id/response-location [VolunteerOnly]
 func (h *Handler) UpdateResponseLocation(c *fiber.Ctx) error {
-	volunteerID := c.Locals("userID").(string)
+	volunteerID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	var req UpdateResponseLocationRequest
@@ -1065,7 +1125,10 @@ func (h *Handler) DispatchBroadcast(c *fiber.Ctx) error {
 
 // POST /api/v1/incidents/:id/personnel-status [PersonnelOnly / AgencyOrPersonnelOnly]
 func (h *Handler) PersonnelUpdateStatus(c *fiber.Ctx) error {
-	personnelID := c.Locals("userID").(string)
+	personnelID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	incidentID := c.Params("id")
 
 	var req struct {
@@ -1109,7 +1172,10 @@ func (h *Handler) PersonnelUpdateStatus(c *fiber.Ctx) error {
 
 // GET /api/v1/incidents/responder/active-mission [PersonnelOnly]
 func (h *Handler) GetPersonnelActiveMission(c *fiber.Ctx) error {
-	personnelID := c.Locals("userID").(string)
+	personnelID, ok := c.Locals("userID").(string)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
 	resp, err := h.svc.GetActiveResponse(personnelID)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Gagal memuat misi aktif")

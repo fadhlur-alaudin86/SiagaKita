@@ -3,6 +3,7 @@
 // Key Components: LocalStorageService, Box names (sos_queue, incident_cache, telemetry_buffer, report_queue).
 
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -42,6 +43,13 @@ class LocalStorageService {
     _initialized = true;
 
     await _migrateFromSharedPreferences();
+
+    // Startup sweep (finding F2, P2): no pending_evidence entry may outlive a
+    // missing pending_sos. If the SOS was lost before delivery (process crash,
+    // ungraceful exit), delete the spooled files and the orphaned entry.
+    if (getPendingSOS() == null && getPendingEvidence() != null) {
+      await purgeSpooledEvidence();
+    }
   }
 
   @visibleForTesting
@@ -188,6 +196,29 @@ class LocalStorageService {
 
   static Future<void> clearPendingEvidence() async {
     await _sosQueueBox?.delete(_keyPendingEvidence);
+  }
+
+  /// Purge the spooled evidence entry: delete each spooled media file whose
+  /// path still exists (best-effort, individual failures ignored), then delete
+  /// the `pending_evidence` entry itself. Safe to call when no entry exists.
+  static Future<void> purgeSpooledEvidence() async {
+    final pending = getPendingEvidence();
+    if (pending == null) return;
+
+    for (final pathKey in ['front_path', 'rear_path', 'audio_path']) {
+      final path = pending[pathKey] as String?;
+      if (path == null || path.isEmpty) continue;
+      try {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (_) {
+        // Best-effort: never let a single file deletion failure abort the purge.
+      }
+    }
+
+    await clearPendingEvidence();
   }
 
   // ─── Incident Cache ─────────────────────────────────────────────────────────
