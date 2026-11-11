@@ -543,6 +543,7 @@ class AppLocalization {
         'SOS call canceled (Waiting for connection)...',
     'Status SOS telah diselesaikan oleh instansi.':
         'SOS status has been resolved by the agency.',
+    'Belum terkirim - mencoba ulang': 'Not delivered - retrying',
     'Ambil Foto KTP': 'Take ID Card Photo',
     'Ambil Foto Profil (Selfie)': 'Take Profile Photo (Selfie)',
     'Sesuai KTP': 'As per ID Card',

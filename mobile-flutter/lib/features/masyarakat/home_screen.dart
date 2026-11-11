@@ -66,9 +66,12 @@ class _HomeScreenState extends State<HomeScreen>
   String _sosPhase = 'idle'; // 'idle' | 'gracePeriod' | 'broadcasting'
   bool _isTriggeringSOS = false;
   // Status upload SOS ke server
-  // 'idle' | 'sending' | 'sent' | 'failed'
+  // 'idle' | 'sending' | 'sent' | 'retrying' | 'failed'
   String _sosUploadStatus = 'idle';
   Timer? _sosRetryTimer;
+
+  // Guards against stacking duplicate retry timers while an upload is in flight.
+  bool _sosUploadInFlight = false;
 
   // ─── Grace Period State ─────────────────────────────────────────────────────
   int _graceCountdown = 10;
@@ -284,6 +287,18 @@ class _HomeScreenState extends State<HomeScreen>
       );
       if (!mounted) return;
       if (active == null) {
+        // While the SOS is unacknowledged, a null active response must not
+        // reset local state or wipe an undelivered pending SOS.
+        final pending = await OfflineService.getPendingSOS();
+        if (evaluateSosPollDecision(
+              uploadStatus: _sosUploadStatus,
+              pendingSos: pending,
+              userCancelled: false,
+            ) ==
+            SosPollDecision.retry) {
+          return;
+        }
+
         _stopVibration();
         _stopLocationUpdates();
         setState(() {
@@ -980,7 +995,9 @@ class _HomeScreenState extends State<HomeScreen>
     required String triggeredBy,
     required String localId,
   }) {
+    if (_sosUploadInFlight) return;
     _sosRetryTimer?.cancel();
+    _sosUploadInFlight = true;
     _performSOSUpload(
       lat: lat,
       lng: lng,
@@ -998,12 +1015,19 @@ class _HomeScreenState extends State<HomeScreen>
     required String localId,
   }) async {
     // Hentikan jika sudah tidak relevan (dibatalkan user / sudah ada server ID)
-    if (!mounted) return;
-    if (_sosPhase == 'idle') return;
+    if (!mounted) {
+      _sosUploadInFlight = false;
+      return;
+    }
+    if (_sosPhase == 'idle') {
+      _sosUploadInFlight = false;
+      return;
+    }
     // Cek apakah masih relevan: pendingId harus match ATAU activeIncident sudah punya server ID
     if (_pendingIncidentId != null &&
         _pendingIncidentId != localId &&
         _activeIncident?.incidentId != localId) {
+      _sosUploadInFlight = false;
       return;
     }
 
@@ -1059,6 +1083,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       // Bersihkan pending SOS karena berhasil masuk ke server
       await OfflineService.clearPendingSOS();
+      _sosUploadInFlight = false;
       if (pendingType != null && serverStatus == 'broadcasting') {
         await OfflineService.clearPendingIncidentType();
       }
@@ -1107,11 +1132,15 @@ class _HomeScreenState extends State<HomeScreen>
     } on SOSBannedException catch (e) {
       OfflineService.clearPendingSOS();
       OfflineService.clearPendingIncidentType();
+      _sosUploadInFlight = false;
       if (!mounted) return;
       // SOS banned → batalkan grace period
       _cancelGracePeriodLocally();
       _showSOSBannedDialog(e.toString());
     } catch (_) {
+      // Jika gagal, reset penangga agar percobaan berikutnya via
+      // _attemptSOSUpload (poller retry) tidak menjadi no-op permanen.
+      _sosUploadInFlight = false;
       if (!mounted) return;
       setState(() => _sosUploadStatus = 'sending');
       // Retry setiap 5 detik selama phase masih aktif
@@ -1464,14 +1493,39 @@ class _HomeScreenState extends State<HomeScreen>
         );
         if (!mounted) return;
         if (active == null) {
-          _stopVibration();
-          _stopLocationUpdates();
           final currentIncidentId = _activeIncident?.incidentId;
           final lastCancelled = OfflineService.getLastCancelledIncidentId();
           final isUserCancelled =
               _userInitiatedCancel ||
               (currentIncidentId != null && currentIncidentId == lastCancelled);
 
+          final pending = await OfflineService.getPendingSOS();
+          final decision = evaluateSosPollDecision(
+            uploadStatus: _sosUploadStatus,
+            pendingSos: pending,
+            userCancelled: isUserCancelled,
+          );
+
+          if (decision == SosPollDecision.retry) {
+            // Undelivered pending SOS: keep SOS alive, schedule exactly one
+            // retry (the timer field is cancelled first in _attemptSOSUpload,
+            // so duplicate timers cannot stack), and surface the state.
+            _sosUploadStatus = 'retrying';
+            if (pending != null) {
+              _attemptSOSUpload(
+                lat: pending['latitude'] as double,
+                lng: pending['longitude'] as double,
+                addressDetail: pending['address_detail'] as String?,
+                triggeredBy: 'user',
+                localId: pending['local_id'] as String,
+              );
+            }
+            if (!mounted) return;
+            return;
+          }
+
+          _stopVibration();
+          _stopLocationUpdates();
           _userInitiatedCancel = false;
           if (currentIncidentId != null && currentIncidentId == lastCancelled) {
             OfflineService.clearLastCancelledIncidentId();
@@ -1720,6 +1774,10 @@ class _HomeScreenState extends State<HomeScreen>
       case 'sent':
         color = Colors.green;
         label = 'Sent'.tr(context);
+        break;
+      case 'retrying':
+        color = Colors.orange;
+        label = 'Belum terkirim - mencoba ulang'.tr(context);
         break;
       case 'failed':
         color = Colors.red;
@@ -2091,4 +2149,26 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+}
+
+/// Decision the status poller makes when GET /incidents/active returns null.
+enum SosPollDecision { resolve, retry }
+
+/// Returns whether the poller should [resolve] (wipe) the SOS or [retry]
+/// (keep an undelivered pending SOS alive and re-attempt upload).
+///
+/// Resolves only when the upload was acknowledged (status `'sent'` and no
+/// pending record remains) or the user initiated the cancel. Any other case
+/// — a pending SOS record exists or the upload status is not `'sent'` —
+/// retries so an undelivered SOS is never discarded.
+SosPollDecision evaluateSosPollDecision({
+  required String uploadStatus,
+  required Map<String, dynamic>? pendingSos,
+  required bool userCancelled,
+}) {
+  final acknowledged = uploadStatus == 'sent' && pendingSos == null;
+  if (userCancelled || acknowledged) {
+    return SosPollDecision.resolve;
+  }
+  return SosPollDecision.retry;
 }
