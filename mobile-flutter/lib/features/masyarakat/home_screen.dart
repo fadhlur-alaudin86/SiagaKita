@@ -317,7 +317,10 @@ class _HomeScreenState extends State<HomeScreen>
           _tapCount = 0;
         });
       } else {
-        setState(() => _activeIncident = active);
+        setState(() {
+          _activeIncident = active;
+          _sosUploadStatus = 'sent';
+        });
         if (active.isBeingHandled) {
           _stopVibration();
         }
@@ -565,6 +568,10 @@ class _HomeScreenState extends State<HomeScreen>
             OfflineService.clearPendingSOS();
             _pendingIncidentId = null;
             _sosPhase = 'idle'; // Nanti ditimpa kalau server bilang dia aktif
+          }
+          if (active != null) {
+            _sosUploadStatus =
+                'sent'; // server-confirmed active incident is delivered
           }
         });
         if (active != null) {
@@ -1554,7 +1561,8 @@ class _HomeScreenState extends State<HomeScreen>
             // Undelivered pending SOS: keep SOS alive, schedule exactly one
             // retry (the timer field is cancelled first in _attemptSOSUpload,
             // so duplicate timers cannot stack), and surface the state.
-            _sosUploadStatus = 'retrying';
+            if (!mounted) return;
+            setState(() => _sosUploadStatus = 'retrying');
             if (pending != null) {
               _attemptSOSUpload(
                 lat: pending['latitude'] as double,
@@ -1564,7 +1572,6 @@ class _HomeScreenState extends State<HomeScreen>
                 localId: pending['local_id'] as String,
               );
             }
-            if (!mounted) return;
             return;
           }
 

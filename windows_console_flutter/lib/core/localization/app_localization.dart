@@ -322,8 +322,6 @@ class AppLocalization {
         'Failed to flag false alarm. Try again.',
     'Gagal menandai alarm palsu. Periksa koneksi.':
         'Failed to flag false alarm. Check connection.',
-    'Terlalu banyak permintaan. Coba lagi nanti.':
-        'Too many requests. Please try again later.',
   };
 
   static String _translateInternal(String languageCode, String text) {

@@ -355,17 +355,18 @@ class ActiveSOSBanner extends StatelessWidget {
                 Icon(
                   Icons.stream,
                   size: 12.cw(context, min: 10, max: 12),
-                  color: uploadStatus == 'sending'
+                  color: uploadStatus == 'sending' || uploadStatus == 'retrying'
                       ? Colors.orangeAccent
                       : Colors.greenAccent,
                 ),
                 SizedBox(width: 4.w(context)),
                 Text(
-                  uploadStatus == 'sending'
+                  uploadStatus == 'sending' || uploadStatus == 'retrying'
                       ? 'Mengirim ulang...'.tr(context)
                       : 'Streaming Real-time'.tr(context),
                   style: TextStyle(
-                    color: uploadStatus == 'sending'
+                    color:
+                        uploadStatus == 'sending' || uploadStatus == 'retrying'
                         ? Colors.orangeAccent
                         : Colors.greenAccent,
                     fontSize: 10.csp(context, min: 9, max: 11),
