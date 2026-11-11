@@ -918,6 +918,10 @@ class _HomeScreenState extends State<HomeScreen>
       _sosUploadStatus = 'sending';
       // F3: reset pre-flight guard so the new SOS runs its own one-shot check.
       _evidencePermissionsPreflighted = false;
+      // F4A: reset per-SOS cancel flags so a NEW SOS is not wiped by the first
+      // successful status poll of a previous (cancelled) SOS session.
+      _userInitiatedCancel = false;
+      _cancelledLocalId = null;
     });
     _startGracePeriodCountdown();
 
@@ -1639,6 +1643,10 @@ class _HomeScreenState extends State<HomeScreen>
             _pendingIncidentId = null;
             _isTriggeringSOS = false;
           });
+          // Clear any Hive-persisted pending_sos / spooled evidence left behind by
+          // a discarded SOS so a later app start cannot resurrect it as "retrying".
+          await OfflineService.clearPendingSOS();
+          await OfflineService.purgeSpooledEvidence();
           _startCooldown();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
