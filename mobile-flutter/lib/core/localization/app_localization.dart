@@ -33,6 +33,8 @@ class AppLocalization {
         'SiagaKita needs location access so that help can be immediately directed to you accurately during an emergency.',
     'Mohon aktifkan izin lokasi secara manual melalui pengaturan aplikasi.':
         'Please enable location permission manually through app settings.',
+    'Izin kamera/mikrofon ditolak - bukti dilewati':
+        'Camera/microphone permission denied - evidence skipped',
     'TAMPILAN & AKSESIBILITAS': 'DISPLAY & ACCESSIBILITY',
     'Bahasa': 'Language',
     'AKUN & KEAMANAN': 'ACCOUNT & SECURITY',

@@ -28,6 +28,7 @@ import '../../core/services/mobile_ws_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/services/offline_service.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/services/permission_service.dart';
 import '../permissions/presentation/permission_primer_screen.dart';
 import 'report_screen.dart';
 import 'widgets/home_widgets.dart';
@@ -72,6 +73,14 @@ class _HomeScreenState extends State<HomeScreen>
 
   // Guards against stacking duplicate retry timers while an upload is in flight.
   bool _sosUploadInFlight = false;
+
+  // ─── Evidence permission pre-flight (F3) ───────────────────────────────────
+  // One-shot per SOS activation: camera/microphone checked + requested at most
+  // once, then denied types are skipped for the rest of this SOS. Reset when a
+  // new SOS starts (_triggerSOS). Never re-prompts inside retry loops.
+  bool _evidencePermissionsPreflighted = false;
+  bool _evidenceSkipCamera = false;
+  bool _evidenceSkipMicrophone = false;
 
   // ─── Grace Period State ─────────────────────────────────────────────────────
   int _graceCountdown = 10;
@@ -874,6 +883,8 @@ class _HomeScreenState extends State<HomeScreen>
       _sosPhase = 'gracePeriod';
       _graceCountdown = 10;
       _sosUploadStatus = 'sending';
+      // F3: reset pre-flight guard so the new SOS runs its own one-shot check.
+      _evidencePermissionsPreflighted = false;
     });
     _startGracePeriodCountdown();
 
@@ -892,6 +903,13 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     // Ambil posisi GPS di background
+    //
+    // F4: Google Location Accuracy dialog is purely platform behavior. This is
+    // a single one-shot request (awaited once, no retry loop re-requests
+    // location). If the dialog/disable triggers, LocationService throws and the
+    // catch blocks below cancel gracefully with a snackbar instead of blocking
+    // or looping the SOS flow. See infrastructure/README.md for the emulator
+    // prerequisite (enable Google Location Accuracy before E2E).
     double lat = 0.0;
     double lng = 0.0;
     String? address;
@@ -1301,63 +1319,73 @@ class _HomeScreenState extends State<HomeScreen>
     File? rearPhotoFile;
     File? audioFile;
 
-    // 1. Ambil foto dari kamera depan
-    try {
-      final cameras = await availableCameras();
-      final frontCamera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.front,
-        orElse: () => cameras.first,
-      );
-      final controller = CameraController(
-        frontCamera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-      );
-      await controller.initialize();
-      final xFile = await controller.takePicture();
-      await controller.dispose();
-      frontPhotoFile = File(xFile.path);
-    } catch (_) {
-      // Kamera depan tidak tersedia atau ditolak
-    }
+    // F3: one-shot permission pre-flight — checks camera + microphone once,
+    // requests at most once, skips denied types, never re-prompts in retries.
+    await _runEvidencePermissionPreflight();
 
-    // 2. Ambil foto dari kamera belakang
-    try {
-      final cameras = await availableCameras();
-      final rearCamera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-      final controller = CameraController(
-        rearCamera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-      );
-      await controller.initialize();
-      final xFile = await controller.takePicture();
-      await controller.dispose();
-      rearPhotoFile = File(xFile.path);
-    } catch (_) {
-      // Kamera belakang tidak tersedia atau ditolak
-    }
-
-    // 3. Rekam audio 5 detik
-    try {
-      final dir = await getTemporaryDirectory();
-      final audioPath =
-          '${dir.path}/sos_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      final recorder = AudioRecorder();
-      if (await recorder.hasPermission()) {
-        await recorder.start(
-          const RecordConfig(encoder: AudioEncoder.aacLc),
-          path: audioPath,
+    // 1. Ambil foto dari kamera depan (dilewati jika izin kamera ditolak)
+    if (!_evidenceSkipCamera) {
+      try {
+        final cameras = await availableCameras();
+        final frontCamera = cameras.firstWhere(
+          (c) => c.lensDirection == CameraLensDirection.front,
+          orElse: () => cameras.first,
         );
-        await Future.delayed(const Duration(seconds: 5));
-        await recorder.stop();
-        audioFile = File(audioPath);
+        final controller = CameraController(
+          frontCamera,
+          ResolutionPreset.medium,
+          enableAudio: false,
+        );
+        await controller.initialize();
+        final xFile = await controller.takePicture();
+        await controller.dispose();
+        frontPhotoFile = File(xFile.path);
+      } catch (_) {
+        // Kamera depan tidak tersedia atau ditolak
       }
-    } catch (_) {
-      // Mikrofon tidak tersedia atau ditolak
+    }
+
+    // 2. Ambil foto dari kamera belakang (dilewati jika izin kamera ditolak)
+    if (!_evidenceSkipCamera) {
+      try {
+        final cameras = await availableCameras();
+        final rearCamera = cameras.firstWhere(
+          (c) => c.lensDirection == CameraLensDirection.back,
+          orElse: () => cameras.first,
+        );
+        final controller = CameraController(
+          rearCamera,
+          ResolutionPreset.medium,
+          enableAudio: false,
+        );
+        await controller.initialize();
+        final xFile = await controller.takePicture();
+        await controller.dispose();
+        rearPhotoFile = File(xFile.path);
+      } catch (_) {
+        // Kamera belakang tidak tersedia atau ditolak
+      }
+    }
+
+    // 3. Rekam audio 5 detik (dilewati jika izin mikrofon ditolak)
+    if (!_evidenceSkipMicrophone) {
+      try {
+        final dir = await getTemporaryDirectory();
+        final audioPath =
+            '${dir.path}/sos_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final recorder = AudioRecorder();
+        if (await recorder.hasPermission()) {
+          await recorder.start(
+            const RecordConfig(encoder: AudioEncoder.aacLc),
+            path: audioPath,
+          );
+          await Future.delayed(const Duration(seconds: 5));
+          await recorder.stop();
+          audioFile = File(audioPath);
+        }
+      } catch (_) {
+        // Mikrofon tidak tersedia atau ditolak
+      }
     }
 
     // 4. Periksa apakah insiden sudah diakui oleh server dan koneksi aktif
@@ -1392,6 +1420,45 @@ class _HomeScreenState extends State<HomeScreen>
         frontPath: frontPhotoFile?.path ?? '',
         rearPath: rearPhotoFile?.path ?? '',
         audioPath: audioFile?.path ?? '',
+      );
+    }
+  }
+
+  // ─── Evidence permission pre-flight (F3) ───────────────────────────────────
+
+  /// F3: one-shot permission pre-flight for evidence capture, run once per SOS
+  /// activation. Checks camera + microphone status via PermissionService,
+  /// requests at most once, then records which evidence types to skip. Shows at
+  /// most one localized info message. Never re-prompts inside retry loops.
+  Future<void> _runEvidencePermissionPreflight() async {
+    if (_evidencePermissionsPreflighted) return;
+    _evidencePermissionsPreflighted = true;
+
+    bool cameraAllowed = await PermissionService.hasCameraPermission();
+    if (!cameraAllowed) {
+      cameraAllowed = (await Permission.camera.request()).isGranted;
+    }
+    bool micAllowed = await PermissionService.hasMicrophonePermission();
+    if (!micAllowed) {
+      micAllowed = (await Permission.microphone.request()).isGranted;
+    }
+
+    final decision = evaluateEvidencePreflight(
+      cameraAllowed: cameraAllowed,
+      microphoneAllowed: micAllowed,
+    );
+    _evidenceSkipCamera = decision.skipCamera;
+    _evidenceSkipMicrophone = decision.skipMicrophone;
+
+    if (decision.showInfoMessage && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Izin kamera/mikrofon ditolak - bukti dilewati'.tr(context),
+          ),
+          backgroundColor: Colors.orange.shade700,
+          duration: const Duration(seconds: 4),
+        ),
       );
     }
   }
@@ -2148,4 +2215,42 @@ SosPollDecision evaluateSosPollDecision({
     return SosPollDecision.resolve;
   }
   return SosPollDecision.retry;
+}
+
+/// Result of the one-shot evidence permission pre-flight (F3).
+///
+/// All fields are pure: no OS calls are made here, so the decision is safe to
+/// assert in unit tests.
+class EvidencePreflightResult {
+  /// Skip capturing the front/rear camera photo.
+  final bool skipCamera;
+
+  /// Skip recording the 5 s audio clip.
+  final bool skipMicrophone;
+
+  /// Show a single localized info message explaining the skip.
+  final bool showInfoMessage;
+
+  const EvidencePreflightResult({
+    required this.skipCamera,
+    required this.skipMicrophone,
+    required this.showInfoMessage,
+  });
+}
+
+/// Pure decision for evidence pre-flight: given whether camera and microphone
+/// permissions are granted, returns which evidence types to skip and whether a
+/// single info message should be shown. Denied or permanently denied types are
+/// skipped for the rest of this SOS; at most one info message is shown.
+EvidencePreflightResult evaluateEvidencePreflight({
+  required bool cameraAllowed,
+  required bool microphoneAllowed,
+}) {
+  final skipCamera = !cameraAllowed;
+  final skipMicrophone = !microphoneAllowed;
+  return EvidencePreflightResult(
+    skipCamera: skipCamera,
+    skipMicrophone: skipMicrophone,
+    showInfoMessage: skipCamera || skipMicrophone,
+  );
 }
