@@ -15,62 +15,73 @@ import '../helpers/toxiproxy_client.dart';
 import '../helpers/weaknet_env.dart';
 
 Future<void> main() async {
-  final up = await stackUp();
   final toxiproxy = ToxiproxyClient();
 
-  group('weaknet auth', () {
-    late String email;
-    const password = 'WeakNet#2026x';
+  group(
+    'weaknet auth',
+    () {
+      late String email;
+      const password = 'WeakNet#2026x';
 
-    setUpAll(() async {
-      final (_, capturedEmail) = await bootstrapTestUser();
-      email = capturedEmail;
-    });
+      setUpAll(() async {
+        final (_, capturedEmail) = await bootstrapTestUser();
+        email = capturedEmail;
+      });
 
-    tearDown(() async {
-      await toxiproxy.reset(ToxiproxyClient.restProxy);
-    });
+      tearDown(() async {
+        await toxiproxy.reset(ToxiproxyClient.restProxy);
+      });
 
-    test(
-      'register + OTP verify succeeds through 400ms added latency',
-      () async {
-        await toxiproxy.addLatency(ToxiproxyClient.restProxy, 400);
-        final watch = Stopwatch()..start();
+      test(
+        'register + OTP verify succeeds through 400ms added latency',
+        () async {
+          await toxiproxy.addLatency(ToxiproxyClient.restProxy, 400);
+          final watch = Stopwatch()..start();
 
-        final (auth, _) = await bootstrapTestUser();
+          final (auth, _) = await bootstrapTestUser();
 
-        watch.stop();
-        expect(auth.accessToken, isNotEmpty);
-        expect(
-          watch.elapsedMilliseconds,
-          greaterThanOrEqualTo(380),
-          reason: 'flow must have detoured through the latency toxic',
-        );
-      },
-    );
-
-    test('connection cut by timeout toxic surfaces as AuthException', () async {
-      await toxiproxy.addTimeout(ToxiproxyClient.restProxy, 100);
-      await expectLater(
-        AuthService.login(email: email, password: password),
-        throwsA(isA<AuthException>()),
-      );
-    });
-
-    test('full proxy outage surfaces as AuthException and recovers', () async {
-      await toxiproxy.setProxyEnabled(ToxiproxyClient.restProxy, false);
-      await expectLater(
-        AuthService.login(email: email, password: password),
-        throwsA(isA<AuthException>()),
+          watch.stop();
+          expect(auth.accessToken, isNotEmpty);
+          expect(
+            watch.elapsedMilliseconds,
+            greaterThanOrEqualTo(380),
+            reason: 'flow must have detoured through the latency toxic',
+          );
+        },
       );
 
-      await toxiproxy.setProxyEnabled(ToxiproxyClient.restProxy, true);
-      final (auth, _) = await bootstrapTestUser();
-      expect(
-        auth.accessToken,
-        isNotEmpty,
-        reason: 'full auth flow must recover after the outage ends',
+      test(
+        'connection cut by timeout toxic surfaces as AuthException',
+        () async {
+          await toxiproxy.addTimeout(ToxiproxyClient.restProxy, 100);
+          await expectLater(
+            AuthService.login(email: email, password: password),
+            throwsA(isA<AuthException>()),
+          );
+        },
       );
-    });
-  }, skip: up ? null : 'toxiproxy/backend stack not running on 127.0.0.1');
+
+      test(
+        'full proxy outage surfaces as AuthException and recovers',
+        () async {
+          await toxiproxy.setProxyEnabled(ToxiproxyClient.restProxy, false);
+          await expectLater(
+            AuthService.login(email: email, password: password),
+            throwsA(isA<AuthException>()),
+          );
+
+          await toxiproxy.setProxyEnabled(ToxiproxyClient.restProxy, true);
+          final (auth, _) = await bootstrapTestUser();
+          expect(
+            auth.accessToken,
+            isNotEmpty,
+            reason: 'full auth flow must recover after the outage ends',
+          );
+        },
+      );
+    },
+    skip: hasWeaknetEnv
+        ? null
+        : 'requires live weaknet stack: run with --dart-define=API_BASE_URL/WS_BASE_URL',
+  );
 }

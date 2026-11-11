@@ -24,6 +24,13 @@ const String weaknetWsBase = String.fromEnvironment(
   defaultValue: 'ws://127.0.0.1:10001/v1/ws/connect',
 );
 
+/// True when both weak-network base URLs are provided via --dart-define.
+/// Computed at compile time: bare `flutter test` (defines absent) skips the
+/// suites gracefully instead of failing in setUpAll.
+const bool hasWeaknetEnv =
+    String.fromEnvironment('API_BASE_URL') != '' &&
+    String.fromEnvironment('WS_BASE_URL') != '';
+
 const String _controlUrl = 'http://127.0.0.1:8474';
 
 /// True when both the toxiproxy control API and the proxied backend answer.

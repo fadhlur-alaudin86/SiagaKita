@@ -93,6 +93,9 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _locationUpdateTimer;
   Timer?
   _statusCheckTimer; // polling cepat adaptif (3 detik) khusus saat SOS aktif
+  Timer?
+  _adoptionRetryTimer; // bounded retry saat init-time GET /incidents/active gagal
+  int _adoptionRetryCount = 0; // percobaan retry adopsi (maks 3)
   bool _isLoadingActiveIncident = true;
   bool _userInitiatedCancel = false;
 
@@ -421,6 +424,7 @@ class _HomeScreenState extends State<HomeScreen>
     _graceTimer?.cancel();
     _sosRetryTimer?.cancel();
     _countdownTimer?.cancel();
+    _adoptionRetryTimer?.cancel();
     _vibrationTimer?.cancel();
     _sosCooldownTimer?.cancel();
     _wsSub?.cancel();
@@ -551,6 +555,7 @@ class _HomeScreenState extends State<HomeScreen>
         if (active != null &&
             (active.incidentId == pendingCancel ||
                 active.incidentId == lastCancelled)) {
+          _resetAdoptionRetry();
           setState(() {
             _activeIncident = null;
             _isLoadingActiveIncident = false;
@@ -574,6 +579,7 @@ class _HomeScreenState extends State<HomeScreen>
                 'sent'; // server-confirmed active incident is delivered
           }
         });
+        _resetAdoptionRetry();
         if (active != null) {
           _startLocationUpdates();
           _startStatusPolling();
@@ -582,7 +588,27 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } catch (_) {
       if (mounted) setState(() => _isLoadingActiveIncident = false);
+      _scheduleAdoptionRetry();
     }
+  }
+
+  /// Bounded retry adopsi setelah init-time GET /incidents/active gagal
+  /// (misal TimeoutException saat boot). Maks 3 percobaan, jeda ~5 detik.
+  void _scheduleAdoptionRetry() {
+    if (!mounted) return;
+    if (_adoptionRetryCount >= 3) return;
+    _adoptionRetryTimer?.cancel();
+    _adoptionRetryCount++;
+    _adoptionRetryTimer = Timer(const Duration(seconds: 5), () async {
+      if (!mounted) return;
+      if (_adoptionRetryCount >= 3) return;
+      await _checkActiveIncident();
+    });
+  }
+
+  void _resetAdoptionRetry() {
+    _adoptionRetryTimer?.cancel();
+    _adoptionRetryCount = 0;
   }
 
   // ─── GPS Location Update (setiap 10 detik) ───────────────────────────────────
@@ -1573,6 +1599,25 @@ class _HomeScreenState extends State<HomeScreen>
               );
             }
             return;
+          }
+
+          // Re-verify with a fresh snapshot before wiping: a concurrent POST
+          // may have committed the incident after this poll's GET returned null.
+          if (!isUserCancelled) {
+            if (!mounted) return;
+            final recheck = await IncidentService.getActive(
+              accessToken: widget.accessToken,
+            );
+            if (!mounted) return;
+            if (recheck != null) {
+              setState(() {
+                _activeIncident = recheck;
+                _sosUploadStatus = 'sent';
+              });
+              _startLocationUpdates();
+              if (!recheck.isBeingHandled) _startVibration();
+              return;
+            }
           }
 
           _stopVibration();

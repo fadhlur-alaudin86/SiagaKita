@@ -14,59 +14,64 @@ import '../helpers/toxiproxy_client.dart';
 import '../helpers/weaknet_env.dart';
 
 Future<void> main() async {
-  final up = await stackUp();
   final toxiproxy = ToxiproxyClient();
 
-  group('weaknet SOS', () {
-    late String accessToken;
-    final triggeredIncidentIds = <String>[];
+  group(
+    'weaknet SOS',
+    () {
+      late String accessToken;
+      final triggeredIncidentIds = <String>[];
 
-    setUpAll(() async {
-      final (auth, _) = await bootstrapTestUser();
-      accessToken = auth.accessToken;
-    });
+      setUpAll(() async {
+        final (auth, _) = await bootstrapTestUser();
+        accessToken = auth.accessToken;
+      });
 
-    tearDown(() async {
-      for (final id in triggeredIncidentIds) {
-        try {
-          await IncidentService.cancelSOS(
-            accessToken: accessToken,
-            incidentId: id,
-          );
-        } catch (_) {
-          // Cancellation is best-effort cleanup; never mask test results.
+      tearDown(() async {
+        for (final id in triggeredIncidentIds) {
+          try {
+            await IncidentService.cancelSOS(
+              accessToken: accessToken,
+              incidentId: id,
+            );
+          } catch (_) {
+            // Cancellation is best-effort cleanup; never mask test results.
+          }
         }
-      }
-      triggeredIncidentIds.clear();
-      await toxiproxy.reset(ToxiproxyClient.restProxy);
-    });
+        triggeredIncidentIds.clear();
+        await toxiproxy.reset(ToxiproxyClient.restProxy);
+      });
 
-    test('triggerSOS succeeds through 300ms added latency', () async {
-      await toxiproxy.addLatency(ToxiproxyClient.restProxy, 300);
-      final result = await IncidentService.triggerSOS(
-        accessToken: accessToken,
-        latitude: -6.2,
-        longitude: 106.816666,
-        addressDetail: 'WeakNet Test Point',
-      );
-
-      expect(result.incidentId, isNotEmpty);
-      triggeredIncidentIds.add(result.incidentId);
-    });
-
-    test(
-      'triggerSOS under connection cut throws IncidentException, not hang',
-      () async {
-        await toxiproxy.addTimeout(ToxiproxyClient.restProxy, 100);
-        await expectLater(
-          IncidentService.triggerSOS(
-            accessToken: accessToken,
-            latitude: -6.2,
-            longitude: 106.816666,
-          ),
-          throwsA(isA<IncidentException>()),
+      test('triggerSOS succeeds through 300ms added latency', () async {
+        await toxiproxy.addLatency(ToxiproxyClient.restProxy, 300);
+        final result = await IncidentService.triggerSOS(
+          accessToken: accessToken,
+          latitude: -6.2,
+          longitude: 106.816666,
+          addressDetail: 'WeakNet Test Point',
         );
-      },
-    );
-  }, skip: up ? null : 'toxiproxy/backend stack not running on 127.0.0.1');
+
+        expect(result.incidentId, isNotEmpty);
+        triggeredIncidentIds.add(result.incidentId);
+      });
+
+      test(
+        'triggerSOS under connection cut throws IncidentException, not hang',
+        () async {
+          await toxiproxy.addTimeout(ToxiproxyClient.restProxy, 100);
+          await expectLater(
+            IncidentService.triggerSOS(
+              accessToken: accessToken,
+              latitude: -6.2,
+              longitude: 106.816666,
+            ),
+            throwsA(isA<IncidentException>()),
+          );
+        },
+      );
+    },
+    skip: hasWeaknetEnv
+        ? null
+        : 'requires live weaknet stack: run with --dart-define=API_BASE_URL/WS_BASE_URL',
+  );
 }

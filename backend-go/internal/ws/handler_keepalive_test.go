@@ -27,18 +27,18 @@ import (
 
 func TestReadLoop_KeepalivePingKeepsIdleConnectionAlive(t *testing.T) {
 	// Save and restore the package-level timing vars so the test is hermetic.
-	origPing := wsPingInterval
-	origDeadline := wsReadDeadline
+	origPing := wsPingInterval()
+	origDeadline := wsReadDeadline()
 	defer func() {
-		wsPingInterval = origPing
-		wsReadDeadline = origDeadline
+		wsPingIntervalNs.Store(int64(origPing))
+		wsReadDeadlineNs.Store(int64(origDeadline))
 	}()
 
 	// Shorten both the ping interval and the read deadline so the test runs
 	// quickly: ping every 100 ms, deadline 400 ms. A ping well before the
 	// deadline, answered by a pong, keeps refreshing the deadline.
-	wsPingInterval = 100 * time.Millisecond
-	wsReadDeadline = 400 * time.Millisecond
+	wsPingIntervalNs.Store(int64(100 * time.Millisecond))
+	wsReadDeadlineNs.Store(int64(400 * time.Millisecond))
 
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
