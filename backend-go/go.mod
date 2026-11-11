@@ -2,7 +2,7 @@ module siagakita-backend
 
 go 1.26.2
 
-toolchain go1.27.2
+toolchain go1.27.4
 
 require (
 	firebase.google.com/go/v4 v4.22.0
